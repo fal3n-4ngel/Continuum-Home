@@ -13,4 +13,6 @@ export const AUTHOR = {
   email: "hello@adithyakrishnan.com",
   github: "https://github.com/fal3n-4ngel",
   githubHandle: "fal3n-4ngel",
+  sponsorUrl: "https://github.com/sponsors/fal3n-4ngel",
+  coffeeUrl: "https://buymeacoffee.com/fal3n4ngel",
 };

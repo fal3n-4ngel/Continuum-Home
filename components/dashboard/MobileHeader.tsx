@@ -1,6 +1,7 @@
 import React from "react";
 import { FirebaseUser } from "@/types";
 import { isSafeImageUrl } from "@/lib/safe-url";
+import { AUTHOR } from "@/lib/site";
 
 interface MobileHeaderProps {
   activeTab: string;
@@ -57,6 +58,17 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           <span className="text-base font-bold tracking-[-0.3px]">PHub Dashboard</span>
         </div>
         <div className="flex items-center gap-3">
+          <a
+            href={AUTHOR.coffeeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Support this project"
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-secondary transition-colors hover:text-text-primary"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
+            </svg>
+          </a>
           <a
             href="/assistant"
             title="AI Integration Setup"

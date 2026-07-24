@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { redis } from "@/lib/redis";
 import { ApiError } from "@/lib/errors";
+import { listAllUsers } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
 
@@ -26,9 +27,26 @@ export async function GET(req: NextRequest) {
     const usersSet = await redis.smembers("metrics:gpt:users_set");
     const userLastActive = await redis.hgetall("metrics:gpt:user_last_active") as Record<string, string> || {};
 
+    // GPT users authenticated via a long-lived refresh token/API key have no
+    // email on their session (see trackGptMetrics in lib/auth.ts), so the
+    // Redis set stores their raw Firebase uid instead. Resolve those to a
+    // real email for display via the Admin SDK; entries that are already an
+    // email (from the ID-token auth path) pass through untouched.
+    const uidsToResolve = usersSet.filter((identifier) => !identifier.includes("@"));
+    const uidToEmail = new Map<string, string>();
+    if (uidsToResolve.length > 0) {
+      try {
+        const allUsers = await listAllUsers();
+        for (const u of allUsers) uidToEmail.set(u.uid, u.email);
+      } catch (e) {
+        console.error("Failed to resolve GPT metric uids via Admin SDK:", e);
+      }
+    }
+
     // 3. Compile users details list
-    const usersList = usersSet.map((email) => {
-      const lastActiveMs = Number(userLastActive[email]) || 0;
+    const usersList = usersSet.map((identifier) => {
+      const lastActiveMs = Number(userLastActive[identifier]) || 0;
+      const email = identifier.includes("@") ? identifier : uidToEmail.get(identifier) || identifier;
       return {
         email,
         lastActive: lastActiveMs ? new Date(lastActiveMs).toISOString() : null,

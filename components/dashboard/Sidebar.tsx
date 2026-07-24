@@ -1,6 +1,7 @@
 import React from "react";
 import { FirebaseUser, AniListUser, TraktUser } from "@/types";
 import { isSafeImageUrl } from "@/lib/safe-url";
+import { AUTHOR } from "@/lib/site";
 
 interface SidebarProps {
   activeTab: string;
@@ -273,10 +274,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20M4 19.5V5A2.5 2.5 0 0 1 6.5 2.5H20v20H6.5A2.5 2.5 0 0 1 4 19.5z"/></svg>
           OpenAPI Spec
         </a>
-        <button onClick={() => setShowOnboarding(true)} className="mb-2 flex w-full cursor-pointer items-center gap-3 rounded-lg border-none bg-transparent px-3.5 py-2.5 text-left text-xs font-medium text-text-secondary transition-all duration-200 hover:bg-bg-primary hover:text-text-primary">
+        <button onClick={() => setShowOnboarding(true)} className="mb-1 flex w-full cursor-pointer items-center gap-3 rounded-lg border-none bg-transparent px-3.5 py-2.5 text-left text-xs font-medium text-text-secondary transition-all duration-200 hover:bg-bg-primary hover:text-text-primary">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
           Feature Guide
         </button>
+        <a href={AUTHOR.coffeeUrl} target="_blank" rel="noopener noreferrer" className="mb-2 flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-xs font-medium text-text-secondary no-underline transition-all duration-200 hover:bg-bg-primary hover:text-text-primary">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
+          Support this project
+        </a>
 
         {user && (
           <div className="mt-4 flex items-center gap-2.5 border-t border-border-subtle px-3.5 py-3">
