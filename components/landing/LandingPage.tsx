@@ -1322,6 +1322,24 @@ export default function LandingPage({
               >
                 @fal3n-4ngel
               </a>
+              <span className="text-[#d1cfc7]">·</span>
+              <a
+                href={AUTHOR.sponsorUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9c9a92] no-underline hover:text-[#1c1b18]"
+              >
+                Sponsor ♥
+              </a>
+              <span className="text-[#d1cfc7]">·</span>
+              <a
+                href={AUTHOR.coffeeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9c9a92] no-underline hover:text-[#1c1b18]"
+              >
+                Buy me a coffee ☕
+              </a>
             </div>
             <div className="flex items-center gap-1.5 font-mono text-[10.5px] tracking-[0.6px] text-[#9c9a92] uppercase">
               <div className="h-1.5 w-1.5 rounded-full bg-[#22c55e] shadow-[0_0_0_3px_rgba(34,197,94,0.15)]" />
