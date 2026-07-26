@@ -114,6 +114,8 @@ export default function Dashboard() {
   const [ledgerCategoryFilter, setLedgerCategoryFilter] = useState("");
   const [ledgerMinAmount, setLedgerMinAmount] = useState("");
   const [ledgerMaxAmount, setLedgerMaxAmount] = useState("");
+  const [ledgerSortField, setLedgerSortField] = useState<"date" | "amount" | "title" | "category">("date");
+  const [ledgerSortDir, setLedgerSortDir] = useState<"asc" | "desc">("desc");
 
   // Subscriptions State
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -1762,8 +1764,26 @@ const updateMarketPrices = async () => {
       if (!isNaN(max)) list = list.filter((e) => (e.amount || 0) <= max);
     }
 
+    // Sorting is purely client-side on data already fetched — expenses are
+    // loaded in full up front, so re-sorting never costs an extra Firestore
+    // read no matter how often the user changes the sort order.
+    const dir = ledgerSortDir === "asc" ? 1 : -1;
+    list = [...list].sort((a, b) => {
+      switch (ledgerSortField) {
+        case "amount":
+          return ((a.amount || 0) - (b.amount || 0)) * dir;
+        case "title":
+          return a.title.localeCompare(b.title) * dir;
+        case "category":
+          return (a.category || "").localeCompare(b.category || "") * dir;
+        case "date":
+        default:
+          return (a.date || "").localeCompare(b.date || "") * dir;
+      }
+    });
+
     return list;
-  }, [expenses, timeFilter, salaryDay, salaryLog, expenseSearch, ledgerCategoryFilter, ledgerMinAmount, ledgerMaxAmount]);
+  }, [expenses, timeFilter, salaryDay, salaryLog, expenseSearch, ledgerCategoryFilter, ledgerMinAmount, ledgerMaxAmount, ledgerSortField, ledgerSortDir]);
 
   const totalSpent = useMemo(() => filteredExpenses.reduce((acc, e) => acc + (e.amount || 0), 0), [filteredExpenses]);
 
@@ -2094,6 +2114,10 @@ const updateMarketPrices = async () => {
               setLedgerMinAmount={setLedgerMinAmount}
               ledgerMaxAmount={ledgerMaxAmount}
               setLedgerMaxAmount={setLedgerMaxAmount}
+              ledgerSortField={ledgerSortField}
+              setLedgerSortField={setLedgerSortField}
+              ledgerSortDir={ledgerSortDir}
+              setLedgerSortDir={setLedgerSortDir}
               isFetchingExpenses={isFetchingExpenses}
               expensesLoaded={expensesLoaded}
               subscriptions={subscriptions}

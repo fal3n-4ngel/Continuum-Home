@@ -499,11 +499,15 @@ export async function listWatchlist(session: Session): Promise<WatchlistItem[]> 
   const itemsMap = await getRawWatchlist(session);
   // Items added before createdAt existed have no such field in Firestore —
   // updatedAt is the closest available proxy for when they first appeared.
-  const items = Object.entries(itemsMap).map(([id, data]) => ({
-    ...data,
-    id,
-    createdAt: typeof data.createdAt === "number" ? data.createdAt : data.updatedAt,
-  }));
+  const items = Object.entries(itemsMap)
+    .map(([id, data]) => ({
+      ...data,
+      id,
+      createdAt: typeof data.createdAt === "number" ? data.createdAt : data.updatedAt,
+    }))
+    // Guard against malformed/partial docs (e.g. missing `title`) so
+    // consumers can rely on the required WatchlistItem fields being present.
+    .filter((item) => typeof item.title === "string" && item.title.length > 0);
   items.sort((a, b) => b.updatedAt - a.updatedAt);
   return items;
 }

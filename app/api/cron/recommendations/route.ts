@@ -4,6 +4,12 @@ import type { DailyRecommendation } from "@/lib/firebase";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 export const dynamic = "force-dynamic";
+// Gemini free-tier throttling (13s between calls, see GEMINI_MIN_INTERVAL_MS
+// below) means this route now runs for roughly (users × 4 types × 13s).
+// Bump this if you add users and the cron starts timing out — and note
+// Vercel's plan-level cap on function duration still applies on top of this
+// (e.g. Hobby plans cap lower than Pro regardless of this value).
+export const maxDuration = 300;
 
 // Calculate calendar date in IST (UTC+5:30)
 function getCalendarIstDate() {
@@ -20,6 +26,53 @@ type ProcessResult = { sent: false; reason: string } | { sent: true; generated: 
 
 const TYPES: ("movie" | "show" | "anime" | "book")[] = ["movie", "show", "anime", "book"];
 
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// The free Gemini tier caps gemini-2.5-flash at 5 requests/minute PER
+// PROJECT (not per user), so this has to throttle across the whole cron
+// run, not just within one user. lastGeminiCallAt is module-scoped rather
+// than per-user so every generateContent() call anywhere in this
+// invocation shares the same clock. 13s spacing keeps 60/13 ≈ 4.6 req/min,
+// just under the 5/min ceiling.
+const GEMINI_MIN_INTERVAL_MS = 13_000;
+let lastGeminiCallAt = 0;
+
+// Pulls the server-suggested wait out of a Gemini 429's RetryInfo detail,
+// e.g. { retryDelay: "48s" }. Returns null if the error isn't a parseable
+// quota error, in which case the caller shouldn't bother retrying.
+function extractRetryDelayMs(err: any): number | null {
+  const details = err?.errorDetails;
+  if (!Array.isArray(details)) return null;
+  const retryInfo = details.find((d) => d?.["@type"]?.includes("RetryInfo"));
+  const raw = retryInfo?.retryDelay;
+  if (typeof raw !== "string") return null;
+  const seconds = parseFloat(raw.replace(/s$/, ""));
+  return isNaN(seconds) ? null : Math.ceil(seconds * 1000);
+}
+
+async function generateThrottled(model: ReturnType<GoogleGenerativeAI["getGenerativeModel"]>, prompt: string): Promise<string> {
+  for (let attempt = 0; ; attempt++) {
+    const elapsed = Date.now() - lastGeminiCallAt;
+    if (elapsed < GEMINI_MIN_INTERVAL_MS) {
+      await sleep(GEMINI_MIN_INTERVAL_MS - elapsed);
+    }
+    lastGeminiCallAt = Date.now();
+    try {
+      const response = await model.generateContent(prompt);
+      return response.response.text();
+    } catch (err: any) {
+      const retryDelayMs = extractRetryDelayMs(err);
+      if (attempt === 0 && retryDelayMs !== null) {
+        await sleep(retryDelayMs + 500);
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+
 async function processUser(user: AdminUser, geminiApiKey: string, dateStr: string): Promise<ProcessResult> {
   const allItems = await adminListWatchlist(user.uid);
   if (allItems.length === 0) {
@@ -35,8 +88,12 @@ async function processUser(user: AdminUser, geminiApiKey: string, dateStr: strin
     },
   });
 
-  const outcomes = await Promise.all(
-    TYPES.map(async (type) => {
+  // Sequential, not Promise.all: concurrent calls would burst 4 requests at
+  // once against a 5-req/min quota shared across every user in this run.
+  const outcomes: boolean[] = [];
+  for (const type of TYPES) {
+    outcomes.push(
+      await (async () => {
       try {
         let prompt = "";
         if (type === "book") {
@@ -88,8 +145,7 @@ Return no other text or markdown blocks. Just the raw JSON object.
 `;
         }
 
-        const response = await model.generateContent(prompt);
-        const replyText = response.response.text();
+        const replyText = await generateThrottled(model, prompt);
         const geminiResult = JSON.parse(replyText.trim());
 
         // Enrichment (Quick, single-attempt lookup)
@@ -159,8 +215,9 @@ Return no other text or markdown blocks. Just the raw JSON object.
         console.error(`[Cron Recs] Failed to generate "${type}" for uid ${user.uid}:`, e);
         return false;
       }
-    })
-  );
+      })()
+    );
+  }
 
   const generated = outcomes.filter(Boolean).length;
   if (generated === 0) {
