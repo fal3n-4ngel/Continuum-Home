@@ -187,7 +187,11 @@ export async function adminListWatchlist(uid: string): Promise<WatchlistItem[]> 
   if (!doc.exists) return [];
   const data = doc.data() || {};
   const itemsMap = data.items && typeof data.items === "object" ? (data.items as Record<string, WatchlistItem>) : {};
-  return Object.entries(itemsMap).map(([id, item]) => ({ ...item, id }));
+  // Malformed/partial entries (e.g. a doc missing `title`) shouldn't reach
+  // callers — every consumer assumes the required WatchlistItem fields exist.
+  return Object.entries(itemsMap)
+    .map(([id, item]) => ({ ...item, id }))
+    .filter((item) => typeof item.title === "string" && item.title.length > 0);
 }
 
 export async function adminSaveDailyRecommendation(

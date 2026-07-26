@@ -2,6 +2,12 @@
   "name": "phub-dashboard",
   "version": "0.1.0",
   "private": true,
+  "overrides": {
+    "jose": "5.10.0",
+    "jwks-rsa": {
+      "jose": "5.10.0"
+    }
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
