@@ -246,6 +246,37 @@ const FOOTER_COL_LABEL =
   "mb-4 block font-mono text-[10px] font-semibold tracking-wider text-[#9c9a92] uppercase";
 const FI_YES = "shrink-0 text-[13px] text-[#22c55e]";
 
+/* ─── FAQ content: single-sourced for both the rendered section and its
+ * FAQPage JSON-LD, so search-engine rich snippets never drift from the copy
+ * users actually see. ─── */
+const FAQ_ITEMS: { question: string; answer: string }[] = [
+  {
+    question: "Is PHub Dashboard free?",
+    answer:
+      "Yes. The self-hosted version is free forever — deploy your own copy on Vercel + Firebase's free tiers with no feature gates. The cloud-hosted version is also free right now; a small fee or ads may be added later only if hosting costs grow.",
+  },
+  {
+    question: "Where is my data stored?",
+    answer:
+      "In your own private Firebase project (if self hosted), never a shared database. Expense and portfolio fields are additionally encrypted at rest with AES-256-GCM, so even direct database access doesn't expose your raw amounts or notes.",
+  },
+  {
+    question: "Do I need to know how to code to self-host it?",
+    answer:
+      "Basic comfort with forking a GitHub repo and clicking through the Vercel deploy flow is enough. Setup is fork → deploy to Vercel → create a Firebase project → paste in a few config values — no manual database schema or server management.",
+  },
+  {
+    question: "How does the ChatGPT / AI agent integration work?",
+    answer:
+      "Every API route is documented with a standard OpenAPI schema (at /api/openapi.json), so you can plug it directly into a Custom GPT Action, or point Gemini/Claude developer APIs at the same schema to log expenses or manage your watchlist in plain English.",
+  },
+  {
+    question: "Can I import my existing expense or watchlist data?",
+    answer:
+      "Yes — the expense ledger supports CSV import/export, and the media watchlist can sync from AniList, Trakt, or a Letterboxd export.",
+  },
+];
+
 export default function LandingPage({
   onLogin,
   authError,
@@ -253,6 +284,18 @@ export default function LandingPage({
 }: LandingPageProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [coords, setCoords] = useState<DiagramCoords | null>(null);
+  const [userCount, setUserCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/stats")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (typeof data?.userCount === "number" && data.userCount > 0) {
+          setUserCount(data.userCount);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const updateCoords = () => {
@@ -504,6 +547,14 @@ export default function LandingPage({
             View on GitHub
           </a>
         </div>
+        {userCount !== null && (
+          <p
+            className={`mt-4 text-[12.5px] text-[#9c9a92] ${HERO_REVEAL} [animation-delay:0.23s]`}
+          >
+            Joined by <strong className="font-semibold text-[#6e6c64]">{userCount}</strong>{" "}
+            {userCount === 1 ? "person" : "people"} tracking their life with PHub
+          </p>
+        )}
         <div
           className={`mt-7 flex flex-wrap justify-center gap-2 ${HERO_REVEAL} [animation-delay:0.26s]`}
         >
@@ -1063,6 +1114,9 @@ export default function LandingPage({
               <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
                 <span className={FI_YES}>✓</span> Always updated
               </li>
+                 <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
+                <span className={FI_YES}>✓</span> AES-256 GCM DB Encryption
+              </li>
               <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
                 <span className="shrink-0 text-[13px] text-[#f59e0b]">○</span>{" "}
                 Shared hosting instance
@@ -1183,6 +1237,70 @@ export default function LandingPage({
           </div>
         </div>
       </section>
+
+      {/* ─── FAQ ─── */}
+      <section className="border-t border-b border-[#e5e3db] bg-[#eae8e0] px-6 py-[100px] max-[480px]:py-[60px]">
+        <div className="mx-auto grid max-w-[1100px] grid-cols-[1.1fr_1fr] gap-[60px] max-[900px]:grid-cols-1 max-[900px]:gap-9">
+          <div>
+            <span className={`${HERO_BADGE} bg-[#f4f3ec]`}>Frequently asked</span>
+            <h2 className={`${HERO_TITLE} mb-5 text-left text-[40px]`}>
+              Questions,
+              <br />
+              <span className="font-normal italic" style={SERIF_ITALIC_STYLE}>
+                answered.
+              </span>
+            </h2>
+            <p className={`${STEP_DESC} mb-8 max-w-[380px] text-sm`}>
+              The short version of everything above — for when you just want
+              the answer. Can&apos;t find yours?
+            </p>
+            <a
+              href="https://github.com/fal3n-4ngel/PHub-Dashboard/issues"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${HERO_CTA_PRIMARY} inline-flex`}
+            >
+              Ask on GitHub
+              <span>→</span>
+            </a>
+          </div>
+
+          <div className="overflow-hidden rounded-xl border border-[#e5e3db] bg-white shadow-[0_20px_40px_-15px_rgba(110,108,100,0.14)]">
+            {FAQ_ITEMS.map((item, idx) => (
+              <details
+                key={item.question}
+                className={`group px-6 py-5 max-[480px]:px-5 ${
+                  idx !== FAQ_ITEMS.length - 1 ? "border-b border-[#e5e3db]" : ""
+                }`}
+              >
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[14px] font-semibold text-[#1c1b18] marker:content-none [&::-webkit-details-marker]:hidden">
+                  {item.question}
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#e5e3db] text-[13px] text-[#6e6c64] transition-transform duration-200 group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3 max-w-[440px] text-[13px] leading-[1.65] text-[#6e6c64]">
+                  {item.answer}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "FAQPage",
+            mainEntity: FAQ_ITEMS.map((item) => ({
+              "@type": "Question",
+              name: item.question,
+              acceptedAnswer: { "@type": "Answer", text: item.answer },
+            })),
+          }),
+        }}
+      />
 
       {/* ─── Footer ─── */}
       <footer className="border-t border-[#e5e3db] bg-white">
