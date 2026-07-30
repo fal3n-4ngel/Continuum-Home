@@ -902,6 +902,41 @@ export async function updatePortfolio(session: Session, assets: InvestmentAsset[
   await cacheInvalidate(portfolioCacheKey(session));
 }
 
+export async function updatePortfolioAsset(session: Session, assetId: string, updates: Partial<InvestmentAsset>) {
+  assertDocId(assetId, "portfolio asset");
+  const portfolio = await getPortfolio(session);
+  if (!portfolio || !portfolio.assets) {
+    throw new ApiError(404, "Portfolio not found.");
+  }
+  const index = portfolio.assets.findIndex((a) => a.id === assetId);
+  if (index === -1) {
+    throw new ApiError(404, "Asset not found in portfolio.");
+  }
+
+  const updatedAssets = [...portfolio.assets];
+  updatedAssets[index] = {
+    ...portfolio.assets[index],
+    ...updates,
+  };
+
+  await updatePortfolio(session, updatedAssets);
+  return { id: assetId };
+}
+
+export async function deletePortfolioAsset(session: Session, assetId: string) {
+  assertDocId(assetId, "portfolio asset");
+  const portfolio = await getPortfolio(session);
+  if (!portfolio || !portfolio.assets) {
+    throw new ApiError(404, "Portfolio not found.");
+  }
+  const filteredAssets = portfolio.assets.filter((a) => a.id !== assetId);
+  if (filteredAssets.length === portfolio.assets.length) {
+    throw new ApiError(404, "Asset not found in portfolio.");
+  }
+  await updatePortfolio(session, filteredAssets);
+  return { id: assetId };
+}
+
 export async function updatePortfolioValuationHistory(
   session: Session,
   valuationHistory: Record<string, number>
