@@ -1205,8 +1205,15 @@ export default function Dashboard() {
 
   const deleteExpense = async (id: string) => {
     triggerConfirm("Archive Expense", "Are you sure you want to archive this expense?", async () => {
-      const res = await fetch(`/api/expenses/${id}`, { method: "DELETE", headers: getHeaders() });
-      if (res.ok) setExpenses((prev) => prev.filter((e) => e.id !== id));
+      const previousList = [...expenses];
+      setExpenses((prev) => prev.filter((e) => e.id !== id));
+      try {
+        const res = await fetch(`/api/expenses/${id}`, { method: "DELETE", headers: getHeaders() });
+        if (!res.ok) throw new Error("Failed to archive expense");
+      } catch (err) {
+        console.error(err);
+        setExpenses(previousList);
+      }
     });
   };
 
@@ -1242,8 +1249,15 @@ export default function Dashboard() {
 
   const deleteSubscription = async (id: string) => {
     triggerConfirm("Delete Subscription", "Are you sure you want to delete this subscription?", async () => {
-      const res = await fetch(`/api/subscriptions/${id}`, { method: "DELETE", headers: getHeaders() });
-      if (res.ok) setSubscriptions((prev) => prev.filter((s) => s.id !== id));
+      const previousList = [...subscriptions];
+      setSubscriptions((prev) => prev.filter((s) => s.id !== id));
+      try {
+        const res = await fetch(`/api/subscriptions/${id}`, { method: "DELETE", headers: getHeaders() });
+        if (!res.ok) throw new Error("Failed to delete subscription");
+      } catch (err) {
+        console.error(err);
+        setSubscriptions(previousList);
+      }
     });
   };
 
@@ -1641,28 +1655,31 @@ export default function Dashboard() {
 
   const deleteInvestment = async (id: string) => {
     triggerConfirm("Delete Asset", "Are you sure you want to delete this asset from your portfolio?", async () => {
+      const previousList = [...investments];
       const updatedList = investments.filter((a) => a.id !== id);
       setInvestments(updatedList);
-      const res = await fetch("/api/portfolio", {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify({
-          assets: updatedList,
-        }),
-      });
-      if (res.ok) {
-        fetchInvestments();
+      try {
+        const res = await fetch(`/api/portfolio/${id}`, {
+          method: "DELETE",
+          headers: getHeaders(),
+        });
+        if (!res.ok) throw new Error("Failed to delete asset");
+      } catch (err) {
+        console.error(err);
+        setInvestments(previousList);
       }
     });
   };
 
   const sellInvestment = async (id: string, soldPrice: number) => {
+    const previousList = [...investments];
+    const now = Date.now();
     const updatedList = investments.map((a) => {
       if (a.id === id) {
         return {
           ...a,
           isSold: true,
-          soldAt: Date.now(),
+          soldAt: now,
           soldPrice: soldPrice,
           amount: 0, // Market value is 0 after sale
         };
@@ -1670,15 +1687,21 @@ export default function Dashboard() {
       return a;
     });
     setInvestments(updatedList);
-    const res = await fetch("/api/portfolio", {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify({
-        assets: updatedList,
-      }),
-    });
-    if (res.ok) {
-      fetchInvestments();
+    try {
+      const res = await fetch(`/api/portfolio/${id}`, {
+        method: "PATCH",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          isSold: true,
+          soldAt: now,
+          soldPrice: soldPrice,
+          amount: 0,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to update asset");
+    } catch (err) {
+      console.error(err);
+      setInvestments(previousList);
     }
   };
 

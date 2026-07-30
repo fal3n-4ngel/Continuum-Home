@@ -330,3 +330,26 @@ export function validatePortfolioAssets(body: unknown): InvestmentAsset[] {
   if (assets.length > MAX_PORTFOLIO_ASSETS) badRequest(`Field 'assets' must contain at most ${MAX_PORTFOLIO_ASSETS} items.`);
   return assets.map((a, i) => validateInvestmentAsset(a, i));
 }
+
+export function validatePortfolioAssetPatch(body: unknown): Partial<InvestmentAsset> {
+  const b = requireObject(body, "Portfolio asset patch");
+  const patch: Partial<InvestmentAsset> = {};
+  if (b.name !== undefined) patch.name = asTrimmedString(b.name, "name", 200, true)!;
+  if (b.category !== undefined) patch.category = asEnum(b.category, "category", ASSET_CATEGORIES, true)!;
+  if (b.amount !== undefined) patch.amount = asNumber(b.amount, "amount", { min: 0, max: 1_000_000_000 });
+  if (b.investedAmount !== undefined) patch.investedAmount = asNumber(b.investedAmount, "investedAmount", { min: 0, max: 1_000_000_000 });
+  if (b.quantity !== undefined) patch.quantity = b.quantity !== null && b.quantity !== "" ? asNumber(b.quantity, "quantity", { min: 0 }) : undefined;
+  if (b.buyPrice !== undefined) patch.buyPrice = b.buyPrice !== null && b.buyPrice !== "" ? asNumber(b.buyPrice, "buyPrice", { min: 0 }) : undefined;
+  if (b.currentPrice !== undefined) patch.currentPrice = b.currentPrice !== null && b.currentPrice !== "" ? asNumber(b.currentPrice, "currentPrice", { min: 0 }) : undefined;
+  if (b.previousClose !== undefined) patch.previousClose = b.previousClose !== null && b.previousClose !== "" ? asNumber(b.previousClose, "previousClose", { min: 0 }) : null;
+  if (b.notes !== undefined) patch.notes = asTrimmedString(b.notes, "notes", 1000, false);
+  if (b.isSold !== undefined) patch.isSold = b.isSold !== null ? Boolean(b.isSold) : undefined;
+  if (b.soldAt !== undefined) patch.soldAt = b.soldAt !== null ? asNumber(b.soldAt, "soldAt", { min: 0 }) : undefined;
+  if (b.soldPrice !== undefined) patch.soldPrice = b.soldPrice !== null ? asNumber(b.soldPrice, "soldPrice", { min: 0 }) : undefined;
+
+  if (Object.keys(patch).length === 0) {
+    badRequest("Patch body must include at least one asset property to update.");
+  }
+  return patch;
+}
+

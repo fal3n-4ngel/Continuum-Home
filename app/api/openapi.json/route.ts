@@ -104,6 +104,18 @@ export async function GET() {
         },
       },
       "/api/expenses/{id}": {
+        patch: {
+          operationId: "updateExpense",
+          summary: "Update an expense",
+          description: "Update title, amount, category, date, or notes of an existing expense. Only provided fields change.",
+          "x-openai-isConsequential": false,
+          parameters: [idParam("expense")],
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: { $ref: "#/components/schemas/ExpensePatch" } } },
+          },
+          responses: writeResult("Expense updated"),
+        },
         delete: {
           operationId: "deleteExpense",
           summary: "Delete an expense",
@@ -295,6 +307,39 @@ export async function GET() {
           },
           responses: writeResult("Portfolio updated"),
         },
+        patch: {
+          operationId: "patchPortfolio",
+          summary: "Partially update portfolio assets",
+          description: "Update or patch investment assets in the user's portfolio.",
+          "x-openai-isConsequential": false,
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: { $ref: "#/components/schemas/PortfolioPatch" } } },
+          },
+          responses: writeResult("Portfolio patched"),
+        },
+      },
+      "/api/portfolio/{id}": {
+        patch: {
+          operationId: "updatePortfolioAsset",
+          summary: "Update a portfolio asset",
+          description: "Update name, category, amount, investedAmount, quantity, prices, or notes of an asset in the investment portfolio.",
+          "x-openai-isConsequential": false,
+          parameters: [idParam("portfolio asset")],
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: { $ref: "#/components/schemas/InvestmentAssetPatch" } } },
+          },
+          responses: writeResult("Portfolio asset updated"),
+        },
+        delete: {
+          operationId: "deletePortfolioAsset",
+          summary: "Delete a portfolio asset",
+          description: "Remove an asset from the investment portfolio.",
+          "x-openai-isConsequential": true,
+          parameters: [idParam("portfolio asset")],
+          responses: writeResult("Portfolio asset deleted"),
+        },
       },
       "/api/portfolio/prices": {
         post: {
@@ -424,6 +469,17 @@ export async function GET() {
             notes: { type: "string", maxLength: 1000, description: "Optional free-form notes", examples: ["Ride back from airport"] },
           },
         },
+        ExpensePatch: {
+          type: "object",
+          description: "Any subset of expense fields to change.",
+          properties: {
+            title: { type: "string", maxLength: 200 },
+            amount: { type: "number" },
+            category: { type: "string", maxLength: 100 },
+            date: { type: "string", format: "date" },
+            notes: { type: "string", maxLength: 1000 },
+          },
+        },
         ExpenseRecord: {
           type: "object",
           properties: {
@@ -543,6 +599,23 @@ export async function GET() {
             createdAt: { type: "integer", description: "Creation time (Unix ms)" },
           },
         },
+        InvestmentAssetPatch: {
+          type: "object",
+          description: "Any subset of portfolio asset fields to change.",
+          properties: {
+            name: { type: "string", maxLength: 200 },
+            category: { type: "string", enum: ["equity", "crypto", "mutual_fund", "sip", "gold", "cash", "other"] },
+            amount: { type: "number", minimum: 0 },
+            investedAmount: { type: "number", minimum: 0 },
+            quantity: { type: "number", minimum: 0 },
+            buyPrice: { type: "number", minimum: 0 },
+            currentPrice: { type: "number", minimum: 0 },
+            notes: { type: "string", maxLength: 1000 },
+            isSold: { type: "boolean" },
+            soldAt: { type: "number" },
+            soldPrice: { type: "number" },
+          },
+        },
         PortfolioRecord: {
           type: "object",
           properties: {
@@ -559,6 +632,20 @@ export async function GET() {
               maxItems: 500,
               items: { $ref: "#/components/schemas/InvestmentAsset" },
               description: "The complete list of assets — this replaces the whole portfolio, so include every asset that should still exist.",
+            },
+          },
+        },
+        PortfolioPatch: {
+          type: "object",
+          description: "Update a single asset by id or patch portfolio assets list.",
+          properties: {
+            id: { type: "string", description: "Asset ID to update when patching a single asset" },
+            asset: { $ref: "#/components/schemas/InvestmentAssetPatch" },
+            assets: {
+              type: "array",
+              maxItems: 500,
+              items: { $ref: "#/components/schemas/InvestmentAsset" },
+              description: "List of assets to update or replace",
             },
           },
         },
