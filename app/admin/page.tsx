@@ -240,7 +240,7 @@ export default function AdminPage() {
   if (!user) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#f4f3ec]">
-        <div className="flex w-[400px] flex-col gap-6 rounded-card border border-border-subtle bg-white p-8 text-center shadow-subtle">
+        <div className="flex w-[400px] flex-col gap-6 rounded-card border border-border-subtle bg-bg-card p-8 text-center shadow-subtle">
           <Shield className="mx-auto h-12 w-12 text-[#b3666b]" />
           <div>
             <h1 className="font-serif text-2xl font-bold text-text-primary">Admin Access</h1>
@@ -296,12 +296,12 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             <Shield className="h-7 w-7 text-text-primary" />
             <div>
-              <h1 className="font-serif text-2xl font-bold text-text-primary">Admin Control Panel</h1>
+              <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">Admin Control Panel</h1>
               <p className="text-xs text-text-secondary">Logged in as {user.email}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/" className="rounded-md border border-border-subtle bg-white px-4 py-2 text-xs font-semibold text-text-primary hover:bg-bg-primary transition-all">
+            <Link href="/" className="rounded-md border border-border-subtle bg-bg-card px-4 py-2 text-xs font-semibold text-text-primary hover:bg-bg-primary transition-all">
               Dashboard
             </Link>
             <button onClick={logout} className="rounded-md border border-border-subtle bg-[#b3666b]/10 text-[#b3666b] px-4 py-2 text-xs font-semibold hover:bg-[#b3666b]/20 transition-all">
@@ -317,7 +317,7 @@ export default function AdminPage() {
               ? "border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]" 
               : statusMessage.type === "error"
               ? "border-[#fecaca] bg-[#fef2f2] text-[#991b1b]"
-              : "border-border-subtle bg-white text-text-primary"
+              : "border-border-subtle bg-bg-card text-text-primary"
           }`}>
             {statusMessage.text}
           </div>
@@ -331,7 +331,7 @@ export default function AdminPage() {
             { label: "LIBRARY ITEMS", val: statsLoading ? "..." : stats?.watchlist },
             { label: "PORTFOLIO", val: statsLoading ? "..." : `₹${stats?.portfolioValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}` },
           ].map((card, i) => (
-            <div key={i} className="flex flex-col gap-1 rounded-card border border-border-subtle bg-white p-5 shadow-subtle">
+            <div key={i} className="flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle">
               <span className="font-mono text-[9px] font-bold tracking-[0.8px] text-text-secondary uppercase">{card.label}</span>
               <span className="text-[20px] font-bold tracking-tight text-text-primary mt-1">{card.val}</span>
             </div>
@@ -339,7 +339,7 @@ export default function AdminPage() {
         </div>
 
         {/* Custom GPT Analytics Panel */}
-        <div className="rounded-card border border-border-subtle bg-white p-6 shadow-subtle flex flex-col gap-4">
+        <div className="rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col gap-4">
           <h3 className="font-serif text-base font-bold text-text-primary flex items-center gap-2 border-b border-border-subtle pb-2">
             🤖 Custom GPT Integration Analytics
           </h3>
@@ -391,7 +391,7 @@ export default function AdminPage() {
         <div className="grid grid-cols-[1.5fr_1fr] gap-6 max-md:grid-cols-1">
           
           {/* Left Column: Cron Alerts Operations */}
-          <div className="rounded-card border border-border-subtle bg-white p-6 shadow-subtle flex flex-col gap-4">
+          <div className="rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col gap-4">
             <h3 className="font-serif text-base font-bold text-text-primary flex items-center gap-2 border-b border-border-subtle pb-2">
               <Mail className="h-4.5 w-4.5" /> Trigger Automated Crons
             </h3>
@@ -455,7 +455,7 @@ export default function AdminPage() {
           <div className="flex flex-col gap-6">
             
             {/* Cache Controls Card */}
-            <div className="rounded-card border border-border-subtle bg-white p-6 shadow-subtle flex flex-col gap-4">
+            <div className="rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col gap-4">
               <h3 className="font-serif text-base font-bold text-text-primary flex items-center gap-2 border-b border-border-subtle pb-2">
                 <RefreshCw className="h-4.5 w-4.5" /> Database & Cache Operations
               </h3>
@@ -483,7 +483,7 @@ export default function AdminPage() {
             </div>
 
             {/* Quick Server Info Card */}
-            <div className="rounded-card border border-border-subtle bg-white p-6 shadow-subtle flex flex-col gap-4">
+            <div className="rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col gap-4">
               <h3 className="font-serif text-base font-bold text-text-primary flex items-center gap-2 border-b border-border-subtle pb-2">
                 System Info
               </h3>

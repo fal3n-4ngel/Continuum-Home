@@ -29,8 +29,9 @@ import { OnboardingModal } from "@/components/dashboard/OnboardingModal";
 import { ExpensesTab } from "@/components/dashboard/ExpensesTab";
 import { SubscriptionsTab } from "@/components/dashboard/SubscriptionsTab";
 import { WatchlistTab } from "@/components/dashboard/WatchlistTab";
+import { IntegrationsTab } from "@/components/dashboard/IntegrationsTab";
 import { BooksTab } from "@/components/dashboard/BooksTab";
-import { NotesTab } from "@/components/dashboard/NotesTab";
+
 import { InvestmentsTab } from "@/components/dashboard/InvestmentsTab";
 import { FinancialHealthTab } from "@/components/dashboard/FinancialHealthTab";
 import { ReportsTab } from "@/components/dashboard/ReportsTab";
@@ -48,6 +49,7 @@ interface FirebaseAuthModule {
 export default function Dashboard() {
   /* ─── State ─── */
   const [activeTab, setActiveTab] = useState<string>("expenses");
+  const [mediaSubTab, setMediaSubTab] = useState<"watchlist" | "books" | "integrations">("watchlist");
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [selectedMediaItem, setSelectedMediaItem] = useState<WatchlistItem | null>(null);
@@ -146,7 +148,7 @@ export default function Dashboard() {
   const [bookQuery, setBookQuery] = useState("");
   const [isSearchingBooks, setIsSearchingBooks] = useState(false);
   const [bookResults, setBookResults] = useState<SearchResult[]>([]);
-  const [bookFilter, setBookFilter] = useState<"all" | "reading" | "to_read" | "completed">("reading");
+  const [bookFilter, setBookFilter] = useState<"all" | "reading" | "to_read" | "completed">("all");
   const [isEnrichingBookCovers, setIsEnrichingBookCovers] = useState(false);
 
   // Notes State
@@ -2174,77 +2176,137 @@ const updateMarketPrices = async () => {
           </>
         )}
 
-        {/* Media Watchlist */}
+        {/* Media Library (Watchlist, Books, Integrations) */}
         {activeTab === "media" && (
-          <WatchlistTab
-            watchlist={watchlist}
-            watchlistFilter={watchlistFilter}
-            setWatchlistFilter={setWatchlistFilter}
-            mediaQuery={mediaQuery}
-            setMediaQuery={setMediaQuery}
-            mediaType={mediaType}
-            setMediaType={setMediaType}
-            searchMedia={searchMedia}
-            isSearchingMedia={isSearchingMedia}
-            searchResults={searchResults}
-            addToWatchlist={addToWatchlist}
-            updateWatchItem={updateWatchItem}
-            deleteWatchItem={deleteWatchItem}
-            isFetchingWatchlist={isFetchingWatchlist}
-            showLetterboxdModal={showLetterboxdModal}
-            setShowLetterboxdModal={setShowLetterboxdModal}
-            letterboxdUsername={letterboxdUsername}
-            setLetterboxdUsername={setLetterboxdUsername}
-            handleLetterboxdImport={handleLetterboxdImport}
-            isImportingLetterboxd={isImportingLetterboxd}
-            disconnectLetterboxd={disconnectLetterboxd}
-            anilistUser={anilistUser}
-            connectAnilist={connectAnilist}
-            disconnectAnilist={disconnectAnilist}
-            syncAnilist={syncAnilist}
-            isSyncingAnilist={isSyncingAnilist}
-            traktUser={traktUser}
-            connectTrakt={connectTrakt}
-            disconnectTrakt={disconnectTrakt}
-            syncTrakt={syncTrakt}
-            isSyncingTrakt={isSyncingTrakt}
-            enrichMissingPosters={enrichMissingPosters}
-            isEnrichingPosters={isEnrichingPosters}
-            onItemClick={setSelectedMediaItem}
-            idToken={user?.idToken}
-          />
-        )}
+          <>
+          <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">My Library</h1>
+            <div className="mb-8 flex gap-6 border-b border-border-subtle max-sm:gap-4 max-sm:overflow-x-auto max-sm:scrollbar-none">
+              
+              <button
+                onClick={() => setMediaSubTab("watchlist")}
+                className={`relative pb-3 text-[13px] font-medium transition-all ${
+                  mediaSubTab === "watchlist"
+                    ? "text-text-primary"
+                    : "text-text-muted hover:text-text-primary"
+                }`}
+              >
+                Cine
+                {mediaSubTab === "watchlist" && (
+                  <span className="absolute bottom-0 left-0 right-0 h-px bg-text-primary" />
+                )}
+              </button>
+              <button
+                onClick={() => setMediaSubTab("books")}
+                className={`relative pb-3 text-[13px] font-medium transition-all ${
+                  mediaSubTab === "books"
+                    ? "text-text-primary"
+                    : "text-text-muted hover:text-text-primary"
+                }`}
+              >
+                Books
+                {mediaSubTab === "books" && (
+                  <span className="absolute bottom-0 left-0 right-0 h-px bg-text-primary" />
+                )}
+              </button>
+              <button
+                onClick={() => setMediaSubTab("integrations")}
+                className={`relative pb-3 text-[13px] font-medium transition-all ${
+                  mediaSubTab === "integrations"
+                    ? "text-text-primary"
+                    : "text-text-muted hover:text-text-primary"
+                }`}
+              >
+                Integrations
+                {mediaSubTab === "integrations" && (
+                  <span className="absolute bottom-0 left-0 right-0 h-px bg-text-primary" />
+                )}
+              </button>
+            </div>
 
-        {/* Book Library */}
-        {activeTab === "books" && (
-          <BooksTab
-            watchlist={watchlist}
-            bookQuery={bookQuery}
-            setBookQuery={setBookQuery}
-            searchBooks={searchBooks}
-            isSearchingBooks={isSearchingBooks}
-            bookResults={bookResults}
-            addBook={addBook}
-            bookFilter={bookFilter}
-            setBookFilter={setBookFilter}
-            updateWatchItem={updateWatchItem}
-            deleteWatchItem={deleteWatchItem}
-            isFetchingWatchlist={isFetchingWatchlist}
-            enrichMissingBookCovers={enrichMissingBookCovers}
-            isEnrichingBookCovers={isEnrichingBookCovers}
-            onItemClick={setSelectedMediaItem}
-            idToken={user?.idToken}
-          />
-        )}
+            {mediaSubTab === "watchlist" && (
+              <WatchlistTab
+                watchlist={watchlist}
+                watchlistFilter={watchlistFilter}
+                setWatchlistFilter={setWatchlistFilter}
+                mediaQuery={mediaQuery}
+                setMediaQuery={setMediaQuery}
+                mediaType={mediaType}
+                setMediaType={setMediaType}
+                searchMedia={searchMedia}
+                isSearchingMedia={isSearchingMedia}
+                searchResults={searchResults}
+                addToWatchlist={addToWatchlist}
+                updateWatchItem={updateWatchItem}
+                deleteWatchItem={deleteWatchItem}
+                isFetchingWatchlist={isFetchingWatchlist}
+                showLetterboxdModal={showLetterboxdModal}
+                setShowLetterboxdModal={setShowLetterboxdModal}
+                letterboxdUsername={letterboxdUsername}
+                setLetterboxdUsername={setLetterboxdUsername}
+                handleLetterboxdImport={handleLetterboxdImport}
+                isImportingLetterboxd={isImportingLetterboxd}
+                disconnectLetterboxd={disconnectLetterboxd}
+                anilistUser={anilistUser}
+                connectAnilist={connectAnilist}
+                disconnectAnilist={disconnectAnilist}
+                syncAnilist={syncAnilist}
+                isSyncingAnilist={isSyncingAnilist}
+                traktUser={traktUser}
+                connectTrakt={connectTrakt}
+                disconnectTrakt={disconnectTrakt}
+                syncTrakt={syncTrakt}
+                isSyncingTrakt={isSyncingTrakt}
+                enrichMissingPosters={enrichMissingPosters}
+                isEnrichingPosters={isEnrichingPosters}
+                onItemClick={setSelectedMediaItem}
+                idToken={user?.idToken}
+              />
+            )}
 
-        {/* Quick Notes */}
-        {activeTab === "notes" && (
-          <NotesTab
-            noteContent={noteContent}
-            updateNote={updateNote}
-            isSavingNote={isSavingNote}
-            isFetchingNote={isFetchingNote}
-          />
+            {mediaSubTab === "books" && (
+              <BooksTab
+                watchlist={watchlist}
+                bookQuery={bookQuery}
+                setBookQuery={setBookQuery}
+                searchBooks={searchBooks}
+                isSearchingBooks={isSearchingBooks}
+                bookResults={bookResults}
+                addBook={addBook}
+                bookFilter={bookFilter}
+                setBookFilter={setBookFilter}
+                updateWatchItem={updateWatchItem}
+                deleteWatchItem={deleteWatchItem}
+                isFetchingWatchlist={isFetchingWatchlist}
+                enrichMissingBookCovers={enrichMissingBookCovers}
+                isEnrichingBookCovers={isEnrichingBookCovers}
+                onItemClick={setSelectedMediaItem}
+                idToken={user?.idToken}
+              />
+            )}
+
+            {mediaSubTab === "integrations" && (
+              <IntegrationsTab
+                watchlist={watchlist}
+                showLetterboxdModal={showLetterboxdModal}
+                setShowLetterboxdModal={setShowLetterboxdModal}
+                letterboxdUsername={letterboxdUsername}
+                setLetterboxdUsername={setLetterboxdUsername}
+                handleLetterboxdImport={handleLetterboxdImport}
+                isImportingLetterboxd={isImportingLetterboxd}
+                disconnectLetterboxd={disconnectLetterboxd}
+                anilistUser={anilistUser}
+                connectAnilist={connectAnilist}
+                disconnectAnilist={disconnectAnilist}
+                syncAnilist={syncAnilist}
+                isSyncingAnilist={isSyncingAnilist}
+                traktUser={traktUser}
+                connectTrakt={connectTrakt}
+                disconnectTrakt={disconnectTrakt}
+                syncTrakt={syncTrakt}
+                isSyncingTrakt={isSyncingTrakt}
+              />
+            )}
+          </>
         )}
 
         {/* Investments & Portfolio */}
@@ -2297,6 +2359,7 @@ const updateMarketPrices = async () => {
             cycleAverages={cycleAverages}
           />
         )}
+
 
         {/* Reports: filtered CSV exports for expenses and each media type */}
         {activeTab === "reports" && (

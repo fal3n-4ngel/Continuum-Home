@@ -25,10 +25,10 @@ async function processUser(user: AdminUser, resendApiKey: string): Promise<Proce
   const emailHtml = `
     <!DOCTYPE html>
     <html>
-    <head>
+    <head>\n      <meta name="color-scheme" content="light only">\n      <meta name="supported-color-schemes" content="light">
       <meta charset="utf-8">
       <title>Upcoming Renewals</title>
-      <style>
+      <style>\n        :root { color-scheme: light; supported-color-schemes: light; }
         body {
           background-color: #f4f3ec;
           font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -51,7 +51,7 @@ async function processUser(user: AdminUser, resendApiKey: string): Promise<Proce
           margin-bottom: 24px;
         }
         .logo {
-          font-family: Georgia, serif;
+          
           font-size: 20px;
           font-weight: bold;
           letter-spacing: -0.5px;
@@ -59,7 +59,7 @@ async function processUser(user: AdminUser, resendApiKey: string): Promise<Proce
           text-decoration: none;
         }
         .title {
-          font-family: Georgia, serif;
+          
           font-size: 22px;
           font-weight: bold;
           color: #1c1b18;
@@ -150,7 +150,7 @@ async function processUser(user: AdminUser, resendApiKey: string): Promise<Proce
       <div class="container">
         <table width="100%" cellpadding="0" cellspacing="0" style="border-bottom: 1px solid #eae8e0; padding-bottom: 20px; margin-bottom: 24px;">
           <tr>
-            <td align="left"><span style="font-family: Georgia, serif; font-size: 20px; font-weight: bold; letter-spacing: -0.5px; color: #1c1b18;">PHub Dashboard</span></td>
+            <td align="left"><span style=" font-family: ui-serif, Georgia, serif; font-size: 20px; font-weight: bold; letter-spacing: -0.5px; color: #1c1b18;">PHub Dashboard</span></td>
             <td align="right"><span style="font-size: 10px; font-weight: 700; background-color: #b45309; color: #ffffff; padding: 4px 8px; border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;">Alert</span></td>
           </tr>
         </table>

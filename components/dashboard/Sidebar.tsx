@@ -80,14 +80,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className="fixed top-0 bottom-0 left-0 z-[100] flex w-[250px] flex-col justify-between border-r border-border-subtle bg-bg-sidebar px-4 py-6 max-md:hidden min-[769px]:max-[1100px]:w-[210px]">
       {/* Brand Header */}
       <div className="mb-6 flex items-center gap-2.5 px-2">
-        <svg width="22" height="22" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="1.6" y="1.6" width="7.2" height="7.2" rx="1.8" fill="var(--text-primary)" />
-          <rect x="11.2" y="1.6" width="7.2" height="7.2" rx="1.8" fill="var(--text-primary)" opacity="0.55" />
-          <rect x="1.6" y="11.2" width="7.2" height="7.2" rx="1.8" fill="var(--text-primary)" opacity="0.55" />
-          <rect x="11.2" y="11.2" width="7.2" height="7.2" rx="1.8" fill="var(--text-primary)" opacity="0.85" />
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-primary">
+          <path d="M4 4h6v6H4z" />
+          <path d="M14 4h6v6h-6z" opacity="0.5" />
+          <path d="M4 14h6v6H4z" opacity="0.5" />
+          <path d="M14 14h6v6h-6z" />
         </svg>
         <div>
-          <span className="text-base font-bold tracking-[-0.3px]">PHub Dashboard</span>
+          <span className="text-xl font-medium tracking-tight text-text-primary">PHub Dashboard</span>
         </div>
       </div>
 
@@ -110,23 +110,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <span>Investments</span>
           </div>
         )}
-        <div onClick={() => setActiveTab("reports")} className={navLinkClass(activeTab === "reports")}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>Reports</span>
-        </div>
 
         {/* Lifestyle group */}
         <div onClick={() => setActiveTab("media")} className={`${navLinkClass(activeTab === "media")} mt-3 border-t border-border-subtle pt-4`}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-          <span>Media Watchlist</span>
+          <span>Library</span>
         </div>
-        <div onClick={() => setActiveTab("books")} className={navLinkClass(activeTab === "books")}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          <span>Book Library</span>
-        </div>
-        <div onClick={() => setActiveTab("notes")} className={navLinkClass(activeTab === "notes")}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          <span>Quick Notes</span>
+        <div onClick={() => setActiveTab("reports")} className={navLinkClass(activeTab === "reports")}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Reports</span>
         </div>
 
         {/* Integrations Section */}

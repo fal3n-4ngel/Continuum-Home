@@ -28,12 +28,12 @@ interface ReportsTabProps {
   salaryLog: Record<string, SalaryLogEntry>;
 }
 
-const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card shadow-subtle overflow-hidden transition-all duration-200 hover:shadow-hover";
+const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
 const CARD_HEADER = "flex items-center justify-between gap-2 border-b border-border-subtle bg-bg-primary/30 px-5 py-3.5";
 const CARD_BODY = "flex flex-col gap-3 p-5";
 const LABEL_MONO = "font-mono text-[10px] font-bold tracking-[0.8px] text-text-secondary uppercase";
 const INPUT_CLASS = "w-full rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
-const BTN_PRIMARY = "cursor-pointer rounded-md border border-text-primary bg-text-primary px-4 py-2 text-[12px] font-semibold text-white transition-all duration-150 hover:border-[#2e2d27] hover:bg-[#2e2d27] disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.98]";
+const BTN_PRIMARY = "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[12px] font-semibold text-white transition-all duration-150 hover:border-[#2e2d27] hover:bg-[#2e2d27] disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.98]";
 const PILL = "cursor-pointer rounded-md border border-border-subtle bg-bg-card px-2.5 py-1 text-[10.5px] font-medium text-text-secondary transition-all duration-150 hover:border-border-hover hover:text-text-primary";
 const LEDGER_TH = "border-b border-border-subtle px-3 py-2 text-left font-mono text-[9.5px] font-bold tracking-[0.4px] text-text-secondary uppercase";
 const LEDGER_TD = "border-b border-border-subtle px-3 py-2.5 text-[11px] text-text-primary align-middle";
@@ -499,7 +499,7 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border-subtle pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-text-primary">Data Export & Reports</h1>
+          <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">Data Export & Reports</h1>
           <p className="mt-1 text-xs text-text-secondary">
             Filter, verify, and export your personal finance and media records into standard CSV format.
           </p>

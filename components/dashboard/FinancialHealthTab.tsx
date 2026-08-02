@@ -75,12 +75,12 @@ interface FinancialHealthTabProps {
   cycleAverages: CycleAverages | null;
 }
 
-const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle";
+const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
 const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
 const STAT_VALUE = "text-[24px] font-bold tracking-[-0.5px] text-text-primary";
 const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
 const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
-const BTN_PRIMARY = "cursor-pointer rounded-md border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27]";
+const BTN_PRIMARY = "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27]";
 const BTN_SECONDARY = "cursor-pointer rounded-md border border-border-subtle bg-transparent px-4 py-2 text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary";
 
 const fmtDate = (s: string) => {
@@ -232,8 +232,8 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border-subtle pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-[-0.5px]">Financial Health</h1>
-          <p className="mt-0.5 text-xs text-text-muted">
+          <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">Financial Health</h1>
+          <p className="mt-1 text-sm text-text-muted">
             Real pay-cycle pace, savings reconciliation, and long-term runway.
           </p>
         </div>
@@ -269,8 +269,8 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
       <div className="grid grid-cols-[1.1fr_1fr] gap-5 max-md:grid-cols-1">
         {/* Pay Cycle Progress */}
         <div className={BENTO_CARD}>
-          <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold tracking-[-0.3px] text-text-primary">
-            <Calendar className="h-4 w-4 text-text-secondary" strokeWidth={2.25} /> Current Pay Cycle
+          <h2 className="mb-4 flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
+            <Calendar className="h-5 w-5 text-text-secondary" strokeWidth={2} /> Current Pay Cycle
           </h2>
           <p className="text-[11px] text-text-muted">{fmtDate(payCycle.startStr)} – {fmtDate(payCycle.endStr)}</p>
 
@@ -388,8 +388,8 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
 
         {/* Reconciliation */}
         <div className={BENTO_CARD}>
-          <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold tracking-[-0.3px] text-text-primary">
-            <ScanSearch className="h-4 w-4 text-text-secondary" strokeWidth={2.25} /> Does This Match Reality?
+          <h2 className="mb-4 flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
+            <ScanSearch className="h-5 w-5 text-text-secondary" strokeWidth={2} /> Does This Match Reality?
           </h2>
 
           {showRecordedSummary ? (
@@ -505,8 +505,8 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             starting estimate; logging the actual date + amount each cycle
             is what makes the pay-cycle math exact. */}
         <div className={BENTO_CARD}>
-          <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold tracking-[-0.3px] text-text-primary">
-            <CalendarCheck className="h-4 w-4 text-text-secondary" strokeWidth={2.25} /> This Cycle&apos;s Payday
+          <h2 className="mb-4 flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
+            <CalendarCheck className="h-5 w-5 text-text-secondary" strokeWidth={2} /> This Cycle&apos;s Payday
           </h2>
           {loggedPayday && !isEditingPayday ? (
             <div className="flex flex-col gap-2.5">
@@ -566,8 +566,8 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
 
         {/* Income Settings */}
         <div className={BENTO_CARD}>
-          <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold tracking-[-0.3px] text-text-primary">
-            <IndianRupee className="h-4 w-4 text-text-secondary" strokeWidth={2.25} /> Usual Income
+          <h2 className="mb-4 flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
+            <IndianRupee className="h-5 w-5 text-text-secondary" strokeWidth={2} /> Usual Income
           </h2>
           <div className="grid grid-cols-2 gap-3">
             <div>
@@ -609,8 +609,8 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
       {showInvestmentsTab && (
         <div className={BENTO_CARD}>
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="flex items-center gap-1.5 text-sm font-semibold tracking-[-0.3px] text-text-primary">
-              <Shield className="h-4 w-4 text-text-secondary" strokeWidth={2.25} /> Emergency Runway
+            <h2 className="flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
+              <Shield className="h-5 w-5 text-text-secondary" strokeWidth={2} /> Emergency Runway
             </h2>
             <span className="rounded bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.4px] text-text-muted uppercase">
               If income stops
@@ -744,7 +744,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
 
       {/* Cycle History */}
       <div className={BENTO_CARD}>
-        <h2 className="mb-3 flex items-center gap-1.5 text-sm font-semibold tracking-[-0.3px] text-text-primary">
+        <h2 className="mb-4 flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
           <BarChart3 className="h-4 w-4 text-text-secondary" strokeWidth={2.25} /> Cycle History
         </h2>
 

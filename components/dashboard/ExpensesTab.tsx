@@ -60,12 +60,12 @@ interface ExpensesTabProps {
   importExpensesBatch: (items: any[]) => Promise<number>;
 }
 
-const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle";
+const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
 const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
 const STAT_VALUE = "text-[28px] font-bold tracking-[-0.5px] text-text-primary";
 const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
 const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
-const BTN_PRIMARY = "rounded-md border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27]";
+const BTN_PRIMARY = "rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27]";
 const BTN_SECONDARY = "rounded-md border border-border-subtle bg-transparent text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary disabled:cursor-not-allowed disabled:opacity-50";
 const INPUT_CLASS = "rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
 const LEDGER_TH = "border-b border-border-subtle bg-bg-card px-3 py-2.5 font-mono text-[11px] font-semibold tracking-[0.5px] text-text-muted uppercase";
@@ -493,18 +493,18 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
 
       {/* LEDGER TAB */}
       {expenseTab === "ledger" && (
-        <div className="flex flex-col gap-7 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+        <div className="flex flex-col gap-7 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]"> <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">Expenses Ledger</h1>
           {/* Stat Cards */}
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 max-md:grid-cols-2 max-md:gap-2.5">
-            <div className={STAT_CARD}>
-              <span className={LABEL_MONO}>Total Spent</span>
+            <div className={`${STAT_CARD} !bg-[var(--accent-blue)] !border-none`}>
+              <span className={`${LABEL_MONO} !text-[#1A1A1A]/70`}>Total Spent</span>
               <span className={STAT_VALUE}>{currency}{totalSpent.toLocaleString()}</span>
-              <span className={STAT_SUBTEXT}>{timeFilter === "all" ? "All time" : `Last ${timeFilter} days`}</span>
+              <span className={`${STAT_SUBTEXT} !text-[#1A1A1A]/70`}>{timeFilter === "all" ? "All time" : `Last ${timeFilter} days`}</span>
             </div>
-            <div className={STAT_CARD}>
-              <span className={LABEL_MONO}>Charges Logged</span>
-              <span className={STAT_VALUE} style={{ color: "#b3666b" }}>{filteredExpenses.length}</span>
-              <span className={STAT_SUBTEXT}>Transactions</span>
+            <div className={`${STAT_CARD} !bg-[var(--accent-yellow)] !border-none`}>
+              <span className={`${LABEL_MONO} !text-[#1A1A1A]/70`}>Charges Logged</span>
+              <span className={STAT_VALUE} style={{ color: "#1A1A1A" }}>{filteredExpenses.length}</span>
+              <span className={`${STAT_SUBTEXT} !text-[#1A1A1A]/70`}>Transactions</span>
             </div>
             <div className={STAT_CARD}>
               <span className={LABEL_MONO}>Largest Charge</span>
@@ -583,7 +583,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
                   const parts = sub.nextBillingDate ? sub.nextBillingDate.split("-") : [];
                   const dueStr = parts.length === 3 ? new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).toLocaleDateString("en-IN", { month: "short", day: "numeric" }) : sub.nextBillingDate;
                   return (
-                    <div key={sub.id} className="flex items-center justify-between rounded-lg border border-border-subtle bg-bg-primary/20 p-3.5 shadow-subtle hover:border-border-hover transition-all duration-200">
+                    <div key={sub.id} className="flex items-center justify-between rounded-lg border border-border-subtle bg-bg-primary/20 p-3.5  hover:border-border-hover transition-all duration-200">
                       <div className="flex items-center gap-3">
                         <span className="text-xl">{sub.icon || "💳"}</span>
                         <div>

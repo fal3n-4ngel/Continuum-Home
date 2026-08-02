@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { Trash2 } from "lucide-react";
 import { WatchlistItem, SearchResult } from "@/types";
 import { isSafeImageUrl } from "@/lib/safe-url";
 
@@ -272,10 +273,10 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
   const totalMovies = watchlist.filter((i) => i.type === "movie").length;
 
   return (
-    <div className="flex flex-col gap-5 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+    <div className="flex flex-col gap-5 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]"><h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">Media library</h1>
       {/* 4 Overview Stat Cards */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
-        <div className={STAT_CARD}>
+      <div className="grid grid-cols-4 max-md:grid-cols-2 gap-4">
+        <div className={`${STAT_CARD} border-t-2 border-t-accent-blue/80`}>
           <span className={LABEL_MONO}>WATCHING NOW</span>
           <span className={STAT_VALUE}>{watchingTotal}</span>
           <div className="mt-1 flex gap-3 font-mono text-[10px]">
@@ -283,7 +284,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
             <span className="text-text-muted">TV/S {watchingShows}</span>
           </div>
         </div>
-        <div className={STAT_CARD}>
+        <div className={`${STAT_CARD} border-t-2 border-t-[#e39282]/80`}>
           <span className={LABEL_MONO}>PLAN TO WATCH</span>
           <span className={STAT_VALUE} style={{ color: "#e39282" }}>{planTotal}</span>
           <div className="mt-1 flex gap-3 font-mono text-[10px]">
@@ -291,169 +292,20 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
             <span className="text-text-muted">TV/S {planShows}</span>
           </div>
         </div>
-        <div className={STAT_CARD}>
+        <div className={`${STAT_CARD} border-t-2 border-t-[#b3666b]/80`}>
           <span className={LABEL_MONO}>COMPLETED</span>
-          <span className={STAT_VALUE} style={{ color: "#e39282" }}>{completedTotal}</span>
+          <span className={STAT_VALUE} style={{ color: "#b3666b" }}>{completedTotal}</span>
           <div className="mt-1 flex gap-3 font-mono text-[10px]">
             <span className="font-semibold text-accent-blue">ANIME {completedAnime}</span>
             <span className="text-text-muted">TV/S {completedShows}</span>
           </div>
         </div>
-        <div className={STAT_CARD}>
+        <div className={`${STAT_CARD} border-t-2 border-t-text-primary/60`}>
           <span className={LABEL_MONO}>LIBRARY</span>
-          <div className="mt-2 flex items-baseline gap-4">
+          <div className="mt-2 flex flex-wrap items-baseline justify-between gap-x-2 gap-y-1">
             <div><span className="text-xl font-bold">{totalAnime}</span><span className="ml-1 font-mono text-[9px] text-text-muted">ANIME</span></div>
             <div><span className="text-xl font-bold">{totalShows}</span><span className="ml-1 font-mono text-[9px] text-text-muted">SHOWS</span></div>
             <div><span className="text-xl font-bold">{totalMovies}</span><span className="ml-1 font-mono text-[9px] text-text-muted">MOVIES</span></div>
-          </div>
-        </div>
-      </div>
-
-      {/* Integration Banners */}
-      {/* Integration Banners Grid */}
-      <div className="grid grid-cols-4 gap-4 max-xl:grid-cols-2 max-md:grid-cols-1">
-        {/* AniList Card */}
-        <div className={`${BENTO_CARD} flex flex-col justify-between p-5 min-h-[155px]`}>
-          <div className="flex items-start gap-3.5">
-            <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.05)] bg-[#1e2630]">
-              <svg viewBox="0 0 512 512" className="h-full w-full">
-                <path d="M0 0h512v512H0" fill="#1e2630"/>
-                <path d="M321.92 323.27V136.6c0-10.698-5.887-16.602-16.558-16.602h-36.433c-10.672 0-16.561 5.904-16.561 16.602v88.651c0 2.497 23.996 14.089 24.623 16.541 18.282 71.61 3.972 128.92-13.359 131.6 28.337 1.405 31.455 15.064 10.348 5.731 3.229-38.209 15.828-38.134 52.049-1.406.31.317 7.427 15.282 7.87 15.282h85.545c10.672 0 16.558-5.9 16.558-16.6v-36.524c0-10.698-5.886-16.602-16.558-16.602z" fill="#02a9ff"/>
-                <path d="M170.68 120 74.999 393h74.338l16.192-47.222h80.96L262.315 393h73.968l-95.314-273zm11.776 165.28 23.183-75.629 25.393 75.629z" fill="#fefefe"/>
-              </svg>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-text-primary">
-                {anilistUser ? "AniList Connected" : "Connect AniList"}
-              </p>
-              <p className="text-[11px] text-text-muted mt-0.5 truncate font-medium" title={anilistUser ? anilistUser.name : undefined}>
-                {anilistUser ? anilistUser.name : "Sync anime watch progress automatically."}
-              </p>
-            </div>
-          </div>
-          <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-border-subtle pt-3">
-            {anilistUser ? (
-              <>
-                <span className="text-[10px] font-mono text-text-muted">Status: Active</span>
-                <div className="flex gap-2">
-                  {syncAnilist && (
-                    <button onClick={syncAnilist} disabled={isSyncingAnilist} className="text-xs font-semibold text-text-primary hover:underline bg-transparent border-none cursor-pointer">
-                      {isSyncingAnilist ? "Syncing..." : "Sync"}
-                    </button>
-                  )}
-                  <button onClick={disconnectAnilist} className="text-xs font-semibold text-red-500 hover:underline bg-transparent border-none cursor-pointer">Disconnect</button>
-                </div>
-              </>
-            ) : (
-              <button onClick={connectAnilist} className={`${BTN_PRIMARY} h-8 px-4 text-xs w-full`}>Connect</button>
-            )}
-          </div>
-        </div>
-
-        {/* Trakt Card */}
-        <div className={`${BENTO_CARD} flex flex-col justify-between p-5 min-h-[155px]`}>
-          <div className="flex items-start gap-3.5">
-            <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.05)] bg-transparent">
-              <svg viewBox="0 0 48 48" className="h-full w-full">
-                <defs>
-                  <radialGradient id="trakt-card-grad" cx="48.46" cy="-.95" r="64.84" fx="48.46" fy="-.95" gradientUnits="userSpaceOnUse">
-                    <stop offset="0" stopColor="#9f42c6"/>
-                    <stop offset=".27" stopColor="#a041c3"/>
-                    <stop offset=".42" stopColor="#a43ebb"/>
-                    <stop offset=".53" stopColor="#aa39ad"/>
-                    <stop offset=".64" stopColor="#b4339a"/>
-                    <stop offset=".73" stopColor="#c02b81"/>
-                    <stop offset=".82" stopColor="#cf2061"/>
-                    <stop offset=".9" stopColor="#e1143c"/>
-                    <stop offset=".97" stopColor="#f50613"/>
-                    <stop offset="1" stopColor="red"/>
-                  </radialGradient>
-                </defs>
-                <circle cx="24" cy="24" r="24" fill="url(#trakt-card-grad)"/>
-                <path d="m13.62 17.97 7.92 7.92 1.47-1.47-7.92-7.92-1.47 1.47Zm14.39 14.4 1.47-1.46-2.16-2.16L47.64 8.43c-.19-.75-.46-1.46-.79-2.14L24.39 28.75l3.62 3.62Zm-15.09-13.7-1.46 1.46 14.4 14.4 1.46-1.47L23 28.75 46.35 5.4c-.36-.6-.78-1.16-1.25-1.68L21.54 27.28l-8.62-8.61Zm34.95-9.09L28.7 28.75l1.47 1.46L48 12.38v-1.12c0-.57-.04-1.14-.13-1.68ZM25.16 22.27l-7.92-7.92-1.47 1.47 7.92 7.92 1.47-1.47Zm16.16 12.85c0 3.42-2.78 6.2-6.2 6.2H12.88c-3.42 0-6.2-2.78-6.2-6.2V12.88c0-3.42 2.78-6.21 6.2-6.21h20.78V4.6H12.88c-4.56 0-8.28 3.71-8.28 8.28v22.24c0 4.56 3.71 8.28 8.28 8.28h22.24c4.56 0 8.28-3.71 8.28-8.28v-3.51h-2.07v3.51Z" fill="#fff"/>
-              </svg>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-text-primary">
-                {traktUser ? "Trakt Connected" : "Connect Trakt"}
-              </p>
-              <p className="text-[11px] text-text-muted mt-0.5 truncate font-medium" title={traktUser ? (traktUser.name || traktUser.username) : undefined}>
-                {traktUser ? (traktUser.name || traktUser.username) : "Sync movies & TV shows history automatically."}
-              </p>
-            </div>
-          </div>
-          <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-border-subtle pt-3">
-            {traktUser ? (
-              <>
-                <span className="text-[10px] font-mono text-text-muted">Status: Active</span>
-                <div className="flex gap-2">
-                  {syncTrakt && (
-                    <button onClick={syncTrakt} disabled={isSyncingTrakt} className="text-xs font-semibold text-text-primary hover:underline bg-transparent border-none cursor-pointer">
-                      {isSyncingTrakt ? "Syncing..." : "Sync"}
-                    </button>
-                  )}
-                  <button onClick={disconnectTrakt} className="text-xs font-semibold text-red-500 hover:underline bg-transparent border-none cursor-pointer">Disconnect</button>
-                </div>
-              </>
-            ) : (
-              <button onClick={connectTrakt} className={`${BTN_PRIMARY} h-8 px-4 text-xs w-full`}>Connect</button>
-            )}
-          </div>
-        </div>
-
-        {/* Letterboxd Card */}
-        <div className={`${BENTO_CARD} flex flex-col justify-between p-5 min-h-[155px]`}>
-          <div className="flex items-start gap-3.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1c1b18] text-white">
-              <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
-                <circle cx="7" cy="12" r="3.5" fill="#ff7a00" />
-                <circle cx="12" cy="12" r="3.5" fill="#00e054" />
-                <circle cx="17" cy="12" r="3.5" fill="#00b0ea" />
-              </svg>
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-text-primary">
-                {letterboxdUsername ? "Letterboxd Connected" : "Sync Letterboxd"}
-              </p>
-              <p className="text-[11px] text-text-muted mt-0.5 truncate font-medium" title={letterboxdUsername || undefined}>
-                {letterboxdUsername ? letterboxdUsername : "Sync Letterboxd watched diary entries via RSS feed."}
-              </p>
-            </div>
-          </div>
-          <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-border-subtle pt-3">
-            {letterboxdUsername ? (
-              <>
-                <span className="text-[10px] font-mono text-text-muted">Status: Active</span>
-                <div className="flex gap-2">
-                  <button onClick={handleLetterboxdImport} disabled={isImportingLetterboxd} className="text-xs font-semibold text-text-primary hover:underline bg-transparent border-none cursor-pointer">
-                    {isImportingLetterboxd ? "Syncing..." : "Sync"}
-                  </button>
-                  <button onClick={disconnectLetterboxd} className="text-xs font-semibold text-red-500 hover:underline bg-transparent border-none cursor-pointer">Disconnect</button>
-                </div>
-              </>
-            ) : (
-              <button onClick={() => setShowLetterboxdModal(true)} className={`${BTN_PRIMARY} h-8 px-4 text-xs w-full`}>Connect</button>
-            )}
-          </div>
-        </div>
-
-        {/* Export CSV Card */}
-        <div className={`${BENTO_CARD} flex flex-col justify-between p-5 min-h-[155px]`}>
-          <div className="flex items-start gap-3.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-secondary text-text-primary">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-text-primary">Export Library</p>
-              <p className="text-[11px] text-text-muted mt-0.5">Download movie diary entries as CSV for importing.</p>
-            </div>
-          </div>
-          <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-border-subtle pt-3">
-            <button onClick={exportLetterboxdCSV} className={`${BTN_SECONDARY} h-8 px-4 text-xs w-full font-semibold`}>Export CSV</button>
           </div>
         </div>
       </div>
@@ -639,7 +491,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
           <div className="mb-4 flex flex-col gap-3 border-b border-border-subtle pb-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               {/* Category Tabs */}
-              <div className="flex gap-1.5 rounded-lg bg-bg-secondary p-[3px] max-md:w-full">
+              <div className="flex gap-1.5 rounded-lg bg-bg-secondary p-[3px] max-md:overflow-x-auto max-md:w-full hide-scrollbar">
                 <button onClick={() => setActiveCategoryTab("movie")} className={`${pillClass(activeCategoryTab === "movie")} max-md:flex-1 max-md:justify-center`}>
                   🎬 Movies
                 </button>
@@ -664,7 +516,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                   </button>
                 )}
 
-                <div className="flex gap-1 rounded-lg bg-bg-secondary p-[3px]">
+                <div className="flex gap-1 rounded-lg bg-bg-secondary p-[3px] max-md:overflow-x-auto max-md:w-full hide-scrollbar">
                   {(
                     [
                       { id: "all", label: "All" },
@@ -703,93 +555,117 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
             </div>
           </div>
 
-          {/* Watchlist Rows */}
-          <div className="flex flex-col gap-2.5">
+          {/* Watchlist Grid */}
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] max-md:grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-5 overflow-y-auto max-h-[65vh] pr-1 pb-10 custom-scrollbar">
             {filteredWatchlist.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between gap-3.5 rounded-lg border border-border-subtle bg-bg-card px-3.5 py-3 transition-[transform,box-shadow] duration-150 max-md:flex-col max-md:items-stretch"
-              >
-                {/* Poster & Info (Clickable for Detail Popup) */}
+              <div key={item.id} className="group flex flex-col rounded-[14px] border border-border-subtle bg-bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
                 <div 
-                  onClick={() => onItemClick(item)} 
-                  className="flex min-w-0 flex-1 items-center gap-3.5 max-md:w-full cursor-pointer hover:opacity-85"
+                  onClick={() => onItemClick(item)}
+                  className="relative aspect-[2/3] w-full overflow-hidden rounded-t-[14px] cursor-pointer"
                 >
                   {isSafeImageUrl(item.coverImage) ? (
-                    <img src={item.coverImage} alt={item.title} className="h-14 w-10 shrink-0 rounded object-cover shadow-[0_2px_6px_rgba(0,0,0,0.05)]" />
+                    <>
+                      <img
+                        src={item.coverImage}
+                        alt={item.title}
+                        className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                      />
+                      <div className="absolute inset-y-0 left-0 w-2.5 bg-linear-to-r from-black/25 via-black/10 to-transparent pointer-events-none" />
+                      <div className="absolute inset-0 bg-linear-to-tr from-white/0 via-white/5 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                    </>
                   ) : (
-                    <div className="flex h-14 w-10 shrink-0 items-center justify-center rounded bg-bg-secondary text-lg shadow-[0_2px_6px_rgba(0,0,0,0.05)]">
+                    <div className="flex h-full w-full items-center justify-center bg-bg-secondary text-4xl shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
                       {item.type === "movie" ? "🎬" : item.type === "show" ? "📺" : "🌸"}
                     </div>
                   )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13.5px] font-semibold">{item.title}</p>
-                    <p className="mt-px text-[10.5px] text-text-muted">
+                  {/* Delete button absolute overlay */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteWatchItem(item.id);
+                    }}
+                    className="absolute top-2 right-2 z-10 flex cursor-pointer items-center justify-center rounded-md border border-border-subtle bg-white/95 p-1.5 text-text-muted shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#fdf2f2] hover:text-[#b3666b] hover:border-[#fde2e2] active:scale-95"
+                    title="Remove item"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />
+                  </button>
+                  {/* Quick episodes overlay if show/anime */}
+                  {(item.type === "show" || item.type === "anime") && (
+                    <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-200" onClick={(e) => e.stopPropagation()}>
+                      <span className="font-mono text-[9px] font-medium mr-0.5">
+                        Ep {item.progress || 0}
+                      </span>
+                      <button
+                        onClick={() => updateWatchItem(item, { progress: Math.max(0, (item.progress || 0) - 1) })}
+                        className="cursor-pointer hover:text-accent-blue transition-colors px-1 text-[10px]"
+                      >
+                        -
+                      </button>
+                      <button
+                        onClick={() => updateWatchItem(item, { progress: (item.progress || 0) + 1 })}
+                        className="cursor-pointer hover:text-accent-blue transition-colors px-1 text-[10px]"
+                      >
+                        +
+                      </button>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="flex flex-col flex-1 justify-between gap-3 p-3.5">
+                  <div>
+                    <p 
+                      onClick={() => onItemClick(item)}
+                      className="cursor-pointer line-clamp-2 min-h-[36px] font-serif text-[13px] font-bold tracking-tight text-text-primary leading-tight group-hover:text-text-primary/90 transition-colors" 
+                      title={item.title}
+                    >
+                      {item.title}
+                    </p>
+                    <p className="mt-1 text-[10px] text-text-muted">
                       {item.type === "movie" ? "Movie" : item.type === "show" ? "Show" : "Anime"} {item.year ? `(${item.year})` : ""}
                     </p>
-
-                    {/* Quick Episode Incrementer */}
-                    {(item.type === "show" || item.type === "anime") && (
-                      <div className="mt-1 flex items-center gap-1.5">
-                        <span className="font-mono text-[10px] font-medium text-text-secondary">
-                          Ep {item.progress || 0}{item.totalEpisodes ? `/${item.totalEpisodes}` : ""}
-                        </span>
-                        <button
-                          onClick={() => updateWatchItem(item, { progress: Math.max(0, (item.progress || 0) - 1) })}
-                          className="cursor-pointer rounded-[3px] border border-border-subtle bg-bg-secondary px-1.5 py-px text-[10px] font-semibold"
-                        >
-                          -
-                        </button>
-                        <button
-                          onClick={() => updateWatchItem(item, { progress: (item.progress || 0) + 1 })}
-                          className="cursor-pointer rounded-[3px] border border-border-subtle bg-bg-secondary px-1.5 py-px text-[10px] font-semibold"
-                        >
-                          +
-                        </button>
-                      </div>
-                    )}
                   </div>
-                </div>
+                  
+                  <div className="flex flex-col gap-1.5 mt-auto">
+                    <div className="relative w-full">
+                      <select
+                        value={item.status}
+                        onChange={(e) => updateWatchItem(item, { status: e.target.value as any })}
+                        className="w-full cursor-pointer appearance-none rounded-full border border-border-subtle bg-bg-secondary/40 py-1.5 pl-3 pr-8 text-[11px] font-bold text-text-secondary transition-all duration-200 hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary outline-none"
+                      >
+                        <option value="watching">Watching</option>
+                        <option value="paused">Paused</option>
+                        <option value="plan_to_watch">Plan</option>
+                        <option value="completed">Completed</option>
+                        <option value="dropped">Dropped</option>
+                      </select>
+                      <span className="absolute inset-y-0 right-2 flex items-center pointer-events-none text-text-muted text-[8px] select-none">
+                        ▼
+                      </span>
+                    </div>
 
-                {/* Right controls: Status, Score, Delete */}
-                <div className="flex shrink-0 items-center gap-2 max-md:w-full">
-                  <select
-                    value={item.status}
-                    onChange={(e) => updateWatchItem(item, { status: e.target.value as any })}
-                    className="cursor-pointer rounded-md border border-border-subtle bg-white px-2 py-1 text-[11px] max-md:flex-1 max-md:min-w-0"
-                  >
-                    <option value="watching">Watching</option>
-                    <option value="paused">Paused</option>
-                    <option value="plan_to_watch">Plan</option>
-                    <option value="completed">Completed</option>
-                    <option value="dropped">Dropped</option>
-                  </select>
-
-                  <select
-                    value={item.rating || 0}
-                    onChange={(e) => updateWatchItem(item, { rating: Number(e.target.value) || null })}
-                    className="cursor-pointer rounded-md border border-border-subtle bg-white px-2 py-1 text-[11px] max-md:flex-1 max-md:min-w-0"
-                  >
-                    <option value="0">Score v</option>
-                    {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((n) => (
-                      <option key={n} value={n}>★ {n}</option>
-                    ))}
-                  </select>
-
-                  <button
-                    onClick={() => deleteWatchItem(item.id)}
-                    className="shrink-0 cursor-pointer rounded-md border-none bg-transparent px-2 py-1 text-sm font-bold text-[#b3666b] hover:bg-[rgba(179,102,107,0.08)]"
-                    title="Delete item"
-                  >
-                    ✕
-                  </button>
+                    <div className="relative w-full">
+                      <select
+                        value={item.rating || 0}
+                        onChange={(e) => updateWatchItem(item, { rating: Number(e.target.value) || null })}
+                        className="w-full cursor-pointer appearance-none rounded-full border border-border-subtle bg-bg-secondary/40 py-1.5 pl-3 pr-8 text-[11px] font-bold text-text-secondary transition-all duration-200 hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary outline-none"
+                      >
+                        <option value="0">Score v</option>
+                        {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((n) => (
+                          <option key={n} value={n}>★ {n}</option>
+                        ))}
+                      </select>
+                      <span className="absolute inset-y-0 right-2 flex items-center pointer-events-none text-text-muted text-[8px] select-none">
+                        ▼
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
 
             {filteredWatchlist.length === 0 && (
-              <p className="p-8 text-center text-[13px] text-text-muted">
-                {isFetchingWatchlist ? "Loading watchlist..." : "No items found in this view."}
+              <p className="col-span-full p-8 text-center text-[13px] text-text-muted">
+                {isFetchingWatchlist ? "Loading library..." : "No items found in this view."}
               </p>
             )}
           </div>

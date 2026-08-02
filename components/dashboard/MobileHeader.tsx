@@ -49,14 +49,14 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
     <>
       <header className="sticky top-0 z-[100] hidden min-h-[52px] items-center justify-between border-b border-border-subtle bg-bg-card px-4 py-3 max-md:flex">
         <div className="flex items-center gap-2">
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect x="1.6" y="1.6" width="7.2" height="7.2" rx="1.8" fill="var(--text-primary)" />
-            <rect x="11.2" y="1.6" width="7.2" height="7.2" rx="1.8" fill="var(--text-primary)" opacity="0.55" />
-            <rect x="1.6" y="11.2" width="7.2" height="7.2" rx="1.8" fill="var(--text-primary)" opacity="0.55" />
-            <rect x="11.2" y="11.2" width="7.2" height="7.2" rx="1.8" fill="var(--text-primary)" opacity="0.85" />
-          </svg>
-          <span className="text-base font-bold tracking-[-0.3px]">PHub Dashboard</span>
-        </div>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-primary">
+          <path d="M4 4h6v6H4z" />
+          <path d="M14 4h6v6h-6z" opacity="0.5" />
+          <path d="M4 14h6v6H4z" opacity="0.5" />
+          <path d="M14 14h6v6h-6z" />
+        </svg>
+        <span className="text-base font-medium tracking-tight text-text-primary">PHub Dashboard</span>
+      </div>
         <div className="flex items-center gap-3">
           <a
             href={AUTHOR.coffeeUrl}
@@ -121,21 +121,13 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             <span>Invest</span>
           </div>
         )}
+        <div onClick={() => setActiveTab("media")} className={mobileNavLinkClass(activeTab === "media")}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+          <span>Library</span>
+        </div>
         <div onClick={() => setActiveTab("reports")} className={mobileNavLinkClass(activeTab === "reports")}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Reports</span>
-        </div>
-        <div onClick={() => setActiveTab("media")} className={mobileNavLinkClass(activeTab === "media")}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-          <span>Watchlist</span>
-        </div>
-        <div onClick={() => setActiveTab("books")} className={mobileNavLinkClass(activeTab === "books")}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-          <span>Library</span>
-        </div>
-        <div onClick={() => setActiveTab("notes")} className={mobileNavLinkClass(activeTab === "notes")}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          <span>Notes</span>
         </div>
       </nav>
     </>
