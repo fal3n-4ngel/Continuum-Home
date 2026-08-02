@@ -774,10 +774,12 @@ export async function updateNote(session: Session, content: string) {
   await cacheInvalidate(noteCacheKey(session));
 }
 
+export type FdCompounding = "monthly" | "quarterly" | "half_yearly" | "yearly";
+
 export interface InvestmentAsset {
   id: string;
   name: string;
-  category: "equity" | "crypto" | "mutual_fund" | "sip" | "gold" | "cash" | "other";
+  category: "equity" | "crypto" | "mutual_fund" | "sip" | "gold" | "cash" | "fixed_deposit" | "other";
   amount: number;
   investedAmount: number;
   quantity?: number;
@@ -789,6 +791,10 @@ export interface InvestmentAsset {
   isSold?: boolean;
   soldAt?: number;
   soldPrice?: number;
+  interestRate?: number;
+  startDate?: string;
+  maturityDate?: string;
+  compounding?: FdCompounding;
 }
 
 export interface PortfolioRecord {
@@ -828,6 +834,10 @@ export function encryptAsset(a: InvestmentAsset): Record<string, unknown> {
     isSold: a.isSold ?? null,
     soldAt: a.soldAt ?? null,
     soldPrice: a.soldPrice !== undefined ? encrypt(String(a.soldPrice)) : null,
+    interestRate: a.interestRate !== undefined ? encrypt(String(a.interestRate)) : null,
+    startDate: a.startDate ? encrypt(a.startDate) : null,
+    maturityDate: a.maturityDate ? encrypt(a.maturityDate) : null,
+    compounding: a.compounding ?? null,
   };
 }
 
@@ -848,6 +858,10 @@ export function decryptAsset(a: Record<string, unknown>): InvestmentAsset {
     isSold: a.isSold !== undefined && a.isSold !== null ? Boolean(a.isSold) : undefined,
     soldAt: a.soldAt !== undefined && a.soldAt !== null ? Number(a.soldAt) : undefined,
     soldPrice: decryptNumber(a.soldPrice),
+    interestRate: decryptNumber(a.interestRate),
+    startDate: typeof a.startDate === "string" ? decrypt(a.startDate) || undefined : undefined,
+    maturityDate: typeof a.maturityDate === "string" ? decrypt(a.maturityDate) || undefined : undefined,
+    compounding: typeof a.compounding === "string" ? (a.compounding as FdCompounding) : undefined,
   };
 }
 

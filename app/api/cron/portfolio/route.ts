@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listAllUsers, adminGetPortfolio, adminUpdatePortfolioValuationHistory, type AdminUser } from "@/lib/firebase-admin";
 import { fetchAssetPrice, getUsdToInrRate } from "@/lib/prices";
+import { getEffectiveAmount } from "@/lib/fd";
 
 export const dynamic = "force-dynamic";
 
@@ -33,7 +34,11 @@ async function processUser(user: AdminUser, usdToInr: number, resendApiKey: stri
       const investedAmount = asset.investedAmount !== undefined ? asset.investedAmount : asset.amount;
 
       let currentValue = asset.amount;
-      if (asset.quantity !== undefined && currentPrice > 0) {
+      if (category === "fixed_deposit") {
+        // No live price feed for FDs — value comes from compound interest
+        // accrual on the principal instead.
+        currentValue = getEffectiveAmount(asset);
+      } else if (asset.quantity !== undefined && currentPrice > 0) {
         currentValue = quantity * currentPrice;
       } else if (isLive) {
         currentValue = currentPrice;

@@ -3,14 +3,17 @@
 import React, { useState, useEffect, useRef } from "react";
 import { MessageSquare, X, Send, RotateCcw } from "lucide-react";
 
-interface GeminiChatBubbleProps {
+interface KirokuChatBubbleProps {
   idToken?: string;
 }
 
-export function GeminiChatBubble({ idToken }: GeminiChatBubbleProps) {
+// "Kiroku" (記録) — Japanese for "record/log," a fitting name for the
+// dashboard's built-in assistant. The underlying model is an implementation
+// detail and intentionally not surfaced in any user-facing text here.
+export function KirokuChatBubble({ idToken }: KirokuChatBubbleProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<{ sender: "user" | "assistant" | "system"; text: string }[]>([
-    { sender: "assistant", text: "Hello! I am your native Gemini assistant. How can I help you manage your expenses, watchlist, subscriptions, or notes today?" }
+    { sender: "assistant", text: "Hello! I'm Kiroku, your dashboard's built-in assistant. How can I help you manage your expenses, watchlist, subscriptions, or notes today?" }
   ]);
   const [history, setHistory] = useState<any[]>([]);
   const [input, setInput] = useState("");
@@ -122,7 +125,7 @@ export function GeminiChatBubble({ idToken }: GeminiChatBubbleProps) {
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="fixed max-md:bottom-[76px] bottom-6 right-6 h-12 w-12 rounded-full bg-text-primary text-white flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 z-[9999] cursor-pointer"
-        aria-label="Toggle AI Assistant"
+        aria-label="Toggle Kiroku Assistant"
       >
         {isOpen ? <X className="h-5.5 w-5.5" /> : <MessageSquare className="h-5.5 w-5.5" />}
       </button>
@@ -130,12 +133,15 @@ export function GeminiChatBubble({ idToken }: GeminiChatBubbleProps) {
       {/* Chat Overlay Panel */}
       {isOpen && (
         <div className="fixed max-md:bottom-[136px] bottom-20 right-6 w-96 max-md:w-[calc(100vw-32px)] h-[480px] bg-bg-card border border-border-subtle rounded-card shadow-subtle flex flex-col overflow-hidden z-[9999] animate-in fade-in slide-in-from-bottom-4 duration-200">
-          
+
           {/* Header */}
           <div className="border-b border-border-subtle px-5 py-4 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-              <h3 className="font-serif text-lg font-bold tracking-tight text-text-primary">PHub Assistant</h3>
+              <div>
+                <h3 className="font-serif text-lg font-bold tracking-tight text-text-primary leading-tight">Kiroku</h3>
+                <p className="font-mono text-[9px] font-semibold tracking-[0.6px] text-text-muted uppercase">記録 · Dashboard Assistant</p>
+              </div>
             </div>
             <div className="flex items-center gap-1.5">
               <button
@@ -156,7 +162,7 @@ export function GeminiChatBubble({ idToken }: GeminiChatBubbleProps) {
 
           {/* Messages Stream */}
           <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 flex flex-col gap-4 bg-transparent">
-            
+
             {/* Guidelines Card shown at the beginning */}
             {history.length === 0 && (
               <div className="rounded-lg border border-border-subtle bg-bg-primary p-4 shadow-sm text-xs leading-relaxed text-text-secondary flex flex-col gap-2 mb-2">

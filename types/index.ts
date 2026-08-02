@@ -64,7 +64,9 @@ export interface Subscription {
   createdAt: number;
 }
 
-export type InvestmentCategory = "equity" | "crypto" | "mutual_fund" | "sip" | "gold" | "cash" | "other";
+export type InvestmentCategory = "equity" | "crypto" | "mutual_fund" | "sip" | "gold" | "cash" | "fixed_deposit" | "other";
+
+export type FdCompounding = "monthly" | "quarterly" | "half_yearly" | "yearly";
 
 export interface InvestmentAsset {
   id: string;
@@ -83,6 +85,13 @@ export interface InvestmentAsset {
   isSold?: boolean;
   soldAt?: number;
   soldPrice?: number;
+  // Fixed Deposit terms — only meaningful when category === "fixed_deposit".
+  // The accrued current value is derived from these (see lib/fd.ts) rather
+  // than stored, since there's no live price feed for an FD.
+  interestRate?: number;
+  startDate?: string;
+  maturityDate?: string;
+  compounding?: FdCompounding;
 }
 
 export interface Note {

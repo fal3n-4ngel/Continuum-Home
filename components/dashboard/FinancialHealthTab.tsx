@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Calendar, CalendarCheck, ScanSearch, IndianRupee, Shield, BarChart3, TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
 import { InvestmentAsset } from "@/types";
+import { getEffectiveAmount } from "@/lib/fd";
 
 interface PayCycle {
   startStr: string;
@@ -73,6 +74,14 @@ interface FinancialHealthTabProps {
   // enough logged history exists.
   cycleHistory: CycleHistoryEntry[];
   cycleAverages: CycleAverages | null;
+  // Every cycle's confirmed "actual amount left" reconciliation, keyed by
+  // cycle start date — used to build a track record of how closely logged
+  // spending has matched reality over past cycles.
+  reconciliations: Record<string, number>;
+  // Logs the current cycle's reconciliation shortfall as a real expense
+  // (dated today, category "Other") so unlogged spending actually lands in
+  // the ledger instead of just being flagged as a discrepancy message.
+  logUnaccountedGap: (amount: number) => void;
 }
 
 const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
@@ -97,6 +106,7 @@ const LIQUIDITY_WEIGHTS: Record<string, number> = {
   gold: 0.95,         // quick to sell, holds value in downturns
   mutual_fund: 0.9,   // days to redeem
   sip: 0.9,
+  fixed_deposit: 0.75, // premature withdrawal usually possible, but at a penalty
   other: 0.85,
   equity: 0.8,        // liquid but volatile — discounted for forced-sale risk
   crypto: 0.65,       // highly volatile
@@ -104,7 +114,8 @@ const LIQUIDITY_WEIGHTS: Record<string, number> = {
 const DEFAULT_LIQUIDITY_WEIGHT = 0.85;
 // Shown in the methodology box, ordered most→least liquid.
 const RESERVE_CLASSES: { key: string; label: string }[] = [
-  { key: "cash", label: "Cash / FD" },
+  { key: "cash", label: "Cash" },
+  { key: "fixed_deposit", label: "Fixed Deposit" },
   { key: "gold", label: "Gold" },
   { key: "mutual_fund", label: "Mutual funds" },
   { key: "sip", label: "SIP" },
@@ -128,10 +139,15 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   setSalaryLogEntry,
   cycleHistory,
   cycleAverages,
+  reconciliations,
+  logUnaccountedGap,
 }) => {
   const [reconcileAnswer, setReconcileAnswer] = useState<"yes" | "no" | null>(null);
   const [actualAmount, setActualAmount] = useState("");
   const [isEditingReconciliation, setIsEditingReconciliation] = useState(false);
+  // Which cycle's discrepancy has already been logged as an expense, so the
+  // "Log as unaccounted" button doesn't offer to double-log the same gap.
+  const [gapLoggedFor, setGapLoggedFor] = useState<string | null>(null);
 
   const loggedPayday = salaryLog[payCycle.startStr];
   const [isEditingPayday, setIsEditingPayday] = useState(false);
@@ -172,7 +188,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   }, [payCycle.startStr, savedReconciliation]);
 
   const safeInvestments = Array.isArray(investments) ? investments : [];
-  const portfolioValue = safeInvestments.reduce((acc, a) => acc + (a.amount || 0), 0);
+  const portfolioValue = safeInvestments.reduce((acc, a) => acc + getEffectiveAmount(a), 0);
 
   // Emergency runway — models a TOTAL income loss (job/paycheck stops). This
   // deliberately ignores current income: it answers "if my paycheck stopped
@@ -181,7 +197,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   // comfortably saving would burn down reserves at their spending rate the
   // moment income disappears.
   const accessibleReserve = safeInvestments.reduce(
-    (acc, a) => acc + (a.amount || 0) * (LIQUIDITY_WEIGHTS[a.category] ?? DEFAULT_LIQUIDITY_WEIGHT),
+    (acc, a) => acc + getEffectiveAmount(a) * (LIQUIDITY_WEIGHTS[a.category] ?? DEFAULT_LIQUIDITY_WEIGHT),
     0
   );
   const reserveHaircutPct = portfolioValue > 0 ? (1 - accessibleReserve / portfolioValue) * 100 : 0;
@@ -226,6 +242,27 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   };
 
   const showRecordedSummary = savedReconciliation !== undefined && !isEditingReconciliation;
+
+  // How closely confirmed "actual amount left" has matched what the ledger
+  // predicted, across past COMPLETE cycles only — the current, still-running
+  // cycle isn't a fair data point yet (its own live reconciliation is shown
+  // immediately above in the Q&A itself instead).
+  const reconciliationTrack = cycleHistory
+    .filter((c) => reconciliations[c.startStr] !== undefined)
+    .slice(0, 4)
+    .map((c) => {
+      const expected = c.income - c.spend;
+      const actual = reconciliations[c.startStr];
+      const threshold = Math.max(50, c.income * 0.01);
+      const diff = expected - actual;
+      return { startStr: c.startStr, endStr: c.endStr, diff, accurate: Math.abs(diff) <= threshold };
+    });
+  const accurateTrackCount = reconciliationTrack.filter((c) => c.accurate).length;
+
+  const handleLogGap = (amount: number) => {
+    logUnaccountedGap(amount);
+    setGapLoggedFor(payCycle.startStr);
+  };
 
   return (
     <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]">
@@ -404,12 +441,24 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
               </p>
 
               {discrepancy !== null && discrepancy > DISCREPANCY_THRESHOLD && (
-                <div className="flex items-center gap-2 rounded-lg border border-rose-200/50 bg-rose-50/50 p-2.5 text-[11px] leading-relaxed text-rose-800">
-                  <span>⚠</span>
-                  <span>
-                    <strong>{currency}{discrepancy.toLocaleString("en-IN", { maximumFractionDigits: 0 })} unaccounted for.</strong> You likely
-                    have unlogged expenses this cycle — cash spending, a forgotten subscription, or a purchase you haven't logged yet.
-                  </span>
+                <div className="flex flex-col gap-2 rounded-lg border border-rose-200/50 bg-rose-50/50 p-2.5 text-[11px] leading-relaxed text-rose-800">
+                  <div className="flex items-center gap-2">
+                    <span>⚠</span>
+                    <span>
+                      <strong>{currency}{discrepancy.toLocaleString("en-IN", { maximumFractionDigits: 0 })} unaccounted for.</strong> You likely
+                      have unlogged expenses this cycle — cash spending, a forgotten subscription, or a purchase you haven't logged yet.
+                    </span>
+                  </div>
+                  {gapLoggedFor === payCycle.startStr ? (
+                    <span className="self-start text-[10px] font-semibold text-emerald-700">✓ Logged as an expense</span>
+                  ) : (
+                    <button
+                      onClick={() => handleLogGap(discrepancy)}
+                      className="cursor-pointer self-start rounded-md border border-rose-300/60 bg-white/60 px-2 py-1 text-[10px] font-semibold text-rose-800 transition-colors hover:bg-white"
+                    >
+                      Log {currency}{discrepancy.toLocaleString("en-IN", { maximumFractionDigits: 0 })} as unaccounted expense
+                    </button>
+                  )}
                 </div>
               )}
               {discrepancy !== null && discrepancy < -DISCREPANCY_THRESHOLD && (
@@ -463,12 +512,24 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                   </div>
 
                   {discrepancy !== null && discrepancy > DISCREPANCY_THRESHOLD && (
-                    <div className="flex items-center gap-2 rounded-lg border border-rose-200/50 bg-rose-50/50 p-2.5 text-[11px] leading-relaxed text-rose-800">
-                      <span>⚠</span>
-                      <span>
-                        <strong>{currency}{discrepancy.toLocaleString("en-IN", { maximumFractionDigits: 0 })} unaccounted for.</strong> You likely
-                        have unlogged expenses this cycle — cash spending, a forgotten subscription, or a purchase you haven't logged yet.
-                      </span>
+                    <div className="flex flex-col gap-2 rounded-lg border border-rose-200/50 bg-rose-50/50 p-2.5 text-[11px] leading-relaxed text-rose-800">
+                      <div className="flex items-center gap-2">
+                        <span>⚠</span>
+                        <span>
+                          <strong>{currency}{discrepancy.toLocaleString("en-IN", { maximumFractionDigits: 0 })} unaccounted for.</strong> You likely
+                          have unlogged expenses this cycle — cash spending, a forgotten subscription, or a purchase you haven't logged yet.
+                        </span>
+                      </div>
+                      {gapLoggedFor === payCycle.startStr ? (
+                        <span className="self-start text-[10px] font-semibold text-emerald-700">✓ Logged as an expense</span>
+                      ) : (
+                        <button
+                          onClick={() => handleLogGap(discrepancy)}
+                          className="cursor-pointer self-start rounded-md border border-rose-300/60 bg-white/60 px-2 py-1 text-[10px] font-semibold text-rose-800 transition-colors hover:bg-white"
+                        >
+                          Log {currency}{discrepancy.toLocaleString("en-IN", { maximumFractionDigits: 0 })} as unaccounted expense
+                        </button>
+                      )}
                     </div>
                   )}
                   {discrepancy !== null && discrepancy < -DISCREPANCY_THRESHOLD && (
@@ -496,6 +557,41 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
               )}
             </>
           )}
+
+          {/* Reconciliation Track Record — fills the space below the current
+              cycle's Q&A with how accurate past confirmed reconciliations
+              have been, so the card isn't just a single empty question. */}
+          <div className="mt-5 border-t border-border-subtle pt-3.5">
+            <span className="font-mono text-[9px] font-bold tracking-[0.5px] text-text-secondary uppercase">Reconciliation Track Record</span>
+            {reconciliationTrack.length === 0 ? (
+              <p className="mt-2 text-[10.5px] leading-relaxed text-text-muted">
+                Once you reconcile a few past cycles, how closely your logged spending matched reality will show up here.
+              </p>
+            ) : (
+              <>
+                <div className="mt-2.5 flex flex-col gap-2">
+                  {reconciliationTrack.map((c) => (
+                    <div key={c.startStr} className="flex items-center justify-between text-[11px]">
+                      <span className="text-text-secondary">{fmtDate(c.startStr)} – {fmtDate(c.endStr)}</span>
+                      {c.accurate ? (
+                        <span className="font-semibold text-emerald-700">✓ Accurate</span>
+                      ) : (
+                        <span className={`font-semibold ${c.diff > 0 ? "text-rose-700" : "text-text-secondary"}`}>
+                          {c.diff > 0 ? "−" : "+"}{currency}{Math.abs(c.diff).toLocaleString("en-IN", { maximumFractionDigits: 0 })} {c.diff > 0 ? "short" : "extra"}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2.5 text-[10px] leading-relaxed text-text-muted">
+                  {accurateTrackCount}/{reconciliationTrack.length} recent cycles reconciled accurately —{" "}
+                  {accurateTrackCount / reconciliationTrack.length >= 0.75
+                    ? "your ledger is tracking real spending well."
+                    : "logging habits may be slipping; check for unlogged cash spends."}
+                </p>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -786,29 +882,49 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                     <th className="border-b border-border-subtle px-2 py-1.5 text-right font-mono text-[10px] font-semibold tracking-[0.4px] text-text-muted uppercase">Income</th>
                     <th className="border-b border-border-subtle px-2 py-1.5 text-right font-mono text-[10px] font-semibold tracking-[0.4px] text-text-muted uppercase">Spend</th>
                     <th className="border-b border-border-subtle px-2 py-1.5 text-right font-mono text-[10px] font-semibold tracking-[0.4px] text-text-muted uppercase">Savings</th>
+                    <th className="border-b border-border-subtle px-2 py-1.5 text-right font-mono text-[10px] font-semibold tracking-[0.4px] text-text-muted uppercase">Rate</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {cycleHistory.map((c) => (
-                    <tr key={c.startStr}>
-                      <td className="border-b border-border-subtle px-2 py-2 text-[12px] whitespace-nowrap text-text-primary">
-                        {fmtDate(c.startStr)} – {fmtDate(c.endStr)}
-                        {!c.isSalaryLogged && <span className="ml-1.5 text-[9px] text-text-muted">(est.)</span>}
-                      </td>
-                      <td className="border-b border-border-subtle px-2 py-2 text-right font-mono text-[12px] text-text-primary">
-                        {currency}{c.income.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                      </td>
-                      <td className="border-b border-border-subtle px-2 py-2 text-right font-mono text-[12px] text-text-primary">
-                        {currency}{c.spend.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                      </td>
-                      <td
-                        className="border-b border-border-subtle px-2 py-2 text-right font-mono text-[12px] font-semibold"
-                        style={{ color: c.savings >= 0 ? "#16a34a" : "#b3666b" }}
-                      >
-                        {c.savings >= 0 ? "+" : ""}{currency}{c.savings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                      </td>
-                    </tr>
-                  ))}
+                  {cycleHistory.map((c) => {
+                    const savingsRatePct = c.income > 0 ? (c.savings / c.income) * 100 : 0;
+                    return (
+                      <tr key={c.startStr}>
+                        <td className="border-b border-border-subtle px-2 py-2 text-[12px] whitespace-nowrap text-text-primary">
+                          {fmtDate(c.startStr)} – {fmtDate(c.endStr)}
+                          {!c.isSalaryLogged && <span className="ml-1.5 text-[9px] text-text-muted">(est.)</span>}
+                        </td>
+                        <td className="border-b border-border-subtle px-2 py-2 text-right font-mono text-[12px] text-text-primary">
+                          {currency}{c.income.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                        </td>
+                        <td className="border-b border-border-subtle px-2 py-2 text-right font-mono text-[12px] text-text-primary">
+                          {currency}{c.spend.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                        </td>
+                        <td
+                          className="border-b border-border-subtle px-2 py-2 text-right font-mono text-[12px] font-semibold"
+                          style={{ color: c.savings >= 0 ? "#16a34a" : "#b3666b" }}
+                        >
+                          {c.savings >= 0 ? "+" : ""}{currency}{c.savings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                        </td>
+                        <td className="border-b border-border-subtle px-2 py-2 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <div className="h-1.5 w-12 overflow-hidden rounded-full bg-bg-secondary">
+                              <div
+                                className="h-full rounded-full"
+                                style={{
+                                  width: `${Math.min(100, Math.max(0, Math.abs(savingsRatePct)))}%`,
+                                  backgroundColor: savingsRatePct >= 0 ? "#16a34a" : "#b3666b",
+                                }}
+                              />
+                            </div>
+                            <span className="font-mono text-[11px] font-semibold" style={{ color: savingsRatePct >= 0 ? "#16a34a" : "#b3666b" }}>
+                              {savingsRatePct.toFixed(0)}%
+                            </span>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

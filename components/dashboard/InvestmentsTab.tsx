@@ -1,6 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
-import { InvestmentAsset, InvestmentCategory, InvestmentQuote } from "@/types";
+import { InvestmentAsset, InvestmentCategory, InvestmentQuote, FdCompounding } from "@/types";
+import { getEffectiveAmount, computeFdMaturityValue, daysUntil, FD_COMPOUNDING_LABELS } from "@/lib/fd";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -33,6 +34,14 @@ interface InvestmentsTabProps {
   setInvAmount: (s: string) => void;
   invNotes: string;
   setInvNotes: (s: string) => void;
+  invInterestRate: string;
+  setInvInterestRate: (s: string) => void;
+  invStartDate: string;
+  setInvStartDate: (s: string) => void;
+  invMaturityDate: string;
+  setInvMaturityDate: (s: string) => void;
+  invCompounding: FdCompounding;
+  setInvCompounding: (c: FdCompounding) => void;
   isAddingAsset: boolean;
   addInvestment: (e: React.FormEvent) => void;
   deleteInvestment: (id: string) => void;
@@ -57,6 +66,11 @@ const LEDGER_TH = "border-b border-border-subtle bg-bg-card px-3.5 py-3.5 font-m
 const LEDGER_TD = "border-b border-border-subtle px-3.5 py-4 align-middle text-[13px] text-text-primary";
 
 interface DynamicFieldConfig {
+  namePlaceholder: string;
+  // Whether a ticker/symbol lookup makes sense for this category — false
+  // for FD/cash/gold/other, where the name is just a free-text label, not
+  // something to search a market for.
+  searchEnabled: boolean;
   amountLabel: string;
   amountPlaceholder: string;
   quantityLabel: string;
@@ -73,6 +87,8 @@ const getFieldConfig = (category: InvestmentCategory): DynamicFieldConfig => {
   switch (category) {
     case "equity":
       return {
+        namePlaceholder: "Asset / Fund Ticker (e.g. BTC, AAPL)",
+        searchEnabled: true,
         amountLabel: "Total Invested Capital",
         amountPlaceholder: "Total fiat spent (e.g. 1500)",
         quantityLabel: "Quantity Owned",
@@ -86,6 +102,8 @@ const getFieldConfig = (category: InvestmentCategory): DynamicFieldConfig => {
       };
     case "crypto":
       return {
+        namePlaceholder: "Asset / Fund Ticker (e.g. BTC, AAPL)",
+        searchEnabled: true,
         amountLabel: "Total Invested Capital",
         amountPlaceholder: "Total fiat spent (e.g. 2000)",
         quantityLabel: "Quantity Owned",
@@ -99,6 +117,8 @@ const getFieldConfig = (category: InvestmentCategory): DynamicFieldConfig => {
       };
     case "mutual_fund":
       return {
+        namePlaceholder: "Asset / Fund Ticker (e.g. BTC, AAPL)",
+        searchEnabled: true,
         amountLabel: "Total Invested Capital",
         amountPlaceholder: "Total fiat spent (e.g. 3000)",
         quantityLabel: "Units Owned (Optional)",
@@ -112,6 +132,8 @@ const getFieldConfig = (category: InvestmentCategory): DynamicFieldConfig => {
       };
     case "sip":
       return {
+        namePlaceholder: "Fund Ticker / Scheme Name (e.g. HDFC Mid Cap)",
+        searchEnabled: true,
         amountLabel: "Total Valuation",
         amountPlaceholder: "Current value of all SIP deposits (e.g. 5000)",
         quantityLabel: "Monthly Installment (Optional)",
@@ -125,6 +147,8 @@ const getFieldConfig = (category: InvestmentCategory): DynamicFieldConfig => {
       };
     case "gold":
       return {
+        namePlaceholder: "Asset Name (e.g. Gold Coins, SGB)",
+        searchEnabled: false,
         amountLabel: "Total Valuation",
         amountPlaceholder: "Current market value of gold (e.g. 1200)",
         quantityLabel: "Weight in Grams (Optional)",
@@ -138,19 +162,38 @@ const getFieldConfig = (category: InvestmentCategory): DynamicFieldConfig => {
       };
     case "cash":
       return {
-        amountLabel: "Total Valuation / Principal",
-        amountPlaceholder: "Bank balance or FD deposit size (e.g. 10000)",
-        quantityLabel: "FD Interest Rate (%) (Optional)",
-        quantityPlaceholder: "Annual yield (e.g. 6.5)",
-        buyPriceLabel: "Original Deposit (Optional)",
-        buyPricePlaceholder: "Principal invested if tracking an FD",
-        notesLabel: "Bank / Maturity Date",
-        notesPlaceholder: "e.g. HDFC Bank, matures 2027-05-12",
-        description: "Liquid savings and bank Fixed Deposits (FDs). Low-risk, offering predictable interest rates over time.",
-        trackingTip: "💡 Tip: Keep 3-6 months of expenses in Liquid Cash/FDs as an emergency fund before making risky equity plays.",
+        namePlaceholder: "Asset Name (e.g. HDFC Savings)",
+        searchEnabled: false,
+        amountLabel: "Total Valuation",
+        amountPlaceholder: "Bank / wallet balance (e.g. 10000)",
+        quantityLabel: "Quantity (Optional)",
+        quantityPlaceholder: "Not applicable for cash",
+        buyPriceLabel: "Invested Cost (Optional)",
+        buyPricePlaceholder: "Original amount deposited",
+        notesLabel: "Bank / Account Details",
+        notesPlaceholder: "e.g. HDFC Savings Account",
+        description: "Liquid savings held in a bank account or wallet — no fixed term, no guaranteed interest.",
+        trackingTip: "💡 Tip: For a bank Fixed Deposit with a locked term and interest rate, use the dedicated Fixed Deposit category instead — it auto-calculates accrued interest.",
+      };
+    case "fixed_deposit":
+      return {
+        namePlaceholder: "Asset Name (e.g. SBI FD, HDFC FD 2027)",
+        searchEnabled: false,
+        amountLabel: "Principal Amount",
+        amountPlaceholder: "Amount deposited (e.g. 5000)",
+        quantityLabel: "",
+        quantityPlaceholder: "",
+        buyPriceLabel: "",
+        buyPricePlaceholder: "",
+        notesLabel: "Bank / FD Account Details",
+        notesPlaceholder: "e.g. SBI Bank, Account ending 4521",
+        description: "A bank Fixed Deposit (FD). Locks a principal at a guaranteed annual interest rate until maturity — the current value accrues automatically via compound interest.",
+        trackingTip: "💡 Tip: e.g. ₹5,000 for 1 year at 6.5% (SBI's typical rate) compounded quarterly matures to about ₹5,333.",
       };
     default:
       return {
+        namePlaceholder: "Asset Name (e.g. Real Estate Share)",
+        searchEnabled: false,
         amountLabel: "Current Valuation",
         amountPlaceholder: "Current value (e.g. 1000)",
         quantityLabel: "Quantity (Optional)",
@@ -180,6 +223,14 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
   setInvAmount,
   invNotes,
   setInvNotes,
+  invInterestRate,
+  setInvInterestRate,
+  invStartDate,
+  setInvStartDate,
+  invMaturityDate,
+  setInvMaturityDate,
+  invCompounding,
+  setInvCompounding,
   isAddingAsset,
   addInvestment,
   deleteInvestment,
@@ -192,9 +243,11 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
   selectSuggestion,
 }) => {
   const safeInvestments = Array.isArray(investments) ? investments : [];
-  
-  // Differentiate active and sold assets
-  const activeInvestments = safeInvestments.filter((a) => !a.isSold);
+
+  // Differentiate active and sold assets. Fixed Deposits have no live price
+  // feed, so `amount` here is overridden with the compound-interest accrued
+  // value (see lib/fd.ts) — every other category passes through unchanged.
+  const activeInvestments = safeInvestments.filter((a) => !a.isSold).map((a) => ({ ...a, amount: getEffectiveAmount(a) }));
   const soldInvestments = safeInvestments.filter((a) => a.isSold);
 
   const totalValue = activeInvestments.reduce((acc, a) => acc + (a.amount || 0), 0);
@@ -238,6 +291,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
     sip: "#0d9488",          // Teal
     gold: "#d97706",         // Gold/Amber
     cash: "#059669",         // Emerald Bank Green
+    fixed_deposit: "#166534", // Deep Forest Green
     other: "#4b5563",        // Muted Slate
   };
 
@@ -247,7 +301,8 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
     mutual_fund: "Mutual Funds",
     sip: "SIP (Recurring MF)",
     gold: "Gold / Precious Metals",
-    cash: "Cash & Fixed Deposits (FD)",
+    cash: "Cash / Savings",
+    fixed_deposit: "Fixed Deposit (FD)",
     other: "Other Assets",
   };
 
@@ -258,6 +313,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
     sip: 0,
     gold: 0,
     cash: 0,
+    fixed_deposit: 0,
     other: 0,
   };
 
@@ -306,7 +362,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
 
   // Grouped Categories for Strategy comparison
   const actualGroupTotals = {
-    cash: categoryTotals["cash"] || 0,
+    cash: (categoryTotals["cash"] || 0) + (categoryTotals["fixed_deposit"] || 0),
     gold: categoryTotals["gold"] || 0,
     mutual_fund: (categoryTotals["mutual_fund"] || 0) + (categoryTotals["sip"] || 0),
     equity: categoryTotals["equity"] || 0,
@@ -760,13 +816,17 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
             <div className="relative">
               <input
                 type="text"
-                placeholder="Asset / Fund Ticker (e.g. BTC, AAPL)"
+                placeholder={currentFieldConfig.namePlaceholder}
                 value={invName}
                 onChange={(e) => setInvName(e.target.value)}
+                // Delay the clear so a click on a suggestion below still
+                // registers before the dropdown unmounts — onBlur otherwise
+                // fires first and the suggestion's onClick never runs.
+                onBlur={() => setTimeout(() => setInvSuggestions([]), 150)}
                 required
                 className={INPUT_CLASS}
               />
-              {invSuggestions.length > 0 && (
+              {currentFieldConfig.searchEnabled && invSuggestions.length > 0 && (
                 <div className="absolute top-full right-0 left-0 z-[100] mt-1 max-h-[180px] overflow-y-auto rounded-lg border border-border-subtle bg-bg-card p-1 shadow-md">
                   {invSuggestions.map((s, idx) => (
                     <div
@@ -792,7 +852,8 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                 <option value="equity">Equity (Stocks)</option>
                 <option value="mutual_fund">Mutual Fund</option>
                 <option value="sip">SIP (Recurring MF)</option>
-                <option value="cash">Fixed Deposit / Cash</option>
+                <option value="fixed_deposit">Fixed Deposit (FD)</option>
+                <option value="cash">Cash / Savings</option>
                 <option value="crypto">Cryptocurrency</option>
                 <option value="gold">Gold</option>
                 <option value="other">Other Asset</option>
@@ -814,32 +875,106 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
               />
             </div>
 
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">
-                {currentFieldConfig.quantityLabel}
-              </span>
-              <input
-                type="number"
-                placeholder={currentFieldConfig.quantityPlaceholder}
-                value={invQuantity}
-                onChange={(e) => setInvQuantity(e.target.value)}
-                step="any"
-                className={INPUT_CLASS}
-              />
-            </div>
+            {invCategory === "fixed_deposit" ? (
+              <>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">Annual Interest Rate (%)</span>
+                  <input
+                    type="number"
+                    placeholder="e.g. 6.5"
+                    value={invInterestRate}
+                    onChange={(e) => setInvInterestRate(e.target.value)}
+                    step="any"
+                    min="0"
+                    max="100"
+                    required
+                    className={INPUT_CLASS}
+                  />
+                </div>
 
-            <div className="flex flex-col gap-1">
-              <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">
-                {currentFieldConfig.buyPriceLabel}
-              </span>
-              <input
-                type="text"
-                placeholder={currentFieldConfig.buyPricePlaceholder}
-                value={invBuyPrice}
-                onChange={(e) => setInvBuyPrice(e.target.value)}
-                className={INPUT_CLASS}
-              />
-            </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">Start Date</span>
+                    <input
+                      type="date"
+                      value={invStartDate}
+                      onChange={(e) => setInvStartDate(e.target.value)}
+                      required
+                      className={INPUT_CLASS}
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">Maturity Date</span>
+                    <input
+                      type="date"
+                      value={invMaturityDate}
+                      onChange={(e) => setInvMaturityDate(e.target.value)}
+                      min={invStartDate || undefined}
+                      required
+                      className={INPUT_CLASS}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">Compounding Frequency</span>
+                  <select
+                    value={invCompounding}
+                    onChange={(e) => setInvCompounding(e.target.value as FdCompounding)}
+                    className={`${INPUT_CLASS} cursor-pointer text-xs`}
+                  >
+                    {(Object.keys(FD_COMPOUNDING_LABELS) as FdCompounding[]).map((key) => (
+                      <option key={key} value={key}>{FD_COMPOUNDING_LABELS[key]}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {invAmount && invInterestRate && invStartDate && invMaturityDate && (
+                  <div className="rounded-lg bg-emerald-50/40 border border-emerald-200/50 p-3 text-[11px] text-emerald-800">
+                    <span className="font-semibold">Projected Maturity Value: </span>
+                    <span className="font-mono font-bold">
+                      {currency}
+                      {computeFdMaturityValue(
+                        parseFloat(invAmount) || 0,
+                        parseFloat(invInterestRate) || 0,
+                        invStartDate,
+                        invMaturityDate,
+                        invCompounding
+                      ).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                    </span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">
+                    {currentFieldConfig.quantityLabel}
+                  </span>
+                  <input
+                    type="number"
+                    placeholder={currentFieldConfig.quantityPlaceholder}
+                    value={invQuantity}
+                    onChange={(e) => setInvQuantity(e.target.value)}
+                    step="any"
+                    className={INPUT_CLASS}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1">
+                  <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">
+                    {currentFieldConfig.buyPriceLabel}
+                  </span>
+                  <input
+                    type="text"
+                    placeholder={currentFieldConfig.buyPricePlaceholder}
+                    value={invBuyPrice}
+                    onChange={(e) => setInvBuyPrice(e.target.value)}
+                    className={INPUT_CLASS}
+                  />
+                </div>
+              </>
+            )}
 
             <div className="flex flex-col gap-1">
               <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">
@@ -914,7 +1049,11 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                           </span>
                         </td>
                         <td className={`${LEDGER_TD} text-right font-mono font-medium`}>
-                          {asset.quantity ? asset.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 }) : "—"}
+                          {asset.category === "fixed_deposit" && asset.interestRate
+                            ? `${asset.interestRate}% p.a.`
+                            : asset.quantity
+                              ? asset.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })
+                              : "—"}
                         </td>
                         <td className={`${LEDGER_TD} text-right font-mono`}>
                           <div>{currency}{investedVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
@@ -936,7 +1075,16 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                           className={`${LEDGER_TD} text-right font-mono ${dayChange !== null ? "font-semibold" : ""}`}
                           style={dayChange !== null ? { color: dayChange >= 0 ? "#16a34a" : "#b3666b" } : undefined}
                         >
-                          {dayChange !== null ? (
+                          {asset.category === "fixed_deposit" && asset.maturityDate ? (
+                            (() => {
+                              const daysLeft = daysUntil(asset.maturityDate!);
+                              return daysLeft <= 0 ? (
+                                <span className="text-[10px] font-semibold text-emerald-700">Matured</span>
+                              ) : (
+                                <span className="text-[10px] font-semibold text-text-secondary">Matures in {daysLeft}d</span>
+                              );
+                            })()
+                          ) : dayChange !== null ? (
                             <>
                               <div>{dayChange >= 0 ? "+" : ""}{currency}{dayChange.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                               {dayChangePct !== null && <div className="text-[10px] font-bold">{dayChangePct >= 0 ? "+" : ""}{dayChangePct.toFixed(2)}%</div>}

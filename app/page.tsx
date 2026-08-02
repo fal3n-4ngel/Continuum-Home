@@ -12,6 +12,7 @@ import {
   InvestmentCategory,
   SearchResult,
   InvestmentQuote,
+  FdCompounding,
 } from "@/types";
 import { getNextFutureBillingDate, resolvePayCycle, buildCycleHistory, toLocalDateStr } from "@/lib/dates";
 import { anilistQuery } from "@/lib/anilist";
@@ -36,7 +37,7 @@ import { InvestmentsTab } from "@/components/dashboard/InvestmentsTab";
 import { FinancialHealthTab } from "@/components/dashboard/FinancialHealthTab";
 import { ReportsTab } from "@/components/dashboard/ReportsTab";
 import { MediaDetailsModal } from "@/components/dashboard/MediaDetailsModal";
-import { GeminiChatBubble } from "@/components/dashboard/GeminiChatBubble";
+import { KirokuChatBubble } from "@/components/dashboard/KirokuChatBubble";
 
 interface FirebaseAuthModule {
   auth: any;
@@ -45,6 +46,10 @@ interface FirebaseAuthModule {
   signInWithRedirect: any;
   signOut: any;
 }
+
+// Ticker/symbol lookup only makes sense for these investment categories — FD,
+// cash, gold, and other are free-text labels with nothing to search a market for.
+const TICKER_SEARCH_CATEGORIES: InvestmentCategory[] = ["equity", "crypto", "mutual_fund", "sip"];
 
 export default function Dashboard() {
   /* ─── State ─── */
@@ -166,11 +171,15 @@ export default function Dashboard() {
   const [invQuantity, setInvQuantity] = useState("");
   const [invBuyPrice, setInvBuyPrice] = useState("");
   const [invNotes, setInvNotes] = useState("");
+  const [invInterestRate, setInvInterestRate] = useState("");
+  const [invStartDate, setInvStartDate] = useState("");
+  const [invMaturityDate, setInvMaturityDate] = useState("");
+  const [invCompounding, setInvCompounding] = useState<FdCompounding>("quarterly");
   const [isAddingAsset, setIsAddingAsset] = useState(false);
   const [isUpdatingPrices, setIsUpdatingPrices] = useState(false);
   const [invSuggestions, setInvSuggestions] = useState<InvestmentQuote[]>([]);
   const [showInvestmentsTab, setShowInvestmentsTab] = useState(true);
-  const [enableGeminiChat, setEnableGeminiChat] = useState(false);
+  const [enableChatAssistant, setEnableChatAssistant] = useState(false);
 
   // Load Feature Flags
   useEffect(() => {
@@ -182,7 +191,7 @@ export default function Dashboard() {
             setShowInvestmentsTab(data.enableInvestmentPortfolios);
           }
           if (typeof data.enableGeminiChatAssitant === "boolean") {
-            setEnableGeminiChat(data.enableGeminiChatAssitant);
+            setEnableChatAssistant(data.enableGeminiChatAssitant);
           }
         }
       })
@@ -1205,6 +1214,29 @@ export default function Dashboard() {
     }
   };
 
+  // From Financial Health's reconciliation: when the confirmed cash-on-hand
+  // is short of what the ledger predicted, log the gap as a real expense
+  // instead of just leaving it as a discrepancy message — so it actually
+  // corrects the ledger rather than needing the user to guess what it was.
+  const logUnaccountedGap = async (amount: number) => {
+    try {
+      const res = await fetch("/api/expenses", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          title: "Unaccounted spending (reconciliation gap)",
+          amount,
+          category: "Other",
+          date: toLocalDateStr(new Date()),
+          notes: `Logged from Financial Health reconciliation for cycle ${payCycle.startStr} – ${payCycle.endStr}`,
+        }),
+      });
+      if (res.ok) fetchExpenses();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   const deleteExpense = async (id: string) => {
     triggerConfirm("Archive Expense", "Are you sure you want to archive this expense?", async () => {
       const previousList = [...expenses];
@@ -1592,7 +1624,7 @@ export default function Dashboard() {
 
   /* ─── Investments Actions ─── */
   useEffect(() => {
-    if (!invName.trim()) {
+    if (!invName.trim() || !TICKER_SEARCH_CATEGORIES.includes(invCategory)) {
       setInvSuggestions([]);
       return;
     }
@@ -1609,30 +1641,51 @@ export default function Dashboard() {
     }, 250);
 
     return () => clearTimeout(delayDebounce);
-  }, [invName, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [invName, invCategory, user]);
 
   const selectSuggestion = (s: InvestmentQuote) => {
     setInvName(s.symbol || s.name || "");
-    if (s.type === "EQUITY") setInvCategory("equity");
-    else if (s.type === "CRYPTOCURRENCY") setInvCategory("crypto");
-    else if (s.type === "MUTUALFUND") setInvCategory("mutual_fund");
+    // Only auto-detect the category from the search result when the user
+    // hasn't already made a deliberate choice — picking a mutual fund ticker
+    // while in SIP mode should stay SIP, not silently flip back to Mutual
+    // Fund (this previously made adding a SIP look like it "didn't work").
+    if (invCategory === "equity" || invCategory === "crypto" || invCategory === "mutual_fund") {
+      if (s.type === "EQUITY") setInvCategory("equity");
+      else if (s.type === "CRYPTOCURRENCY") setInvCategory("crypto");
+      else if (s.type === "MUTUALFUND") setInvCategory("mutual_fund");
+    }
     setInvSuggestions([]);
   };
 
   const addInvestment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!invName.trim() || !invAmount) return;
+    if (invCategory === "fixed_deposit" && (!invInterestRate || !invStartDate || !invMaturityDate)) return;
     setIsAddingAsset(true);
     try {
-      const newAsset = {
-        name: invName.trim(),
-        category: invCategory,
-        amount: parseFloat(invAmount),
-        investedAmount: parseFloat(invAmount),
-        quantity: invQuantity ? parseFloat(invQuantity) : undefined,
-        buyPrice: invBuyPrice ? parseFloat(invBuyPrice) : undefined,
-        notes: invNotes.trim() || undefined,
-      };
+      const newAsset =
+        invCategory === "fixed_deposit"
+          ? {
+              name: invName.trim(),
+              category: invCategory,
+              amount: parseFloat(invAmount),
+              investedAmount: parseFloat(invAmount),
+              interestRate: parseFloat(invInterestRate),
+              startDate: invStartDate,
+              maturityDate: invMaturityDate,
+              compounding: invCompounding,
+              notes: invNotes.trim() || undefined,
+            }
+          : {
+              name: invName.trim(),
+              category: invCategory,
+              amount: parseFloat(invAmount),
+              investedAmount: parseFloat(invAmount),
+              quantity: invQuantity ? parseFloat(invQuantity) : undefined,
+              buyPrice: invBuyPrice ? parseFloat(invBuyPrice) : undefined,
+              notes: invNotes.trim() || undefined,
+            };
       const res = await fetch("/api/portfolio", {
         method: "POST",
         headers: getHeaders(),
@@ -1646,6 +1699,9 @@ export default function Dashboard() {
         setInvQuantity("");
         setInvBuyPrice("");
         setInvNotes("");
+        setInvInterestRate("");
+        setInvStartDate("");
+        setInvMaturityDate("");
         fetchInvestments();
       }
     } catch (err) {
@@ -1752,7 +1808,11 @@ const updateMarketPrices = async () => {
     return Array.from(new Set([...defaultCats, ...Array.from(loadedCats)]));
   }, [expenses, customCategories]);
 
-  const filteredExpenses = useMemo(() => {
+  // Time/search/amount filters only — deliberately excludes the category
+  // filter so the analytics chart can keep showing every category (with the
+  // selected one highlighted and the rest dimmed) instead of collapsing down
+  // to a single bar whenever the ledger's category filter is active.
+  const filteredExpensesBase = useMemo(() => {
     let list = expenses;
 
     // Time filter
@@ -1774,11 +1834,6 @@ const updateMarketPrices = async () => {
       list = list.filter((e) => e.title.toLowerCase().includes(q) || (e.notes && e.notes.toLowerCase().includes(q)));
     }
 
-    // Category filter
-    if (ledgerCategoryFilter) {
-      list = list.filter((e) => e.category === ledgerCategoryFilter);
-    }
-
     // Amount range filter
     if (ledgerMinAmount) {
       const min = parseFloat(ledgerMinAmount);
@@ -1787,6 +1842,17 @@ const updateMarketPrices = async () => {
     if (ledgerMaxAmount) {
       const max = parseFloat(ledgerMaxAmount);
       if (!isNaN(max)) list = list.filter((e) => (e.amount || 0) <= max);
+    }
+
+    return list;
+  }, [expenses, timeFilter, salaryDay, salaryLog, expenseSearch, ledgerMinAmount, ledgerMaxAmount]);
+
+  const filteredExpenses = useMemo(() => {
+    let list = filteredExpensesBase;
+
+    // Category filter
+    if (ledgerCategoryFilter) {
+      list = list.filter((e) => e.category === ledgerCategoryFilter);
     }
 
     // Sorting is purely client-side on data already fetched — expenses are
@@ -1808,7 +1874,7 @@ const updateMarketPrices = async () => {
     });
 
     return list;
-  }, [expenses, timeFilter, salaryDay, salaryLog, expenseSearch, ledgerCategoryFilter, ledgerMinAmount, ledgerMaxAmount, ledgerSortField, ledgerSortDir]);
+  }, [filteredExpensesBase, ledgerCategoryFilter, ledgerSortField, ledgerSortDir]);
 
   const totalSpent = useMemo(() => filteredExpenses.reduce((acc, e) => acc + (e.amount || 0), 0), [filteredExpenses]);
 
@@ -2008,6 +2074,18 @@ const updateMarketPrices = async () => {
     return Object.fromEntries(Object.entries(breakdown).sort(([, a], [, b]) => b - a));
   }, [filteredExpenses]);
 
+  // Same shape as catBreakdown, but derived from the pre-category-filter list
+  // so the Analytics chart always shows every category — the selected one
+  // highlighted, the rest dimmed — instead of collapsing to a single bar.
+  const chartCatBreakdown = useMemo(() => {
+    const breakdown: Record<string, number> = {};
+    filteredExpensesBase.forEach((e) => {
+      const cat = e.category || "Uncategorized";
+      breakdown[cat] = (breakdown[cat] || 0) + (e.amount || 0);
+    });
+    return Object.fromEntries(Object.entries(breakdown).sort(([, a], [, b]) => b - a));
+  }, [filteredExpensesBase]);
+
   const topCategory = useMemo(() => Object.keys(catBreakdown)[0] || "None", [catBreakdown]);
 
   const dailyTrend = useMemo(() => {
@@ -2112,6 +2190,7 @@ const updateMarketPrices = async () => {
               activeChart={activeChart}
               setActiveChart={setActiveChart}
               catBreakdown={catBreakdown}
+              chartCatBreakdown={chartCatBreakdown}
               dailyTrend={dailyTrend}
               addExpense={addExpense}
               expenseTitle={expenseTitle}
@@ -2326,6 +2405,14 @@ const updateMarketPrices = async () => {
             setInvAmount={setInvAmount}
             invNotes={invNotes}
             setInvNotes={setInvNotes}
+            invInterestRate={invInterestRate}
+            setInvInterestRate={setInvInterestRate}
+            invStartDate={invStartDate}
+            setInvStartDate={setInvStartDate}
+            invMaturityDate={invMaturityDate}
+            setInvMaturityDate={setInvMaturityDate}
+            invCompounding={invCompounding}
+            setInvCompounding={setInvCompounding}
             isAddingAsset={isAddingAsset}
             addInvestment={addInvestment}
             deleteInvestment={deleteInvestment}
@@ -2357,13 +2444,25 @@ const updateMarketPrices = async () => {
             setSalaryLogEntry={setSalaryLogEntry}
             cycleHistory={cycleHistory}
             cycleAverages={cycleAverages}
+            reconciliations={reconciliations}
+            logUnaccountedGap={logUnaccountedGap}
           />
         )}
 
 
         {/* Reports: filtered CSV exports for expenses and each media type */}
         {activeTab === "reports" && (
-          <ReportsTab expenses={expenses} watchlist={watchlist} investments={investments} currency={currency} salaryDay={salaryDay} salaryLog={salaryLog} />
+          <ReportsTab
+            expenses={expenses}
+            watchlist={watchlist}
+            investments={investments}
+            currency={currency}
+            salaryDay={salaryDay}
+            salaryLog={salaryLog}
+            isProUser={isProUser}
+            cycleHistory={cycleHistory}
+            reconciliations={reconciliations}
+          />
         )}
       </main>
 
@@ -2423,8 +2522,8 @@ const updateMarketPrices = async () => {
         />
       )}
 
-      {enableGeminiChat && (
-        <GeminiChatBubble idToken={user?.idToken} />
+      {enableChatAssistant && isProUser && (
+        <KirokuChatBubble idToken={user?.idToken} />
       )}
     </div>
   );
