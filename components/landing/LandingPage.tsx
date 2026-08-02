@@ -384,7 +384,7 @@ export default function LandingPage({
       <header className="sticky top-0 z-[1000] mx-auto flex max-w-[1300px] items-center justify-between border-b border-[rgba(229,227,219,0.6)] bg-[rgba(244,243,236,0.92)] px-20 py-5 backdrop-blur-[10px] max-[900px]:px-6 max-[900px]:py-4">
         <a
           href="#"
-          className="flex items-center gap-[9px] text-[17px] font-bold tracking-[-0.4px] text-[#1c1b18] no-underline"
+          className="flex items-center gap-[9px] text-[18px] font-medium tracking-tight text-[#1c1b18] no-underline"
         >
           <BentoLogo size={22} color="#1c1b18" />
           <span>PHub Dashboard</span>

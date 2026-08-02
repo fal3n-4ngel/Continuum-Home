@@ -26,7 +26,7 @@ const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle 
 const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
 const STAT_VALUE = "text-[28px] font-bold tracking-[-0.5px] text-text-primary";
 const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
-const BTN_PRIMARY = "rounded-md border border-text-primary bg-text-primary text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27] active:scale-[0.98]";
+const BTN_PRIMARY = "rounded-full border border-text-primary bg-text-primary text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27] active:scale-[0.98]";
 const INPUT_CLASS = "rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
 
 const pillClass = (id: string, active: boolean) => {
@@ -201,11 +201,9 @@ export const BooksTab: React.FC<BooksTabProps> = ({
   const finishedCount = books.filter((i) => i.status === "completed").length;
 
   return (
-    <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]">
-      <h1 className="font-serif text-3xl font-bold tracking-tight text-text-primary">Book Library</h1>
-
+    <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]"><h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">Book Library</h1>
       {/* Book Stat Cards */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4">
+      <div className="grid grid-cols-4 max-md:grid-cols-2 gap-4">
         <div className={`${STAT_CARD} border-t-2 border-t-accent-blue/80`}>
           <span className={LABEL_MONO}>READING NOW</span>
           <span className={STAT_VALUE}>{readingCount}</span>
@@ -400,7 +398,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
         </div>
 
         {/* Right Column: Your Library Section */}
-        <div>
+        <div className="rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle min-w-[280px]">
         <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-serif text-lg font-bold tracking-tight text-text-primary">Your Library</h2>
 
@@ -421,6 +419,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
             <div className="flex gap-1 rounded-lg bg-bg-secondary p-[3px]">
               {(
                 [
+                  { id: "all", label: "All" },
                   { id: "reading", label: "📖 Reading" },
                   { id: "to_read", label: "⏳ To Read" },
                   { id: "completed", label: "✅ Done" },
@@ -464,12 +463,12 @@ export const BooksTab: React.FC<BooksTabProps> = ({
         </div>
 
         {/* Book Covers Grid */}
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-5">
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] max-md:grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-5 overflow-y-auto max-h-[65vh] pr-1 pb-10">
           {filteredBooks.map((item) => (
-            <div key={item.id} className="group flex flex-col gap-3 rounded-xl border border-border-subtle bg-bg-card p-3 shadow-subtle hover:shadow-[0_8px_30px_rgba(28,27,24,0.04)] transition-all duration-300 hover:-translate-y-1">
+            <div key={item.id} className="group flex flex-col rounded-[14px] border border-border-subtle bg-bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
               <div 
                 onClick={() => onItemClick(item)}
-                className="relative aspect-[2/3] w-full overflow-hidden rounded-lg shadow-sm transition-all duration-300 group-hover:shadow-md cursor-pointer"
+                className="relative aspect-[2/3] w-full overflow-hidden rounded-t-[14px] cursor-pointer"
               >
                 {isSafeImageUrl(item.coverImage) ? (
                   <>
@@ -500,7 +499,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                   <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />
                 </button>
               </div>
-              <div className="flex flex-col flex-1 justify-between gap-2.5">
+              <div className="flex flex-col flex-1 justify-between gap-3 p-3.5">
                 <p 
                   onClick={() => onItemClick(item)}
                   className="cursor-pointer line-clamp-2 min-h-[36px] font-serif text-[13px] font-bold tracking-tight text-text-primary leading-tight group-hover:text-text-primary/90 transition-colors" 
@@ -512,7 +511,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                   <select
                     value={item.status}
                     onChange={(e) => updateWatchItem(item, { status: e.target.value as any })}
-                    className="w-full cursor-pointer appearance-none rounded-lg border border-border-subtle bg-bg-secondary/40 py-1 pl-2.5 pr-6 text-[10.5px] font-bold text-text-secondary transition-all duration-200 hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary outline-none"
+                    className="w-full cursor-pointer appearance-none rounded-full border border-border-subtle bg-bg-secondary/40 py-1.5 pl-3 pr-8 text-[11px] font-bold text-text-secondary transition-all duration-200 hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary outline-none"
                   >
                     <option value="watching">📖 Reading</option>
                     <option value="plan_to_watch">⏳ To Read</option>

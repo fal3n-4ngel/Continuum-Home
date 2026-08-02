@@ -1,9 +1,10 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { FirebaseUser } from "@/types";
-import { Shield, Trash2, Bell, Mail, RefreshCw, BarChart2, ArrowLeft, Sparkles } from "lucide-react";
+import { Shield, Trash2, Bell, Mail, RefreshCw, BarChart2, ArrowLeft, Sparkles, AlertTriangle } from "lucide-react";
 
 interface FirebaseAuthModule {
   auth: any;
@@ -31,6 +32,8 @@ export default function AdminPage() {
   // Operation states
   const [cronRunning, setCronRunning] = useState<string | null>(null);
   const [flushLoading, setFlushLoading] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [confirmModal, setConfirmModal] = useState<{ id: string; title: string } | null>(null);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
 
   // 1. Initialize Firebase Auth
@@ -146,18 +149,20 @@ export default function AdminPage() {
     setCronRunning(type);
     setStatusMessage(null);
     try {
-      const res = await fetch("/api/admin/cron", {
+      const endpoint = type === "test_emails" ? "/api/admin/test-emails" : "/api/admin/cron";
+      const bodyParams = type === "test_emails" ? undefined : JSON.stringify({ triggerType: type });
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${user.idToken}`,
         },
-        body: JSON.stringify({ triggerType: type }),
+        body: bodyParams,
       });
       const data = await res.json();
       if (res.ok) {
         setStatusMessage({
-          text: `Successfully triggered ${type.replace(/_/g, " ")} email!`,
+          text: `Successfully triggered ${type.replace(/_/g, " ")} — emails sent!`,
           type: "success",
         });
       } else {
@@ -167,6 +172,42 @@ export default function AdminPage() {
       setStatusMessage({ text: err.message || "Failed to complete operation.", type: "error" });
     } finally {
       setCronRunning(null);
+    }
+  };
+
+  // Asks for confirmation before firing a production cron (emails ALL users)
+  const handleProductionCronClick = (id: string, title: string) => {
+    setConfirmModal({ id, title });
+  };
+
+  const confirmAndRun = () => {
+    if (!confirmModal) return;
+    const id = confirmModal.id;
+    setConfirmModal(null);
+    triggerCron(id);
+  };
+
+  // Sends a hardcoded sample email directly to personal inbox via Resend — no user fanout
+  const sendPreviewEmail = async (type: string) => {
+    if (!user) return;
+    setPreviewLoading(true);
+    setStatusMessage(null);
+    try {
+      const res = await fetch("/api/admin/preview-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${user.idToken}` },
+        body: JSON.stringify({ type }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatusMessage({ text: `✅ Preview sent to ${data.sentTo}! Check your inbox.`, type: "success" });
+      } else {
+        throw new Error(data.error || "Failed to send preview");
+      }
+    } catch (err: any) {
+      setStatusMessage({ text: err.message || "Preview send failed.", type: "error" });
+    } finally {
+      setPreviewLoading(false);
     }
   };
 
@@ -240,7 +281,7 @@ export default function AdminPage() {
   if (!user) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#f4f3ec]">
-        <div className="flex w-[400px] flex-col gap-6 rounded-card border border-border-subtle bg-white p-8 text-center shadow-subtle">
+        <div className="flex w-[400px] flex-col gap-6 rounded-card border border-border-subtle bg-bg-card p-8 text-center shadow-subtle">
           <Shield className="mx-auto h-12 w-12 text-[#b3666b]" />
           <div>
             <h1 className="font-serif text-2xl font-bold text-text-primary">Admin Access</h1>
@@ -288,6 +329,7 @@ export default function AdminPage() {
 
   /* ─── Main Admin Console ─── */
   return (
+    <>
     <div className="min-h-screen bg-[#f4f3ec] p-10 max-md:p-5">
       <div className="mx-auto max-w-[900px] flex flex-col gap-6">
         
@@ -296,12 +338,12 @@ export default function AdminPage() {
           <div className="flex items-center gap-3">
             <Shield className="h-7 w-7 text-text-primary" />
             <div>
-              <h1 className="font-serif text-2xl font-bold text-text-primary">Admin Control Panel</h1>
+              <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">Admin Control Panel</h1>
               <p className="text-xs text-text-secondary">Logged in as {user.email}</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/" className="rounded-md border border-border-subtle bg-white px-4 py-2 text-xs font-semibold text-text-primary hover:bg-bg-primary transition-all">
+            <Link href="/" className="rounded-md border border-border-subtle bg-bg-card px-4 py-2 text-xs font-semibold text-text-primary hover:bg-bg-primary transition-all">
               Dashboard
             </Link>
             <button onClick={logout} className="rounded-md border border-border-subtle bg-[#b3666b]/10 text-[#b3666b] px-4 py-2 text-xs font-semibold hover:bg-[#b3666b]/20 transition-all">
@@ -317,7 +359,7 @@ export default function AdminPage() {
               ? "border-[#bbf7d0] bg-[#f0fdf4] text-[#166534]" 
               : statusMessage.type === "error"
               ? "border-[#fecaca] bg-[#fef2f2] text-[#991b1b]"
-              : "border-border-subtle bg-white text-text-primary"
+              : "border-border-subtle bg-bg-card text-text-primary"
           }`}>
             {statusMessage.text}
           </div>
@@ -331,7 +373,7 @@ export default function AdminPage() {
             { label: "LIBRARY ITEMS", val: statsLoading ? "..." : stats?.watchlist },
             { label: "PORTFOLIO", val: statsLoading ? "..." : `₹${stats?.portfolioValue.toLocaleString('en-IN', { maximumFractionDigits: 0 })}` },
           ].map((card, i) => (
-            <div key={i} className="flex flex-col gap-1 rounded-card border border-border-subtle bg-white p-5 shadow-subtle">
+            <div key={i} className="flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle">
               <span className="font-mono text-[9px] font-bold tracking-[0.8px] text-text-secondary uppercase">{card.label}</span>
               <span className="text-[20px] font-bold tracking-tight text-text-primary mt-1">{card.val}</span>
             </div>
@@ -339,7 +381,7 @@ export default function AdminPage() {
         </div>
 
         {/* Custom GPT Analytics Panel */}
-        <div className="rounded-card border border-border-subtle bg-white p-6 shadow-subtle flex flex-col gap-4">
+        <div className="rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col gap-4">
           <h3 className="font-serif text-base font-bold text-text-primary flex items-center gap-2 border-b border-border-subtle pb-2">
             🤖 Custom GPT Integration Analytics
           </h3>
@@ -391,7 +433,7 @@ export default function AdminPage() {
         <div className="grid grid-cols-[1.5fr_1fr] gap-6 max-md:grid-cols-1">
           
           {/* Left Column: Cron Alerts Operations */}
-          <div className="rounded-card border border-border-subtle bg-white p-6 shadow-subtle flex flex-col gap-4">
+          <div className="rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col gap-4">
             <h3 className="font-serif text-base font-bold text-text-primary flex items-center gap-2 border-b border-border-subtle pb-2">
               <Mail className="h-4.5 w-4.5" /> Trigger Automated Crons
             </h3>
@@ -399,53 +441,87 @@ export default function AdminPage() {
               Manually fire cron events on-demand. This simulates the schedule triggers set up in your GitHub Actions crons.
             </p>
 
+            {/* ── Per-email preview + production run buttons ── */}
             <div className="flex flex-col gap-3 mt-2">
+              {/* Divider */}
+              <div className="flex items-center gap-2 pb-1">
+                <div className="flex-1 border-t border-[#fecaca]" />
+                <span className="font-mono text-[9px] font-bold text-[#dc2626] tracking-widest flex items-center gap-1">
+                  <AlertTriangle className="h-3 w-3" /> PRODUCTION — EMAILS ALL USERS
+                </span>
+                <div className="flex-1 border-t border-[#fecaca]" />
+              </div>
+
+              {/* ── Per-email rows: Preview (safe) + Run (production) ── */}
               {[
                 {
                   id: "subscriptions",
-                  title: "Trigger Subscription Warnings",
-                  desc: "Scans for subscriptions billing in 2-3 days and sends alert emails.",
+                  previewId: "subscriptions",
+                  title: "Subscription Warnings",
+                  desc: "Scans for subscriptions billing in 2-3 days and sends alert emails to all registered users.",
                   icon: <Bell className="h-4 w-4" />,
+                  hasPreview: true,
                 },
                 {
                   id: "expenses_weekly",
-                  title: "Trigger Weekly Expense Summary",
-                  desc: "Summarizes spent categories and daily burn rate for the last 7 days.",
+                  previewId: "expenses_weekly",
+                  title: "Weekly Expense Summary",
+                  desc: "Summarizes spent categories and daily burn rate for the last 7 days for all users.",
                   icon: <BarChart2 className="h-4 w-4" />,
+                  hasPreview: true,
                 },
                 {
                   id: "expenses_monthly",
-                  title: "Trigger Monthly Expense Summary",
-                  desc: "Generates category breakdowns and top outflows for the last 30 days.",
+                  previewId: "expenses_monthly",
+                  title: "Monthly Expense Summary",
+                  desc: "Generates category breakdowns and top outflows for the last 30 days for all users.",
                   icon: <BarChart2 className="h-4 w-4" />,
+                  hasPreview: true,
                 },
                 {
                   id: "portfolio",
-                  title: "Trigger Daily Portfolio Wrap",
-                  desc: "Calculates current valuations and emails portfolio Net P&L (5:30 IST close).",
+                  previewId: "portfolio",
+                  title: "Daily Portfolio Wrap",
+                  desc: "Calculates current valuations and emails portfolio Net P&L (5:30 IST close) to all users.",
                   icon: <Mail className="h-4 w-4" />,
+                  hasPreview: true,
                 },
                 {
                   id: "recommendations",
-                  title: "Trigger Daily AI Recommendations",
-                  desc: "Generates and enriches daily suggestions for movies, shows, anime, and books.",
+                  previewId: null,
+                  title: "Daily AI Recommendations",
+                  desc: "Generates and enriches daily suggestions for movies, shows, anime, and books for all users.",
                   icon: <Sparkles className="h-4 w-4" />,
+                  hasPreview: false,
                 },
               ].map((task) => (
-                <div key={task.id} className="flex justify-between items-center gap-4 rounded-lg border border-border-subtle bg-bg-primary/30 p-3.5 hover:border-border-hover transition-colors">
-                  <div className="min-w-0">
-                    <h4 className="text-[12.5px] font-bold text-text-primary flex items-center gap-1.5">
-                      {task.icon} {task.title}
-                    </h4>
-                    <p className="text-[10.5px] text-text-secondary mt-1">{task.desc}</p>
-                  </div>
-                  <button
-                    disabled={cronRunning !== null}
-                    onClick={() => triggerCron(task.id)}
-                    className="shrink-0 cursor-pointer rounded-md border border-text-primary bg-text-primary text-[11px] font-semibold text-white px-3 py-1.5 transition-all hover:bg-[#2e2d27] disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
+                <div key={task.id} className="rounded-lg border border-[#fecaca] bg-[#fef2f2]/60 p-3.5 hover:bg-[#fef2f2] transition-colors">
+                  <div className="flex justify-between items-start gap-4">
+                    <div className="min-w-0">
+                      <h4 className="text-[12.5px] font-bold text-text-primary flex items-center gap-1.5">
+                        {task.icon} {task.title}
+                      </h4>
+                      <p className="text-[10.5px] text-text-secondary mt-1">{task.desc}</p>
+                    </div>
+                    <div className="shrink-0 flex items-center gap-2">
+                      {task.hasPreview && (
+                        <button
+                          disabled={previewLoading || cronRunning !== null}
+                          onClick={() => sendPreviewEmail(task.previewId!)}
+                          className="cursor-pointer rounded-md border border-[#3b82f6] bg-[#eff6ff] text-[11px] font-semibold text-[#1d4ed8] px-3 py-1.5 transition-all hover:bg-[#dbeafe] disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {previewLoading ? "..." : "📬 Preview"}
+                        </button>
+                      )}
+                      <button
+                        disabled={cronRunning !== null}
+                        onClick={() => handleProductionCronClick(task.id, task.title)}
+                        className="cursor-pointer rounded-md border border-[#dc2626] bg-transparent text-[11px] font-semibold text-[#dc2626] px-3 py-1.5 transition-all hover:bg-[#dc2626] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
                     {cronRunning === task.id ? "Firing..." : "Run"}
-                  </button>
+                      </button>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -455,7 +531,7 @@ export default function AdminPage() {
           <div className="flex flex-col gap-6">
             
             {/* Cache Controls Card */}
-            <div className="rounded-card border border-border-subtle bg-white p-6 shadow-subtle flex flex-col gap-4">
+            <div className="rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col gap-4">
               <h3 className="font-serif text-base font-bold text-text-primary flex items-center gap-2 border-b border-border-subtle pb-2">
                 <RefreshCw className="h-4.5 w-4.5" /> Database & Cache Operations
               </h3>
@@ -483,7 +559,7 @@ export default function AdminPage() {
             </div>
 
             {/* Quick Server Info Card */}
-            <div className="rounded-card border border-border-subtle bg-white p-6 shadow-subtle flex flex-col gap-4">
+            <div className="rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col gap-4">
               <h3 className="font-serif text-base font-bold text-text-primary flex items-center gap-2 border-b border-border-subtle pb-2">
                 System Info
               </h3>
@@ -509,5 +585,51 @@ export default function AdminPage() {
 
       </div>
     </div>
-  );
+
+    {/* ── Confirmation Modal (portal) ── */}
+    {confirmModal && typeof document !== "undefined" && createPortal(
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center"
+        style={{ backgroundColor: "rgba(28,27,24,0.55)", backdropFilter: "blur(4px)" }}
+        onClick={() => setConfirmModal(null)}
+      >
+        <div
+          className="relative w-[420px] max-w-[90vw] rounded-card border border-border-subtle bg-bg-card p-8 shadow-[0_20px_60px_rgba(0,0,0,0.2)] flex flex-col gap-5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex items-start gap-4">
+            <div className="shrink-0 rounded-full bg-[#fef2f2] border border-[#fecaca] p-2.5">
+              <AlertTriangle className="h-5 w-5 text-[#dc2626]" />
+            </div>
+            <div>
+              <h2 className="font-serif text-xl font-bold text-text-primary">Production Trigger</h2>
+              <p className="text-xs text-text-secondary mt-1 leading-relaxed">
+                This will fire <strong className="text-text-primary">{confirmModal.title}</strong> for <strong className="text-[#dc2626]">every registered user</strong> on the platform — not just you. Real emails will be sent.
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-[#fef2f2] border border-[#fecaca] px-4 py-3 text-xs text-[#991b1b] font-medium">
+            ⚠️ Are you sure you want to proceed? This cannot be undone.
+          </div>
+
+          <div className="flex gap-3 mt-1">
+            <button
+              onClick={() => setConfirmModal(null)}
+              className="flex-1 rounded-md border border-border-subtle bg-transparent py-2.5 text-xs font-semibold text-text-primary transition-all hover:bg-bg-primary"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmAndRun}
+              className="flex-1 rounded-md border border-[#dc2626] bg-[#dc2626] py-2.5 text-xs font-semibold text-white transition-all hover:bg-[#b91c1c]"
+            >
+              Yes, Fire for All Users
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body
+    )}
+  </>);
 }

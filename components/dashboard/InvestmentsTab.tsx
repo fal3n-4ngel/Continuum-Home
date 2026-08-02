@@ -49,8 +49,8 @@ const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle 
 const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
 const STAT_VALUE = "text-[28px] font-bold tracking-[-0.5px] text-text-primary";
 const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
-const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle transition-all duration-200 hover:shadow-hover";
-const BTN_PRIMARY = "rounded-md border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27] active:scale-[0.98]";
+const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
+const BTN_PRIMARY = "rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27] active:scale-[0.98]";
 const BTN_SECONDARY = "rounded-md border border-border-subtle bg-transparent text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary disabled:cursor-not-allowed disabled:opacity-50";
 const INPUT_CLASS = "w-full rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
 const LEDGER_TH = "border-b border-border-subtle bg-bg-card px-3.5 py-3.5 font-mono text-[11px] font-bold tracking-[0.5px] text-text-secondary uppercase";
@@ -405,7 +405,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-text-primary">Wealth & Portfolio Management</h1>
+          <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">Wealth & Portfolio Management</h1>
           <p className="mt-1 text-xs text-text-secondary">
             Manage your holdings, learn investment principles, and optimize asset allocation.
           </p>

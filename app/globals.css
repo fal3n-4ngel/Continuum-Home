@@ -15,12 +15,13 @@
   --color-border-subtle: var(--border-subtle);
   --color-border-hover: var(--border-hover);
   --color-accent-blue: var(--accent-blue);
+  --color-accent-yellow: var(--accent-yellow);
 
-  --radius-card: 12px;
-  --radius-button: 8px;
+  --radius-card: 10px;
+  --radius-button: 9999px;
 
-  --shadow-subtle: 0 4px 20px -2px rgba(110, 108, 100, 0.04);
-  --shadow-focus: 0 0 0 3px rgba(28, 27, 24, 0.06);
+  --shadow-subtle: 0 2px 10px -2px rgba(110, 108, 100, 0.03);
+  --shadow-focus: 0 0 0 3px rgba(28, 27, 24, 0.05);
 
   --font-body: 'Plus Jakarta Sans', sans-serif;
   --font-serif: 'Playfair Display', serif;
@@ -33,20 +34,24 @@
    utilities. */
 @layer base {
 :root {
-  --bg-primary: #f4f3ec; /* warm neutral paper canvas background */
-  --bg-secondary: #eae8e0; /* slightly darker neutral background */
-  --bg-card: #ffffff; /* pure white cards */
-  --bg-sidebar: #ffffff; /* pure white sidebar */
-  --text-primary: #1c1b18; /* rich dark grey/black */
-  --text-secondary: #6e6c64; /* subtle charcoal */
-  --text-muted: #9c9a92; /* soft warm grey */
-  --border-subtle: #e5e3db; /* thin warm grey borders */
-  --border-hover: #c4c2ba; /* active border hover state */
-  --accent-blue: #3b82f6; /* dashboard blue */
-  --shadow-subtle: 0 4px 20px -2px rgba(110, 108, 100, 0.04);
-  --shadow-focus: 0 0 0 3px rgba(28, 27, 24, 0.06);
-  --radius-card: 12px;
-  --radius-button: 8px;
+  --bg-primary: #F5F1EB; /* warm creamy paper canvas */
+  --bg-secondary: #EBE5DB; /* slightly darker warm neutral */
+  --bg-card: #FAF7F2; /* pure clean off-white for cards */
+  --bg-sidebar: #FAF7F2; /* pure clean off-white for sidebar */
+  --text-primary: #1A1A1A; /* deep charcoal black */
+  --text-secondary: #6B685F; /* subtle warm grey */
+  --text-muted: #9E9C94; /* soft warm grey */
+  --border-subtle: #DCD8D0; /* elegant fine lines */
+  --border-hover: #C5BFA0; /* active border hover state */
+  --accent-blue: #A0C4E2; /* pastel aesthetic blue */
+  --accent-yellow: #E5B85C; /* pastel aesthetic mustard yellow */
+  
+  --shadow-subtle: 0 2px 10px -2px rgba(110, 108, 100, 0.03); /* flattened print look */
+  --shadow-focus: 0 0 0 3px rgba(28, 27, 24, 0.05);
+  
+  --radius-card: 10px; /* elegant, slightly sharp corners */
+  --radius-button: 9999px; /* pill shaped buttons */
+  
   --font-body: 'Plus Jakarta Sans', sans-serif;
 }
 
@@ -88,8 +93,8 @@ button {
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
-  border-radius: 6px;
-  padding: 8px 16px;
+  border-radius: var(--radius-button);
+  padding: 10px 20px;
   transition: all 0.2s ease;
   border: none;
 }
