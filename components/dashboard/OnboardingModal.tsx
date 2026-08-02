@@ -1,4 +1,5 @@
 import React from "react";
+import { LogoMark } from "@/components/Logo";
 
 interface OnboardingModalProps {
   showOnboarding: boolean;
@@ -24,12 +25,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       >
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
-            <svg width="34" height="34" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0">
-              <rect x="1.6" y="1.6" width="7.2" height="7.2" rx="1.8" fill="var(--text-primary)" />
-              <rect x="11.2" y="1.6" width="7.2" height="7.2" rx="1.8" fill="var(--text-primary)" opacity="0.55" />
-              <rect x="1.6" y="11.2" width="7.2" height="7.2" rx="1.8" fill="var(--text-primary)" opacity="0.55" />
-              <rect x="11.2" y="11.2" width="7.2" height="7.2" rx="1.8" fill="var(--text-primary)" opacity="0.85" />
-            </svg>
+            <LogoMark size={34} color="var(--text-primary)" className="shrink-0" />
             <div>
               <p className="text-lg leading-[1.2] font-bold tracking-[-0.3px]">Welcome to PHub</p>
               <p className="mt-0.5 font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase">Personal Hub</p>

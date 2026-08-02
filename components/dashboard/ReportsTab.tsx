@@ -2,21 +2,34 @@ import React, { useMemo, useState } from "react";
 import { Expense, WatchlistItem, MediaStatus, MediaType, InvestmentAsset, InvestmentCategory } from "@/types";
 import { downloadCsv } from "@/lib/csv";
 import { resolvePayCycle, toLocalDateStr } from "@/lib/dates";
-import { 
-  TrendingUp, 
-  DollarSign, 
-  Film, 
-  Tv, 
-  Sparkles, 
-  BookOpen, 
-  Calendar, 
+import { getEffectiveAmount } from "@/lib/fd";
+import {
+  TrendingUp,
+  DollarSign,
+  Film,
+  Tv,
+  Sparkles,
+  BookOpen,
+  Calendar,
   FileText,
-  Clock
+  Clock,
+  ScanSearch
 } from "lucide-react";
 
 interface SalaryLogEntry {
   date: string;
   amount: number;
+}
+
+// Mirrors the shape of app/page.tsx's `cycleHistory` (past COMPLETE pay
+// cycles, newest first) — passed straight through rather than recomputed
+// here, since building it requires salary log + subscriptions + multi-cycle
+// baselining logic that already lives in one place.
+interface CycleHistoryEntry {
+  startStr: string;
+  endStr: string;
+  income: number;
+  spend: number;
 }
 
 interface ReportsTabProps {
@@ -26,6 +39,9 @@ interface ReportsTabProps {
   currency: string;
   salaryDay: number;
   salaryLog: Record<string, SalaryLogEntry>;
+  isProUser: boolean;
+  cycleHistory: CycleHistoryEntry[];
+  reconciliations: Record<string, number>;
 }
 
 const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
@@ -217,7 +233,8 @@ const InvestmentReportCard: React.FC<{ investments: InvestmentAsset[]; currency:
     mutual_fund: "Mutual Funds",
     sip: "SIP (Recurring MF)",
     gold: "Gold / Precious Metals",
-    cash: "Cash & FDs",
+    cash: "Cash / Savings",
+    fixed_deposit: "Fixed Deposit (FD)",
     other: "Other Assets",
   };
 
@@ -228,15 +245,15 @@ const InvestmentReportCard: React.FC<{ investments: InvestmentAsset[]; currency:
         if (status === "active" && i.isSold) return false;
         if (status === "sold" && !i.isSold) return false;
         
-        const val = i.amount || 0;
+        const val = getEffectiveAmount(i);
         const minVal = parseFloat(minValuation);
         if (!isNaN(minVal) && val < minVal) return false;
         const maxVal = parseFloat(maxValuation);
         if (!isNaN(maxVal) && val > maxVal) return false;
-        
+
         return true;
       })
-      .sort((a, b) => b.amount - a.amount);
+      .sort((a, b) => getEffectiveAmount(b) - getEffectiveAmount(a));
   }, [investments, category, status, minValuation, maxValuation]);
 
   const download = () => {
@@ -244,8 +261,8 @@ const InvestmentReportCard: React.FC<{ investments: InvestmentAsset[]; currency:
       `investments_report_${todayStamp()}.csv`,
       ["Asset Name", "Category", "Quantity Owned", "Avg Buy Price", "Current Valuation", "Invested Capital", "Unrealized P&L", "Status", "Sold Price", "Date Sold"],
       filtered.map((i) => {
+        const valuation = getEffectiveAmount(i);
         const cost = i.investedAmount || i.amount || 0;
-        const valuation = i.amount || 0;
         const pnl = valuation - cost;
         const statusStr = i.isSold ? "Sold" : "Active";
         const dateSoldStr = i.soldAt ? toLocalDateStr(new Date(i.soldAt)) : "—";
@@ -318,7 +335,7 @@ const InvestmentReportCard: React.FC<{ investments: InvestmentAsset[]; currency:
                       {i.isSold ? (
                         <span className="text-[#16a34a] font-bold">Sold @ {currency}{i.soldPrice?.toLocaleString()}</span>
                       ) : (
-                        <span>{currency}{i.amount.toLocaleString()}</span>
+                        <span>{currency}{getEffectiveAmount(i).toLocaleString()}</span>
                       )}
                     </td>
                     <td className={`${LEDGER_TD} text-right`}>
@@ -342,6 +359,120 @@ const InvestmentReportCard: React.FC<{ investments: InvestmentAsset[]; currency:
 
         <div className="mt-1 flex items-center justify-end border-t border-border-subtle pt-3">
           <button onClick={download} disabled={filtered.length === 0} className={BTN_PRIMARY}>
+            Export CSV
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─── MONTHLY DISCREPANCY REPORT (Pro) ─── */
+// How closely each reconciled pay cycle's confirmed "actual amount left"
+// matched what the ledger predicted — the audit trail behind Financial
+// Health's "Does This Match Reality?" check, across all history rather than
+// just the last few cycles shown there.
+const DiscrepancyReportCard: React.FC<{
+  cycleHistory: CycleHistoryEntry[];
+  reconciliations: Record<string, number>;
+  currency: string;
+}> = ({ cycleHistory, reconciliations, currency }) => {
+  const rows = useMemo(() => {
+    return cycleHistory
+      .filter((c) => reconciliations[c.startStr] !== undefined)
+      .map((c) => {
+        const expected = c.income - c.spend;
+        const actual = reconciliations[c.startStr];
+        const threshold = Math.max(50, c.income * 0.01);
+        const discrepancy = expected - actual;
+        const status: "accurate" | "short" | "extra" =
+          Math.abs(discrepancy) <= threshold ? "accurate" : discrepancy > 0 ? "short" : "extra";
+        return { startStr: c.startStr, endStr: c.endStr, expected, actual, discrepancy, status };
+      })
+      .sort((a, b) => b.startStr.localeCompare(a.startStr));
+  }, [cycleHistory, reconciliations]);
+
+  const totalUnaccounted = rows.filter((r) => r.status === "short").reduce((acc, r) => acc + r.discrepancy, 0);
+  const accurateCount = rows.filter((r) => r.status === "accurate").length;
+
+  const download = () => {
+    downloadCsv(
+      `discrepancy_report_${todayStamp()}.csv`,
+      ["Cycle Start", "Cycle End", "Expected Cash On Hand", "Confirmed Actual", "Discrepancy", "Status"],
+      rows.map((r) => [
+        r.startStr,
+        r.endStr,
+        r.expected,
+        r.actual,
+        r.discrepancy,
+        r.status === "accurate" ? "Accurate" : r.status === "short" ? "Unaccounted (Short)" : "Extra",
+      ])
+    );
+  };
+
+  return (
+    <div className={BENTO_CARD}>
+      <ReportCardHeader title="Monthly Discrepancy Report" icon={<ScanSearch className="h-4.5 w-4.5 text-text-secondary" />} count={rows.length} noun="cycle" />
+      <div className={CARD_BODY}>
+        <p className="text-[11px] leading-relaxed text-text-secondary">
+          Every reconciled pay cycle's confirmed cash-on-hand vs. what the ledger predicted — the full audit trail behind Financial Health&apos;s reality check.
+        </p>
+
+        {rows.length === 0 ? (
+          <p className="py-4 text-center text-[11px] text-text-muted">
+            No reconciled cycles yet — confirm &quot;Does This Match Reality?&quot; on the Financial Health tab each cycle to build this report.
+          </p>
+        ) : (
+          <>
+            <div className="grid grid-cols-2 gap-3 rounded-lg border border-border-subtle bg-bg-secondary/10 p-3">
+              <div>
+                <span className="block font-mono text-[9px] font-bold tracking-[0.4px] text-text-muted uppercase">Total Unaccounted</span>
+                <span className="text-[15px] font-bold text-rose-700">{currency}{totalUnaccounted.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+              </div>
+              <div>
+                <span className="block font-mono text-[9px] font-bold tracking-[0.4px] text-text-muted uppercase">Accurate Cycles</span>
+                <span className="text-[15px] font-bold text-text-primary">{accurateCount} / {rows.length}</span>
+              </div>
+            </div>
+
+            <div className="mt-1 overflow-hidden rounded-lg border border-border-subtle bg-bg-secondary/10">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr>
+                    <th className={LEDGER_TH}>Cycle</th>
+                    <th className={`${LEDGER_TH} text-right`}>Discrepancy</th>
+                    <th className={`${LEDGER_TH} text-right`}>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.slice(0, 6).map((r) => (
+                    <tr key={r.startStr} className="hover:bg-bg-secondary/40">
+                      <td className={`${LEDGER_TD} whitespace-nowrap`}>{fmtShort(r.startStr)} – {fmtShort(r.endStr)}</td>
+                      <td className={`${LEDGER_TD} text-right font-mono font-bold`}>
+                        {r.status === "accurate" ? "—" : `${r.discrepancy > 0 ? "−" : "+"}${currency}${Math.abs(r.discrepancy).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`}
+                      </td>
+                      <td className={`${LEDGER_TD} text-right`}>
+                        <span className={`text-[8.5px] font-bold px-1.5 py-0.5 rounded-sm uppercase ${
+                          r.status === "accurate" ? "bg-emerald-100 text-emerald-800" : r.status === "short" ? "bg-rose-100 text-rose-800" : "bg-blue-100 text-blue-800"
+                        }`}>
+                          {r.status === "accurate" ? "Accurate" : r.status === "short" ? "Short" : "Extra"}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {rows.length > 6 && (
+                <div className="border-t border-border-subtle bg-bg-primary/40 px-2.5 py-1.5 text-center text-[9.5px] font-semibold text-text-muted">
+                  +{rows.length - 6} more in full export
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        <div className="mt-1 flex items-center justify-end border-t border-border-subtle pt-3">
+          <button onClick={download} disabled={rows.length === 0} className={BTN_PRIMARY}>
             Export CSV
           </button>
         </div>
@@ -481,18 +612,23 @@ const MediaReportCard: React.FC<{ title: string; icon: React.ReactNode; type: Me
 };
 
 /* ─── MAIN REPORTS TAB ─── */
-export const ReportsTab: React.FC<ReportsTabProps> = ({ 
-  expenses, 
-  watchlist, 
-  investments = [], 
-  currency, 
-  salaryDay, 
-  salaryLog 
+export const ReportsTab: React.FC<ReportsTabProps> = ({
+  expenses,
+  watchlist,
+  investments = [],
+  currency,
+  salaryDay,
+  salaryLog,
+  isProUser,
+  cycleHistory,
+  reconciliations,
 }) => {
   const safeExpenses = Array.isArray(expenses) ? expenses : [];
   const safeWatchlist = Array.isArray(watchlist) ? watchlist : [];
   const safeInvestments = Array.isArray(investments) ? investments : [];
   const safeSalaryLog = salaryLog || {};
+  const safeCycleHistory = Array.isArray(cycleHistory) ? cycleHistory : [];
+  const safeReconciliations = reconciliations || {};
 
   return (
     <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]">
@@ -518,6 +654,9 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
         <div className="grid grid-cols-2 gap-5 max-md:grid-cols-1">
           <ExpenseReportCard expenses={safeExpenses} currency={currency} salaryDay={salaryDay} salaryLog={safeSalaryLog} />
           <InvestmentReportCard investments={safeInvestments} currency={currency} />
+          {isProUser && (
+            <DiscrepancyReportCard cycleHistory={safeCycleHistory} reconciliations={safeReconciliations} currency={currency} />
+          )}
         </div>
       </div>
 

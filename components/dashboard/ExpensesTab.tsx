@@ -20,6 +20,7 @@ interface ExpensesTabProps {
   activeChart: "category" | "trend";
   setActiveChart: (c: "category" | "trend") => void;
   catBreakdown: Record<string, number>;
+  chartCatBreakdown: Record<string, number>;
   dailyTrend: [string, number][];
   addExpense: (e: React.FormEvent) => void;
   expenseTitle: string;
@@ -208,6 +209,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
   activeChart,
   setActiveChart,
   catBreakdown,
+  chartCatBreakdown,
   dailyTrend,
   addExpense,
   expenseTitle,
@@ -534,8 +536,8 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
 
             {activeChart === "category" ? (
               <div className="flex h-[260px] items-end justify-start gap-4 overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2">
-                {Object.entries(catBreakdown).slice(0, 8).map(([cat, total], idx) => {
-                  const maxAmt = Math.max(...Object.values(catBreakdown), 1);
+                {Object.entries(chartCatBreakdown).slice(0, 8).map(([cat, total], idx) => {
+                  const maxAmt = Math.max(...Object.values(chartCatBreakdown), 1);
                   const pct = (total / maxAmt) * 100;
                   const colors = ["#b3666b", "#e39282", "#1c1b18", "#6e6c64", "#d1b89a", "#eae8e0", "#9c9a92", "#c4c2ba"];
                   const isSelected = ledgerCategoryFilter === cat;
@@ -574,7 +576,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
                     </div>
                   );
                 })}
-                {Object.keys(catBreakdown).length === 0 && <p className="self-center text-[13px] text-text-muted">No transactions to plot.</p>}
+                {Object.keys(chartCatBreakdown).length === 0 && <p className="self-center text-[13px] text-text-muted">No transactions to plot.</p>}
               </div>
             ): (
               <div className="flex h-[260px] items-end justify-start gap-4 overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2">
@@ -841,7 +843,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
                             onClick={() => deleteExpense(exp.id)}
                             className="cursor-pointer border-none bg-transparent px-1.5 py-0.5 text-[11px] text-[#b3666b]"
                           >
-                            Archive
+                            delete
                           </button>
                         </td>
                       </tr>

@@ -2,6 +2,7 @@ import React from "react";
 import { FirebaseUser } from "@/types";
 import { isSafeImageUrl } from "@/lib/safe-url";
 import { AUTHOR } from "@/lib/site";
+import { LogoMark } from "@/components/Logo";
 
 interface MobileHeaderProps {
   activeTab: string;
@@ -49,12 +50,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
     <>
       <header className="sticky top-0 z-[100] hidden min-h-[52px] items-center justify-between border-b border-border-subtle bg-bg-card px-4 py-3 max-md:flex">
         <div className="flex items-center gap-2">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-primary">
-          <path d="M4 4h6v6H4z" />
-          <path d="M14 4h6v6h-6z" opacity="0.5" />
-          <path d="M4 14h6v6H4z" opacity="0.5" />
-          <path d="M14 14h6v6h-6z" />
-        </svg>
+        <LogoMark size={20} className="text-text-primary" />
         <span className="text-base font-medium tracking-tight text-text-primary">PHub Dashboard</span>
       </div>
         <div className="flex items-center gap-3">

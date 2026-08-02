@@ -5,7 +5,8 @@ import type { DashboardSettings, ExpenseEntry, InvestmentAsset, SubscriptionEntr
 const MEDIA_TYPES = ["movie", "show", "anime", "book"] as const;
 const MEDIA_STATUSES = ["plan_to_watch", "watching", "completed", "dropped", "paused"] as const;
 const BILLING_CYCLES = ["monthly", "yearly"] as const;
-const ASSET_CATEGORIES = ["equity", "crypto", "mutual_fund", "sip", "gold", "cash", "other"] as const;
+const ASSET_CATEGORIES = ["equity", "crypto", "mutual_fund", "sip", "gold", "cash", "fixed_deposit", "other"] as const;
+const FD_COMPOUNDING_OPTIONS = ["monthly", "quarterly", "half_yearly", "yearly"] as const;
 const TIME_FILTERS = ["7", "30", "90", "salary", "all"] as const;
 
 export const MAX_PORTFOLIO_ASSETS = 500;
@@ -296,9 +297,18 @@ export function validateNoteContent(body: unknown): string {
 
 /* ─── Portfolio / Investments ─── */
 
+function validateFdDates(startDate: string | undefined, maturityDate: string | undefined) {
+  if (startDate && maturityDate && maturityDate < startDate) {
+    badRequest("Field 'maturityDate' must not be before 'startDate'.");
+  }
+}
+
 function validateInvestmentAsset(raw: unknown, index: number): InvestmentAsset {
   const b = requireObject(raw, "Asset");
   try {
+    const startDate = asDate(b.startDate, "startDate");
+    const maturityDate = asDate(b.maturityDate, "maturityDate");
+    validateFdDates(startDate, maturityDate);
     return {
       id: asTrimmedString(b.id, "id", 128, false) || randomUUID(),
       name: asTrimmedString(b.name, "name", 200, true)!,
@@ -314,6 +324,10 @@ function validateInvestmentAsset(raw: unknown, index: number): InvestmentAsset {
       isSold: b.isSold !== undefined && b.isSold !== null ? Boolean(b.isSold) : undefined,
       soldAt: b.soldAt !== undefined && b.soldAt !== null ? asNumber(b.soldAt, "soldAt", { min: 0 }) : undefined,
       soldPrice: b.soldPrice !== undefined && b.soldPrice !== null ? asNumber(b.soldPrice, "soldPrice", { min: 0 }) : undefined,
+      interestRate: b.interestRate !== undefined && b.interestRate !== null && b.interestRate !== "" ? asNumber(b.interestRate, "interestRate", { min: 0, max: 100 }) : undefined,
+      startDate,
+      maturityDate,
+      compounding: asEnum(b.compounding, "compounding", FD_COMPOUNDING_OPTIONS, false),
     };
   } catch (error) {
     if (error instanceof ApiError) throw new ApiError(400, `Asset ${index + 1}: ${error.message}`);
@@ -346,6 +360,11 @@ export function validatePortfolioAssetPatch(body: unknown): Partial<InvestmentAs
   if (b.isSold !== undefined) patch.isSold = b.isSold !== null ? Boolean(b.isSold) : undefined;
   if (b.soldAt !== undefined) patch.soldAt = b.soldAt !== null ? asNumber(b.soldAt, "soldAt", { min: 0 }) : undefined;
   if (b.soldPrice !== undefined) patch.soldPrice = b.soldPrice !== null ? asNumber(b.soldPrice, "soldPrice", { min: 0 }) : undefined;
+  if (b.interestRate !== undefined) patch.interestRate = b.interestRate !== null && b.interestRate !== "" ? asNumber(b.interestRate, "interestRate", { min: 0, max: 100 }) : undefined;
+  if (b.startDate !== undefined) patch.startDate = asDate(b.startDate, "startDate");
+  if (b.maturityDate !== undefined) patch.maturityDate = asDate(b.maturityDate, "maturityDate");
+  if (patch.startDate !== undefined || patch.maturityDate !== undefined) validateFdDates(patch.startDate, patch.maturityDate);
+  if (b.compounding !== undefined) patch.compounding = asEnum(b.compounding, "compounding", FD_COMPOUNDING_OPTIONS, false);
 
   if (Object.keys(patch).length === 0) {
     badRequest("Patch body must include at least one asset property to update.");

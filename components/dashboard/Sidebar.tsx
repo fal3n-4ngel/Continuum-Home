@@ -2,6 +2,7 @@ import React from "react";
 import { FirebaseUser, AniListUser, TraktUser } from "@/types";
 import { isSafeImageUrl } from "@/lib/safe-url";
 import { AUTHOR } from "@/lib/site";
+import { LogoMark } from "@/components/Logo";
 
 interface SidebarProps {
   activeTab: string;
@@ -80,12 +81,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <aside className="fixed top-0 bottom-0 left-0 z-[100] flex w-[250px] flex-col justify-between border-r border-border-subtle bg-bg-sidebar px-4 py-6 max-md:hidden min-[769px]:max-[1100px]:w-[210px]">
       {/* Brand Header */}
       <div className="mb-6 flex items-center gap-2.5 px-2">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-text-primary">
-          <path d="M4 4h6v6H4z" />
-          <path d="M14 4h6v6h-6z" opacity="0.5" />
-          <path d="M4 14h6v6H4z" opacity="0.5" />
-          <path d="M14 14h6v6h-6z" />
-        </svg>
+        <LogoMark size={22} className="text-text-primary" />
         <div>
           <span className="text-xl font-medium tracking-tight text-text-primary">PHub Dashboard</span>
         </div>

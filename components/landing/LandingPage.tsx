@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { AUTHOR } from "@/lib/site";
+import { LogoMark as BentoLogo } from "@/components/Logo";
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -138,61 +139,6 @@ function LiveClockStrip() {
         </div>
       ))}
     </div>
-  );
-}
-
-/* ─── New logo: bento-grid SVG ─── */
-function BentoLogo({
-  size = 22,
-  color = "currentColor",
-}: {
-  size?: number;
-  color?: string;
-}) {
-  const gap = size * 0.08;
-  const cell = (size - gap * 3) / 2;
-  const r = size * 0.12;
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* top-left */}
-      <rect x={gap} y={gap} width={cell} height={cell} rx={r} fill={color} />
-      {/* top-right */}
-      <rect
-        x={gap * 2 + cell}
-        y={gap}
-        width={cell}
-        height={cell}
-        rx={r}
-        fill={color}
-        opacity="0.55"
-      />
-      {/* bottom-left */}
-      <rect
-        x={gap}
-        y={gap * 2 + cell}
-        width={cell}
-        height={cell}
-        rx={r}
-        fill={color}
-        opacity="0.55"
-      />
-      {/* bottom-right */}
-      <rect
-        x={gap * 2 + cell}
-        y={gap * 2 + cell}
-        width={cell}
-        height={cell}
-        rx={r}
-        fill={color}
-        opacity="0.85"
-      />
-    </svg>
   );
 }
 

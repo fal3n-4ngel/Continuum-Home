@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Auth, GoogleAuthProvider as GoogleAuthProviderClass, signInWithPopup as signInWithPopupFn } from "firebase/auth";
 import { SITE_URL } from "@/lib/site";
 import { useOrigin } from "@/hooks/useOrigin";
+import { LogoMark } from "@/components/Logo";
 
 interface AgentUser {
   displayName: string | null;
@@ -139,7 +140,7 @@ Always confirm what you logged in one short line, including the year you recorde
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2L2 22H22L12 2ZM12 6L18.8 19.6H5.2L12 6Z" fill="var(--text-primary)"/></svg>
+            <LogoMark size={22} color="var(--text-primary)" />
             <span className="text-[19px] font-bold tracking-[-0.5px]">PHub Dashboard</span>
           </div>
           <Link href="/" className="mb-0 flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-[13px] font-medium text-text-secondary no-underline transition-all duration-200 hover:bg-bg-primary hover:text-text-primary">← Back to dashboard</Link>
