@@ -538,19 +538,45 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
                   const maxAmt = Math.max(...Object.values(catBreakdown), 1);
                   const pct = (total / maxAmt) * 100;
                   const colors = ["#b3666b", "#e39282", "#1c1b18", "#6e6c64", "#d1b89a", "#eae8e0", "#9c9a92", "#c4c2ba"];
+                  const isSelected = ledgerCategoryFilter === cat;
+                  const isInactive = ledgerCategoryFilter !== "" && !isSelected;
                   return (
-                    <div key={cat} className="flex min-w-[60px] max-w-[90px] flex-1 shrink-0 flex-col items-center gap-1.5">
-                      <span className="text-[11px] font-semibold text-text-secondary">{currency}{(total/1000).toFixed(1)}k</span>
-                      <div className="flex h-[200px] w-8 items-end rounded-t-md bg-bg-secondary">
-                        <div className="w-full rounded-t-md transition-[height] duration-500 ease-in-out" style={{ height: `${pct}%`, backgroundColor: colors[idx % colors.length] }}></div>
+                    <div
+                      key={cat}
+                      onClick={() => setLedgerCategoryFilter(isSelected ? "" : cat)}
+                      className="flex min-w-[60px] max-w-[90px] flex-1 shrink-0 cursor-pointer flex-col items-center gap-1.5"
+                      title={isSelected ? "Click to clear filter" : `Filter ledger by ${cat}`}
+                    >
+                      <span className={`text-[11px] font-semibold transition-colors duration-200 ${isInactive ? "text-text-muted" : "text-text-secondary"}`}>
+                        {currency}{(total/1000).toFixed(1)}k
+                      </span>
+                      <div
+                        className={`flex h-[200px] w-8 items-end rounded-t-md bg-bg-secondary transition-all duration-200 ${
+                          isSelected ? "ring-2 ring-text-primary ring-offset-1" : ""
+                        }`}
+                      >
+                        <div
+                          className="w-full rounded-t-md transition-all duration-500 ease-in-out"
+                          style={{
+                            height: `${pct}%`,
+                            backgroundColor: isInactive ? "#d4d2c9" : colors[idx % colors.length],
+                          }}
+                        ></div>
                       </div>
-                      <span className="w-full overflow-hidden text-ellipsis whitespace-nowrap text-center font-mono text-[9px] text-text-muted uppercase" title={cat}>{cat}</span>
+                      <span
+                        className={`w-full overflow-hidden text-ellipsis whitespace-nowrap text-center font-mono text-[9px] uppercase transition-colors duration-200 ${
+                          isSelected ? "font-bold text-text-primary" : "text-text-muted"
+                        }`}
+                        title={cat}
+                      >
+                        {cat}
+                      </span>
                     </div>
                   );
                 })}
                 {Object.keys(catBreakdown).length === 0 && <p className="self-center text-[13px] text-text-muted">No transactions to plot.</p>}
               </div>
-            ) : (
+            ): (
               <div className="flex h-[260px] items-end justify-start gap-4 overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2">
                 {dailyTrend.map(([date, total]) => {
                   const maxAmt = Math.max(...dailyTrend.map(d => d[1]), 1);
