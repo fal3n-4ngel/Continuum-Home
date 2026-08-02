@@ -104,7 +104,7 @@ export default function PrivacyPolicyPage() {
               If you have any questions about this Privacy Policy or self-hosting, feel free to contact the administrator or reach out at:
             </p>
             <p className="font-mono text-xs text-text-primary mt-1">
-              {AUTHOR.email || "adiadithyakrishnan@gmail.com"}
+              {AUTHOR.email || "hello@adithyakrishnan.com"}
             </p>
           </section>
 

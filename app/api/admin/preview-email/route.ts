@@ -307,7 +307,7 @@ function buildSubscriptionsEmail(appUrl: string, todayStr: string): { html: stri
 export async function POST(req: NextRequest) {
   try {
     const session = await requireUser(req);
-    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com";
+    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
     if (session.user.email !== adminEmail) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -319,7 +319,7 @@ export async function POST(req: NextRequest) {
 
     const body = await req.json().catch(() => ({}));
     const type: string = body.type || "portfolio";
-    const TO_EMAIL = "adiadithyakrishnan@gmail.com";
+    const TO_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
     const appUrl = process.env.APP_URL || "http://localhost:3000";
     const todayStr = new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "short", day: "numeric" });
 
