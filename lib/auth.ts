@@ -189,7 +189,6 @@ async function trackGptMetrics(req: NextRequest, uid: string, email: string | nu
 
   let user: AuthedUser;
   let resolvedIdToken = token;
-  let usedRefreshToken = false;
 
   try {
     user = await verifyIdToken(config, token);
@@ -198,7 +197,6 @@ async function trackGptMetrics(req: NextRequest, uid: string, email: string | nu
       const refreshResult = await refreshIdToken(config, token);
       user = refreshResult.user;
       resolvedIdToken = refreshResult.idToken;
-      usedRefreshToken = true;
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) recordAuthFailure(ip);
       throw err;
@@ -209,18 +207,6 @@ async function trackGptMetrics(req: NextRequest, uid: string, email: string | nu
   trackGptMetrics(req, user.uid, user.email).catch(() => {});
 
   const session = { creds, config, uid: user.uid, idToken: resolvedIdToken, user };
-
-  // Gate Custom GPT / OpenAPI / Agent access behind Pro status
-  const userAgent = (req.headers.get("user-agent") || "").toLowerCase();
-  const isAgent =
-    userAgent.includes("chatgpt") ||
-    userAgent.includes("openai") ||
-    userAgent.includes("coze") ||
-    userAgent.includes("dify") ||
-    userAgent.includes("poe") ||
-    usedRefreshToken;
-
-
 
   return session;
 }

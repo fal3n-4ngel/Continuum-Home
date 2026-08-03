@@ -950,10 +950,14 @@ export default function Dashboard() {
       const auth = getAuth(app);
       setFirebaseAuth({ auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut });
 
-      // Process any pending redirect sign-in result (e.g. from popup-blocked browsers
+      // Consume any pending redirect sign-in result (e.g. from popup-blocked browsers
       // that fell back to signInWithRedirect — the credential lands here after redirect)
-      getRedirectResult(auth).catch(() => {
-        // Silently ignore — no pending redirect, or redirect failed
+      getRedirectResult(auth).then((result) => {
+        if (result?.user) {
+          console.log("[Auth] Redirect sign-in consumed:", result.user.email);
+        }
+      }).catch((err) => {
+        console.warn("[Auth] getRedirectResult error:", err?.code, err?.message);
       });
 
       unsubscribe = auth.onAuthStateChanged(async (fbUser: any) => {
@@ -2174,6 +2178,7 @@ const updateMarketPrices = async () => {
               });
           }
         }}
+        authError={undefined}
         firebaseAuthReady={!!firebaseAuth}
       />
     );

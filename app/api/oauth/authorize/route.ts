@@ -12,15 +12,20 @@ export async function GET(req: NextRequest) {
   const clientId = searchParams.get("client_id");
   const redirectUri = searchParams.get("redirect_uri");
   const state = searchParams.get("state");
-  const responseType = searchParams.get("response_type");
 
   if (!clientId || !redirectUri || !state) {
     return new NextResponse("Missing required OAuth 2.0 query parameters (client_id, redirect_uri, state).", { status: 400 });
   }
 
-  // Fetch Firebase config from internal route so the client SDK can initialize
   const creds = await getCredentials(req);
   const firebaseConfig = parseFirebaseConfig(creds);
+
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  const domainFromHost = host ? host.split(":")[0] : null;
+  const isLocalhost = domainFromHost === "localhost" || domainFromHost === "127.0.0.1";
+  if (!isLocalhost && domainFromHost) {
+    firebaseConfig.authDomain = domainFromHost;
+  }
 
   // Render a clean, premium cream-neutral styled HTML login/consent screen
   const html = `
@@ -304,7 +309,7 @@ export async function POST(req: NextRequest) {
     // 1. Verify user identity token
     const creds = await getCredentials(req);
     const config = parseFirebaseConfig(creds);
-    const user = await verifyIdToken(config, idToken);
+    await verifyIdToken(config, idToken);
 
     if (!redis) {
       return NextResponse.json({ error: "Upstash Redis DB is offline." }, { status: 500 });

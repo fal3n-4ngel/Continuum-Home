@@ -3,7 +3,6 @@ import crypto from "crypto";
 // AES-256-GCM configuration
 const ALGORITHM = "aes-256-gcm";
 const IV_LENGTH = 12; // 96 bits for GCM
-const AUTH_TAG_LENGTH = 16; // 128 bits for GCM
 
 // Get or derive a 32-byte encryption key
 function getEncryptionKey(useFallbackOnly: boolean = false): Buffer {
