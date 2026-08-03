@@ -18,9 +18,15 @@ export async function GET(req: NextRequest) {
     return new NextResponse("Missing required OAuth 2.0 query parameters (client_id, redirect_uri, state).", { status: 400 });
   }
 
-  // Fetch Firebase config from internal route so the client SDK can initialize
   const creds = await getCredentials(req);
   const firebaseConfig = parseFirebaseConfig(creds);
+
+  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+  const domainFromHost = host ? host.split(":")[0] : null;
+  const isLocalhost = domainFromHost === "localhost" || domainFromHost === "127.0.0.1";
+  if (!isLocalhost && domainFromHost) {
+    firebaseConfig.authDomain = domainFromHost;
+  }
 
   // Render a clean, premium cream-neutral styled HTML login/consent screen
   const html = `
