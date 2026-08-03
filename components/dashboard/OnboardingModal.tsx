@@ -27,7 +27,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           <div className="flex items-center gap-3">
             <LogoMark size={34} color="var(--text-primary)" className="shrink-0" />
             <div>
-              <p className="text-lg leading-[1.2] font-bold tracking-[-0.3px]">Welcome to PHub</p>
+              <p className="text-lg leading-[1.2] font-bold tracking-[-0.3px]">Welcome to Continuum</p>
               <p className="mt-0.5 font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase">Personal Hub</p>
             </div>
           </div>

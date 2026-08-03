@@ -247,7 +247,7 @@ Always confirm what you logged in one short line, including the year you recorde
             It uses secure OAuth 2.0 — no copy-pasting API keys required.
           </p>
           <a
-            href="https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-phub-dashboard-public"
+            href="https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-dashboard-public"
             target="_blank"Continuum-Home
             rel="noopener noreferrer"
             className={BTN_PRIMARY}

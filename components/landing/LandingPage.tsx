@@ -498,7 +498,7 @@ export default function LandingPage({
             className={`mt-4 text-[12.5px] text-[#9c9a92] ${HERO_REVEAL} [animation-delay:0.23s]`}
           >
             Joined by <strong className="font-semibold text-[#6e6c64]">{userCount}</strong>{" "}
-            {userCount === 1 ? "person" : "people"} tracking their life with PHub
+            {userCount === 1 ? "person" : "people"} tracking their life with Continuum
           </p>
         )}
         <div
@@ -666,9 +666,9 @@ export default function LandingPage({
                   </div>
                 </div>
 
-                {/* Column 2: What Phub Handles */}
+                {/* Column 2: What Continuum Handles */}
                 <div className="z-[2] flex w-[230px] min-w-0 flex-col justify-center gap-[22px] max-[900px]:w-full">
-                  <span className={FEATURE_NUM}>WHAT PHUB HANDLES</span>
+                  <span className={FEATURE_NUM}>WHAT Continuum HANDLES</span>
 
                   <div className={DIAGRAM_NODE} id="dg-c2-n1">
                     <div className={`${NODE_ICON} bg-[#e39282]`}>📊</div>
@@ -697,9 +697,9 @@ export default function LandingPage({
                   </div>
                 </div>
 
-                {/* Column 3: Phub Logo Hub */}
+                {/* Column 3: Continuum Logo Hub */}
                 <div className="z-[2] flex w-[120px] min-w-0 flex-col items-center justify-center gap-9 max-[900px]:w-full">
-                  <span className={FEATURE_NUM}>PHUB ENGINE</span>
+                  <span className={FEATURE_NUM}>Continuum ENGINE</span>
                   <div
                     className="relative flex h-[84px] w-[84px] flex-col items-center justify-center gap-[3px] rounded-[20px] bg-[#1c1b18] text-white shadow-[0_8px_24px_rgba(28,27,24,0.16)]"
                     id="dg-hub"
@@ -763,7 +763,7 @@ export default function LandingPage({
 
               {/* Step 2: Processing */}
               <div className="flex w-full flex-col items-center gap-2.5">
-                <span className={FEATURE_NUM}>WHAT PHUB HANDLES</span>
+                <span className={FEATURE_NUM}>WHAT Continuum HANDLES</span>
                 <div className={DIAGRAM_NODE}>
                   <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#e39282] text-[11px]">
                     📊
@@ -794,7 +794,7 @@ export default function LandingPage({
 
               {/* Step 3: Logo */}
               <div className="flex w-full flex-col items-center gap-2.5">
-                <span className={FEATURE_NUM}>PHUB ENGINE</span>
+                <span className={FEATURE_NUM}>Continuum ENGINE</span>
                 <div className="relative flex h-[84px] w-[84px] flex-col items-center justify-center gap-[3px] rounded-[20px] bg-[#1c1b18] text-white shadow-[0_8px_24px_rgba(28,27,24,0.16)]">
                   <BentoLogo size={22} color="#ffffff" />
                   <span className="font-mono text-[8px] font-bold tracking-[0.8px] uppercase">
@@ -878,7 +878,7 @@ export default function LandingPage({
               <div className={`${BROWSER_DOT} bg-[#ffbd2e]`} />
               <div className={`${BROWSER_DOT} bg-[#27c93f]`} />
               <span className="flex-1 text-center font-mono text-[10.5px] font-semibold tracking-wider text-[#9c9a92] uppercase">
-                ChatGPT · Phub
+                ChatGPT · Continuum
               </span>
             </div>
             <div className="flex h-[280px] items-end gap-3 bg-[#f4f3ec] p-5">
@@ -1379,7 +1379,7 @@ export default function LandingPage({
 
           <div className="flex flex-wrap items-center justify-between gap-2.5 py-[22px] max-[900px]:flex-col max-[900px]:items-start">
             <div className="flex flex-wrap items-center gap-2.5 font-mono text-[10.5px] tracking-[0.6px] text-[#9c9a92] uppercase">
-              <span>© {new Date().getFullYear()} PHUB</span>
+              <span>© {new Date().getFullYear()} Continuum</span>
               <span className="text-[#d1cfc7]">·</span>
               <span>MIT LICENSED</span>
               <span className="text-[#d1cfc7]">·</span>
