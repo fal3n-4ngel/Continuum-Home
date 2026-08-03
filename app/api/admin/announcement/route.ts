@@ -81,8 +81,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required fields: subject, title, content" }, { status: 400 });
     }
 
-    const appUrl = process.env.APP_URL || "https://continuuuum.vercel.app";
-    const sender = process.env.CRON_SENDER_EMAIL || "Continuum Home <onboarding@resend.dev>";
+    const appUrl = process.env.APP_URL || "https://continuum-home.vercel.app";
+    const sender = process.env.CRON_SENDER_EMAIL || "Continuum <onboarding@resend.dev>";
 
     // Build the beautiful announcement email body HTML
     const emailBody = wrap(`
