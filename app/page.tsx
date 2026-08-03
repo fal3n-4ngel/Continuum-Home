@@ -2158,7 +2158,14 @@ const updateMarketPrices = async () => {
       <LandingPage
         onLogin={() => {
           if (firebaseAuth) {
-            firebaseAuth.signInWithPopup(firebaseAuth.auth, new firebaseAuth.GoogleAuthProvider());
+            firebaseAuth.signInWithPopup(firebaseAuth.auth, new firebaseAuth.GoogleAuthProvider())
+              .catch((err: any) => {
+                if (err.code === "auth/popup-blocked" || err.code === "auth/cancelled-popup-request") {
+                  firebaseAuth.signInWithRedirect(firebaseAuth.auth, new firebaseAuth.GoogleAuthProvider());
+                } else {
+                  console.error("Login failed:", err);
+                }
+              });
           }
         }}
         firebaseAuthReady={!!firebaseAuth}
