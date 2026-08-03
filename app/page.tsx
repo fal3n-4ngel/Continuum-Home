@@ -946,9 +946,15 @@ export default function Dashboard() {
       const config = await res.json();
       const app = getApps().length ? getApps()[0] : initializeApp(config);
 
-      const { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut } = await import("firebase/auth");
+      const { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, getRedirectResult } = await import("firebase/auth");
       const auth = getAuth(app);
       setFirebaseAuth({ auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut });
+
+      // Process any pending redirect sign-in result (e.g. from popup-blocked browsers
+      // that fell back to signInWithRedirect — the credential lands here after redirect)
+      getRedirectResult(auth).catch(() => {
+        // Silently ignore — no pending redirect, or redirect failed
+      });
 
       unsubscribe = auth.onAuthStateChanged(async (fbUser: any) => {
         if (fbUser) {

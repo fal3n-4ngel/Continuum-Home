@@ -220,24 +220,7 @@ async function trackGptMetrics(req: NextRequest, uid: string, email: string | nu
     userAgent.includes("poe") ||
     usedRefreshToken;
 
-  if (isAgent) {
-    try {
-      const isOfficialCloud = config.projectId === "personal-hub-adi";
-      if (isOfficialCloud) {
-        const { getSettings } = await import("./firebase");
-        const settings = await getSettings(session);
-        if (!settings || !settings.isPro) {
-          throw new ApiError(
-            403,
-            "Upgrade to Pro: Connecting external AI tools or Custom GPTs requires a Continuum Home Pro account. Please go to your dashboard settings to upgrade."
-          );
-        }
-      }
-    } catch (err) {
-      if (err instanceof ApiError) throw err;
-      // Fail open if Firestore is down, but otherwise enforce
-    }
-  }
+
 
   return session;
 }

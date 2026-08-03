@@ -198,7 +198,10 @@ export async function GET(req: NextRequest) {
 
         let currentUser = null;
 
-        // 2. Auth State Observer
+        // 2. Consume any pending redirect result first (popup-blocked fallback)
+        auth.getRedirectResult().catch(() => { /* no pending redirect */ });
+
+        // 3. Auth State Observer
         auth.onAuthStateChanged(async (user) => {
           loadingDiv.style.display = 'none';
           if (user) {
