@@ -490,15 +490,15 @@ export default function LandingPage({
             rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-full border-[1.5px] border-[#d1cfc7] bg-transparent px-7 py-[13px] text-sm font-semibold text-[#1c1b18] no-underline transition-all duration-200 hover:border-[#1c1b18] hover:bg-[rgba(28,27,24,0.04)]"
           >
-            View on GitHub
+            ⭐ Star on GitHub
           </a>
         </div>
         {userCount !== null && (
           <p
             className={`mt-4 text-[12.5px] text-[#9c9a92] ${HERO_REVEAL} [animation-delay:0.23s]`}
           >
-            Joined by <strong className="font-semibold text-[#6e6c64]">{userCount}</strong>{" "}
-            {userCount === 1 ? "person" : "people"} tracking their life with Continuum
+            <strong className="font-semibold text-[#6e6c64]">{userCount}</strong>{" "}
+            {userCount === 1 ? "person is" : "people are"} already using Continuum
           </p>
         )}
         <div
@@ -1064,15 +1064,11 @@ export default function LandingPage({
               <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
                 <span className={FI_YES}>✓</span> AES-256 GCM DB Encryption
               </li>
-              {/* Pro exclusions */}
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-muted opacity-45">
-                <span className="shrink-0 text-[13px]">✕</span> <span>Custom GPT / OpenAPI token access</span>
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> Custom GPT &amp; AI Agent integration
               </li>
               <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-muted opacity-45">
-                <span className="shrink-0 text-[13px]">✕</span> <span>Kiroku AI Chat Assistant</span>
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-muted opacity-45">
-                <span className="shrink-0 text-[13px]">✕</span> <span>Financial Health Tab (Pay-cycles)</span>
+                <span className="shrink-0 text-[13px]">✕</span> <span>Pro Tabs & AI Chat Assistant</span>
               </li>
             </ul>
             {authError && (
@@ -1113,24 +1109,30 @@ export default function LandingPage({
               or a $25 one-time lifetime payment
             </p>
             <p className="mt-4 flex-1 text-[13px] leading-[1.65] text-text-secondary">
-              Support the developer to connect external AI agents or Custom GPTs to your cloud-hosted dashboard. Enable full API endpoints.
+              Support the developer and unlock premium extras — Financial Health insights, early feature access, and a sponsor badge on your profile.
             </p>
             <div className="my-6 h-px bg-border-subtle" />
             <ul className="mb-7 flex list-none flex-col gap-2.5 p-0">
               <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> <strong>Custom GPT / OpenAPI token access</strong>
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> <strong>Kiroku AI Chat Assistant</strong>
+                <span className={FI_YES}>✓</span> Everything in Free
               </li>
               <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
                 <span className={FI_YES}>✓</span> <strong>Financial Health Tab</strong> (Pay-cycles)
               </li>
               <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Sponsor badge & profile highlight
+                <span className={FI_YES}>✓</span> <strong>Kiroku AI Chat Assistant</strong>
               </li>
               <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Early feature access & changelogs
+                <span className={FI_YES}>✓</span> Sponsor badge &amp; profile highlight
+              </li>
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> Early feature access &amp; changelogs
+              </li>
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> Priority bug reports &amp; feedback
+              </li>
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> Support open-source development
               </li>
             </ul>
             <button
@@ -1175,6 +1177,12 @@ export default function LandingPage({
               </li>
               <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
                 <span className={FI_YES}>✓</span> MIT licensed open source
+              </li>
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> Custom domain &amp; infra ownership
+              </li>
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> No rate limits or shared resources
               </li>
             </ul>
             <a

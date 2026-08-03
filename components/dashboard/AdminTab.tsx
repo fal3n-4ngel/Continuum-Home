@@ -250,7 +250,7 @@ Thank you for being part of our journey!`);
       const res = await fetch("/api/admin/preview-email", {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify({ task }),
+        body: JSON.stringify({ type: task }),
       });
       const data = await res.json();
       if (res.ok) {

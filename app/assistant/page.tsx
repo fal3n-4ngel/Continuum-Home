@@ -24,7 +24,7 @@ export default function AssistantIntegrationPage() {
   const [user, setUser] = useState<AgentUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
-  const [isProUser, setIsProUser] = useState<boolean | null>(null); // null = loading
+
   const origin = useOrigin();
   const [copied, setCopied] = useState<string>("");
   const [tokenBusy, setTokenBusy] = useState(false);
@@ -50,30 +50,8 @@ export default function AssistantIntegrationPage() {
           if (fbUser) {
             const idToken = await fbUser.getIdToken();
             setUser({ displayName: fbUser.displayName, email: fbUser.email || "", idToken });
-            
-            // Bypass Pro gate for self-hosters (non-official project ID)
-            const isOfficial = config.projectId === "personal-hub-adi";
-            if (!isOfficial) {
-              setIsProUser(true);
-            } else {
-              // Check pro status for official cloud users
-              try {
-                const settingsRes = await fetch("/api/settings", {
-                  headers: { Authorization: `Bearer ${idToken}` },
-                });
-                if (settingsRes.ok) {
-                  const data = await settingsRes.json();
-                  setIsProUser(!!data.isPro);
-                } else {
-                  setIsProUser(false);
-                }
-              } catch {
-                setIsProUser(false);
-              }
-            }
           } else {
             setUser(null);
-            setIsProUser(null);
           }
           setAuthLoading(false);
         });
@@ -165,34 +143,6 @@ Always confirm what you logged in one short line, including the year you recorde
     </span>
   );
 
-  const renderProGate = () => (
-    <div className="flex flex-col items-start gap-4 rounded-[8px] border border-border-subtle bg-bg-primary px-5 py-5">
-      <div className="flex items-center gap-2.5">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-muted">
-          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-        </svg>
-        <span className="text-[12.5px] font-semibold text-text-primary">Pro feature</span>
-        <span
-          className="inline-flex items-center rounded-full border px-1.5 py-[1px] text-[9px] font-bold tracking-wider"
-          style={{ borderColor: "rgba(139,92,246,0.6)", color: "#7c3aed" }}
-        >PRO</span>
-      </div>
-      <p className="text-[12.5px] leading-relaxed text-text-secondary">
-        API key and token generation is available to Pro subscribers. Upgrade to access this section and connect your custom agents.
-      </p>
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 text-[12px] font-medium no-underline transition-colors"
-        style={{ color: "#7c3aed" }}
-      >
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-        </svg>
-        Claim Pro access from your dashboard
-      </Link>
-    </div>
-  );
 
   return (
     <div className="min-h-screen bg-bg-primary">
@@ -299,9 +249,7 @@ Always confirm what you logged in one short line, including the year you recorde
               <p className="mb-3 text-[13px] leading-[1.7] text-text-secondary">
                 For <strong className="text-text-primary">Poe Server Bots</strong>, copy the Server Webhook URL and paste it in Poe's Server URL settings:
               </p>
-              {isProUser === false ? (
-                renderProGate()
-              ) : isProUser === true ? (
+              {user ? (
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={CODE}>{poeWebhookUrl}</span>
                   <button onClick={() => copyText("poe", poeWebhookUrl)} className={`${BTN_GHOST} py-1.5 text-xs`}>
@@ -365,9 +313,7 @@ Always confirm what you logged in one short line, including the year you recorde
                 <button onClick={signIn} disabled={!authApi} className={`${BTN_PRIMARY} w-fit text-xs`}>
                   Sign in to retrieve API Key
                 </button>
-              ) : isProUser === false ? (
-                renderProGate()
-              ) : isProUser === true ? (
+              ) : (
                 <div className="flex flex-col gap-2.5">
                   <p className="text-[12px] text-text-secondary">
                     Signed in as <strong className="text-text-primary">{user.displayName || user.email}</strong>
@@ -381,8 +327,6 @@ Always confirm what you logged in one short line, including the year you recorde
                     </button>
                   </div>
                 </div>
-              ) : (
-                <p className="text-[12px] text-text-muted italic">Checking Pro status…</p>
               )}
             </div>
           </div>
