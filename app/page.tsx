@@ -1,4 +1,5 @@
 "use client";
+import { SITE_NAME } from "@/lib/site";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
@@ -38,6 +39,7 @@ import { FinancialHealthTab } from "@/components/dashboard/FinancialHealthTab";
 import { ReportsTab } from "@/components/dashboard/ReportsTab";
 import { MediaDetailsModal } from "@/components/dashboard/MediaDetailsModal";
 import { KirokuChatBubble } from "@/components/dashboard/KirokuChatBubble";
+import { ClaimProModal } from "@/components/dashboard/ClaimProModal";
 
 interface FirebaseAuthModule {
   auth: any;
@@ -72,6 +74,11 @@ export default function Dashboard() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isFetchingExpenses, setIsFetchingExpenses] = useState(false);
   const [expensesLoaded, setExpensesLoaded] = useState(false);
+  const [watchlistLoaded, setWatchlistLoaded] = useState(false);
+  const [subscriptionsLoaded, setSubscriptionsLoaded] = useState(false);
+  const [noteLoaded, setNoteLoaded] = useState(false);
+  const [investmentsLoaded, setInvestmentsLoaded] = useState(false);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [expenseTitle, setExpenseTitle] = useState("");
   const [expenseAmount, setExpenseAmount] = useState("");
   const [expenseCategory, setExpenseCategory] = useState("");
@@ -116,6 +123,7 @@ export default function Dashboard() {
   // Pro-tier flag from settings. Server-controlled (not patchable via the
   // API), so it only changes when set directly in Firestore.
   const [isProUser, setIsProUser] = useState(false);
+  const [showClaimPro, setShowClaimPro] = useState(false);
   const [activeChart, setActiveChart] = useState<"category" | "trend">("category");
   const [expenseSearch, setExpenseSearch] = useState("");
   const [ledgerCategoryFilter, setLedgerCategoryFilter] = useState("");
@@ -1003,6 +1011,7 @@ export default function Dashboard() {
       console.error(err);
     } finally {
       setIsFetchingWatchlist(false);
+      setWatchlistLoaded(true);
     }
   };
 
@@ -1030,6 +1039,7 @@ export default function Dashboard() {
       console.error(err);
     } finally {
       setIsFetchingSubscriptions(false);
+      setSubscriptionsLoaded(true);
     }
   };
 
@@ -1045,6 +1055,7 @@ export default function Dashboard() {
       console.error(err);
     } finally {
       setIsFetchingNote(false);
+      setNoteLoaded(true);
     }
   };
 
@@ -1061,6 +1072,7 @@ export default function Dashboard() {
       console.error(err);
     } finally {
       setIsFetchingInvestments(false);
+      setInvestmentsLoaded(true);
     }
   };
 
@@ -1095,6 +1107,8 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error(err);
+    } finally {
+      setSettingsLoaded(true);
     }
   };
 
@@ -2097,10 +2111,43 @@ const updateMarketPrices = async () => {
   }, [filteredExpenses]);
 
   /* ─── Sign In Screen ─── */
-  if (authLoading) {
+  // Show loader while initializing firebase authentication OR while fetching user's data collections
+  const isDataLoaded = !user || (expensesLoaded && watchlistLoaded && subscriptionsLoaded && noteLoaded && investmentsLoaded && settingsLoaded);
+  const showLoader = authLoading || (user && !isDataLoaded);
+
+  if (showLoader) {
     return (
-      <div className="flex h-screen items-center justify-center bg-bg-primary">
-        <p className="text-sm text-text-muted">Loading PHub Dashboard…</p>
+      <div className="flex h-screen flex-col items-center justify-center bg-bg-primary text-text-primary">
+        <style>{`
+          @keyframes pulse-dot {
+            0%, 100% { opacity: 0.35; transform: scale(0.95); }
+            50% { opacity: 0.95; transform: scale(1.05); }
+          }
+          .bento-cell {
+            animation: pulse-dot 1.4s ease-in-out infinite;
+          }
+          .bento-cell-1 { animation-delay: 0s; }
+          .bento-cell-2 { animation-delay: 0.2s; }
+          .bento-cell-3 { animation-delay: 0.4s; }
+          .bento-cell-4 { animation-delay: 0.6s; }
+        `}</style>
+        
+        <div className="flex flex-col items-center gap-6">
+          {/* Animated Bento Grid Logo */}
+          <div className="grid grid-cols-2 gap-1.5 w-11 h-11">
+            <div className="bento-cell bento-cell-1 rounded-[4px] bg-text-primary" />
+            <div className="bento-cell bento-cell-2 rounded-[4px] bg-text-primary/60" />
+            <div className="bento-cell bento-cell-3 rounded-[4px] bg-text-primary/60" />
+            <div className="bento-cell bento-cell-4 rounded-[4px] bg-text-primary/30" />
+          </div>
+          
+          <div className="flex flex-col items-center gap-1.5 text-center animate-[heroFadeUp_0.6s_ease-out_both]">
+            <span className="font-body font-semibold text-lg tracking-tight">{SITE_NAME}</span>
+            <span className="text-[12px] tracking-wide text-text-muted font-mono uppercase">
+              {authLoading ? "Initializing security..." : "Fetching logs..."}
+            </span>
+          </div>
+        </div>
       </div>
     );
   }
@@ -2129,6 +2176,7 @@ const updateMarketPrices = async () => {
         user={user}
         showInvestmentsTab={showInvestmentsTab}
         isProUser={isProUser}
+        onClaimPro={() => setShowClaimPro(true)}
         triggerConfirm={triggerConfirm}
         firebaseAuth={firebaseAuth}
         setExpenses={setExpenses}
@@ -2160,6 +2208,7 @@ const updateMarketPrices = async () => {
         isSyncingLetterboxd={isImportingLetterboxd}
         showInvestmentsTab={showInvestmentsTab}
         isProUser={isProUser}
+        onClaimPro={() => setShowClaimPro(true)}
         setShowOnboarding={setShowOnboarding}
         triggerConfirm={triggerConfirm}
         firebaseAuth={firebaseAuth}
@@ -2524,6 +2573,15 @@ const updateMarketPrices = async () => {
 
       {enableChatAssistant && isProUser && (
         <KirokuChatBubble idToken={user?.idToken} />
+      )}
+
+      {/* Claim Pro Modal */}
+      {user && (
+        <ClaimProModal
+          isOpen={showClaimPro}
+          onClose={() => setShowClaimPro(false)}
+          idToken={user.idToken}
+        />
       )}
     </div>
   );

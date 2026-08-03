@@ -3,13 +3,14 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Auth, GoogleAuthProvider as GoogleAuthProviderClass, signInWithPopup as signInWithPopupFn } from "firebase/auth";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { useOrigin } from "@/hooks/useOrigin";
 import { LogoMark } from "@/components/Logo";
 
 interface AgentUser {
   displayName: string | null;
   email: string;
+  idToken: string;
 }
 
 interface AuthApi {
@@ -23,6 +24,7 @@ export default function AssistantIntegrationPage() {
   const [user, setUser] = useState<AgentUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
+  const [isProUser, setIsProUser] = useState<boolean | null>(null); // null = loading
   const origin = useOrigin();
   const [copied, setCopied] = useState<string>("");
   const [tokenBusy, setTokenBusy] = useState(false);
@@ -44,8 +46,35 @@ export default function AssistantIntegrationPage() {
         const auth = getAuth(app);
         setAuthApi({ auth, GoogleAuthProvider, signInWithPopup });
 
-        unsubscribe = onAuthStateChanged(auth, (fbUser) => {
-          setUser(fbUser ? { displayName: fbUser.displayName, email: fbUser.email || "" } : null);
+        unsubscribe = onAuthStateChanged(auth, async (fbUser) => {
+          if (fbUser) {
+            const idToken = await fbUser.getIdToken();
+            setUser({ displayName: fbUser.displayName, email: fbUser.email || "", idToken });
+            
+            // Bypass Pro gate for self-hosters (non-official project ID)
+            const isOfficial = config.projectId === "personal-hub-adi";
+            if (!isOfficial) {
+              setIsProUser(true);
+            } else {
+              // Check pro status for official cloud users
+              try {
+                const settingsRes = await fetch("/api/settings", {
+                  headers: { Authorization: `Bearer ${idToken}` },
+                });
+                if (settingsRes.ok) {
+                  const data = await settingsRes.json();
+                  setIsProUser(!!data.isPro);
+                } else {
+                  setIsProUser(false);
+                }
+              } catch {
+                setIsProUser(false);
+              }
+            }
+          } else {
+            setUser(null);
+            setIsProUser(null);
+          }
           setAuthLoading(false);
         });
       } catch (err) {
@@ -124,194 +153,269 @@ Always confirm what you logged in one short line, including the year you recorde
     "What am I currently watching?",
   ];
 
-  const CODE_CLASS = "rounded-[5px] bg-bg-secondary px-[7px] py-0.5 font-mono text-xs break-all";
-  const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
-  const BTN_PRIMARY = "rounded-md border border-text-primary bg-text-primary text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27] disabled:cursor-not-allowed disabled:opacity-50";
-  const BTN_SECONDARY = "rounded-md border border-border-subtle bg-transparent text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary disabled:cursor-not-allowed disabled:opacity-50";
+  // ── Reusable style atoms ──────────────────────────────────────────────────
+  const CARD = "rounded-[10px] border border-border-subtle bg-bg-card p-6 shadow-[0_2px_10px_-2px_rgba(110,108,100,0.05)]";
+  const CODE = "rounded-[5px] bg-bg-secondary px-[7px] py-0.5 font-mono text-xs break-all";
+  const BTN_PRIMARY = "inline-flex items-center justify-center rounded-md border border-text-primary bg-text-primary px-4 py-2.5 text-[12.5px] font-medium text-white no-underline transition-all duration-200 hover:bg-[#2e2d27] hover:border-[#2e2d27] disabled:cursor-not-allowed disabled:opacity-40";
+  const BTN_GHOST = "inline-flex items-center justify-center rounded-md border border-border-subtle bg-transparent px-4 py-2.5 text-[12.5px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary disabled:cursor-not-allowed disabled:opacity-40";
 
-  const stepBadge = (n: number) => (
-    <span className="inline-flex h-6.5 w-6.5 shrink-0 items-center justify-center rounded-full bg-text-primary text-[13px] font-bold text-white">{n}</span>
+  const renderStep = (n: number) => (
+    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-bg-primary font-mono text-[11px] font-bold text-text-secondary">
+      {n}
+    </span>
+  );
+
+  const renderProGate = () => (
+    <div className="flex flex-col items-start gap-4 rounded-[8px] border border-border-subtle bg-bg-primary px-5 py-5">
+      <div className="flex items-center gap-2.5">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-muted">
+          <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        <span className="text-[12.5px] font-semibold text-text-primary">Pro feature</span>
+        <span
+          className="inline-flex items-center rounded-full border px-1.5 py-[1px] text-[9px] font-bold tracking-wider"
+          style={{ borderColor: "rgba(139,92,246,0.6)", color: "#7c3aed" }}
+        >PRO</span>
+      </div>
+      <p className="text-[12.5px] leading-relaxed text-text-secondary">
+        API key and token generation is available to Pro subscribers. Upgrade to access this section and connect your custom agents.
+      </p>
+      <Link
+        href="/"
+        className="inline-flex items-center gap-1.5 text-[12px] font-medium no-underline transition-colors"
+        style={{ color: "#7c3aed" }}
+      >
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+        </svg>
+        Claim Pro access from your dashboard
+      </Link>
+    </div>
   );
 
   return (
-    <div className="min-h-screen bg-bg-primary px-5 py-10">
-      <div className="mx-auto flex max-w-195 flex-col gap-5">
+    <div className="min-h-screen bg-bg-primary">
+      <div className="mx-auto flex max-w-[780px] flex-col gap-6 px-5 py-10 md:py-14">
 
-        {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        {/* ── Header ─────────────────────────────────────────────── */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-1">
           <div className="flex items-center gap-2.5">
-            <LogoMark size={22} color="var(--text-primary)" />
-            <span className="text-[19px] font-bold tracking-[-0.5px]">PHub Dashboard</span>
+            <LogoMark size={20} color="var(--text-primary)" />
+            <span className="text-[15px] font-semibold tracking-tight text-text-primary">{SITE_NAME}</span>
           </div>
-          <Link href="/" className="mb-0 flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-[13px] font-medium text-text-secondary no-underline transition-all duration-200 hover:bg-bg-primary hover:text-text-primary">← Back to dashboard</Link>
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12.5px] font-medium text-text-secondary no-underline transition-all hover:text-text-primary"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+            Back to dashboard
+          </Link>
         </div>
 
-        <div>
-          <h1 className="text-[26px] font-bold tracking-[-0.5px]">ChatGPT Setup Guide</h1>
-          <p className="mt-2 text-sm leading-[1.6] text-text-secondary">
-            Connect your dashboard to a Custom GPT on the GPT Store. If you prefer a native chat assistant, it is available as a floating chat bubble in the bottom right corner of the dashboard page!
+        {/* ── Page title ─────────────────────────────────────────── */}
+        <div className="border-b border-border-subtle pb-6">
+          <p className="font-mono text-[9px] font-bold uppercase tracking-[1.2px] text-text-muted mb-2">Integration guide</p>
+          <h1 className="font-serif text-[28px] italic font-medium text-text-primary leading-tight mb-2">
+            Connect a Custom GPT
+          </h1>
+          <p className="text-[13px] leading-[1.7] text-text-secondary max-w-[560px]">
+            Link your dashboard to a Custom GPT on the GPT Store, or wire it up to any AI agent platform that supports OpenAPI schemas.
           </p>
         </div>
 
         {authError && (
-          <div className="rounded-lg border border-[#fecaca] bg-[#fef2f2] px-3.5 py-2.5 text-xs text-[#dc2626]">
+          <div className="rounded-[8px] border border-[#fecaca] bg-[#fef2f2] px-4 py-3 text-[12.5px] text-[#b3666b]">
             {authError}
           </div>
         )}
 
-        {/* Recommended Option: Public Custom GPT */}
-        <div className="rounded-card border border-border-subtle bg-white p-6 shadow-subtle flex flex-col gap-4 border-l-4 border-l-text-primary">
-          <div className="flex items-center justify-between">
-            <span className="inline-block rounded bg-[#eae8e0] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-text-secondary w-fit">
-              RECOMMENDED (EASIEST)
-            </span>
+        {/* ── Recommended: Public GPT ────────────────────────────── */}
+        <div className={CARD}>
+          <div className="mb-3 flex items-center gap-2">
+            <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">Recommended</span>
+            <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">·</span>
+            <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">Easiest</span>
           </div>
-          <h2 className="text-[17px] font-bold font-serif leading-tight">Use the Official Public Custom GPT</h2>
-          <p className="text-[13px] leading-[1.6] text-text-secondary">
-            Connect to the pre-built, secure **PHub Dashboard Assistant** on the GPT Store. 
-            It uses secure OAuth 2.0 to link directly to your account. No copy-pasting API keys required!
+          <h2 className="font-serif text-[18px] italic font-medium text-text-primary mb-2 leading-snug">
+            Use the Official Public Custom GPT
+          </h2>
+          <p className="text-[13px] leading-[1.7] text-text-secondary mb-5">
+            Connect to the pre-built <strong className="font-semibold text-text-primary">Continuum Assistant</strong> on the GPT Store.
+            It uses secure OAuth 2.0 — no copy-pasting API keys required.
           </p>
           <a
             href="https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-phub-dashboard-public"
-            target="_blank"
+            target="_blank"Continuum-Home
             rel="noopener noreferrer"
-            className={`${BTN_PRIMARY} px-5 py-3 text-center no-underline inline-block w-fit cursor-pointer`}
+            className={BTN_PRIMARY}
           >
             Open in ChatGPT
           </a>
         </div>
 
-        <div className="border-t border-border-subtle my-2 text-center text-xs font-semibold text-text-secondary tracking-wider uppercase font-mono">
-          — OR SETUP CUSTOM AGENTS / SELF-HOSTED —
+        {/* ── Divider ────────────────────────────────────────────── */}
+        <div className="flex items-center gap-4 py-2">
+          <div className="flex-1 border-t border-border-subtle" />
+          <span className="font-mono text-[9px] font-bold uppercase tracking-[1.5px] text-text-muted">
+            Or Self-Host / Custom Agent
+          </span>
+          <div className="flex-1 border-t border-border-subtle" />
         </div>
 
-        {/* Step 1 */}
-        <div className={`${BENTO_CARD} flex gap-4`}>
-          {stepBadge(1)}
+        {/* ── Step 1 ─────────────────────────────────────────────── */}
+        <div className={`${CARD} flex gap-4`}>
+          {renderStep(1)}
           <div className="min-w-0 flex-1">
-            <h2 className="mb-1.5 text-[15px] font-semibold">Create a Custom GPT or AI Agent</h2>
+            <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Create a Custom GPT or AI Agent</h2>
             <p className="text-[13px] leading-[1.7] text-text-secondary">
-              In ChatGPT (under Explore GPTs) or your preferred AI Agent builder (e.g. Coze, Dify), initiate a new custom assistant. Keep sharing set to <strong>Only me</strong> — this agent will hold a token to your personal data.
+              In ChatGPT (under Explore GPTs) or your preferred AI Agent builder (e.g. Coze, Dify), initiate a new custom assistant.
+              Keep sharing set to <strong className="text-text-primary">Only me</strong> — this agent will hold a token to your personal data.
             </p>
           </div>
         </div>
 
-        {/* Step 2 */}
-        <div className={`${BENTO_CARD} flex gap-4`}>
-          {stepBadge(2)}
-          <div className="min-w-0 flex-1">
-            <h2 className="mb-1.5 text-[15px] font-semibold">Import the API schema (or set up Poe webhook)</h2>
-            <p className="mb-3 text-[13px] leading-[1.7] text-text-secondary">
-              For <strong>ChatGPT Actions</strong> (Custom GPTs) or agent platforms, choose to import a schema from a URL and paste the link below:
-            </p>
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <span className={CODE_CLASS}>{schemaUrl}</span>
-              <button onClick={() => copyText("schema", schemaUrl)} className={`${BTN_SECONDARY} px-3 py-1.5 text-xs`}>
+        {/* ── Step 2 ─────────────────────────────────────────────── */}
+        <div className={`${CARD} flex gap-4`}>
+          {renderStep(2)}
+          <div className="min-w-0 flex-1 flex flex-col gap-4">
+            <div>
+              <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Import the API schema</h2>
+              <p className="text-[13px] leading-[1.7] text-text-secondary">
+                For <strong className="text-text-primary">ChatGPT Actions</strong> (Custom GPTs) or agent platforms,
+                choose to import a schema from a URL and paste the link below:
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className={CODE}>{schemaUrl}</span>
+              <button onClick={() => copyText("schema", schemaUrl)} className={`${BTN_GHOST} py-1.5 text-xs`}>
                 {copied === "schema" ? "✓ Copied" : "Copy URL"}
               </button>
             </div>
-            
-            <p className="mb-3 text-[13px] leading-[1.7] text-text-secondary border-t border-border-subtle pt-3.5">
-              For <strong>Poe Server Bots</strong>, copy the Server Webhook URL below and paste it in Poe's <strong>Server URL</strong> settings:
-            </p>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className={CODE_CLASS}>{poeWebhookUrl}</span>
-              <button onClick={() => copyText("poe", poeWebhookUrl)} className={`${BTN_SECONDARY} px-3 py-1.5 text-xs`}>
-                {copied === "poe" ? "✓ Copied" : "Copy Poe URL"}
-              </button>
-            </div>
-          </div>
-        </div>
 
-        {/* Step 3 */}
-        <div className={`${BENTO_CARD} flex gap-4`}>
-          {stepBadge(3)}
-          <div className="min-w-0 flex-1">
-            <h2 className="mb-1.5 text-[15px] font-semibold">Authenticate your Agent</h2>
-            <p className="mb-3 text-[13px] leading-[1.7] text-text-secondary">
-              Configure how the custom assistant authenticates with your dashboard:
-            </p>
-
-            <div className="flex flex-col gap-4">
-              {/* Option A: OAuth */}
-              <div className="border border-border-subtle rounded-lg p-4 bg-bg-primary/20">
-                <h3 className="font-serif text-[13px] font-bold text-text-primary mb-1">Option A: Configure OAuth 2.0 (Recommended)</h3>
-                <p className="text-[11.5px] text-text-secondary leading-relaxed mb-3">
-                  Under Authentication, select <strong>OAuth</strong> and configure these endpoints:
-                </p>
-                <table className="w-full text-[11px] font-mono text-text-secondary border-collapse">
-                  <tbody>
-                    <tr>
-                      <td className="pr-3 pb-1 font-bold text-text-primary">Auth URL:</td>
-                      <td className="pb-1 break-all">${origin || SITE_URL}/api/oauth/authorize</td>
-                    </tr>
-                    <tr>
-                      <td className="pr-3 font-bold text-text-primary">Token URL:</td>
-                      <td className="break-all">${origin || SITE_URL}/api/oauth/token</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Option B: API Token (Manual fallback) */}
-              <div className="border border-border-subtle rounded-lg p-4 bg-bg-primary/20 min-h-[82px] flex flex-col justify-center">
-                <h3 className="font-serif text-[13px] font-bold text-text-primary mb-1">Option B: Permanent API Key (Manual copy-paste)</h3>
-                <p className="text-[11.5px] text-text-secondary leading-relaxed mb-3">
-                  Under Authentication, select <strong>API Key</strong> ➔ <strong>Bearer</strong>, and paste your key.
-                </p>
-                
-                {authLoading ? (
-                  <p className="text-xs text-text-muted">Checking sign-in…</p>
-                ) : user ? (
-                  <div className="flex flex-col gap-2.5">
-                    <p className="text-xs text-text-secondary">
-                      Signed in as <strong>{user.displayName || user.email}</strong>
-                    </p>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button onClick={copyPermanentKey} disabled={tokenBusy} className={`${BTN_PRIMARY} px-3 py-1.5 text-xs`}>
-                        {tokenBusy ? "Generating…" : copied === "perm_key" ? "✓ Permanent Key Copied" : "Copy Permanent API Key"}
-                      </button>
-                      <button onClick={copyToken} disabled={tokenBusy} className={`${BTN_SECONDARY} px-3 py-1.5 text-xs`}>
-                        {tokenBusy ? "Generating…" : copied === "token" ? "✓ Token Copied" : "Copy 1-Hour ID Token"}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <button onClick={signIn} disabled={!authApi} className={`${BTN_PRIMARY} px-4 py-2 text-xs`}>
-                    Sign in to retrieve API Key
+            <div className="border-t border-border-subtle pt-4">
+              <p className="mb-3 text-[13px] leading-[1.7] text-text-secondary">
+                For <strong className="text-text-primary">Poe Server Bots</strong>, copy the Server Webhook URL and paste it in Poe's Server URL settings:
+              </p>
+              {isProUser === false ? (
+                renderProGate()
+              ) : isProUser === true ? (
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className={CODE}>{poeWebhookUrl}</span>
+                  <button onClick={() => copyText("poe", poeWebhookUrl)} className={`${BTN_GHOST} py-1.5 text-xs`}>
+                    {copied === "poe" ? "✓ Copied" : "Copy Poe URL"}
                   </button>
-                )}
-              </div>
+                </div>
+              ) : (
+                <p className="text-[12px] text-text-muted italic">Sign in to view your Poe webhook URL.</p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Step 4 */}
-        <div className={`${BENTO_CARD} flex gap-4`}>
-          {stepBadge(4)}
+        {/* ── Step 3 ─────────────────────────────────────────────── */}
+        <div className={`${CARD} flex gap-4`}>
+          {renderStep(3)}
+          <div className="min-w-0 flex-1 flex flex-col gap-4">
+            <div>
+              <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Authenticate your Agent</h2>
+              <p className="text-[13px] leading-[1.7] text-text-secondary">
+                Configure how the custom assistant authenticates with your dashboard:
+              </p>
+            </div>
+
+            {/* Option A: OAuth */}
+            <div className="rounded-[8px] border border-border-subtle bg-bg-primary p-4 flex flex-col gap-3">
+              <div>
+                <p className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted mb-1">Option A</p>
+                <h3 className="text-[13px] font-semibold text-text-primary">OAuth 2.0 (Recommended)</h3>
+              </div>
+              <p className="text-[12px] leading-relaxed text-text-secondary">
+                Under Authentication, select <strong className="text-text-primary">OAuth</strong> and configure:
+              </p>
+              <table className="w-full text-[11px] font-mono text-text-secondary border-collapse">
+                <tbody>
+                  <tr>
+                    <td className="pr-4 pb-1.5 font-semibold text-text-primary whitespace-nowrap">Auth URL</td>
+                    <td className="pb-1.5 break-all">{origin || SITE_URL}/api/oauth/authorize</td>
+                  </tr>
+                  <tr>
+                    <td className="pr-4 font-semibold text-text-primary whitespace-nowrap">Token URL</td>
+                    <td className="break-all">{origin || SITE_URL}/api/oauth/token</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Option B: API Key — Pro gated */}
+            <div className="rounded-[8px] border border-border-subtle bg-bg-primary p-4 flex flex-col gap-3">
+              <div>
+                <p className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted mb-1">Option B</p>
+                <h3 className="text-[13px] font-semibold text-text-primary">Permanent API Key</h3>
+              </div>
+              <p className="text-[12px] leading-relaxed text-text-secondary">
+                Under Authentication, select <strong className="text-text-primary">API Key → Bearer</strong>, then paste your key.
+              </p>
+
+              {authLoading ? (
+                <p className="text-[12px] text-text-muted italic">Checking sign-in…</p>
+              ) : !user ? (
+                <button onClick={signIn} disabled={!authApi} className={`${BTN_PRIMARY} w-fit text-xs`}>
+                  Sign in to retrieve API Key
+                </button>
+              ) : isProUser === false ? (
+                renderProGate()
+              ) : isProUser === true ? (
+                <div className="flex flex-col gap-2.5">
+                  <p className="text-[12px] text-text-secondary">
+                    Signed in as <strong className="text-text-primary">{user.displayName || user.email}</strong>
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <button onClick={copyPermanentKey} disabled={tokenBusy} className={`${BTN_PRIMARY} text-xs py-1.5`}>
+                      {tokenBusy ? "Generating…" : copied === "perm_key" ? "✓ Copied" : "Copy Permanent API Key"}
+                    </button>
+                    <button onClick={copyToken} disabled={tokenBusy} className={`${BTN_GHOST} text-xs py-1.5`}>
+                      {tokenBusy ? "Generating…" : copied === "token" ? "✓ Token Copied" : "Copy 1-Hour ID Token"}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-[12px] text-text-muted italic">Checking Pro status…</p>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Step 4 ─────────────────────────────────────────────── */}
+        <div className={`${CARD} flex gap-4`}>
+          {renderStep(4)}
           <div className="min-w-0 flex-1">
-            <h2 className="mb-1.5 text-[15px] font-semibold">Teach the Agent how to behave</h2>
+            <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Teach the Agent how to behave</h2>
             <p className="mb-3 text-[13px] leading-[1.7] text-text-secondary">
-              Paste this into the agent&apos;s <strong>Instructions</strong> or <strong>System Instructions</strong> field:
+              Paste this into the agent's <strong className="text-text-primary">Instructions</strong> or <strong className="text-text-primary">System Instructions</strong> field:
             </p>
-            <pre className="max-h-65 overflow-y-auto rounded-lg bg-bg-secondary p-3.5 font-mono text-[11.5px] leading-[1.6] whitespace-pre-wrap wrap-break-word text-text-primary">{agentInstructions}</pre>
-            <button onClick={() => copyText("instructions", agentInstructions)} className={`${BTN_SECONDARY} mt-2.5 px-3 py-1.5 text-xs`}>
+            <pre className="max-h-64 overflow-y-auto rounded-[8px] bg-bg-secondary p-4 font-mono text-[11px] leading-[1.7] whitespace-pre-wrap break-words text-text-primary">
+              {agentInstructions}
+            </pre>
+            <button onClick={() => copyText("instructions", agentInstructions)} className={`${BTN_GHOST} mt-3 text-xs py-1.5`}>
               {copied === "instructions" ? "✓ Copied" : "Copy instructions"}
             </button>
           </div>
         </div>
 
-        {/* Step 5 */}
-        <div className={`${BENTO_CARD} flex gap-4`}>
-          {stepBadge(5)}
+        {/* ── Step 5 ─────────────────────────────────────────────── */}
+        <div className={`${CARD} flex gap-4`}>
+          {renderStep(5)}
           <div className="min-w-0 flex-1">
-            <h2 className="mb-1.5 text-[15px] font-semibold">Try it out</h2>
+            <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Try it out</h2>
             <p className="mb-3 text-[13px] leading-[1.7] text-text-secondary">
               Save the agent and start chatting. Things that should just work:
             </p>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               {examplePrompts.map((prompt) => (
-                <div key={prompt} className="rounded-lg bg-bg-secondary px-3 py-2 text-[12.5px] text-text-primary">
+                <div key={prompt} className="rounded-[6px] bg-bg-secondary px-3.5 py-2 text-[12.5px] text-text-secondary">
                   &ldquo;{prompt}&rdquo;
                 </div>
               ))}
@@ -319,20 +423,23 @@ Always confirm what you logged in one short line, including the year you recorde
           </div>
         </div>
 
-        {/* Self-hosting note */}
-        <div className={BENTO_CARD}>
-          <span className="mb-2.5 block font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase">Self-hosting?</span>
+        {/* ── Self-hosting note ──────────────────────────────────── */}
+        <div className={CARD}>
+          <p className="mb-1 font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">Self-hosting?</p>
           <p className="text-[13px] leading-[1.7] text-text-secondary">
-            Deploy this app with your own <span className={CODE_CLASS}>FIREBASE_CONFIG</span> environment
-            variable (your Firebase Web App config JSON) and publish the matching Firestore security
-            rules from <span className={CODE_CLASS}>firestore.rules</span>. Then follow the same steps above
-            against your own domain — the schema URL adapts automatically.
+            Deploy with your own <span className={CODE}>FIREBASE_CONFIG</span> environment variable and publish the matching
+            Firestore security rules from <span className={CODE}>firestore.rules</span>. Follow the same steps above against
+            your own domain — the schema URL adapts automatically.
           </p>
         </div>
 
-        <p className="pb-5 text-center text-[11px] text-text-muted">
-          The raw schema is at <a href="/api/openapi.json" target="_blank" rel="noopener noreferrer" className="text-text-secondary">/api/openapi.json</a>.
+        <p className="pb-6 text-center text-[11px] text-text-muted">
+          Raw schema at{" "}
+          <a href="/api/openapi.json" target="_blank" rel="noopener noreferrer" className="text-text-secondary underline">
+            /api/openapi.json
+          </a>
         </p>
+
       </div>
     </div>
   );

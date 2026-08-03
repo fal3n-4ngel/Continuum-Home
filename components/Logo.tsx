@@ -1,4 +1,5 @@
 import React from "react";
+import { SITE_NAME } from "@/lib/site";
 
 // Single source of truth for the PHub "bento grid" brand mark — a 2x2 grid
 // of rounded squares (top-left solid, top-right & bottom-left muted, bottom-
@@ -40,12 +41,12 @@ interface LogoProps extends LogoMarkProps {
   gap?: number;
 }
 
-// Mark + "PHub Dashboard" wordmark, for header/nav contexts.
-export function Logo({ size = 22, color = "currentColor", className, showWordmark = true, wordmarkClassName = "", gap = 10 }: LogoProps) {
+// Mark + SITE_NAME wordmark, for header/nav contexts.
+export function Logo({ size = 22, color = "currentColor", className, showWordmark = true, wordmarkClassName = "text-base font-medium tracking-tight text-text-primary", gap = 10 }: LogoProps) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap }} className={className}>
       <LogoMark size={size} color={color} />
-      {showWordmark && <span className={wordmarkClassName}>PHub Dashboard</span>}
+      {showWordmark && <span className={wordmarkClassName}>{SITE_NAME}</span>}
     </div>
   );
 }

@@ -1,7 +1,7 @@
 import React from "react";
 import { FirebaseUser, AniListUser, TraktUser } from "@/types";
 import { isSafeImageUrl } from "@/lib/safe-url";
-import { AUTHOR } from "@/lib/site";
+import { AUTHOR, SITE_NAME } from "@/lib/site";
 import { LogoMark } from "@/components/Logo";
 
 interface SidebarProps {
@@ -25,6 +25,7 @@ interface SidebarProps {
   isSyncingLetterboxd?: boolean;
   showInvestmentsTab: boolean;
   isProUser: boolean;
+  onClaimPro: () => void;
   setShowOnboarding: (show: boolean) => void;
   triggerConfirm: (
     title: string,
@@ -70,6 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isSyncingLetterboxd,
   showInvestmentsTab,
   isProUser,
+  onClaimPro,
   setShowOnboarding,
   triggerConfirm,
   firebaseAuth,
@@ -83,7 +85,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="mb-6 flex items-center gap-2.5 px-2">
         <LogoMark size={22} className="text-text-primary" />
         <div>
-          <span className="text-xl font-medium tracking-tight text-text-primary">PHub Dashboard</span>
+          <span className="text-xl font-medium tracking-tight text-text-primary">{SITE_NAME}</span>
         </div>
       </div>
 
@@ -270,6 +272,36 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>
           Support this project
         </a>
+
+        {/* Upgrade to Pro CTA — only for non-pro users */}
+        {!isProUser && (
+          <button
+            onClick={onClaimPro}
+            className="mb-2 flex w-full cursor-pointer items-center gap-3 rounded-lg px-3.5 py-2.5 text-left text-xs font-medium text-text-secondary transition-all duration-200 hover:bg-bg-primary hover:text-text-primary"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <span
+              className="inline-flex shrink-0 items-center rounded-full border px-1.5 py-[1px] text-[9px] font-bold tracking-wider"
+              style={{ borderColor: "rgba(139,92,246,0.6)", color: "#7c3aed" }}
+            >PRO</span>
+            <span>Upgrade to Pro</span>
+          </button>
+        )}
+
+        {/* Pro badge — only for pro users */}
+        {isProUser && (
+          <div className="mb-2 flex items-center gap-3 rounded-lg px-3.5 py-2.5">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-text-muted">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+            </svg>
+            <span
+              className="inline-flex shrink-0 items-center rounded-full border px-1.5 py-[1px] text-[9px] font-bold tracking-wider"
+              style={{ borderColor: "rgba(139,92,246,0.6)", color: "#7c3aed" }}
+            >PRO</span>
+          </div>
+        )}
 
         {user && (
           <div className="mt-4 flex items-center gap-2.5 border-t border-border-subtle px-3.5 py-3">

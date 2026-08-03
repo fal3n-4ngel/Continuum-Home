@@ -445,6 +445,76 @@ export async function GET() {
           responses: writeResult("Note saved"),
         },
       },
+      "/api/settings": {
+        get: {
+          operationId: "getSettings",
+          summary: "Get dashboard settings",
+          description: "Retrieve the user's dashboard preferences (such as salaryDay, monthlySalary, additionalIncome, and timeFilter).",
+          "x-openai-isConsequential": false,
+          responses: {
+            "200": {
+              description: "The user settings",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/DashboardSettings" } } },
+            },
+            "401": errorResponse("Missing or invalid authentication token"),
+          },
+        },
+        patch: {
+          operationId: "updateSettings",
+          summary: "Update dashboard settings",
+          description: "Update dashboard preferences. Only provided fields change.",
+          "x-openai-isConsequential": false,
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: { $ref: "#/components/schemas/DashboardSettingsPatch" } } },
+          },
+          responses: writeResult("Settings updated"),
+        },
+      },
+      "/api/pro-claim": {
+        get: {
+          operationId: "getProClaimStatus",
+          summary: "Get Pro request status",
+          description: "Retrieve the status of the user's current Pro upgrade claim request.",
+          "x-openai-isConsequential": false,
+          responses: {
+            "200": {
+              description: "Pro claim details",
+              content: { "application/json": { schema: { $ref: "#/components/schemas/ProClaimResponse" } } },
+            },
+            "401": errorResponse("Missing or invalid authentication token"),
+          },
+        },
+        post: {
+          operationId: "submitProClaim",
+          summary: "Submit a Pro request",
+          description: "Submit a verification request to upgrade to Pro based on sponsor platform (GitHub or Buy Me A Coffee).",
+          "x-openai-isConsequential": true,
+          requestBody: {
+            required: true,
+            content: { "application/json": { schema: { $ref: "#/components/schemas/ProClaimRequest" } } },
+          },
+          responses: {
+            "200": {
+              description: "Pro claim submitted successfully",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean" },
+                      message: { type: "string" },
+                    },
+                  },
+                },
+              },
+            },
+            "400": errorResponse("Invalid fields provided"),
+            "401": errorResponse("Missing or invalid authentication token"),
+            "409": errorResponse("Pending request or already a Pro user"),
+          },
+        },
+      },
     },
     components: {
       securitySchemes: {
@@ -668,6 +738,55 @@ export async function GET() {
             success: { type: "boolean" },
             id: { type: "string", description: "Id of the affected record" },
             added: { type: "integer", description: "Batch creates only: number of entries written" },
+          },
+        },
+        DashboardSettings: {
+          type: "object",
+          properties: {
+            timeFilter: { type: "string", enum: ["7", "30", "90", "salary", "all"] },
+            salaryDay: { type: "integer", minimum: 1, maximum: 31 },
+            monthlySalary: { type: "number", minimum: 0 },
+            additionalIncome: { type: "number", minimum: 0 },
+            reconciliations: { type: "object", additionalProperties: { type: "number" } },
+            salaryLog: { type: "object", additionalProperties: { type: "object", properties: { date: { type: "string" }, amount: { type: "number" } } } },
+            isPro: { type: "boolean" },
+            updatedAt: { type: "integer" },
+          },
+        },
+        DashboardSettingsPatch: {
+          type: "object",
+          description: "Any subset of dashboard setting fields to change.",
+          properties: {
+            timeFilter: { type: "string", enum: ["7", "30", "90", "salary", "all"] },
+            salaryDay: { type: "integer", minimum: 1, maximum: 31 },
+            monthlySalary: { type: "number", minimum: 0 },
+            additionalIncome: { type: "number", minimum: 0 },
+            reconciliations: { type: "object", additionalProperties: { type: "number" } },
+            salaryLog: { type: "object", additionalProperties: { type: "object", properties: { date: { type: "string" }, amount: { type: "number" } } } },
+          },
+        },
+        ProClaimRequest: {
+          type: "object",
+          required: ["platform", "handle"],
+          properties: {
+            platform: { type: "string", enum: ["github", "bmac"] },
+            handle: { type: "string", maxLength: 200 },
+            note: { type: "string", maxLength: 500 },
+          },
+        },
+        ProClaimResponse: {
+          type: "object",
+          properties: {
+            claim: {
+              type: ["object", "null"],
+              properties: {
+                id: { type: "string" },
+                platform: { type: "string" },
+                handle: { type: "string" },
+                status: { type: "string" },
+                submittedAt: { type: "integer" },
+              },
+            },
           },
         },
         Error: {

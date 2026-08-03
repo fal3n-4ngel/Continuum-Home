@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { FirebaseUser } from "@/types";
-import { Shield, Trash2, Bell, Mail, RefreshCw, BarChart2, ArrowLeft, Sparkles, AlertTriangle } from "lucide-react";
+import { Shield, Trash2, Bell, Mail, RefreshCw, BarChart2, ArrowLeft, Sparkles, AlertTriangle, Star } from "lucide-react";
 
 interface FirebaseAuthModule {
   auth: any;
@@ -35,6 +35,23 @@ export default function AdminPage() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{ id: string; title: string } | null>(null);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
+
+  // Pro Requests state
+  interface ProClaim {
+    id: string;
+    uid: string;
+    email: string | null;
+    displayName: string | null;
+    platform: "github" | "bmac";
+    handle: string;
+    note: string;
+    status: "pending" | "approved" | "denied";
+    submittedAt: number;
+  }
+  const [proClaims, setProClaims] = useState<ProClaim[]>([]);
+  const [proClaimsLoading, setProClaimsLoading] = useState(false);
+  const [proClaimsFilter, setProClaimsFilter] = useState<"pending" | "approved" | "denied" | "all">("pending");
+  const [proActionLoading, setProActionLoading] = useState<string | null>(null);
 
   // 1. Initialize Firebase Auth
   useEffect(() => {
@@ -128,6 +145,52 @@ export default function AdminPage() {
 
     fetchStats();
   }, [isAdmin, user?.idToken]);
+
+  // 3. Fetch Pro Claims
+  const fetchProClaims = async (filter = proClaimsFilter) => {
+    if (!user || !isAdmin) return;
+    setProClaimsLoading(true);
+    try {
+      const res = await fetch(`/api/admin/pro-requests?status=${filter}`, {
+        headers: { Authorization: `Bearer ${user.idToken}` },
+      });
+      const data = await res.json();
+      if (res.ok) setProClaims(data.claims || []);
+    } catch (err) {
+      console.error("Failed to fetch pro claims:", err);
+    } finally {
+      setProClaimsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAdmin) fetchProClaims();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, user?.idToken]);
+
+  const handleProAction = async (claimId: string, action: "approve" | "deny") => {
+    if (!user) return;
+    setProActionLoading(claimId);
+    try {
+      const res = await fetch("/api/admin/pro-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${user.idToken}` },
+        body: JSON.stringify({ claimId, action }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatusMessage({ text: data.message || "Done.", type: "success" });
+        // Re-fetch to reflect updated status
+        await fetchProClaims(proClaimsFilter);
+      } else {
+        throw new Error(data.error || "Action failed");
+      }
+    } catch (err: any) {
+      setStatusMessage({ text: err.message || "Action failed.", type: "error" });
+    } finally {
+      setProActionLoading(null);
+    }
+  };
 
   // Login handler
   const login = () => {
@@ -581,6 +644,97 @@ export default function AdminPage() {
 
           </div>
 
+        </div>
+
+        {/* Pro Upgrade Requests */}
+        <div className="rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col gap-4">
+          <div className="flex items-center justify-between border-b border-border-subtle pb-2">
+            <h3 className="font-serif text-base font-bold text-text-primary flex items-center gap-2">
+              <Star className="h-4.5 w-4.5 text-amber-500" /> Pro Upgrade Requests
+            </h3>
+            <div className="flex items-center gap-1.5">
+              {(["pending", "approved", "denied", "all"] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => { setProClaimsFilter(f); fetchProClaims(f); }}
+                  className={`rounded-md px-2.5 py-1 text-[10px] font-semibold capitalize transition-all ${
+                    proClaimsFilter === f
+                      ? "bg-text-primary text-white"
+                      : "border border-border-subtle bg-transparent text-text-secondary hover:bg-bg-primary"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {proClaimsLoading ? (
+            <p className="text-xs text-text-secondary italic py-2">Loading requests…</p>
+          ) : proClaims.length === 0 ? (
+            <p className="text-xs text-text-secondary italic py-2">No {proClaimsFilter} Pro requests.</p>
+          ) : (
+            <div className="flex flex-col gap-2 max-h-[340px] overflow-y-auto pr-1">
+              {proClaims.map((claim) => (
+                <div
+                  key={claim.id}
+                  className={`flex items-start justify-between gap-4 rounded-lg border p-3.5 transition-colors ${
+                    claim.status === "pending"
+                      ? "border-amber-200 bg-amber-50/60"
+                      : claim.status === "approved"
+                      ? "border-[#bbf7d0] bg-[#f0fdf4]/60"
+                      : "border-[#fecaca] bg-[#fef2f2]/60"
+                  }`}
+                >
+                  <div className="min-w-0 flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
+                        claim.status === "pending" ? "bg-amber-100 text-amber-700"
+                        : claim.status === "approved" ? "bg-[#dcfce7] text-[#166534]"
+                        : "bg-[#fee2e2] text-[#991b1b]"
+                      }`}>
+                        {claim.status}
+                      </span>
+                      <span className="text-[10px] font-mono text-text-muted">
+                        {claim.platform === "github" ? "🐙 GitHub" : "☕ BMAC"}
+                      </span>
+                    </div>
+                    <p className="text-[12.5px] font-bold text-text-primary truncate max-w-[260px]">
+                      {claim.email || claim.displayName || claim.uid}
+                    </p>
+                    <p className="text-[11px] text-text-secondary">
+                      Handle: <span className="font-mono font-semibold">{claim.handle}</span>
+                    </p>
+                    {claim.note && (
+                      <p className="text-[10.5px] text-text-muted italic mt-0.5">&ldquo;{claim.note}&rdquo;</p>
+                    )}
+                    <p className="text-[10px] text-text-muted">
+                      {new Date(claim.submittedAt).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
+                    </p>
+                  </div>
+
+                  {claim.status === "pending" && (
+                    <div className="shrink-0 flex flex-col gap-1.5 mt-0.5">
+                      <button
+                        disabled={proActionLoading === claim.id}
+                        onClick={() => handleProAction(claim.id, "approve")}
+                        className="rounded-md border border-[#16a34a] bg-[#16a34a] px-3 py-1.5 text-[10.5px] font-semibold text-white transition-all hover:bg-[#15803d] disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {proActionLoading === claim.id ? "…" : "✓ Approve"}
+                      </button>
+                      <button
+                        disabled={proActionLoading === claim.id}
+                        onClick={() => handleProAction(claim.id, "deny")}
+                        className="rounded-md border border-[#dc2626] bg-transparent px-3 py-1.5 text-[10.5px] font-semibold text-[#dc2626] transition-all hover:bg-[#dc2626] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {proActionLoading === claim.id ? "…" : "✕ Deny"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
       </div>

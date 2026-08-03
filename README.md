@@ -1,4 +1,4 @@
-# PHub Dashboard
+# Continuum Home
 
 > **One dashboard to rule them all.** Replace 5 single-purpose apps with a self-hosted, privacy-first command center for your finances, watchlists, books, subscriptions, and quick notes—all hooked up directly to your favorite AI assistant.
 
@@ -56,8 +56,8 @@ You can host your own private instance on Vercel or any Next.js-compatible platf
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/fal3n-4ngel/PHub-Dashboard.git
-cd PHub-Dashboard
+git clone https://github.com/fal3n-4ngel/Continuum-Home.git
+cd Continuum-Home
 npm install
 
 ```
@@ -116,7 +116,7 @@ npm run build && npm run start
 You can converse with your dashboard, track expenses, add movies, and manage your notes directly through ChatGPT!
 
 ### 1. Using the Official Public Custom GPT (Recommended)
-Simply open the official **[PHub Dashboard Assistant](https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-phub-dashboard-public)**.
+Simply open the official **[PHub Dashboard Assistant](https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-Home-public)**.
 When you send your first message, ChatGPT will prompt you to log in. Click "Authorize" to link your account securely using OAuth 2.0. No copy-pasting API keys required!
 
 ### 2. Setting Up Your Own Custom GPT (For Self-Hosters)

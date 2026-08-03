@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AUTHOR } from "@/lib/site";
+import { AUTHOR, SITE_NAME } from "@/lib/site";
 import { LogoMark as BentoLogo } from "@/components/Logo";
 
 interface LandingPageProps {
@@ -166,30 +166,30 @@ interface DiagramCoords {
 
 const HERO_REVEAL = "animate-[heroFadeUp_0.7s_cubic-bezier(0.16,1,0.3,1)_both]";
 const HERO_BADGE =
-  "mb-7 inline-flex items-center gap-1.5 rounded-full border border-[#e5e3db] bg-[#eae8e0] px-3.5 py-1.5 font-mono text-[10px] font-semibold tracking-[1.5px] text-[#6e6c64] uppercase";
+  "mb-7 inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-secondary px-3.5 py-1.5 font-mono text-[10px] font-semibold tracking-[1.5px] text-text-secondary uppercase";
 const HERO_TITLE =
-  "mb-4 text-[58px] leading-[1.04] font-bold tracking-[-2.5px] text-[#1c1b18] max-[900px]:text-[40px] max-[900px]:tracking-[-1.8px] max-[480px]:text-[32px] max-[480px]:tracking-[-1.5px]";
+  "mb-4 text-[58px] leading-[1.04] font-bold tracking-[-2.5px] text-text-primary max-[900px]:text-[40px] max-[900px]:tracking-[-1.8px] max-[480px]:text-[32px] max-[480px]:tracking-[-1.5px]";
 const SERIF_ITALIC_STYLE: React.CSSProperties = {
   fontFamily: "'Playfair Display', Georgia, serif",
 };
 const HERO_CTA_PRIMARY =
-  "flex cursor-pointer items-center gap-2 rounded-full border-none bg-[#1c1b18] px-7 py-[13px] text-sm font-semibold text-white no-underline transition-all duration-200 hover:-translate-y-px hover:bg-[#31302b] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50";
-const STEP_DESC = "text-[13px] leading-[1.55] text-[#6e6c64]";
+  "flex cursor-pointer items-center gap-2 rounded-full border-none bg-text-primary px-7 py-[13px] text-sm font-semibold text-white no-underline transition-all duration-200 hover:-translate-y-px hover:bg-[#2e2d27] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50";
+const STEP_DESC = "text-[13px] leading-[1.55] text-text-secondary";
 const DIAGRAM_NODE =
-  "flex w-full items-center gap-2.5 rounded-[10px] border border-[#e5e3db] bg-white px-3.5 py-2.5 shadow-[0_4px_12px_-2px_rgba(110,108,100,0.05)] transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-[#c4c2ba] hover:shadow-[0_6px_18px_-4px_rgba(110,108,100,0.12)]";
+  "flex w-full items-center gap-2.5 rounded-card border border-border-subtle bg-bg-card px-3.5 py-2.5 shadow-subtle transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-border-hover hover:shadow-[0_6px_18px_-4px_rgba(110,108,100,0.12)]";
 const NODE_ICON =
   "flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[13px]";
 const NODE_TITLE =
-  "mb-px overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] font-bold text-[#1c1b18]";
+  "mb-px overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] font-bold text-text-primary";
 const NODE_DESC =
-  "overflow-hidden text-ellipsis whitespace-nowrap text-[9.5px] text-[#6e6c64]";
+  "overflow-hidden text-ellipsis whitespace-nowrap text-[9.5px] text-text-secondary";
 const FEATURE_NUM =
-  "mb-2 block font-mono text-[10px] font-semibold tracking-[0.5px] text-[#c4c2ba]";
+  "mb-2 block font-mono text-[10px] font-semibold tracking-[0.5px] text-text-muted";
 const BROWSER_DOT = "h-2 w-2 rounded-full";
 const FOOTER_LINK_ITEM =
-  "inline-flex cursor-pointer items-center gap-1 text-[13px] text-[#6e6c64] no-underline transition-colors duration-150 hover:text-[#1c1b18]";
+  "inline-flex cursor-pointer items-center gap-1 text-[13px] text-text-secondary no-underline transition-colors duration-150 hover:text-text-primary";
 const FOOTER_COL_LABEL =
-  "mb-4 block font-mono text-[10px] font-semibold tracking-wider text-[#9c9a92] uppercase";
+  "mb-4 block font-mono text-[10px] font-semibold tracking-wider text-text-muted uppercase";
 const FI_YES = "shrink-0 text-[13px] text-[#22c55e]";
 
 /* ─── FAQ content: single-sourced for both the rendered section and its
@@ -197,7 +197,7 @@ const FI_YES = "shrink-0 text-[13px] text-[#22c55e]";
  * users actually see. ─── */
 const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
-    question: "Is PHub Dashboard free?",
+    question: "Is Continuum free?",
     answer:
       "Yes. The self-hosted version is free forever — deploy your own copy on Vercel + Firebase's free tiers with no feature gates. The cloud-hosted version is also free right now; a small fee or ads may be added later only if hosting costs grow.",
   },
@@ -316,7 +316,7 @@ export default function LandingPage({
   }, []);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[#f4f3ec] font-body text-[#1c1b18]">
+    <div className="relative min-h-screen overflow-x-hidden bg-bg-primary font-body text-text-primary">
       <style>{`
         @keyframes spin-clockwise { to { transform: rotate(360deg); } }
         @keyframes heroFadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
@@ -325,15 +325,15 @@ export default function LandingPage({
         @keyframes chatDotBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-3px); opacity: 1; } }
         @keyframes flowDash { to { stroke-dashoffset: -20; } }
       `}</style>
-
+ 
       {/* ─── Header ─── */}
-      <header className="sticky top-0 z-[1000] mx-auto flex max-w-[1300px] items-center justify-between border-b border-[rgba(229,227,219,0.6)] bg-[rgba(244,243,236,0.92)] px-20 py-5 backdrop-blur-[10px] max-[900px]:px-6 max-[900px]:py-4">
+      <header className="sticky top-0 z-[1000] mx-auto flex max-w-[1300px] items-center justify-between border-b border-border-subtle/60 bg-bg-primary/92 px-20 py-5 backdrop-blur-[10px] max-[900px]:px-6 max-[900px]:py-4">
         <a
           href="#"
-          className="flex items-center gap-[9px] text-[18px] font-medium tracking-tight text-[#1c1b18] no-underline"
+          className="flex items-center gap-[9px] text-[18px] font-medium tracking-tight text-text-primary no-underline"
         >
-          <BentoLogo size={22} color="#1c1b18" />
-          <span>PHub Dashboard</span>
+          <BentoLogo size={22} color="var(--text-primary)" />
+          <span>{SITE_NAME}</span>
         </a>
         <nav className="flex items-center gap-8 max-[900px]:hidden">
           <a
@@ -361,7 +361,7 @@ export default function LandingPage({
             Pricing
           </a>
           <a
-            href="https://github.com/fal3n-4ngel/PHub-Dashboard"
+            href="https://github.com/fal3n-4ngel/Continuum-Home"
             target="_blank"
             rel="noopener noreferrer"
             className="text-[13px] font-medium text-[#6e6c64] no-underline transition-colors duration-200 hover:text-[#1c1b18]"
@@ -439,7 +439,7 @@ export default function LandingPage({
             Pricing
           </a>
           <a
-            href="https://github.com/fal3n-4ngel/PHub-Dashboard"
+            href="https://github.com/fal3n-4ngel/Continuum-Home"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] no-underline hover:bg-[#f4f3ec]"
@@ -485,7 +485,7 @@ export default function LandingPage({
             <span>→</span>
           </button>
           <a
-            href="https://github.com/fal3n-4ngel/PHub-Dashboard"
+            href="https://github.com/fal3n-4ngel/Continuum-Home"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-full border-[1.5px] border-[#d1cfc7] bg-transparent px-7 py-[13px] text-sm font-semibold text-[#1c1b18] no-underline transition-all duration-200 hover:border-[#1c1b18] hover:bg-[rgba(28,27,24,0.04)]"
@@ -1030,46 +1030,49 @@ export default function LandingPage({
         </p>
 
         <div className="mt-12 grid grid-cols-3 gap-5 text-left max-[900px]:mx-auto max-[900px]:max-w-[480px] max-[900px]:grid-cols-1">
-          {/* ── Card 1: Cloud hosted ── */}
-          <div className="relative flex flex-col rounded-2xl border border-[#e5e3db] bg-white p-8 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-4px_rgba(110,108,100,0.12)] max-[480px]:p-6">
-            <span className="mb-5 inline-block self-start rounded-full bg-[#eae8e0] px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-[#6e6c64] uppercase">
-              Free · Now
+          {/* ── Card 1: Cloud hosted standard ── */}
+          <div className="relative flex flex-col rounded-card border border-border-subtle bg-bg-card p-8 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-subtle max-[480px]:p-6">
+            <span className="mb-5 inline-block self-start rounded-full bg-bg-secondary px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-text-secondary uppercase">
+              Free · Cloud
             </span>
-            <p className="mb-1.5 text-xl font-bold tracking-[-0.5px] text-[#1c1b18]">
-              Cloud Hosted
+            <p className="mb-1.5 text-xl font-bold tracking-[-0.5px] text-text-primary">
+              Cloud Standard
             </p>
-            <p className="mb-1 text-[38px] leading-none font-extrabold tracking-[-2px] text-[#1c1b18] max-[480px]:text-[30px]">
+            <p className="mb-1 text-[38px] leading-none font-extrabold tracking-[-2px] text-text-primary max-[480px]:text-[30px]">
               ₹0{" "}
-              <span className="text-[13px] font-normal tracking-normal text-[#9c9a92]">
-                / now
+              <span className="text-[13px] font-normal tracking-normal text-text-muted">
+                / forever
               </span>
             </p>
-            <p className="mt-4 flex-1 text-[13px] leading-[1.65] text-[#6e6c64]">
-              Sign in instantly and use my shared Vercel + Firebase instance. No
-              setup, no downloads. Free right now — if traffic grows I may add
-              ads or a small fee to cover hosting.
+            <p className="mt-4 flex-1 text-[13px] leading-[1.65] text-text-secondary">
+              Sign in instantly and use my shared cloud instance. Access all core dashboard tracking modules with zero server setup or maintenance.
             </p>
-            <div className="my-6 h-px bg-[#e5e3db]" />
+            <div className="my-6 h-px bg-border-subtle" />
             <ul className="mb-7 flex list-none flex-col gap-2.5 p-0">
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
                 <span className={FI_YES}>✓</span> Instant access, zero setup
               </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className={FI_YES}>✓</span> Google sign-in
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> Expense ledger & subscriptions
               </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className={FI_YES}>✓</span> Always updated
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> Full Reports & Analytics
               </li>
-                 <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> AniList, Trakt & Letterboxd sync
+              </li>
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
                 <span className={FI_YES}>✓</span> AES-256 GCM DB Encryption
               </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className="shrink-0 text-[13px] text-[#f59e0b]">○</span>{" "}
-                Shared hosting instance
+              {/* Pro exclusions */}
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-muted opacity-45">
+                <span className="shrink-0 text-[13px]">✕</span> <span>Custom GPT / OpenAPI token access</span>
               </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className="shrink-0 text-[13px] text-[#f59e0b]">○</span>{" "}
-                May add ads / fee later
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-muted opacity-45">
+                <span className="shrink-0 text-[13px]">✕</span> <span>Kiroku AI Chat Assistant</span>
+              </li>
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-muted opacity-45">
+                <span className="shrink-0 text-[13px]">✕</span> <span>Financial Health Tab (Pay-cycles)</span>
               </li>
             </ul>
             {authError && (
@@ -1078,7 +1081,7 @@ export default function LandingPage({
               </div>
             )}
             <button
-              className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-[#1c1b18] bg-transparent px-5 py-3 text-[13px] font-semibold text-[#1c1b18] no-underline transition-all duration-200 enabled:hover:bg-[#1c1b18] enabled:hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-text-primary bg-transparent px-5 py-3 text-[13px] font-semibold text-text-primary no-underline transition-all duration-200 enabled:hover:bg-text-primary enabled:hover:text-bg-card disabled:cursor-not-allowed disabled:opacity-50"
               onClick={onLogin}
               disabled={!firebaseAuthReady}
             >
@@ -1086,99 +1089,101 @@ export default function LandingPage({
             </button>
           </div>
 
-          {/* ── Card 2: Self-hosted (featured) ── */}
-          <div className="relative flex flex-col rounded-2xl border border-[#1c1b18] bg-white p-8 shadow-[0_6px_24px_-4px_rgba(28,27,24,0.14)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-4px_rgba(110,108,100,0.12)] max-[900px]:order-[-1] max-[480px]:p-6">
-            <span className="mb-5 inline-block self-start rounded-full bg-[#1c1b18] px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-white uppercase">
-              Recommended · Free Forever
+          {/* ── Card 2: Cloud Pro (featured) ── */}
+          <div className="relative flex flex-col rounded-card border border-text-primary bg-bg-card p-8 shadow-[0_6px_24px_-4px_rgba(28,27,24,0.1)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-subtle max-[900px]:order-[-1] max-[480px]:p-6">
+            <div className="mb-5 flex flex-wrap gap-1.5">
+              <span className="inline-block rounded-full bg-text-primary px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-bg-card uppercase">
+                Sponsor Tier
+              </span>
+              <span
+                className="inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-bold tracking-wide"
+                style={{ borderColor: "rgba(139,92,246,0.6)", color: "#7c3aed" }}
+              >PRO</span>
+            </div>
+            <p className="mb-1.5 text-xl font-bold tracking-[-0.5px] text-text-primary">
+              Pro Upgrade
+            </p>
+            <p className="mb-1 text-[38px] leading-none font-extrabold tracking-[-2px] text-text-primary max-[480px]:text-[30px]">
+              $3{" "}
+              <span className="text-[13px] font-normal tracking-normal text-text-muted">
+                / month
+              </span>
+            </p>
+            <p className="text-[12.5px] text-text-secondary mt-1.5 mb-2">
+              or a $25 one-time lifetime payment
+            </p>
+            <p className="mt-4 flex-1 text-[13px] leading-[1.65] text-text-secondary">
+              Support the developer to connect external AI agents or Custom GPTs to your cloud-hosted dashboard. Enable full API endpoints.
+            </p>
+            <div className="my-6 h-px bg-border-subtle" />
+            <ul className="mb-7 flex list-none flex-col gap-2.5 p-0">
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> <strong>Custom GPT / OpenAPI token access</strong>
+              </li>
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> <strong>Kiroku AI Chat Assistant</strong>
+              </li>
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> <strong>Financial Health Tab</strong> (Pay-cycles)
+              </li>
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> Sponsor badge & profile highlight
+              </li>
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> Early feature access & changelogs
+              </li>
+            </ul>
+            <button
+              className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-text-primary bg-text-primary px-5 py-3 text-[13px] font-semibold text-bg-card no-underline transition-all duration-200 enabled:hover:bg-[#2e2d27]"
+              onClick={onLogin}
+              disabled={!firebaseAuthReady}
+            >
+              Unlock Pro via Login →
+            </button>
+          </div>
+
+          {/* ── Card 3: Self-hosted ── */}
+          <div className="relative flex flex-col rounded-card border border-border-subtle bg-bg-card p-8 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-subtle max-[480px]:p-6">
+            <span className="mb-5 inline-block self-start rounded-full bg-bg-secondary px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-text-secondary uppercase">
+              Developer · Free Forever
             </span>
-            <p className="mb-1.5 text-xl font-bold tracking-[-0.5px] text-[#1c1b18]">
+            <p className="mb-1.5 text-xl font-bold tracking-[-0.5px] text-text-primary">
               Self-Hosted
             </p>
-            <p className="mb-1 text-[38px] leading-none font-extrabold tracking-[-2px] text-[#1c1b18] max-[480px]:text-[30px]">
+            <p className="mb-1 text-[38px] leading-none font-extrabold tracking-[-2px] text-text-primary max-[480px]:text-[30px]">
               ₹0{" "}
-              <span className="text-[13px] font-normal tracking-normal text-[#9c9a92]">
+              <span className="text-[13px] font-normal tracking-normal text-text-muted">
                 forever
               </span>
             </p>
-            <p className="mt-4 flex-1 text-[13px] leading-[1.65] text-[#6e6c64]">
-              Deploy your own instance on Vercel + Firebase in ~5 minutes. Your
-              expenses, watchlist, and notes stay entirely in your private
-              database — never shared, never monetised.
+            <p className="mt-4 flex-1 text-[13px] leading-[1.65] text-text-secondary">
+              Deploy your own copy on Vercel + Firebase in ~5 minutes. 100% free with all Pro features unlocked natively in your private database.
             </p>
-            <div className="my-6 h-px bg-[#e5e3db]" />
+            <div className="my-6 h-px bg-border-subtle" />
             <ul className="mb-7 flex list-none flex-col gap-2.5 p-0">
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className={FI_YES}>✓</span> Your data, your servers
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> <strong>100% unlocked features</strong>
               </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className={FI_YES}>✓</span> Private Firebase database
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> Private Firebase project
               </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className={FI_YES}>✓</span> Zero ads, forever
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> Full environment control
               </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className={FI_YES}>✓</span> Free on Firebase Spark plan
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> Free tier operational costs
               </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className={FI_YES}>✓</span> Full env control
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className={FI_YES}>✓</span> AES-256 GCM DB Encryption
+              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
+                <span className={FI_YES}>✓</span> MIT licensed open source
               </li>
             </ul>
             <a
-              href="https://github.com/fal3n-4ngel/PHub-Dashboard#readme"
+              href="https://github.com/fal3n-4ngel/Continuum-Home#readme"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-[#1c1b18] bg-[#1c1b18] px-5 py-3 text-[13px] font-semibold text-white no-underline transition-all duration-200 enabled:hover:bg-[#31302b]"
+              className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-text-primary bg-transparent px-5 py-3 text-[13px] font-semibold text-text-primary no-underline transition-all duration-200 enabled:hover:bg-text-primary enabled:hover:text-bg-card"
             >
               View Setup Guide →
-            </a>
-          </div>
-
-          {/* ── Card 3: Fork & build ── */}
-          <div className="relative flex flex-col rounded-2xl border border-[#e5e3db] bg-white p-8 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_28px_-4px_rgba(110,108,100,0.12)] max-[480px]:p-6">
-            <span className="mb-5 inline-block self-start rounded-full bg-[#eae8e0] px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-[#6e6c64] uppercase">
-              MIT License
-            </span>
-            <p className="mb-1.5 text-xl font-bold tracking-[-0.5px] text-[#1c1b18]">
-              Fork & Build
-            </p>
-            <p className="mb-1 text-[26px] leading-none font-extrabold tracking-[-0.5px] text-[#1c1b18]">
-              Open Source
-            </p>
-            <p className="mt-4 flex-1 text-[13px] leading-[1.65] text-[#6e6c64]">
-              Clone the full repo, gut it, add your own modules, redesign it.
-              Built on Next.js + Firebase — a solid base for any personal
-              dashboard or productivity app.
-            </p>
-            <div className="my-6 h-px bg-[#e5e3db]" />
-            <ul className="mb-7 flex list-none flex-col gap-2.5 p-0">
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className={FI_YES}>✓</span> Full codebase access
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className={FI_YES}>✓</span> MIT licensed
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className={FI_YES}>✓</span> Next.js + Firebase stack
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className="shrink-0 text-[13px] text-[#9c9a92]">→</span>{" "}
-                PRs & feedback welcome
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-[#1c1b18]">
-                <span className="shrink-0 text-[13px] text-[#9c9a92]">→</span>{" "}
-                ⭐ Star if it helped you
-              </li>
-            </ul>
-            <a
-              href="https://github.com/fal3n-4ngel/PHub-Dashboard"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-[#1c1b18] bg-transparent px-5 py-3 text-[13px] font-semibold text-[#1c1b18] no-underline transition-all duration-200 enabled:hover:bg-[#1c1b18] enabled:hover:text-white"
-            >
-              View on GitHub →
             </a>
           </div>
         </div>
@@ -1201,7 +1206,7 @@ export default function LandingPage({
               the answer. Can&apos;t find yours?
             </p>
             <a
-              href="https://github.com/fal3n-4ngel/PHub-Dashboard/issues"
+              href="https://github.com/fal3n-4ngel/Continuum-Home/issues"
               target="_blank"
               rel="noopener noreferrer"
               className={`${HERO_CTA_PRIMARY} inline-flex`}
@@ -1249,16 +1254,16 @@ export default function LandingPage({
       />
 
       {/* ─── Footer ─── */}
-      <footer className="border-t border-[#e5e3db] bg-white">
+      <footer className="border-t border-border-subtle bg-bg-card">
         <div className="mx-auto max-w-[1100px] px-20 pt-14 max-[900px]:px-6 max-[900px]:pt-12">
-          <div className="grid grid-cols-[1.6fr_1fr_1fr] gap-[60px] border-b border-[#e5e3db] pb-11 max-[900px]:grid-cols-1 max-[900px]:gap-9 max-[900px]:pb-9">
+          <div className="grid grid-cols-[1.6fr_1fr_1fr] gap-[60px] border-b border-border-subtle pb-11 max-[900px]:grid-cols-1 max-[900px]:gap-9 max-[900px]:pb-9">
             <div className="flex flex-col gap-3.5">
               <a
                 href="#"
-                className="flex items-center gap-[9px] text-base font-bold tracking-[-0.4px] text-[#1c1b18] no-underline"
+                className="flex items-center gap-[9px] text-base font-bold tracking-[-0.4px] text-text-primary no-underline"
               >
-                <BentoLogo size={18} color="#1c1b18" />
-                PHub Dashboard
+                <BentoLogo size={18} color="var(--text-primary)" />
+                {SITE_NAME}
               </a>
               <p className="max-w-[290px] text-[13px] leading-[1.65] text-[#6e6c64]">
                 A private tracking dashboard for media watchlists, daily
@@ -1323,7 +1328,7 @@ export default function LandingPage({
               <ul className="flex list-none flex-col gap-[11px] p-0">
                 <li>
                   <a
-                    href="https://github.com/fal3n-4ngel/PHub-Dashboard"
+                    href="https://github.com/fal3n-4ngel/Continuum-Home"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={FOOTER_LINK_ITEM}
@@ -1333,7 +1338,7 @@ export default function LandingPage({
                 </li>
                 <li>
                   <a
-                    href="https://github.com/fal3n-4ngel/PHub-Dashboard#readme"
+                    href="https://github.com/fal3n-4ngel/Continuum-Home#readme"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={FOOTER_LINK_ITEM}
@@ -1353,7 +1358,7 @@ export default function LandingPage({
                 </li>
                 <li>
                   <a
-                    href="https://github.com/fal3n-4ngel/PHub-Dashboard/issues"
+                    href="https://github.com/fal3n-4ngel/Continuum-Home/issues"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={FOOTER_LINK_ITEM}
