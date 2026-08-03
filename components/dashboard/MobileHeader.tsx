@@ -64,22 +64,22 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             <button
               onClick={onClaimPro}
               title="Upgrade to Pro"
-              className="flex h-7 items-center gap-1.5 rounded-full border border-border-subtle bg-transparent px-2.5 text-text-secondary transition-colors hover:text-text-primary"
+              className="flex h-7 items-center gap-1 rounded-full border border-[#7c3aed]/40 bg-[#7c3aed]/5 px-2.5 text-text-primary transition-all hover:bg-[#7c3aed]/10 active:scale-95"
             >
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 text-[#7c3aed]">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
-              <span className="text-[9px] font-bold tracking-wider" style={{ color: "#7c3aed" }}>PRO</span>
+              <span className="text-[9px] font-extrabold tracking-wider text-[#7c3aed]">GET PRO</span>
             </button>
           )}
 
           {/* Pro badge — pro users */}
           {isProUser && (
-            <div title="Pro Account" className="flex h-7 items-center gap-1.5 rounded-full border border-border-subtle px-2.5">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-text-muted">
+            <div title="Pro Account" className="flex h-7 items-center gap-1 rounded-full border border-border-subtle bg-bg-primary px-2.5">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-text-muted">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
-              <span className="text-[9px] font-bold tracking-wider" style={{ color: "#7c3aed" }}>PRO</span>
+              <span className="text-[9px] font-bold tracking-wider text-text-secondary">PRO</span>
             </div>
           )}
 
@@ -100,12 +100,24 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             title="AI Integration Setup"
             className="flex h-7 w-7 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-secondary transition-colors hover:text-text-primary"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2 2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"/>
-              <path d="M19 11v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" y1="18" x2="12" y2="22"/>
-            </svg>
+           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>
+         
           </a>
+          {user && user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL) && (
+            <a
+              onClick={() => setActiveTab("admin")}
+              title="Admin Panel"
+              className={`flex h-7 w-7 items-center justify-center rounded-full border border-border-subtle cursor-pointer transition-colors ${
+                activeTab === "admin"
+                  ? "bg-text-primary text-bg-card"
+                  : "bg-bg-primary text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </a>
+          )}
           {user && (
             <img
               src={isSafeImageUrl(user.photoURL) ? user.photoURL : undefined}
