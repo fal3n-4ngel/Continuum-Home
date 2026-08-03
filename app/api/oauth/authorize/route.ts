@@ -149,7 +149,7 @@ export async function GET(req: NextRequest) {
     </head>
     <body>
       <div class="card" id="consent-card">
-        <div class="logo">Continuum Dashboard</div>
+        <div class="logo">Continuum Home</div>
         
         <div id="loading" class="loader">Verifying login status…</div>
         

@@ -82,34 +82,52 @@ export async function POST(req: NextRequest) {
     }
 
     const appUrl = process.env.APP_URL || "https://continuuuum.vercel.app";
-    const sender = process.env.CRON_SENDER_EMAIL || "Continuum Dashboard <onboarding@resend.dev>";
+    const sender = process.env.CRON_SENDER_EMAIL || "Continuum Home <onboarding@resend.dev>";
 
     // Build the beautiful announcement email body HTML
     const emailBody = wrap(`
-      <tr><td style="border-bottom:1px solid #eae8e0;padding-bottom:16px;">
-        <table width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td align="left" class="txt-main font-sans" style="font-size:16px;font-weight:500;">Continuum Dashboard</td>
-          <td align="right" class="txt-muted font-sans" style="font-size:12px;">Announcement</td>
-        </tr></table>
-      </td></tr>
-      <tr><td height="28"></td></tr>
       ${action === "preview" ? `
-      <tr><td style="background-color:#fef3c7;border:1px solid #fde68a;border-radius:8px;padding:10px 16px;margin-bottom:20px;">
-        <span style="font-size:11px;font-weight:700;color:#92400e;font-family:ui-monospace,monospace;">⚡ ANNOUNCEMENT PREVIEW — Sent to administrative inbox only.</span>
+      <tr><td style="padding-bottom: 20px;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fef3c7; border: 1px solid #fde68a; border-radius: 8px;">
+          <tr><td style="padding: 10px 16px; font-family: ui-monospace, monospace; font-size: 11px; font-weight: 700; color: #92400e;">
+            ⚡ ANNOUNCEMENT PREVIEW — Sent to administrative inbox only.
+          </td></tr>
+        </table>
       </td></tr>
-      <tr><td height="20"></td></tr>
       ` : ""}
       <tr><td>
-        <table width="100%" class="bento-card" cellpadding="0" cellspacing="0">
-          <tr><td align="left">
-            <h1 class="font-serif txt-main" style="font-size:26px;font-weight:normal;margin:0 0 16px 0;line-height:1.3;">${title}</h1>
-            <div class="font-sans txt-main" style="font-size:14px;line-height:1.6;white-space:pre-wrap;color:#2e2d27;">${content}</div>
-          </td></tr>
-          <tr><td height="32"></td></tr>
-          <tr><td align="center" style="border-top:1px solid #eae8e0;padding-top:24px;">
-            <a href="${appUrl}" class="btn-primary font-sans">Open Dashboard</a>
-            <p class="font-sans txt-muted" style="font-size:10px;margin-top:16px;color:#8c8a80;">Continuum — steady flow of life progression.</p>
-          </td></tr>
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fcfbfa; border: 1px solid #eae8e0; border-radius: 12px; box-shadow: 0 2px 10px rgba(28,27,24,0.02);">
+          <tr>
+            <td style="padding: 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <!-- Header Inside Card -->
+                <tr><td style="border-bottom: 1px solid #eae8e0; padding-bottom: 16px;">
+                  <table width="100%" cellpadding="0" cellspacing="0"><tr>
+                    <td align="left" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; color: #1c1b18;">Continuum Dashboard</td>
+                    <td align="right" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 500; color: #7c7a72;">Announcement</td>
+                  </tr></table>
+                </td></tr>
+                
+                <!-- Spacer -->
+                <tr><td height="28"></td></tr>
+                
+                <!-- Content Title & Body -->
+                <tr><td align="left">
+                  <h1 style="font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 26px; font-weight: normal; margin: 0 0 16px 0; line-height: 1.3; color: #1c1b18;">${title}</h1>
+                  <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; line-height: 1.6; white-space: pre-wrap; color: #2e2d27;">${content}</div>
+                </td></tr>
+                
+                <!-- Spacer -->
+                <tr><td height="32"></td></tr>
+                
+                <!-- Footer Buttons & Branding -->
+                <tr><td align="center" style="border-top: 1px solid #eae8e0; padding-top: 24px;">
+                  <a href="${appUrl}" style="display: inline-block; background-color: #1c1b18; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px;">Open Dashboard</a>
+                  <p style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 10px; margin-top: 16px; color: #8c8a80;">Continuum — steady flow of life progression.</p>
+                </td></tr>
+              </table>
+            </td>
+          </tr>
         </table>
       </td></tr>
     `);

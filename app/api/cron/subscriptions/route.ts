@@ -83,7 +83,7 @@ async function processUser(user: AdminUser, resendApiKey: string): Promise<Proce
             <td style="border-bottom:1px solid #eae8e0;padding-bottom:16px;">
               <table width="100%" cellpadding="0" cellspacing="0"><tr>
                 <td align="left" class="txt-main font-sans" style="font-size:16px;font-weight:500;">
-                  Continuum Dashboard
+                  Continuum Home
                 </td>
                 <td align="right"><span class="font-sans txt-white" style="font-size:9px;font-weight:700;background-color:#b45309;background-image:linear-gradient(#b45309,#b45309);padding:4px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px;">Alert</span></td>
               </tr></table>

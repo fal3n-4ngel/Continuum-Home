@@ -272,7 +272,7 @@ export function validateSettingsPatch(body: unknown): Partial<Omit<DashboardSett
   if (b.monthlySalary !== undefined) patch.monthlySalary = asNumber(b.monthlySalary, "monthlySalary", { min: 0 });
   if (b.additionalIncome !== undefined) patch.additionalIncome = asNumber(b.additionalIncome, "additionalIncome", { min: 0 });
   if (b.reconciliations !== undefined) patch.reconciliations = asReconciliationsMap(b.reconciliations, "reconciliations");
-  if (b.salaryLog !== undefined) patch.salaryLog = asSalaryLogMap(b.salaryLog, "salaryLog");
+  if (b.salaryLog !== undefined) patch.salaryLog = asSalaryLogMap(b.salaryLog, "salaryLog");  
   if (Object.keys(patch).length === 0) {
     badRequest("Patch body must include at least one of: timeFilter, salaryDay, monthlySalary, additionalIncome, reconciliations.");
   }

@@ -59,9 +59,19 @@ export function AdminTab({ user }: AdminTabProps) {
   const [proActionLoading, setProActionLoading] = useState<string | null>(null);
 
   // Announcement states
-  const [annSubject, setAnnSubject] = useState("");
-  const [annTitle, setAnnTitle] = useState("");
-  const [annContent, setAnnContent] = useState("");
+  const [annSubject, setAnnSubject] = useState("Rebranding Notice: PHub is now Continuum");
+  const [annTitle, setAnnTitle] = useState("PHub has officially rebranded to Continuum");
+  const [annContent, setAnnContent] = useState(`We are excited to share that PHub has officially rebranded to Continuum.
+
+Our new name represents a smooth, steady flow of life progression. Everything you love about the platform — tracking your expenses, library items, subscription cycles, and financial portfolio — remains completely unchanged and secure under AES-256-GCM encryption.
+
+Key Updates:
+• New domain: continuuuum.vercel.app
+• Refined warm paper aesthetics and dynamic layouts
+• Fully-loaded data guarantees at launch to prevent layout shifts
+• Native Custom GPT integrations for automated ledger management
+
+Thank you for being part of our journey!`);
   const [annSending, setAnnSending] = useState<"preview" | "send" | null>(null);
   const [annConfirmModal, setAnnConfirmModal] = useState(false);
 
@@ -303,6 +313,97 @@ export function AdminTab({ user }: AdminTabProps) {
     }
   };
 
+  const emailHtmlPreview = `
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 16px;
+            background-color: #f4f3ec;
+            color: #1c1b18;
+          }
+          .bento-card {
+            background-color: #fcfbfa;
+            border: 1px solid #eae8e0;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 2px 10px rgba(28,27,24,0.02);
+            max-width: 100%;
+            box-sizing: border-box;
+          }
+          .header {
+            border-bottom: 1px solid #eae8e0;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 500;
+          }
+          .txt-main { color: #1c1b18; }
+          .txt-muted { color: #7c7a72; }
+          .title {
+            font-family: Georgia, "Times New Roman", serif;
+            font-style: italic;
+            font-size: 21px;
+            font-weight: normal;
+            margin: 0 0 12px 0;
+            line-height: 1.3;
+            color: #1c1b18;
+          }
+          .content {
+            font-size: 13px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            color: #2e2d27;
+          }
+          .footer {
+            margin-top: 24px;
+            border-top: 1px solid #eae8e0;
+            padding-top: 16px;
+            text-align: center;
+          }
+          .btn-primary {
+            display: inline-block;
+            background-color: #1c1b18;
+            color: #ffffff !important;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+          }
+          .footer-text {
+            font-size: 9px;
+            margin-top: 12px;
+            color: #8c8a80;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="bento-card">
+          <div class="header">
+            <span class="txt-main">Continuum Dashboard</span>
+            <span class="txt-muted">Announcement</span>
+          </div>
+          <div>
+            <h1 class="title">${annTitle || "Announcement Title"}</h1>
+            <div class="content">${annContent || "Write something..."}</div>
+          </div>
+          <div class="footer">
+            <a href="https://continuuuum.vercel.app" class="btn-primary">Open Dashboard</a>
+            <p class="footer-text">Continuum — steady flow of life progression.</p>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
   const CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
   const BUTTON_GHOST = "cursor-pointer rounded-md border border-border-subtle bg-transparent text-[11px] font-semibold text-text-primary px-3 py-1.5 transition-all hover:bg-bg-primary disabled:opacity-50 disabled:cursor-not-allowed";
 
@@ -543,8 +644,10 @@ export function AdminTab({ user }: AdminTabProps) {
         <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
           <Bell className="h-4 w-4" /> System Announcement Dispatcher
         </h3>
-        <div className="flex flex-col gap-4">
-          <div className="grid grid-cols-2 gap-4 max-sm:grid-cols-1">
+        
+        <div className="grid grid-cols-[1.2fr_1fr] gap-6 max-lg:grid-cols-1">
+          {/* Column 1: Editor Form */}
+          <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Email Subject Line</label>
               <input
@@ -555,6 +658,7 @@ export function AdminTab({ user }: AdminTabProps) {
                 className="w-full rounded-md border border-border-subtle bg-bg-primary px-3.5 py-2 text-xs text-text-primary outline-none transition-all focus:border-text-primary"
               />
             </div>
+            
             <div className="flex flex-col gap-1.5">
               <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Header Title</label>
               <input
@@ -565,34 +669,54 @@ export function AdminTab({ user }: AdminTabProps) {
                 className="w-full rounded-md border border-border-subtle bg-bg-primary px-3.5 py-2 text-xs text-text-primary outline-none transition-all focus:border-text-primary"
               />
             </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Announcement Body Content</label>
+              <textarea
+                value={annContent}
+                onChange={(e) => setAnnContent(e.target.value)}
+                placeholder="Type your markdown or text announcement here..."
+                rows={10}
+                className="w-full rounded-md border border-border-subtle bg-bg-primary px-3.5 py-2.5 text-xs text-text-primary outline-none transition-all focus:border-text-primary font-sans leading-relaxed resize-y"
+              />
+            </div>
+
+            <div className="flex items-center gap-3 justify-end mt-1">
+              <button
+                disabled={annSending !== null || !annSubject.trim() || !annTitle.trim() || !annContent.trim()}
+                onClick={() => handleAnnouncement("preview")}
+                className="rounded-full border border-border-subtle bg-transparent px-4 py-2 text-xs font-semibold text-text-primary transition-all hover:bg-bg-primary disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {annSending === "preview" ? "Sending Test..." : "Send Test to Admin"}
+              </button>
+              <button
+                disabled={annSending !== null || !annSubject.trim() || !annTitle.trim() || !annContent.trim()}
+                onClick={() => setAnnConfirmModal(true)}
+                className="rounded-full border border-text-primary bg-text-primary px-4 py-2 text-xs font-semibold text-bg-card transition-all hover:bg-[#2e2d27] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {annSending === "send" ? "Broadcasting..." : "Broadcast to All Users"}
+              </button>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Announcement Body Content</label>
-            <textarea
-              value={annContent}
-              onChange={(e) => setAnnContent(e.target.value)}
-              placeholder="Type your markdown or text announcement here..."
-              rows={4}
-              className="w-full rounded-md border border-border-subtle bg-bg-primary px-3.5 py-2.5 text-xs text-text-primary outline-none transition-all focus:border-text-primary font-sans leading-relaxed resize-y"
-            />
-          </div>
+          {/* Column 2: Live HTML Viewport Preview */}
+          <div className="flex flex-col gap-2 rounded-lg border border-border-subtle bg-bg-primary/20 p-4">
+            <div className="flex items-center justify-between border-b border-border-subtle pb-2 mb-2">
+              <span className="font-mono text-[9px] font-bold text-text-secondary uppercase tracking-wider">LIVE EMAIL PREVIEW</span>
+              <span className="text-[10px] text-text-muted italic">Updates in real-time</span>
+            </div>
+            
+            <div className="text-xs text-text-secondary mb-2 font-mono truncate">
+              <strong className="text-text-primary">Subject:</strong> {annSubject || "(No Subject)"}
+            </div>
 
-          <div className="flex items-center gap-3 justify-end mt-1">
-            <button
-              disabled={annSending !== null || !annSubject.trim() || !annTitle.trim() || !annContent.trim()}
-              onClick={() => handleAnnouncement("preview")}
-              className="rounded-full border border-border-subtle bg-transparent px-4 py-2 text-xs font-semibold text-text-primary transition-all hover:bg-bg-primary disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {annSending === "preview" ? "Sending Preview..." : "Send Test Preview"}
-            </button>
-            <button
-              disabled={annSending !== null || !annSubject.trim() || !annTitle.trim() || !annContent.trim()}
-              onClick={() => setAnnConfirmModal(true)}
-              className="rounded-full border border-text-primary bg-text-primary px-4 py-2 text-xs font-semibold text-bg-card transition-all hover:bg-[#2e2d27] disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {annSending === "send" ? "Broadcasting..." : "Broadcast to All Users"}
-            </button>
+            <div className="flex-1 rounded-md border border-border-subtle bg-bg-card overflow-hidden h-[330px] shadow-inner">
+              <iframe
+                title="Announcement Email Preview"
+                srcDoc={emailHtmlPreview}
+                className="w-full h-full border-none"
+              />
+            </div>
           </div>
         </div>
       </div>

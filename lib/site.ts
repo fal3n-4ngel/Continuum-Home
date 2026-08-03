@@ -1,8 +1,8 @@
 // Single source of truth for site identity — metadata, JSON-LD, the OpenAPI
 // spec, and the OG/Twitter image generators all read from here so the
 // production URL and author info never drift out of sync.
-export const SITE_URL = "https://continuum-home.vercel.app";
-export const SITE_NAME = "Continuum Home";
+export const SITE_URL = "https://continuuuum.vercel.app";
+export const SITE_NAME = "Continuum";
 export const SITE_TAGLINE = "One dashboard. Everything you track.";
 export const SITE_DESCRIPTION =
   "A private, self-hostable dashboard for expenses, movies/shows/anime, books, and notes — synced with AniList and Trakt, and wired up to ChatGPT via a Custom GPT Action.";

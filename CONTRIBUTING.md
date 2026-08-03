@@ -1,6 +1,6 @@
-# Contributing to Personal Dashboard
+# Contributing to Continnum Home
 
-Thank you for your interest in contributing to the Personal Dashboard! We welcome contributions, bug reports, and suggestions.
+Thank you for your interest in contributing to the Continnum Home! We welcome contributions, bug reports, and suggestions.
 
 ---
 
@@ -8,8 +8,8 @@ Thank you for your interest in contributing to the Personal Dashboard! We welcom
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/fal3n-4ngel/personal-dashboard.git
-   cd personal-dashboard
+   git clone https://github.com/fal3n-4ngel/Continuum-Home.git
+   cd Continuum-Home
    ```
 
 2. **Install Dependencies:**
