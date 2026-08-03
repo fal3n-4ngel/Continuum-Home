@@ -66,7 +66,7 @@ export function AdminTab({ user }: AdminTabProps) {
 Our new name represents a smooth, steady flow of life progression. Everything you love about the platform — tracking your expenses, library items, subscription cycles, and financial portfolio — remains completely unchanged and secure under AES-256-GCM encryption.
 
 Key Updates:
-• New domain: continuuuum.vercel.app
+• New domain: continuum-home.vercel.app
 • Refined warm paper aesthetics and dynamic layouts
 • Fully-loaded data guarantees at launch to prevent layout shifts
 • Native Custom GPT integrations for automated ledger management
@@ -396,7 +396,7 @@ Thank you for being part of our journey!`);
             <div class="content">${annContent || "Write something..."}</div>
           </div>
           <div class="footer">
-            <a href="https://continuuuum.vercel.app" class="btn-primary">Open Dashboard</a>
+            <a href="https://continuum-home.vercel.app" class="btn-primary">Open Dashboard</a>
             <p class="footer-text">Continuum — steady flow of life progression.</p>
           </div>
         </div>
@@ -624,7 +624,7 @@ Thank you for being part of our journey!`);
             <div className="flex flex-col gap-2.5 font-mono text-[10px] text-text-secondary">
               <div className="flex justify-between border-b border-border-subtle pb-1.5">
                 <span>DEPLOYED URL</span>
-                <span className="text-text-primary truncate max-w-[130px]">{user.email ? "https://continuuuum.vercel.app" : "http://localhost:3000"}</span>
+                <span className="text-text-primary truncate max-w-[130px]">{user.email ? "https://continuum-home.vercel.app" : "http://localhost:3000"}</span>
               </div>
               <div className="flex justify-between border-b border-border-subtle pb-1.5">
                 <span>REDIS STATUS</span>
