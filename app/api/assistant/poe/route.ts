@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { requireUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
@@ -33,11 +33,10 @@ export async function POST(req: NextRequest) {
         const fakeHeaders = new Headers();
         fakeHeaders.set("authorization", `Bearer ${key}`);
         
-        let session;
         try {
           // Construct fake request for authentication check
           const fakeReq = new NextRequest(req.url, { headers: fakeHeaders });
-          session = await requireUser(fakeReq);
+          await requireUser(fakeReq);
         } catch (err: any) {
           sendEvent("text", { text: `Error: Authentication failed. Please verify your Permanent API Key is correct.\nDetail: ${err.message || err}` });
           sendEvent("done", {});

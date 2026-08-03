@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LogoMark } from "@/components/Logo";
 import { SITE_NAME } from "@/lib/site";
@@ -127,7 +128,7 @@ export default function LoginPage() {
       {status === "error" && (
         <div style={{ textAlign: "center", maxWidth: "340px" }}>
           <p style={{ fontSize: "13px", color: "#dc2626", marginBottom: "16px" }}>{error}</p>
-          <a
+          <Link
             href="/"
             style={{
               fontSize: "13px",
@@ -138,7 +139,7 @@ export default function LoginPage() {
             }}
           >
             ← Back to home
-          </a>
+          </Link>
         </div>
       )}
 
