@@ -150,3 +150,8 @@ If you find this dashboard helpful, consider supporting its development:
 Distributed under the [MIT License](https://www.google.com/search?q=LICENSE). Feel free to fork, break, or modify it to fit your needs!
 
 <!-- GitAds-Verify: 1VTRJ98N18CZX9P4A3NYHVY5CBSXTDFB -->
+
+## GitAds Sponsored
+[![Sponsored by GitAds](https://gitads.dev/v1/ad-serve?source=fal3n-4ngel/continuum-home@github)](https://gitads.dev/v1/ad-track?source=fal3n-4ngel/continuum-home@github)
+
+
