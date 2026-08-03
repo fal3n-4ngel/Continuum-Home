@@ -11,30 +11,60 @@ export default function LoginPage() {
   useEffect(() => {
     let cancelled = false;
 
-    async function doRedirect() {
+    async function initAuth() {
       try {
         const { initializeApp, getApps } = await import("firebase/app");
         const res = await fetch("/api/auth/config");
         const config = await res.json();
         const app = getApps().length ? getApps()[0] : initializeApp(config);
 
-        const { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult } =
+        const { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, onAuthStateChanged } =
           await import("firebase/auth");
         const auth = getAuth(app);
 
-        // Check if we're returning from a redirect first
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-          // Redirect completed — go back to the main app
+        // 1. If already signed in, go home immediately
+        if (auth.currentUser) {
           window.location.replace("/");
           return;
         }
 
-        if (cancelled) return;
-        setStatus("redirecting");
+        // 2. Listen for auth state
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          if (user && !cancelled) {
+            sessionStorage.removeItem("redirect_sent");
+            window.location.replace("/");
+          }
+        });
 
-        // Initiate the redirect sign-in
-        await signInWithRedirect(auth, new GoogleAuthProvider());
+        // 3. Process redirect result if coming back from Google
+        try {
+          const result = await getRedirectResult(auth);
+          if (result?.user && !cancelled) {
+            sessionStorage.removeItem("redirect_sent");
+            window.location.replace("/");
+            return;
+          }
+        } catch (redirectErr: any) {
+          console.warn("[Login] Redirect result error:", redirectErr);
+        }
+
+        // 4. If not logged in after checking, determine whether to redirect or stop loop
+        if (!cancelled && !auth.currentUser) {
+          const hasAttempted = sessionStorage.getItem("redirect_sent");
+          if (hasAttempted) {
+            // Already attempted redirect once and came back unauthenticated -> stop loop!
+            sessionStorage.removeItem("redirect_sent");
+            setStatus("error");
+            setError("Unable to complete sign-in. Please try again from the main page.");
+          } else {
+            // First time on /login -> initiate redirect
+            sessionStorage.setItem("redirect_sent", "1");
+            setStatus("redirecting");
+            await signInWithRedirect(auth, new GoogleAuthProvider());
+          }
+        }
+
+        return () => unsubscribe();
       } catch (err: any) {
         console.error("[Login] Error:", err);
         if (!cancelled) {
@@ -44,8 +74,10 @@ export default function LoginPage() {
       }
     }
 
-    doRedirect();
-    return () => { cancelled = true; };
+    initAuth();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   return (

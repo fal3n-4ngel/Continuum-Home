@@ -2171,9 +2171,7 @@ const updateMarketPrices = async () => {
             firebaseAuth.signInWithPopup(firebaseAuth.auth, new firebaseAuth.GoogleAuthProvider())
               .catch((err: any) => {
                 if (err.code === "auth/popup-blocked" || err.code === "auth/cancelled-popup-request") {
-                  // Popup is blocked — navigate to dedicated login page which runs
-                  // signInWithRedirect in isolation (avoids cross-origin state issues)
-                  window.location.href = "/login";
+                  firebaseAuth.signInWithRedirect(firebaseAuth.auth, new firebaseAuth.GoogleAuthProvider());
                 } else {
                   console.error("Login failed:", err);
                 }
