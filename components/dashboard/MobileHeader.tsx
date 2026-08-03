@@ -64,22 +64,22 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             <button
               onClick={onClaimPro}
               title="Upgrade to Pro"
-              className="flex h-7 items-center gap-1 rounded-full border border-[#7c3aed]/40 bg-[#7c3aed]/5 px-2.5 text-text-primary transition-all hover:bg-[#7c3aed]/10 active:scale-95"
+              className="flex h-7 items-center justify-center gap-1 rounded-full border border-[#7c3aed]/40 bg-[#7c3aed]/5 px-2.5 text-text-primary transition-all hover:bg-[#7c3aed]/10 active:scale-95"
             >
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 text-[#7c3aed]">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 text-[#7c3aed] relative -top-[0.5px]">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
-              <span className="text-[9px] font-extrabold tracking-wider text-[#7c3aed]">GET PRO</span>
+              <span className="text-[9px] font-semibold tracking-wider text-[#7c3aed] leading-none">GET PRO</span>
             </button>
           )}
 
           {/* Pro badge — pro users */}
           {isProUser && (
-            <div title="Pro Account" className="flex h-7 items-center gap-1 rounded-full border border-border-subtle bg-bg-primary px-2.5">
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-text-muted">
+            <div title="Pro Account" className="flex h-7 items-center justify-center gap-1 rounded-full border border-[#7c3aed]/30 bg-[#7c3aed]/5 px-2.5">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 text-[#7c3aed] relative -top-[0.5px]">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
-              <span className="text-[9px] font-bold tracking-wider text-text-secondary">PRO</span>
+              <span className="text-[9px] font-semibold tracking-wider text-[#7c3aed] leading-none">PRO</span>
             </div>
           )}
 
