@@ -1,4 +1,4 @@
-# PHub Dashboard
+# Continuum Home
 
 > **One dashboard to rule them all.** Replace 5 single-purpose apps with a self-hosted, privacy-first command center for your finances, watchlists, books, subscriptions, and quick notes—all hooked up directly to your favorite AI assistant.
 
