@@ -950,10 +950,14 @@ export default function Dashboard() {
       const auth = getAuth(app);
       setFirebaseAuth({ auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut });
 
-      // Process any pending redirect sign-in result (e.g. from popup-blocked browsers
+      // Consume any pending redirect sign-in result (e.g. from popup-blocked browsers
       // that fell back to signInWithRedirect — the credential lands here after redirect)
-      getRedirectResult(auth).catch(() => {
-        // Silently ignore — no pending redirect, or redirect failed
+      getRedirectResult(auth).then((result) => {
+        if (result?.user) {
+          console.log("[Auth] Redirect sign-in consumed:", result.user.email);
+        }
+      }).catch((err) => {
+        console.warn("[Auth] getRedirectResult error:", err?.code, err?.message);
       });
 
       unsubscribe = auth.onAuthStateChanged(async (fbUser: any) => {
@@ -2167,13 +2171,16 @@ const updateMarketPrices = async () => {
             firebaseAuth.signInWithPopup(firebaseAuth.auth, new firebaseAuth.GoogleAuthProvider())
               .catch((err: any) => {
                 if (err.code === "auth/popup-blocked" || err.code === "auth/cancelled-popup-request") {
-                  firebaseAuth.signInWithRedirect(firebaseAuth.auth, new firebaseAuth.GoogleAuthProvider());
+                  // Popup is blocked — navigate to dedicated login page which runs
+                  // signInWithRedirect in isolation (avoids cross-origin state issues)
+                  window.location.href = "/login";
                 } else {
                   console.error("Login failed:", err);
                 }
               });
           }
         }}
+        authError={undefined}
         firebaseAuthReady={!!firebaseAuth}
       />
     );
