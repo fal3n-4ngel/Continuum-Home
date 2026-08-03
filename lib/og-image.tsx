@@ -38,7 +38,7 @@ export function SocialCard() {
           </div>
         </div>
         <div style={{ display: "flex", fontSize: "32px", fontWeight: 700, color: "#1c1b18", letterSpacing: "-1px" }}>
-          Continuum Dashboard
+          Continuum Home
         </div>
       </div>
 

@@ -145,7 +145,7 @@ async function processUser(user: AdminUser, usdToInr: number, resendApiKey: stri
         <!-- Header -->
         <tr><td style="border-bottom:1px solid #eae8e0;padding-bottom:16px;">
           <table width="100%" cellpadding="0" cellspacing="0"><tr>
-            <td align="left" class="txt-main font-sans" style="font-size:16px;font-weight:500;">Continuum Dashboard</td>
+            <td align="left" class="txt-main font-sans" style="font-size:16px;font-weight:500;">Continuum Home</td>
             <td align="right" class="txt-muted font-sans" style="font-size:12px;">${todayStr}</td>
           </tr></table>
         </td></tr>

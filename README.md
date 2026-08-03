@@ -40,7 +40,7 @@ Anyway, a friend saw it and wanted it too, so rather than handing over my person
 
 ## 🔒 Security Model
 
-Your financial and personal data shouldn't be handled loosely. Continuum Dashboard enforces security at the database boundary:
+Your financial and personal data shouldn't be handled loosely. Continuum Home enforces security at the database boundary:
 
 * **No Master Server Credentials:** The Next.js backend does not hold an admin key. Every database call is routed through the [Firestore REST API](https://firebase.google.com/docs/firestore/use-rest-api) authenticated directly with the user’s personal Firebase ID token.
 * **Database Encryption (AES-256-GCM):** Sensitive financial data fields (titles, categories, spent amounts, and notes) are encrypted on-the-fly using AES-256-GCM symmetric encryption before hitting Google Firestore, keeping your records protected at rest.
@@ -116,7 +116,7 @@ npm run build && npm run start
 You can converse with your dashboard, track expenses, add movies, and manage your notes directly through ChatGPT!
 
 ### 1. Using the Official Public Custom GPT (Recommended)
-Simply open the official **[Continuum Dashboard Assistant](https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-Home-public)**.
+Simply open the official **[Continuum Home Assistant](https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-Home-public)**.
 When you send your first message, ChatGPT will prompt you to log in. Click "Authorize" to link your account securely using OAuth 2.0. No copy-pasting API keys required!
 
 ### 2. Setting Up Your Own Custom GPT (For Self-Hosters)

@@ -82,13 +82,13 @@ export async function POST(req: NextRequest) {
     }
 
     const appUrl = process.env.APP_URL || "https://continuuuum.vercel.app";
-    const sender = process.env.CRON_SENDER_EMAIL || "Continuum Dashboard <onboarding@resend.dev>";
+    const sender = process.env.CRON_SENDER_EMAIL || "Continuum Home <onboarding@resend.dev>";
 
     // Build the beautiful announcement email body HTML
     const emailBody = wrap(`
       <tr><td style="border-bottom:1px solid #eae8e0;padding-bottom:16px;">
         <table width="100%" cellpadding="0" cellspacing="0"><tr>
-          <td align="left" class="txt-main font-sans" style="font-size:16px;font-weight:500;">Continuum Dashboard</td>
+          <td align="left" class="txt-main font-sans" style="font-size:16px;font-weight:500;">Continuum Home</td>
           <td align="right" class="txt-muted font-sans" style="font-size:12px;">Announcement</td>
         </tr></table>
       </td></tr>

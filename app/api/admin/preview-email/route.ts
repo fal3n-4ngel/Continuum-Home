@@ -48,7 +48,7 @@ function header(rightHtml: string) {
   return `
           <tr><td style="border-bottom:1px solid #eae8e0;padding-bottom:16px;">
             <table width="100%" cellpadding="0" cellspacing="0"><tr>
-              <td align="left" class="txt-main font-sans" style="font-size:16px;font-weight:500;">Continuum Dashboard</td>
+              <td align="left" class="txt-main font-sans" style="font-size:16px;font-weight:500;">Continuum Home</td>
               <td align="right">${rightHtml}</td>
             </tr></table>
           </td></tr>
@@ -351,7 +351,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        from: process.env.CRON_SENDER_EMAIL || "Continuum Dashboard <onboarding@resend.dev>",
+        from: process.env.CRON_SENDER_EMAIL || "Continuum Home <onboarding@resend.dev>",
         to: [TO_EMAIL],
         subject,
         html: emailHtml,

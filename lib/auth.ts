@@ -229,7 +229,7 @@ async function trackGptMetrics(req: NextRequest, uid: string, email: string | nu
         if (!settings || !settings.isPro) {
           throw new ApiError(
             403,
-            "Upgrade to Pro: Connecting external AI tools or Custom GPTs requires a Continuum Dashboard Pro account. Please go to your dashboard settings to upgrade."
+            "Upgrade to Pro: Connecting external AI tools or Custom GPTs requires a Continuum Home Pro account. Please go to your dashboard settings to upgrade."
           );
         }
       }
