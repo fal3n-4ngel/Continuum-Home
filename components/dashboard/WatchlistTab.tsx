@@ -113,7 +113,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
       }
       const rewatch = "No";
       const review = "";
-      const tags = "phub-dashboard";
+      const tags = "Continuum-Home";
       return [titleEscaped, year, rating, watchedDate, rewatch, review, tags].join(",");
     });
     const csvContent = [headers.join(","), ...rows].join("\n");

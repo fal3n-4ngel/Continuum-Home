@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Auth, GoogleAuthProvider as GoogleAuthProviderClass, signInWithPopup as signInWithPopupFn } from "firebase/auth";
-import { SITE_URL } from "@/lib/site";
+import { SITE_URL, SITE_NAME } from "@/lib/site";
 import { useOrigin } from "@/hooks/useOrigin";
 import { LogoMark } from "@/components/Logo";
 
@@ -159,14 +159,13 @@ Always confirm what you logged in one short line, including the year you recorde
   const BTN_PRIMARY = "inline-flex items-center justify-center rounded-md border border-text-primary bg-text-primary px-4 py-2.5 text-[12.5px] font-medium text-white no-underline transition-all duration-200 hover:bg-[#2e2d27] hover:border-[#2e2d27] disabled:cursor-not-allowed disabled:opacity-40";
   const BTN_GHOST = "inline-flex items-center justify-center rounded-md border border-border-subtle bg-transparent px-4 py-2.5 text-[12.5px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary disabled:cursor-not-allowed disabled:opacity-40";
 
-  const Step = ({ n }: { n: number }) => (
+  const renderStep = (n: number) => (
     <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-bg-primary font-mono text-[11px] font-bold text-text-secondary">
       {n}
     </span>
   );
 
-  // ── Pro gate component ─────────────────────────────────────────────────────
-  const ProGate = () => (
+  const renderProGate = () => (
     <div className="flex flex-col items-start gap-4 rounded-[8px] border border-border-subtle bg-bg-primary px-5 py-5">
       <div className="flex items-center gap-2.5">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-muted">
@@ -203,7 +202,7 @@ Always confirm what you logged in one short line, including the year you recorde
         <div className="flex flex-wrap items-center justify-between gap-3 pb-1">
           <div className="flex items-center gap-2.5">
             <LogoMark size={20} color="var(--text-primary)" />
-            <span className="text-[15px] font-semibold tracking-tight text-text-primary">Continuum</span>
+            <span className="text-[15px] font-semibold tracking-tight text-text-primary">{SITE_NAME}</span>
           </div>
           <Link
             href="/"
@@ -249,7 +248,7 @@ Always confirm what you logged in one short line, including the year you recorde
           </p>
           <a
             href="https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-phub-dashboard-public"
-            target="_blank"
+            target="_blank"Continuum-Home
             rel="noopener noreferrer"
             className={BTN_PRIMARY}
           >
@@ -258,17 +257,17 @@ Always confirm what you logged in one short line, including the year you recorde
         </div>
 
         {/* ── Divider ────────────────────────────────────────────── */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 py-2">
           <div className="flex-1 border-t border-border-subtle" />
-          <span className="font-mono text-[9px] font-bold uppercase tracking-[1.2px] text-text-muted">
-            or set up custom agents
+          <span className="font-mono text-[9px] font-bold uppercase tracking-[1.5px] text-text-muted">
+            Or Self-Host / Custom Agent
           </span>
           <div className="flex-1 border-t border-border-subtle" />
         </div>
 
         {/* ── Step 1 ─────────────────────────────────────────────── */}
         <div className={`${CARD} flex gap-4`}>
-          <Step n={1} />
+          {renderStep(1)}
           <div className="min-w-0 flex-1">
             <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Create a Custom GPT or AI Agent</h2>
             <p className="text-[13px] leading-[1.7] text-text-secondary">
@@ -280,7 +279,7 @@ Always confirm what you logged in one short line, including the year you recorde
 
         {/* ── Step 2 ─────────────────────────────────────────────── */}
         <div className={`${CARD} flex gap-4`}>
-          <Step n={2} />
+          {renderStep(2)}
           <div className="min-w-0 flex-1 flex flex-col gap-4">
             <div>
               <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Import the API schema</h2>
@@ -301,7 +300,7 @@ Always confirm what you logged in one short line, including the year you recorde
                 For <strong className="text-text-primary">Poe Server Bots</strong>, copy the Server Webhook URL and paste it in Poe's Server URL settings:
               </p>
               {isProUser === false ? (
-                <ProGate />
+                renderProGate()
               ) : isProUser === true ? (
                 <div className="flex flex-wrap items-center gap-2">
                   <span className={CODE}>{poeWebhookUrl}</span>
@@ -318,7 +317,7 @@ Always confirm what you logged in one short line, including the year you recorde
 
         {/* ── Step 3 ─────────────────────────────────────────────── */}
         <div className={`${CARD} flex gap-4`}>
-          <Step n={3} />
+          {renderStep(3)}
           <div className="min-w-0 flex-1 flex flex-col gap-4">
             <div>
               <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Authenticate your Agent</h2>
@@ -367,7 +366,7 @@ Always confirm what you logged in one short line, including the year you recorde
                   Sign in to retrieve API Key
                 </button>
               ) : isProUser === false ? (
-                <ProGate />
+                renderProGate()
               ) : isProUser === true ? (
                 <div className="flex flex-col gap-2.5">
                   <p className="text-[12px] text-text-secondary">
@@ -391,7 +390,7 @@ Always confirm what you logged in one short line, including the year you recorde
 
         {/* ── Step 4 ─────────────────────────────────────────────── */}
         <div className={`${CARD} flex gap-4`}>
-          <Step n={4} />
+          {renderStep(4)}
           <div className="min-w-0 flex-1">
             <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Teach the Agent how to behave</h2>
             <p className="mb-3 text-[13px] leading-[1.7] text-text-secondary">
@@ -408,7 +407,7 @@ Always confirm what you logged in one short line, including the year you recorde
 
         {/* ── Step 5 ─────────────────────────────────────────────── */}
         <div className={`${CARD} flex gap-4`}>
-          <Step n={5} />
+          {renderStep(5)}
           <div className="min-w-0 flex-1">
             <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Try it out</h2>
             <p className="mb-3 text-[13px] leading-[1.7] text-text-secondary">

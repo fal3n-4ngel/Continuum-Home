@@ -361,7 +361,7 @@ export default function LandingPage({
             Pricing
           </a>
           <a
-            href="https://github.com/fal3n-4ngel/PHub-Dashboard"
+            href="https://github.com/fal3n-4ngel/Continuum-Home"
             target="_blank"
             rel="noopener noreferrer"
             className="text-[13px] font-medium text-[#6e6c64] no-underline transition-colors duration-200 hover:text-[#1c1b18]"
@@ -439,7 +439,7 @@ export default function LandingPage({
             Pricing
           </a>
           <a
-            href="https://github.com/fal3n-4ngel/PHub-Dashboard"
+            href="https://github.com/fal3n-4ngel/Continuum-Home"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] no-underline hover:bg-[#f4f3ec]"
@@ -485,7 +485,7 @@ export default function LandingPage({
             <span>→</span>
           </button>
           <a
-            href="https://github.com/fal3n-4ngel/PHub-Dashboard"
+            href="https://github.com/fal3n-4ngel/Continuum-Home"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-full border-[1.5px] border-[#d1cfc7] bg-transparent px-7 py-[13px] text-sm font-semibold text-[#1c1b18] no-underline transition-all duration-200 hover:border-[#1c1b18] hover:bg-[rgba(28,27,24,0.04)]"
@@ -1178,7 +1178,7 @@ export default function LandingPage({
               </li>
             </ul>
             <a
-              href="https://github.com/fal3n-4ngel/PHub-Dashboard#readme"
+              href="https://github.com/fal3n-4ngel/Continuum-Home#readme"
               target="_blank"
               rel="noopener noreferrer"
               className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-text-primary bg-transparent px-5 py-3 text-[13px] font-semibold text-text-primary no-underline transition-all duration-200 enabled:hover:bg-text-primary enabled:hover:text-bg-card"
@@ -1206,7 +1206,7 @@ export default function LandingPage({
               the answer. Can&apos;t find yours?
             </p>
             <a
-              href="https://github.com/fal3n-4ngel/PHub-Dashboard/issues"
+              href="https://github.com/fal3n-4ngel/Continuum-Home/issues"
               target="_blank"
               rel="noopener noreferrer"
               className={`${HERO_CTA_PRIMARY} inline-flex`}
@@ -1328,7 +1328,7 @@ export default function LandingPage({
               <ul className="flex list-none flex-col gap-[11px] p-0">
                 <li>
                   <a
-                    href="https://github.com/fal3n-4ngel/PHub-Dashboard"
+                    href="https://github.com/fal3n-4ngel/Continuum-Home"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={FOOTER_LINK_ITEM}
@@ -1338,7 +1338,7 @@ export default function LandingPage({
                 </li>
                 <li>
                   <a
-                    href="https://github.com/fal3n-4ngel/PHub-Dashboard#readme"
+                    href="https://github.com/fal3n-4ngel/Continuum-Home#readme"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={FOOTER_LINK_ITEM}
@@ -1358,7 +1358,7 @@ export default function LandingPage({
                 </li>
                 <li>
                   <a
-                    href="https://github.com/fal3n-4ngel/PHub-Dashboard/issues"
+                    href="https://github.com/fal3n-4ngel/Continuum-Home/issues"
                     target="_blank"
                     rel="noopener noreferrer"
                     className={FOOTER_LINK_ITEM}
