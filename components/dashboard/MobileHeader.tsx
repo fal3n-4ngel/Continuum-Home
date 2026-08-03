@@ -1,7 +1,7 @@
 import React from "react";
 import { FirebaseUser } from "@/types";
 import { isSafeImageUrl } from "@/lib/safe-url";
-import { AUTHOR } from "@/lib/site";
+import { AUTHOR, SITE_NAME } from "@/lib/site";
 import { LogoMark } from "@/components/Logo";
 
 interface MobileHeaderProps {
@@ -10,6 +10,7 @@ interface MobileHeaderProps {
   user: FirebaseUser | null;
   showInvestmentsTab: boolean;
   isProUser: boolean;
+  onClaimPro: () => void;
   triggerConfirm: (
     title: string,
     message: string,
@@ -38,6 +39,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   user,
   showInvestmentsTab,
   isProUser,
+  onClaimPro,
   triggerConfirm,
   firebaseAuth,
   setExpenses,
@@ -48,12 +50,39 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 }) => {
   return (
     <>
-      <header className="sticky top-0 z-[100] hidden min-h-[52px] items-center justify-between border-b border-border-subtle bg-bg-card px-4 py-3 max-md:flex">
+      <header className="sticky top-0 z-[100] hidden min-h-[52px] items-center justify-between border-b border-border-subtle bg-bg-card px-4 max-md:flex">
+        {/* Left: Logo */}
         <div className="flex items-center gap-2">
-        <LogoMark size={20} className="text-text-primary" />
-        <span className="text-base font-medium tracking-tight text-text-primary">PHub Dashboard</span>
-      </div>
-        <div className="flex items-center gap-3">
+          <LogoMark size={20} className="text-text-primary" />
+          <span className="text-base font-medium tracking-tight text-text-primary">{SITE_NAME}</span>
+        </div>
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-2">
+          {/* Pro button — free users */}
+          {!isProUser && (
+            <button
+              onClick={onClaimPro}
+              title="Upgrade to Pro"
+              className="flex h-7 items-center gap-1.5 rounded-full border border-border-subtle bg-transparent px-2.5 text-text-secondary transition-colors hover:text-text-primary"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span className="text-[9px] font-bold tracking-wider" style={{ color: "#7c3aed" }}>PRO</span>
+            </button>
+          )}
+
+          {/* Pro badge — pro users */}
+          {isProUser && (
+            <div title="Pro Account" className="flex h-7 items-center gap-1.5 rounded-full border border-border-subtle px-2.5">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-text-muted">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+              </svg>
+              <span className="text-[9px] font-bold tracking-wider" style={{ color: "#7c3aed" }}>PRO</span>
+            </div>
+          )}
+
           <a
             href={AUTHOR.coffeeUrl}
             target="_blank"
@@ -65,6 +94,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
             </svg>
           </a>
+
           <a
             href="/assistant"
             title="AI Integration Setup"

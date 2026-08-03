@@ -189,6 +189,7 @@ async function trackGptMetrics(req: NextRequest, uid: string, email: string | nu
 
   let user: AuthedUser;
   let resolvedIdToken = token;
+  let usedRefreshToken = false;
 
   try {
     user = await verifyIdToken(config, token);
@@ -197,6 +198,7 @@ async function trackGptMetrics(req: NextRequest, uid: string, email: string | nu
       const refreshResult = await refreshIdToken(config, token);
       user = refreshResult.user;
       resolvedIdToken = refreshResult.idToken;
+      usedRefreshToken = true;
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) recordAuthFailure(ip);
       throw err;
@@ -206,5 +208,36 @@ async function trackGptMetrics(req: NextRequest, uid: string, email: string | nu
   // Track ChatGPT requests asynchronously
   trackGptMetrics(req, user.uid, user.email).catch(() => {});
 
-  return { creds, config, uid: user.uid, idToken: resolvedIdToken, user };
+  const session = { creds, config, uid: user.uid, idToken: resolvedIdToken, user };
+
+  // Gate Custom GPT / OpenAPI / Agent access behind Pro status
+  const userAgent = (req.headers.get("user-agent") || "").toLowerCase();
+  const isAgent =
+    userAgent.includes("chatgpt") ||
+    userAgent.includes("openai") ||
+    userAgent.includes("coze") ||
+    userAgent.includes("dify") ||
+    userAgent.includes("poe") ||
+    usedRefreshToken;
+
+  if (isAgent) {
+    try {
+      const isOfficialCloud = config.projectId === "personal-hub-adi";
+      if (isOfficialCloud) {
+        const { getSettings } = await import("./firebase");
+        const settings = await getSettings(session);
+        if (!settings || !settings.isPro) {
+          throw new ApiError(
+            403,
+            "Upgrade to Pro: Connecting external AI tools or Custom GPTs requires a PHub Dashboard Pro account. Please go to your dashboard settings to upgrade."
+          );
+        }
+      }
+    } catch (err) {
+      if (err instanceof ApiError) throw err;
+      // Fail open if Firestore is down, but otherwise enforce
+    }
+  }
+
+  return session;
 }

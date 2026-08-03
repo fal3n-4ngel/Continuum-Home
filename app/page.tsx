@@ -1,4 +1,5 @@
 "use client";
+import { SITE_NAME } from "@/lib/site";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
@@ -38,6 +39,7 @@ import { FinancialHealthTab } from "@/components/dashboard/FinancialHealthTab";
 import { ReportsTab } from "@/components/dashboard/ReportsTab";
 import { MediaDetailsModal } from "@/components/dashboard/MediaDetailsModal";
 import { KirokuChatBubble } from "@/components/dashboard/KirokuChatBubble";
+import { ClaimProModal } from "@/components/dashboard/ClaimProModal";
 
 interface FirebaseAuthModule {
   auth: any;
@@ -116,6 +118,7 @@ export default function Dashboard() {
   // Pro-tier flag from settings. Server-controlled (not patchable via the
   // API), so it only changes when set directly in Firestore.
   const [isProUser, setIsProUser] = useState(false);
+  const [showClaimPro, setShowClaimPro] = useState(false);
   const [activeChart, setActiveChart] = useState<"category" | "trend">("category");
   const [expenseSearch, setExpenseSearch] = useState("");
   const [ledgerCategoryFilter, setLedgerCategoryFilter] = useState("");
@@ -2100,7 +2103,7 @@ const updateMarketPrices = async () => {
   if (authLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-bg-primary">
-        <p className="text-sm text-text-muted">Loading PHub Dashboard…</p>
+        <p className="text-sm text-text-muted">Loading {SITE_NAME}…</p>
       </div>
     );
   }
@@ -2129,6 +2132,7 @@ const updateMarketPrices = async () => {
         user={user}
         showInvestmentsTab={showInvestmentsTab}
         isProUser={isProUser}
+        onClaimPro={() => setShowClaimPro(true)}
         triggerConfirm={triggerConfirm}
         firebaseAuth={firebaseAuth}
         setExpenses={setExpenses}
@@ -2160,6 +2164,7 @@ const updateMarketPrices = async () => {
         isSyncingLetterboxd={isImportingLetterboxd}
         showInvestmentsTab={showInvestmentsTab}
         isProUser={isProUser}
+        onClaimPro={() => setShowClaimPro(true)}
         setShowOnboarding={setShowOnboarding}
         triggerConfirm={triggerConfirm}
         firebaseAuth={firebaseAuth}
@@ -2524,6 +2529,15 @@ const updateMarketPrices = async () => {
 
       {enableChatAssistant && isProUser && (
         <KirokuChatBubble idToken={user?.idToken} />
+      )}
+
+      {/* Claim Pro Modal */}
+      {user && (
+        <ClaimProModal
+          isOpen={showClaimPro}
+          onClose={() => setShowClaimPro(false)}
+          idToken={user.idToken}
+        />
       )}
     </div>
   );
