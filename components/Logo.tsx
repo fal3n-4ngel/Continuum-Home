@@ -1,7 +1,7 @@
 import React from "react";
 import { SITE_NAME } from "@/lib/site";
 
-// Single source of truth for the PHub "bento grid" brand mark — a 2x2 grid
+// Single source of truth for the Continuum "bento grid" brand mark — a 2x2 grid
 // of rounded squares (top-left solid, top-right & bottom-left muted, bottom-
 // right accented). Every in-app usage (Sidebar, MobileHeader, OnboardingModal,
 // LandingPage, assistant setup page) should render this instead of a

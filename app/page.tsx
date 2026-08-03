@@ -40,6 +40,7 @@ import { ReportsTab } from "@/components/dashboard/ReportsTab";
 import { MediaDetailsModal } from "@/components/dashboard/MediaDetailsModal";
 import { KirokuChatBubble } from "@/components/dashboard/KirokuChatBubble";
 import { ClaimProModal } from "@/components/dashboard/ClaimProModal";
+import { AdminTab } from "@/components/dashboard/AdminTab";
 
 interface FirebaseAuthModule {
   auth: any;
@@ -2512,6 +2513,11 @@ const updateMarketPrices = async () => {
             cycleHistory={cycleHistory}
             reconciliations={reconciliations}
           />
+        )}
+
+        {/* Admin Control Panel Tab */}
+        {activeTab === "admin" && user && user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com") && (
+          <AdminTab user={user} />
         )}
       </main>
 

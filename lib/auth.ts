@@ -160,8 +160,8 @@ export async function requireUser(req: NextRequest): Promise<Session> {
     throw new ApiError(401, "Missing or invalid Authorization header. Expected 'Bearer <token>'.");
   }
   let token = authHeader.substring(7).trim();
-  if (token.startsWith("phub_")) {
-    token = token.replace(/^phub_/, "");
+  if (token.startsWith("Continuum_")) {
+    token = token.replace(/^Continuum_/, "");
   }
   if (!token) {
     throw new ApiError(401, "Missing bearer token.");
@@ -229,7 +229,7 @@ async function trackGptMetrics(req: NextRequest, uid: string, email: string | nu
         if (!settings || !settings.isPro) {
           throw new ApiError(
             403,
-            "Upgrade to Pro: Connecting external AI tools or Custom GPTs requires a PHub Dashboard Pro account. Please go to your dashboard settings to upgrade."
+            "Upgrade to Pro: Connecting external AI tools or Custom GPTs requires a Continuum Dashboard Pro account. Please go to your dashboard settings to upgrade."
           );
         }
       }

@@ -61,7 +61,7 @@ export const metadata: Metadata = {
     telephone: false,
   },
   other: {
-    "phub-build-signature": "4b8f72a6e910c283df8d3b8f2c30a9eef5b1e9c80d283f982b1897c72f105b58",
+    "Continuum-build-signature": "4b8f72a6e910c283df8d3b8f2c30a9eef5b1e9c80d283f982b1897c72f105b58",
   },
 };
 

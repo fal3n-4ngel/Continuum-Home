@@ -98,7 +98,7 @@ async function processUser(user: AdminUser, period: "weekly" | "monthly", daysLi
             <td style="border-bottom:1px solid #eae8e0;padding-bottom:16px;">
               <table width="100%" cellpadding="0" cellspacing="0"><tr>
                 <td align="left" class="txt-main font-sans" style="font-size:16px;font-weight:500;">
-                  PHub Dashboard
+                  Continuum Dashboard
                 </td>
                 <td align="right"><span class="font-sans txt-white" style="font-size:9px;font-weight:700;background-color:#1c1b18;background-image:linear-gradient(#1c1b18,#1c1b18);padding:4px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px;">${period}</span></td>
               </tr></table>
