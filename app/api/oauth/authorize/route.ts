@@ -29,7 +29,7 @@ export async function GET(req: NextRequest) {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Authorize ChatGPT — Personal Hub</title>
+      <title>Authorize ChatGPT — Continuum</title>
       <style>
         body {
           background-color: #f4f3ec;
@@ -58,59 +58,65 @@ export async function GET(req: NextRequest) {
           font-family: Georgia, serif;
           font-size: 24px;
           font-weight: bold;
-          color: #1c1b18;
           margin-bottom: 24px;
+          font-style: italic;
         }
         .title {
-          font-family: Georgia, serif;
           font-size: 18px;
-          font-weight: bold;
-          margin-bottom: 8px;
+          font-weight: 600;
+          margin: 0 0 8px 0;
         }
         .subtitle {
           font-size: 13px;
           color: #7c7a72;
+          margin: 0 0 24px 0;
           line-height: 1.5;
-          margin-bottom: 24px;
         }
         .user-badge {
           display: flex;
           align-items: center;
-          justify-content: center;
-          gap: 10px;
+          gap: 12px;
           background-color: #fcfbfa;
           border: 1px solid #eae8e0;
           border-radius: 8px;
           padding: 12px;
           margin-bottom: 24px;
-        }
-        .user-avatar {
-          width: 32px;
-          height: 32px;
-          border-radius: 50%;
-          background-color: #eae8e0;
-        }
-        .user-details {
           text-align: left;
         }
+        .user-avatar {
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          background-color: #f4f3ec;
+          object-cover: cover;
+        }
+        .user-details {
+          min-width: 0;
+        }
         .user-name {
-          font-size: 12.5px;
+          font-size: 13.5px;
           font-weight: 600;
+          color: #1c1b18;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         .user-email {
-          font-size: 11px;
+          font-size: 11.5px;
           color: #7c7a72;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         .btn {
-          display: block;
           width: 100%;
-          border: 1px solid #1c1b18;
+          border: none;
           border-radius: 6px;
           padding: 12px;
-          font-size: 13px;
+          font-size: 13.5px;
           font-weight: 600;
           cursor: pointer;
-          transition: all 0.2s;
+          transition: background-color 0.15s;
           box-sizing: border-box;
         }
         .btn-primary {
@@ -149,7 +155,7 @@ export async function GET(req: NextRequest) {
     </head>
     <body>
       <div class="card" id="consent-card">
-        <div class="logo">Continuum Home</div>
+        <div class="logo">Continuum</div>
         
         <div id="loading" class="loader">Verifying login status…</div>
         
@@ -221,7 +227,11 @@ export async function GET(req: NextRequest) {
         document.getElementById('login-btn').onclick = () => {
           const provider = new firebase.auth.GoogleAuthProvider();
           auth.signInWithPopup(provider).catch(err => {
-            alert("Login Failed: " + err.message);
+            if (err.code === 'auth/popup-blocked' || err.code === 'auth/cancelled-popup-request') {
+              auth.signInWithRedirect(provider);
+            } else {
+              alert("Login Failed: " + err.message);
+            }
           });
         };
 
