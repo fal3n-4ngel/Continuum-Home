@@ -11,17 +11,9 @@ permissions:
 
 jobs:
   trigger-cron:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Portfolio Close Endpoint
-        run: |
-          if [ -z "${{ secrets.APP_URL }}" ]; then
-            echo "Error: APP_URL secret is not set."
-            exit 1
-          fi
-          if [ -z "${{ secrets.CRON_SECRET }}" ]; then
-            echo "Error: CRON_SECRET secret is not set."
-            exit 1
-          fi
-          curl --fail -sS -L -X POST "${{ secrets.APP_URL }}/api/cron/portfolio" \
-               -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+    uses: ./.github/workflows/shared-cron-action.yml
+    with:
+      endpoint: /api/cron/portfolio
+    secrets:
+      APP_URL: ${{ secrets.APP_URL }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}

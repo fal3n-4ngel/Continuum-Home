@@ -1,0 +1,31 @@
+name: Shared Cron Trigger Action
+
+on:
+  workflow_call:
+    inputs:
+      endpoint:
+        required: true
+        type: string
+        description: 'The API endpoint to trigger (e.g. /api/cron/portfolio)'
+    secrets:
+      APP_URL:
+        required: true
+      CRON_SECRET:
+        required: true
+
+jobs:
+  trigger-cron:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Cron Endpoint
+        run: |
+          if [ -z "${{ secrets.APP_URL }}" ]; then
+            echo "Error: APP_URL secret is not set."
+            exit 1
+          fi
+          if [ -z "${{ secrets.CRON_SECRET }}" ]; then
+            echo "Error: CRON_SECRET secret is not set."
+            exit 1
+          fi
+          curl --fail -sS -L -X POST "${{ secrets.APP_URL }}${{ inputs.endpoint }}" \
+               -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
