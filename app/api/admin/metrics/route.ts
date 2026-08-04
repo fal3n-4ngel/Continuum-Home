@@ -27,9 +27,7 @@ export async function GET(req: NextRequest) {
     const usersSet = await redis.smembers("metrics:gpt:users_set");
     const userLastActive = await redis.hgetall("metrics:gpt:user_last_active") as Record<string, string> || {};
     
-    // New global metrics (separated by Web and Agent)
-    const topWebEndpointsRaw = await redis.zrange("metrics:web:endpoints", 0, 9, { rev: true, withScores: true }) as string[];
-    const topWebUsersRaw = await redis.zrange("metrics:web:users_volume", 0, 9, { rev: true, withScores: true }) as string[];
+    // New global metrics (AI Agent only)
     const topAgentEndpointsRaw = await redis.zrange("metrics:agent:endpoints", 0, 9, { rev: true, withScores: true }) as string[];
     const topAgentUsersRaw = await redis.zrange("metrics:agent:users_volume", 0, 9, { rev: true, withScores: true }) as string[];
     
@@ -65,8 +63,6 @@ export async function GET(req: NextRequest) {
          .slice(0, 10);
     };
     
-    const topWebEndpoints = formatZset(topWebEndpointsRaw, false);
-    const topWebUsers = formatZset(topWebUsersRaw, true);
     const topAgentEndpoints = formatZset(topAgentEndpointsRaw, false);
     const topAgentUsers = formatZset(topAgentUsersRaw, true);
 
@@ -120,10 +116,6 @@ export async function GET(req: NextRequest) {
       users: usersList,
       dailyUsage,
       globalMetrics: {
-        web: {
-          topEndpoints: topWebEndpoints,
-          topUsers: topWebUsers
-        },
         agent: {
           topEndpoints: topAgentEndpoints,
           topUsers: topAgentUsers

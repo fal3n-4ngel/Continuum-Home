@@ -98,6 +98,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
     fetch("/api/assistant/recommendations?type=book", {
       headers: {
         authorization: `Bearer ${idToken}`,
+        "X-Client": "web",
       },
     })
       .then((res) => {
@@ -142,6 +143,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
         headers: {
           "Content-Type": "application/json",
           authorization: `Bearer ${idToken}`,
+          "X-Client": "web",
         },
         body: JSON.stringify(body),
       });
@@ -156,6 +158,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
         headers: {
           "Content-Type": "application/json",
           authorization: `Bearer ${idToken}`,
+          "X-Client": "web",
         },
         body: JSON.stringify({
           type: "book",

@@ -164,6 +164,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
     fetch(`/api/assistant/recommendations?type=${activeCategoryTab}`, {
       headers: {
         authorization: `Bearer ${idToken}`,
+        "X-Client": "web",
       },
     })
       .then((res) => {
@@ -207,6 +208,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
         headers: {
           "Content-Type": "application/json",
           authorization: `Bearer ${idToken}`,
+          "X-Client": "web",
         },
         body: JSON.stringify(body),
       });
@@ -221,6 +223,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
         headers: {
           "Content-Type": "application/json",
           authorization: `Bearer ${idToken}`,
+          "X-Client": "web",
         },
         body: JSON.stringify({
           type: activeCategoryTab,
