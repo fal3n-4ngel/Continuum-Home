@@ -135,9 +135,9 @@ If you are self-hosting your own instance, you can configure your own private Cu
 ## 👥 Contributing & Sponsoring
 
 We welcome contributions! Please check out our [CONTRIBUTING.md](file:///CONTRIBUTING.md) guide for details on:
-- Setting up your local environment and running checks (`npm run lint`, `npm run build`).
-- Deploying builds and lint validations with GitHub Actions.
-- Automatic release generation when branches matching `release/v*` are pushed.
+- Raising an Issue first before starting bug fixes or feature work.
+- Naming branches using `feature/` or `bugfix/` namespaces.
+- Running local quality checks (`npm run lint`, `npx tsc --noEmit`, `npm run test`, `npm run build`).
 
 If you find this dashboard helpful, consider supporting its development:
 
