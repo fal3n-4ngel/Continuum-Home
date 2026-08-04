@@ -23,24 +23,26 @@ import type { SyncEntry } from "@/lib/firebase";
 
 // Modular Dashboard Components
 import LandingPage from "@/components/landing/LandingPage";
+import dynamic from "next/dynamic";
 import { Sidebar } from "@/components/dashboard/Sidebar";
 import { MobileHeader } from "@/components/dashboard/MobileHeader";
 import { ConfirmModal, ConfirmState } from "@/components/dashboard/ConfirmModal";
 import { SyncPreviewModal, SyncPreviewState, SyncPreviewItem } from "@/components/dashboard/SyncPreviewModal";
 import { OnboardingModal } from "@/components/dashboard/OnboardingModal";
-import { ExpensesTab } from "@/components/dashboard/ExpensesTab";
-import { SubscriptionsTab } from "@/components/dashboard/SubscriptionsTab";
-import { WatchlistTab } from "@/components/dashboard/WatchlistTab";
-import { IntegrationsTab } from "@/components/dashboard/IntegrationsTab";
-import { BooksTab } from "@/components/dashboard/BooksTab";
-
-import { InvestmentsTab } from "@/components/dashboard/InvestmentsTab";
-import { FinancialHealthTab } from "@/components/dashboard/FinancialHealthTab";
-import { ReportsTab } from "@/components/dashboard/ReportsTab";
 import { MediaDetailsModal } from "@/components/dashboard/MediaDetailsModal";
 import { KirokuChatBubble } from "@/components/dashboard/KirokuChatBubble";
 import { ClaimProModal } from "@/components/dashboard/ClaimProModal";
-import { AdminTab } from "@/components/dashboard/AdminTab";
+
+// Dynamically import heavy dashboard tabs to optimize initial bundle size
+const ExpensesTab = dynamic(() => import("@/components/dashboard/ExpensesTab").then((mod) => mod.ExpensesTab));
+const SubscriptionsTab = dynamic(() => import("@/components/dashboard/SubscriptionsTab").then((mod) => mod.SubscriptionsTab));
+const WatchlistTab = dynamic(() => import("@/components/dashboard/WatchlistTab").then((mod) => mod.WatchlistTab));
+const IntegrationsTab = dynamic(() => import("@/components/dashboard/IntegrationsTab").then((mod) => mod.IntegrationsTab));
+const BooksTab = dynamic(() => import("@/components/dashboard/BooksTab").then((mod) => mod.BooksTab));
+const InvestmentsTab = dynamic(() => import("@/components/dashboard/InvestmentsTab").then((mod) => mod.InvestmentsTab));
+const FinancialHealthTab = dynamic(() => import("@/components/dashboard/FinancialHealthTab").then((mod) => mod.FinancialHealthTab));
+const ReportsTab = dynamic(() => import("@/components/dashboard/ReportsTab").then((mod) => mod.ReportsTab));
+const AdminTab = dynamic(() => import("@/components/dashboard/AdminTab").then((mod) => mod.AdminTab));
 
 interface FirebaseAuthModule {
   auth: any;
@@ -225,7 +227,8 @@ export default function Dashboard() {
 
   const getHeaders = useCallback(() => ({
     "Content-Type": "application/json",
-    "Authorization": `Bearer ${user?.idToken || ""}`,
+    "X-Client": "web",
+    Authorization: `Bearer ${user?.idToken || ""}`,
   }), [user]);
 
   const triggerConfirm = (
@@ -276,8 +279,10 @@ export default function Dashboard() {
       if (viewer) {
         setAnilistUser({ id: viewer.id, name: viewer.name, avatar: viewer.avatar?.large || null, token });
       }
-    } catch {
-      localStorage.removeItem("anilist_token");
+    } catch (err) {
+      console.error("Failed to load AniList profile:", err);
+      // Fallback: stay connected but with a generic name if network fails
+      setAnilistUser({ id: 0, name: "AniList User", avatar: null, token });
     }
   }
 
@@ -303,8 +308,16 @@ export default function Dashboard() {
           refreshToken,
         });
       }
-    } catch {
-      disconnectTrakt();
+    } catch (err) {
+      console.error("Failed to load Trakt profile:", err);
+      // Fallback: stay connected but with a generic name if network fails
+      setTraktUser({
+        username: "trakt_user",
+        name: "Trakt User",
+        avatar: null,
+        accessToken,
+        refreshToken,
+      });
     }
   }
 

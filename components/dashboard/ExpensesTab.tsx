@@ -2,6 +2,8 @@ import React from "react";
 import { createPortal } from "react-dom";
 import { Expense, Subscription } from "@/types";
 import { downloadCsv } from "@/lib/csv";
+import { ExpenseRow } from "./expenses/ExpenseRow";
+import { ExpenseLedgerControls } from "./expenses/ExpenseLedgerControls";
 
 interface ExpensesTabProps {
   currency: string;
@@ -755,60 +757,22 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
                     </label>
                   </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <input
-                    type="text"
-                    placeholder="Search..."
-                    value={expenseSearch}
-                    onChange={(e) => setExpenseSearch(e.target.value)}
-                    className={`${INPUT_CLASS} w-[120px] px-2 py-1 text-[11px]`}
-                  />
-                  <select
-                    value={ledgerCategoryFilter}
-                    onChange={(e) => setLedgerCategoryFilter(e.target.value)}
-                    className={`${INPUT_CLASS} cursor-pointer px-2 py-1 text-[11px]`}
-                  >
-                    <option value="">All Categories</option>
-                    {allCategories.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
-                  <input
-                    type="number"
-                    placeholder={`Min (${currency})`}
-                    value={ledgerMinAmount}
-                    onChange={(e) => setLedgerMinAmount(e.target.value)}
-                    className={`${INPUT_CLASS} w-[70px] px-2 py-1 text-[11px]`}
-                  />
-                  <input
-                    type="number"
-                    placeholder={`Max (${currency})`}
-                    value={ledgerMaxAmount}
-                    onChange={(e) => setLedgerMaxAmount(e.target.value)}
-                    className={`${INPUT_CLASS} w-[70px] px-2 py-1 text-[11px]`}
-                  />
-                  <div className="flex items-center gap-1">
-                    <select
-                      value={ledgerSortField}
-                      onChange={(e) => setLedgerSortField(e.target.value as typeof ledgerSortField)}
-                      title="Sort by"
-                      className={`${INPUT_CLASS} cursor-pointer px-2 py-1 text-[11px]`}
-                    >
-                      <option value="date">Date</option>
-                      <option value="amount">Amount</option>
-                      <option value="title">Description</option>
-                      <option value="category">Category</option>
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => setLedgerSortDir(ledgerSortDir === "asc" ? "desc" : "asc")}
-                      title={ledgerSortDir === "asc" ? "Ascending — click for descending" : "Descending — click for ascending"}
-                      className="cursor-pointer rounded-md border border-border-subtle bg-bg-card px-2 py-1 text-[11px] font-semibold text-text-primary transition-all duration-200 hover:bg-bg-primary"
-                    >
-                      {ledgerSortDir === "asc" ? "↑" : "↓"}
-                    </button>
-                  </div>
-                </div>
+                <ExpenseLedgerControls
+                  currency={currency}
+                  expenseSearch={expenseSearch}
+                  setExpenseSearch={setExpenseSearch}
+                  ledgerCategoryFilter={ledgerCategoryFilter}
+                  setLedgerCategoryFilter={setLedgerCategoryFilter}
+                  allCategories={allCategories}
+                  ledgerMinAmount={ledgerMinAmount}
+                  setLedgerMinAmount={setLedgerMinAmount}
+                  ledgerMaxAmount={ledgerMaxAmount}
+                  setLedgerMaxAmount={setLedgerMaxAmount}
+                  ledgerSortField={ledgerSortField}
+                  setLedgerSortField={setLedgerSortField}
+                  ledgerSortDir={ledgerSortDir}
+                  setLedgerSortDir={setLedgerSortDir}
+                />
               </div>
 
               <div className="overflow-x-auto">
@@ -824,29 +788,12 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
                   </thead>
                   <tbody>
                     {paginatedExpenses.map((exp) => (
-                      <tr key={exp.id} className="hover:bg-bg-secondary">
-                        <td className={`${LEDGER_TD} font-medium`}>
-                          {exp.title}
-                          {exp.notes && <p className="mt-0.5 text-[10px] text-text-muted">{exp.notes}</p>}
-                        </td>
-                        <td className={LEDGER_TD}>
-                          {exp.category ? (
-                            <span className="rounded bg-bg-secondary px-1.5 py-0.5 font-mono text-[10px] uppercase">
-                              {exp.category}
-                            </span>
-                          ) : "—"}
-                        </td>
-                        <td className={`${LEDGER_TD} text-[11px] text-text-secondary`}>{exp.date || "—"}</td>
-                        <td className={`${LEDGER_TD} text-right font-semibold`}>{currency}{(exp.amount || 0).toLocaleString()}</td>
-                        <td className={`${LEDGER_TD} text-right`}>
-                          <button
-                            onClick={() => deleteExpense(exp.id)}
-                            className="cursor-pointer border-none bg-transparent px-1.5 py-0.5 text-[11px] text-[#b3666b]"
-                          >
-                            delete
-                          </button>
-                        </td>
-                      </tr>
+                      <ExpenseRow
+                        key={exp.id}
+                        exp={exp}
+                        currency={currency}
+                        deleteExpense={deleteExpense}
+                      />
                     ))}
                     {totalItems === 0 && (
                       <tr>

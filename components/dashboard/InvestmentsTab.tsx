@@ -14,10 +14,12 @@ import {
   Plus, 
   Trash2,
   AlertTriangle,
-  CheckCircle2,
   DollarSign,
-  Tag
+  Tag,
+  CheckCircle2
 } from "lucide-react";
+import { AssetRow } from "./investments/AssetRow";
+import { AssetSummaryCards } from "./investments/AssetSummaryCards";
 
 interface InvestmentsTabProps {
   investments: InvestmentAsset[];
@@ -477,64 +479,18 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
       </div>
 
       {/* Stat Cards */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
-        <div className={STAT_CARD}>
-          <span className={LABEL_MONO}>PORTFOLIO VALUE</span>
-          <span className={STAT_VALUE}>{currency}{totalValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          <span className={STAT_SUBTEXT}>Current market valuation</span>
-          <div className="absolute right-3 top-3 h-10 w-10 text-border-subtle/40 pointer-events-none">
-            <DollarSign className="h-full w-full" />
-          </div>
-        </div>
-        <div className={STAT_CARD}>
-          <span className={LABEL_MONO}>TOTAL INVESTED</span>
-          <span className={`${STAT_VALUE} text-accent-blue`}>{currency}{totalInvested.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-          <span className={STAT_SUBTEXT}>Total net capital inputs</span>
-        </div>
-        <div className={STAT_CARD}>
-          <span className={LABEL_MONO}>UNREALIZED P&amp;L</span>
-          <span className={STAT_VALUE} style={{ color: totalProfit >= 0 ? "#16a34a" : "#b3666b" }}>
-            {totalProfit >= 0 ? "+" : ""}{currency}{totalProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </span>
-          <div className="mt-1 flex items-center gap-1">
-            {totalProfit >= 0 ? (
-              <TrendingUp className="h-3.5 w-3.5 text-[#16a34a]" />
-            ) : (
-              <TrendingDown className="h-3.5 w-3.5 text-[#b3666b]" />
-            )}
-            <span className="text-[11px] font-bold" style={{ color: totalProfit >= 0 ? "#16a34a" : "#b3666b" }}>
-              {profitPct >= 0 ? "+" : ""}{profitPct.toFixed(2)}% Return
-            </span>
-          </div>
-        </div>
-        <div className={STAT_CARD}>
-          <span className={LABEL_MONO}>REALIZED PROFIT</span>
-          <span className={STAT_VALUE} style={{ color: totalRealizedProfit >= 0 ? "#16a34a" : "#b3666b" }}>
-            {totalRealizedProfit >= 0 ? "+" : ""}{currency}{totalRealizedProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </span>
-          <span className="mt-1 text-[11px] font-semibold text-text-muted">
-            From {soldInvestments.length} closed asset{soldInvestments.length !== 1 ? "s" : ""}
-          </span>
-        </div>
-        <div className={STAT_CARD}>
-          <span className={LABEL_MONO}>TODAY&apos;S MOVEMENT</span>
-          {hasDailyData ? (
-            <>
-              <span className={STAT_VALUE} style={{ color: todaysPnl >= 0 ? "#16a34a" : "#b3666b" }}>
-                {todaysPnl >= 0 ? "+" : ""}{currency}{todaysPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-              </span>
-              <span className="mt-1 text-[11px] font-bold flex items-center gap-1" style={{ color: todaysPnl >= 0 ? "#16a34a" : "#b3666b" }}>
-                {todaysPnl >= 0 ? "▲" : "▼"} {todaysPnlPct.toFixed(2)}% Today
-              </span>
-            </>
-          ) : (
-            <>
-              <span className="text-[15px] font-bold text-text-muted pt-2">—</span>
-              <span className={STAT_SUBTEXT}>Live sync needed for daily delta</span>
-            </>
-          )}
-        </div>
-      </div>
+      <AssetSummaryCards
+        currency={currency}
+        totalValue={totalValue}
+        totalInvested={totalInvested}
+        totalProfit={totalProfit}
+        profitPct={profitPct}
+        totalRealizedProfit={totalRealizedProfit}
+        soldInvestmentsCount={soldInvestments.length}
+        hasDailyData={hasDailyData}
+        todaysPnl={todaysPnl}
+        todaysPnlPct={todaysPnlPct}
+      />
 
       {/* Wealth Analytics & Allocation Section */}
       <div className="grid grid-cols-[1.3fr_1fr] gap-5 max-md:grid-cols-1">
@@ -1025,93 +981,15 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                 </thead>
                 <tbody>
                   {activeInvestments.map((asset) => {
-                    const currentVal = asset.amount || 0;
-                    const investedVal = asset.investedAmount || asset.amount || 0;
-                    const assetProfit = currentVal - investedVal;
-                    const assetProfitPct = investedVal > 0 ? (assetProfit / investedVal) * 100 : 0;
-                    const avgBuy = asset.quantity && asset.quantity > 0 ? investedVal / asset.quantity : (asset.buyPrice || 0);
-                    const hasDayChange = !!asset.quantity && asset.currentPrice != null && asset.previousClose != null;
-                    const dayChange = hasDayChange ? asset.quantity! * (asset.currentPrice! - asset.previousClose!) : null;
-                    const dayChangePct = hasDayChange && asset.previousClose! > 0 ? ((asset.currentPrice! - asset.previousClose!) / asset.previousClose!) * 100 : null;
-
                     return (
-                      <tr key={asset.id} className="hover:bg-bg-secondary/40 transition-colors">
-                        <td className={`${LEDGER_TD} font-bold`}>
-                          {asset.name}
-                          {asset.notes && <p className="mt-1 text-[10px] text-text-muted font-normal">{asset.notes}</p>}
-                        </td>
-                        <td className={LEDGER_TD}>
-                          <span 
-                            className="rounded px-2 py-0.5 font-mono text-[9px] font-bold text-white uppercase"
-                            style={{ backgroundColor: categoryColors[asset.category] || "#6b7280" }}
-                          >
-                            {asset.category === "sip" ? "SIP" : asset.category === "mutual_fund" ? "MF" : asset.category}
-                          </span>
-                        </td>
-                        <td className={`${LEDGER_TD} text-right font-mono font-medium`}>
-                          {asset.category === "fixed_deposit" && asset.interestRate
-                            ? `${asset.interestRate}% p.a.`
-                            : asset.quantity
-                              ? asset.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })
-                              : "—"}
-                        </td>
-                        <td className={`${LEDGER_TD} text-right font-mono`}>
-                          <div>{currency}{investedVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                          {asset.quantity && avgBuy > 0 && (
-                            <div className="text-[10px] text-text-muted mt-0.5">@{currency}{avgBuy.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-                          )}
-                        </td>
-                        <td className={`${LEDGER_TD} text-right font-mono font-semibold`}>
-                          <div>{currency}{currentVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                          {asset.currentPrice && (
-                            <div className="text-[10px] text-text-muted mt-0.5">@{currency}{asset.currentPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
-                          )}
-                        </td>
-                        <td className={`${LEDGER_TD} text-right font-semibold font-mono`} style={{ color: assetProfit >= 0 ? "#16a34a" : "#b3666b" }}>
-                          <div>{assetProfit >= 0 ? "+" : ""}{currency}{assetProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                          <div className="text-[10px] font-bold">{assetProfitPct >= 0 ? "+" : ""}{assetProfitPct.toFixed(2)}%</div>
-                        </td>
-                        <td
-                          className={`${LEDGER_TD} text-right font-mono ${dayChange !== null ? "font-semibold" : ""}`}
-                          style={dayChange !== null ? { color: dayChange >= 0 ? "#16a34a" : "#b3666b" } : undefined}
-                        >
-                          {asset.category === "fixed_deposit" && asset.maturityDate ? (
-                            (() => {
-                              const daysLeft = daysUntil(asset.maturityDate!);
-                              return daysLeft <= 0 ? (
-                                <span className="text-[10px] font-semibold text-emerald-700">Matured</span>
-                              ) : (
-                                <span className="text-[10px] font-semibold text-text-secondary">Matures in {daysLeft}d</span>
-                              );
-                            })()
-                          ) : dayChange !== null ? (
-                            <>
-                              <div>{dayChange >= 0 ? "+" : ""}{currency}{dayChange.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
-                              {dayChangePct !== null && <div className="text-[10px] font-bold">{dayChangePct >= 0 ? "+" : ""}{dayChangePct.toFixed(2)}%</div>}
-                            </>
-                          ) : (
-                            <span className="text-text-muted">—</span>
-                          )}
-                        </td>
-                        <td className={LEDGER_TD}>
-                          <div className="flex items-center gap-1 justify-end">
-                            <button
-                              onClick={() => handleSellClick(asset.id, currentVal, asset.name)}
-                              className="border-none bg-transparent hover:bg-emerald-50 p-1.5 rounded-md cursor-pointer text-text-secondary hover:text-[#16a34a] transition-all"
-                              title="Mark as Sold Today"
-                            >
-                              <Tag className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => deleteInvestment(asset.id)}
-                              className="border-none bg-transparent hover:bg-rose-50 p-1.5 rounded-md cursor-pointer text-text-muted hover:text-[#b3666b] transition-all"
-                              title="Delete holding"
-                            >
-                              <Trash2 className="h-4 w-4" strokeWidth={2} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
+                      <AssetRow
+                        key={asset.id}
+                        asset={asset}
+                        currency={currency}
+                        categoryColors={categoryColors}
+                        handleSellClick={handleSellClick}
+                        deleteInvestment={deleteInvestment}
+                      />
                     );
                   })}
                 </tbody>

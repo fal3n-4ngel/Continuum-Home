@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { ApiError } from "@/lib/errors";
+import { ApiError, toErrorResponse } from "@/lib/errors";
 
 export const dynamic = "force-dynamic";
 
@@ -56,10 +56,6 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, response: data });
   } catch (error: any) {
-    console.error("Error in admin cron trigger:", error);
-    if (error instanceof ApiError) {
-      return NextResponse.json({ error: error.message }, { status: error.status });
-    }
-    return NextResponse.json({ error: error.message || "Failed to trigger cron" }, { status: 500 });
+    return toErrorResponse(error, "Error in admin cron trigger");
   }
 }

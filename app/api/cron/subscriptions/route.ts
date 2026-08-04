@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { toErrorResponse } from "@/lib/errors";
 import { listAllUsers, adminListSubscriptions, type AdminUser } from "@/lib/firebase-admin";
-import { getIstDateString, hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
+import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
+import { getIstDateString } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -201,7 +203,6 @@ export async function POST(req: NextRequest) {
     const sentCount = results.filter((r) => r.sent).length;
     return NextResponse.json({ success: true, usersProcessed: users.length, emailsSent: sentCount, results });
   } catch (error: any) {
-    console.error("Error in cron/subscriptions:", error);
-    return NextResponse.json({ error: error.message || "Failed to run subscription alert cron" }, { status: 500 });
+    return toErrorResponse(error, "Error in cron/subscriptions");
   }
 }

@@ -1,16 +1,7 @@
 import { redis } from "@/lib/redis";
 import { getAdminDb } from "@/lib/firebase-admin";
+export { getIstDateString } from "@/lib/dates";
 
-/**
- * Calculates current calendar date string in IST (Asia/Kolkata timezone: UTC+5:30)
- */
-export function getIstDateString(d: Date = new Date()): string {
-  const tzDate = new Date(d.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-  const yyyy = tzDate.getFullYear();
-  const mm = String(tzDate.getMonth() + 1).padStart(2, "0");
-  const dd = String(tzDate.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
 
 /**
  * Checks if a cron email dispatch for a given user and cron task key has already been executed today.

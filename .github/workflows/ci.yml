@@ -1,11 +1,17 @@
-name: CI Build & Lint
+name: CI Pipeline
 
 on:
   push:
+    branches: [ main, master ]
   pull_request:
+    branches: [ main, master ]
+
+permissions:
+  contents: read
 
 jobs:
-  build-and-lint:
+  validate:
+    name: Lint, Typecheck, Test & Build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -28,6 +34,12 @@ jobs:
           # ~4GB old-space heap ceiling on this codebase — well within the
           # ubuntu-latest runner's 7GB RAM, so just raise the ceiling.
           NODE_OPTIONS: --max-old-space-size=6144
+
+      - name: TypeScript Type Check
+        run: npx tsc --noEmit
+
+      - name: Run Integration Tests
+        run: npm run test
 
       - name: Run build
         run: npm run build

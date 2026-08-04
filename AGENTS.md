@@ -1,9 +1,20 @@
-<!-- BEGIN:nextjs-agent-rules -->
-# This is NOT the Next.js you know
+# Artificial Intelligence Agent Directives
 
-This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+The following instructions define explicit behavioral constraints for autonomous coding agents (e.g., Cursor, Copilot, Antigravity) operating within the Continuum Home repository.
+
+## Framework Constraints
+
+<!-- BEGIN:nextjs-agent-rules -->
+### Next.js Strict Environment
+
+This project utilizes Next.js 16 (App Router + Turbopack), which introduces breaking changes to APIs, file conventions, and component structure compared to older datasets.
+- Prior to executing code mutations, agents **must** consult the localized documentation at `node_modules/next/dist/docs/`.
+- Heed all deprecation notices strictly. Do not utilize legacy `pages/` router patterns or outdated `@next/font` imports.
 <!-- END:nextjs-agent-rules -->
 
-# UI Dialogs & Alerts
-Always use custom, styled React/HTML modal popups and themed dialogs instead of browser native alerts, prompts, or confirmations (`alert()`, `prompt()`, `confirm()`). Make sure all modal backdrops cover the entire screen (including sidebars and navigation) by rendering them using React Portals (`createPortal`) targeting `document.body` to break out of parent stacking contexts and CSS animations.
+## Architectural Standards
 
+### UI Component Guidelines
+- **Modals and Dialogs:** Native browser execution blocks (`alert()`, `prompt()`, `confirm()`) are strictly prohibited.
+- Implement custom, styled React/HTML modal popups and themed dialogs.
+- **Portal Rendering:** Ensure modal backdrops cover the entire viewport (including absolute-positioned sidebars and navigation interfaces) by utilizing React Portals (`createPortal`). Target `document.body` to correctly break out of parent stacking contexts and CSS animation boundaries.

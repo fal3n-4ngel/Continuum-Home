@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { FirebaseUser } from "@/types";
+import { FirebaseUser, ProClaim } from "@/types";
 import { 
   Shield, 
   Trash2, 
@@ -14,14 +14,21 @@ import {
   AlertTriangle, 
   Star, 
   Activity,
-  Server
+  Server,
+  TerminalSquare,
+  Users
 } from "lucide-react";
+import { ProClaimsQueue } from "./admin/ProClaimsQueue";
+import { CronTriggerSection } from "./admin/CronTriggerSection";
 
 interface AdminTabProps {
   user: FirebaseUser;
 }
 
 export function AdminTab({ user }: AdminTabProps) {
+  // Tabs State
+  const [activeTab, setActiveTab] = useState<"analytics" | "communications" | "system" | "pro-requests">("analytics");
+
   // Admin stats
   const [stats, setStats] = useState<{
     expenses: number;
@@ -42,21 +49,13 @@ export function AdminTab({ user }: AdminTabProps) {
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
 
   // Pro Requests state
-  interface ProClaim {
-    id: string;
-    uid: string;
-    email: string | null;
-    displayName: string | null;
-    platform: "github" | "bmac";
-    handle: string;
-    note: string;
-    status: "pending" | "approved" | "denied";
-    submittedAt: number;
-  }
   const [proClaims, setProClaims] = useState<ProClaim[]>([]);
   const [proClaimsLoading, setProClaimsLoading] = useState(false);
   const [proClaimsFilter, setProClaimsFilter] = useState<"pending" | "approved" | "denied" | "all">("pending");
   const [proActionLoading, setProActionLoading] = useState<string | null>(null);
+
+  // Analytics sub-scope state
+  const [analyticsScope, setAnalyticsScope] = useState<"web" | "agent">("web");
 
   // Announcement states
   const [annSubject, setAnnSubject] = useState("Rebranding Notice: PHub is now Continuum");
@@ -118,6 +117,7 @@ Thank you for being part of our journey!`);
 
   const getHeaders = () => ({
     "Content-Type": "application/json",
+    "X-Client": "web",
     Authorization: `Bearer ${user.idToken}`,
   });
 
@@ -405,18 +405,36 @@ Thank you for being part of our journey!`);
   `;
 
   const CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
-  const BUTTON_GHOST = "cursor-pointer rounded-md border border-border-subtle bg-transparent text-[11px] font-semibold text-text-primary px-3 py-1.5 transition-all hover:bg-bg-primary disabled:opacity-50 disabled:cursor-not-allowed";
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      {/* Page Title */}
-      <div className="border-b border-border-subtle pb-5">
-        <div className="flex items-center gap-3">
+      {/* Page Title & Tabs */}
+      <div className="border-b border-border-subtle pb-0">
+        <div className="flex items-center gap-3 mb-6">
           <Shield className="h-6 w-6 text-text-primary animate-pulse" />
           <div>
             <h1 className="font-serif text-[26px] italic font-medium tracking-tight text-text-primary">Admin Panel</h1>
             <p className="text-[12px] text-text-secondary">System-wide parameters, analytics, and Pro verification</p>
           </div>
+        </div>
+
+        <div className="flex items-center gap-6">
+          {["analytics", "communications", "system", "pro-requests"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => {
+                setActiveTab(tab as any);
+                setStatusMessage(null); // Clear errors when switching tabs
+              }}
+              className={`pb-3 text-[13px] font-semibold capitalize transition-all ${
+                activeTab === tab 
+                  ? "border-b-2 border-text-primary text-text-primary" 
+                  : "border-b-2 border-transparent text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              {tab.replace("-", " ")}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -431,386 +449,304 @@ Thank you for being part of our journey!`);
         </div>
       )}
 
-      {/* System Metrics Cards */}
-      <div className="grid grid-cols-4 gap-4 max-md:grid-cols-2">
-        {[
-          { label: "EXPENSES", val: statsLoading ? "..." : stats?.expenses },
-          { label: "SUBSCRIPTIONS", val: statsLoading ? "..." : stats?.subscriptions },
-          { label: "LIBRARY ITEMS", val: statsLoading ? "..." : stats?.watchlist },
-          { label: "PORTFOLIO VALUE", val: statsLoading ? "..." : `₹${stats?.portfolioValue?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) || 0}` },
-        ].map((card, i) => (
-          <div key={i} className="flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-4.5 shadow-subtle">
-            <span className="font-mono text-[9px] font-bold tracking-[0.8px] text-text-muted uppercase">{card.label}</span>
-            <span className="text-[20px] font-bold tracking-tight text-text-primary mt-1">{card.val}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Custom GPT Analytics */}
-      <div className={CARD}>
-        <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
-          <Activity className="h-4 w-4" /> Custom GPT Analytics
-        </h3>
-        <div className="grid grid-cols-[1.5fr_1fr] gap-6 max-md:grid-cols-1">
-          {/* Left side: Users list */}
-          <div>
-            <h4 className="text-[12.5px] font-bold text-text-primary mb-3">Connected GPT Users ({gptMetrics?.activeUsersCount || 0})</h4>
-            {gptMetrics?.users && gptMetrics.users.length > 0 ? (
-              <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1">
-                {gptMetrics.users.map((gptUser: any) => (
-                  <div key={gptUser.email} className="flex justify-between items-center rounded-lg border border-border-subtle bg-bg-primary/20 p-3">
-                    <div className="text-[12.5px] font-medium text-text-primary truncate max-w-[200px]">{gptUser.email}</div>
-                    <div className="text-[10px] font-mono text-text-secondary">
-                      {gptUser.lastActive ? new Date(gptUser.lastActive).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" }) : "Never"}
-                    </div>
-                  </div>
-                ))}
+      {/* ──────────────── TAB: ANALYTICS ──────────────── */}
+      {activeTab === "analytics" && (
+        <div className="flex flex-col gap-6 animate-[fadeIn_0.3s_ease-out_both]">
+          {/* System Metrics Cards */}
+          <div className="grid grid-cols-4 gap-4 max-md:grid-cols-2">
+            {[
+              { label: "EXPENSES", val: statsLoading ? "..." : stats?.expenses },
+              { label: "SUBSCRIPTIONS", val: statsLoading ? "..." : stats?.subscriptions },
+              { label: "LIBRARY ITEMS", val: statsLoading ? "..." : stats?.watchlist },
+              { label: "PORTFOLIO VALUE", val: statsLoading ? "..." : `₹${stats?.portfolioValue?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) || 0}` },
+            ].map((card, i) => (
+              <div key={i} className="flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-4.5 shadow-subtle">
+                <span className="font-mono text-[9px] font-bold tracking-[0.8px] text-text-muted uppercase">{card.label}</span>
+                <span className="text-[20px] font-bold tracking-tight text-text-primary mt-1">{card.val}</span>
               </div>
-            ) : (
-              <p className="text-xs text-text-secondary italic">No users have authorized Custom GPT actions yet.</p>
-            )}
+            ))}
           </div>
 
-          {/* Right side: Summary & 7-Day Usage */}
-          <div className="flex flex-col gap-5 border-l border-border-subtle pl-6 max-md:border-l-0 max-md:pl-0">
-            <div>
-              <div className="text-[9px] font-bold font-mono tracking-wider text-text-muted uppercase">TOTAL API CALLS</div>
-              <div className="text-2xl font-bold mt-1 text-text-primary">{gptMetrics?.totalCalls || 0}</div>
+          {/* Global API Analytics */}
+          <div className="flex items-center justify-between mt-4">
+            <h2 className="font-serif text-[18px] italic font-medium text-text-primary">Global API Usage</h2>
+            <div className="flex bg-bg-primary/50 p-1 rounded-md border border-border-subtle">
+              <button 
+                onClick={() => setAnalyticsScope("web")}
+                className={`px-4 py-1 text-[11px] font-bold tracking-wide uppercase rounded-sm transition-all ${analyticsScope === "web" ? "bg-bg-card shadow-subtle text-text-primary" : "text-text-muted hover:text-text-primary"}`}
+              >
+                Web App
+              </button>
+              <button 
+                onClick={() => setAnalyticsScope("agent")}
+                className={`px-4 py-1 text-[11px] font-bold tracking-wide uppercase rounded-sm transition-all ${analyticsScope === "agent" ? "bg-bg-card shadow-subtle text-text-primary" : "text-text-muted hover:text-text-primary"}`}
+              >
+                AI Agent
+              </button>
             </div>
-            <div>
-              <div className="text-[9px] font-bold font-mono tracking-wider text-text-muted uppercase mb-2.5">7-DAY VOLUME</div>
-              {gptMetrics?.dailyUsage ? (
-                <div className="flex flex-col gap-1.5 font-mono text-[11px] text-text-secondary">
-                  {gptMetrics.dailyUsage.map((day: any) => (
-                    <div key={day.date} className="flex justify-between border-b border-bg-primary pb-1">
-                      <span>{day.date}</span>
-                      <span className="font-semibold text-text-primary">{day.calls} call{day.calls === 1 ? "" : "s"}</span>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
+            {/* Top Endpoints */}
+            <div className={CARD}>
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
+                <TerminalSquare className="h-4 w-4" /> Most Used Functionality ({analyticsScope === "web" ? "Web" : "Agent"})
+              </h3>
+              {gptMetrics?.globalMetrics?.[analyticsScope]?.topEndpoints && gptMetrics.globalMetrics[analyticsScope].topEndpoints.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {gptMetrics.globalMetrics[analyticsScope].topEndpoints.map((ep: any, i: number) => (
+                    <div key={ep.name} className="flex items-center gap-3">
+                      <div className="w-5 text-center font-mono text-[10px] font-bold text-text-muted">{i + 1}</div>
+                      <div className="flex-1 flex justify-between items-center rounded-lg border border-border-subtle bg-bg-primary/20 p-2.5 px-3">
+                        <div className="text-[12px] font-mono text-text-primary truncate max-w-[250px]">{ep.name}</div>
+                        <div className="text-[11px] font-semibold text-text-secondary">{ep.calls} calls</div>
+                      </div>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-text-secondary italic">No usage recorded.</p>
+                <p className="text-xs text-text-secondary italic">No API usage recorded yet.</p>
+              )}
+            </div>
+
+            {/* Power Users */}
+            <div className={CARD}>
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
+                <Users className="h-4 w-4" /> API Uses Per User ({analyticsScope === "web" ? "Web" : "Agent"})
+              </h3>
+              {gptMetrics?.globalMetrics?.[analyticsScope]?.topUsers && gptMetrics.globalMetrics[analyticsScope].topUsers.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {gptMetrics.globalMetrics[analyticsScope].topUsers.map((u: any, i: number) => (
+                    <div key={u.name} className="flex items-center gap-3">
+                      <div className="w-5 text-center font-mono text-[10px] font-bold text-text-muted">{i + 1}</div>
+                      <div className="flex-1 flex justify-between items-center rounded-lg border border-border-subtle bg-bg-primary/20 p-2.5 px-3">
+                        <div className="text-[12px] font-medium text-text-primary truncate max-w-[200px]">{u.name}</div>
+                        <div className="text-[11px] font-semibold text-text-secondary">{u.calls} hits</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-text-secondary italic">No user activity recorded yet.</p>
               )}
             </div>
           </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-[1.5fr_1fr] gap-6 max-md:grid-cols-1">
-        {/* Left Column: Cron Alerts Operations */}
-        <div className="flex flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle">
-          <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3">
-            <Mail className="h-4 w-4" /> Trigger Automated Crons
-          </h3>
-          <p className="text-[12.5px] leading-relaxed text-text-secondary">
-            Manually trigger automated tasks. This fires notifications and emails to registered cloud users.
-          </p>
+          {/* Custom GPT Analytics */}
+          <div className={CARD}>
+            <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
+              <Activity className="h-4 w-4" /> Custom GPT Actions Log
+            </h3>
+            <div className="grid grid-cols-[1.5fr_1fr] gap-6 max-md:grid-cols-1">
+              <div>
+                <h4 className="text-[12.5px] font-bold text-text-primary mb-3">Connected GPT Users ({gptMetrics?.activeUsersCount || 0})</h4>
+                {gptMetrics?.users && gptMetrics.users.length > 0 ? (
+                  <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1">
+                    {gptMetrics.users.map((gptUser: any) => (
+                      <div key={gptUser.email} className="flex justify-between items-center rounded-lg border border-border-subtle bg-bg-primary/20 p-3">
+                        <div className="text-[12.5px] font-medium text-text-primary truncate max-w-[200px]">{gptUser.email}</div>
+                        <div className="text-[10px] font-mono text-text-secondary">
+                          {gptUser.lastActive ? new Date(gptUser.lastActive).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" }) : "Never"}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-xs text-text-secondary italic">No users have authorized Custom GPT actions yet.</p>
+                )}
+              </div>
 
-          <div className="flex flex-col gap-3.5 mt-2">
-            <div className="flex items-center gap-2">
-              <div className="flex-1 border-t border-[#fecaca]" />
-              <span className="font-mono text-[8.5px] font-bold text-[#dc2626] tracking-widest flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" /> PRODUCTION CRONS
-              </span>
-              <div className="flex-1 border-t border-[#fecaca]" />
-            </div>
-
-            {[
-              {
-                id: "subscriptions",
-                previewId: "subscriptions",
-                title: "Subscription Warnings",
-                desc: "Alerts users of subscriptions renewing in 2-3 days.",
-                icon: <Bell className="h-4 w-4 text-text-secondary" />,
-                hasPreview: true,
-              },
-              {
-                id: "expenses_weekly",
-                previewId: "expenses_weekly",
-                title: "Weekly Expense Summary",
-                desc: "Dispatches 7-day category summary and burn rate.",
-                icon: <BarChart2 className="h-4 w-4 text-text-secondary" />,
-                hasPreview: true,
-              },
-              {
-                id: "expenses_monthly",
-                previewId: "expenses_monthly",
-                title: "Monthly Expense Summary",
-                desc: "Dispatches 30-day top outflows and category charts.",
-                icon: <BarChart2 className="h-4 w-4 text-text-secondary" />,
-                hasPreview: true,
-              },
-              {
-                id: "portfolio",
-                previewId: "portfolio",
-                title: "Daily Portfolio Wrap",
-                desc: "Calculates stock valuations and emails daily close Net P&L.",
-                icon: <Mail className="h-4 w-4 text-text-secondary" />,
-                hasPreview: true,
-              },
-              {
-                id: "recommendations",
-                previewId: null,
-                title: "Daily AI Recommendations",
-                desc: "Refreshes system suggestions for watchlist additions.",
-                icon: <Sparkles className="h-4 w-4 text-text-secondary" />,
-                hasPreview: false,
-              },
-            ].map((task) => (
-              <div key={task.id} className="rounded-lg border border-[#fecaca]/60 bg-[#fef2f2]/40 p-3.5 hover:bg-[#fef2f2]/60 transition-colors flex justify-between items-center gap-4">
-                <div className="min-w-0">
-                  <h4 className="text-[13px] font-bold text-text-primary flex items-center gap-2">
-                    {task.icon} {task.title}
-                  </h4>
-                  <p className="text-[11px] text-text-secondary mt-0.5 leading-relaxed">{task.desc}</p>
+              <div className="flex flex-col gap-5 border-l border-border-subtle pl-6 max-md:border-l-0 max-md:pl-0">
+                <div>
+                  <div className="text-[9px] font-bold font-mono tracking-wider text-text-muted uppercase">TOTAL GPT CALLS</div>
+                  <div className="text-2xl font-bold mt-1 text-text-primary">{gptMetrics?.totalCalls || 0}</div>
                 </div>
-                <div className="shrink-0 flex items-center gap-2">
-                  {task.hasPreview && (
-                    <button
-                      disabled={previewLoading || cronRunning !== null}
-                      onClick={() => sendPreviewEmail(task.previewId!)}
-                      className="cursor-pointer rounded-md border border-[#3b82f6] bg-[#eff6ff] text-[10.5px] font-semibold text-[#1d4ed8] px-2.5 py-1.5 transition-all hover:bg-[#dbeafe] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {previewLoading ? "..." : "Preview"}
-                    </button>
+                <div>
+                  <div className="text-[9px] font-bold font-mono tracking-wider text-text-muted uppercase mb-2.5">7-DAY GPT VOLUME</div>
+                  {gptMetrics?.dailyUsage ? (
+                    <div className="flex flex-col gap-1.5 font-mono text-[11px] text-text-secondary">
+                      {gptMetrics.dailyUsage.map((day: any) => (
+                        <div key={day.date} className="flex justify-between border-b border-bg-primary pb-1">
+                          <span>{day.date}</span>
+                          <span className="font-semibold text-text-primary">{day.calls} call{day.calls === 1 ? "" : "s"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-text-secondary italic">No usage recorded.</p>
                   )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────── TAB: COMMUNICATIONS ──────────────── */}
+      {activeTab === "communications" && (
+        <div className="flex flex-col gap-6 animate-[fadeIn_0.3s_ease-out_both]">
+          {/* System Announcements */}
+          <div className={CARD}>
+            <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
+              <Bell className="h-4 w-4" /> System Announcement Dispatcher
+            </h3>
+            
+            <div className="grid grid-cols-[1.2fr_1fr] gap-6 max-lg:grid-cols-1">
+              {/* Column 1: Editor Form */}
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Email Subject Line</label>
+                  <input
+                    type="text"
+                    value={annSubject}
+                    onChange={(e) => setAnnSubject(e.target.value)}
+                    placeholder="e.g. New updates and features on Continuum!"
+                    className="w-full rounded-md border border-border-subtle bg-bg-primary px-3.5 py-2 text-xs text-text-primary outline-none transition-all focus:border-text-primary"
+                  />
+                </div>
+                
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Header Title</label>
+                  <input
+                    type="text"
+                    value={annTitle}
+                    onChange={(e) => setAnnTitle(e.target.value)}
+                    placeholder="e.g. Announcing Rebranding & Custom GPTs"
+                    className="w-full rounded-md border border-border-subtle bg-bg-primary px-3.5 py-2 text-xs text-text-primary outline-none transition-all focus:border-text-primary"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Announcement Body Content</label>
+                  <textarea
+                    value={annContent}
+                    onChange={(e) => setAnnContent(e.target.value)}
+                    placeholder="Type your markdown or text announcement here..."
+                    rows={10}
+                    className="w-full rounded-md border border-border-subtle bg-bg-primary px-3.5 py-2.5 text-xs text-text-primary outline-none transition-all focus:border-text-primary font-sans leading-relaxed resize-y"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 justify-end mt-1">
                   <button
-                    disabled={cronRunning !== null}
-                    onClick={() => handleProductionCronClick(task.id, task.title)}
-                    className="cursor-pointer rounded-md border border-[#dc2626] bg-transparent text-[10.5px] font-semibold text-[#dc2626] px-2.5 py-1.5 transition-all hover:bg-[#dc2626] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={annSending !== null || !annSubject.trim() || !annTitle.trim() || !annContent.trim()}
+                    onClick={() => handleAnnouncement("preview")}
+                    className="rounded-full border border-border-subtle bg-transparent px-4 py-2 text-xs font-semibold text-text-primary transition-all hover:bg-bg-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {cronRunning === task.id ? "Running..." : "Run"}
+                    {annSending === "preview" ? "Sending Test..." : "Send Test to Admin"}
+                  </button>
+                  <button
+                    disabled={annSending !== null || !annSubject.trim() || !annTitle.trim() || !annContent.trim()}
+                    onClick={() => setAnnConfirmModal(true)}
+                    className="rounded-full border border-text-primary bg-text-primary px-4 py-2 text-xs font-semibold text-bg-card transition-all hover:bg-[#2e2d27] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {annSending === "send" ? "Broadcasting..." : "Broadcast to All Users"}
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
 
-        {/* Right Column: Database / Cache Systems */}
-        <div className="flex flex-col gap-6">
-          <div className={`${CARD} flex flex-col gap-4`}>
-            <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3">
-              <RefreshCw className="h-4 w-4" /> System Commands
-            </h3>
-            <p className="text-[12.5px] leading-relaxed text-text-secondary">
-              Flush Redis cache values or re-encrypt DB rows for every registered cloud user.
-            </p>
-
-            <div className="flex flex-col gap-2.5 mt-2">
-              <button
-                disabled={flushLoading}
-                onClick={flushCache}
-                className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-full border border-text-primary bg-text-primary text-xs font-semibold text-bg-card py-2.5 transition-all hover:bg-[#2e2d27] disabled:opacity-50"
-              >
-                <Trash2 className="h-3.5 w-3.5" /> {flushLoading ? "Flushing Cache..." : "Flush Redis Cache"}
-              </button>
-
-              <button
-                disabled={migrationLoading}
-                onClick={runEncryptionMigration}
-                className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-full border border-border-subtle bg-transparent text-xs font-semibold text-text-primary py-2.5 transition-all hover:bg-bg-primary disabled:opacity-50"
-              >
-                <Shield className="h-3.5 w-3.5" /> {migrationLoading ? "Encrypting Records..." : "Encrypt All Users' Data"}
-              </button>
-            </div>
-          </div>
-
-          {/* Quick Server Info */}
-          <div className={`${CARD} flex flex-col gap-4`}>
-            <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3">
-              <Server className="h-4 w-4" /> System Info
-            </h3>
-            <div className="flex flex-col gap-2.5 font-mono text-[10px] text-text-secondary">
-              <div className="flex justify-between border-b border-border-subtle pb-1.5">
-                <span>DEPLOYED URL</span>
-                <span className="text-text-primary truncate max-w-[130px]">{user.email ? "https://continuum-home.vercel.app" : "http://localhost:3000"}</span>
-              </div>
-              <div className="flex justify-between border-b border-border-subtle pb-1.5">
-                <span>REDIS STATUS</span>
-                <span className="text-text-primary font-bold">CONNECTED</span>
-              </div>
-              <div className="flex justify-between border-b border-border-subtle pb-1.5">
-                <span>ENCRYPTION</span>
-                <span className="text-text-primary">AES-256-GCM</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* System Announcements */}
-      <div className={CARD}>
-        <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
-          <Bell className="h-4 w-4" /> System Announcement Dispatcher
-        </h3>
-        
-        <div className="grid grid-cols-[1.2fr_1fr] gap-6 max-lg:grid-cols-1">
-          {/* Column 1: Editor Form */}
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Email Subject Line</label>
-              <input
-                type="text"
-                value={annSubject}
-                onChange={(e) => setAnnSubject(e.target.value)}
-                placeholder="e.g. New updates and features on Continuum!"
-                className="w-full rounded-md border border-border-subtle bg-bg-primary px-3.5 py-2 text-xs text-text-primary outline-none transition-all focus:border-text-primary"
-              />
-            </div>
-            
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Header Title</label>
-              <input
-                type="text"
-                value={annTitle}
-                onChange={(e) => setAnnTitle(e.target.value)}
-                placeholder="e.g. Announcing Rebranding & Custom GPTs"
-                className="w-full rounded-md border border-border-subtle bg-bg-primary px-3.5 py-2 text-xs text-text-primary outline-none transition-all focus:border-text-primary"
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Announcement Body Content</label>
-              <textarea
-                value={annContent}
-                onChange={(e) => setAnnContent(e.target.value)}
-                placeholder="Type your markdown or text announcement here..."
-                rows={10}
-                className="w-full rounded-md border border-border-subtle bg-bg-primary px-3.5 py-2.5 text-xs text-text-primary outline-none transition-all focus:border-text-primary font-sans leading-relaxed resize-y"
-              />
-            </div>
-
-            <div className="flex items-center gap-3 justify-end mt-1">
-              <button
-                disabled={annSending !== null || !annSubject.trim() || !annTitle.trim() || !annContent.trim()}
-                onClick={() => handleAnnouncement("preview")}
-                className="rounded-full border border-border-subtle bg-transparent px-4 py-2 text-xs font-semibold text-text-primary transition-all hover:bg-bg-primary disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {annSending === "preview" ? "Sending Test..." : "Send Test to Admin"}
-              </button>
-              <button
-                disabled={annSending !== null || !annSubject.trim() || !annTitle.trim() || !annContent.trim()}
-                onClick={() => setAnnConfirmModal(true)}
-                className="rounded-full border border-text-primary bg-text-primary px-4 py-2 text-xs font-semibold text-bg-card transition-all hover:bg-[#2e2d27] disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {annSending === "send" ? "Broadcasting..." : "Broadcast to All Users"}
-              </button>
-            </div>
-          </div>
-
-          {/* Column 2: Live HTML Viewport Preview */}
-          <div className="flex flex-col gap-2 rounded-lg border border-border-subtle bg-bg-primary/20 p-4">
-            <div className="flex items-center justify-between border-b border-border-subtle pb-2 mb-2">
-              <span className="font-mono text-[9px] font-bold text-text-secondary uppercase tracking-wider">LIVE EMAIL PREVIEW</span>
-              <span className="text-[10px] text-text-muted italic">Updates in real-time</span>
-            </div>
-            
-            <div className="text-xs text-text-secondary mb-2 font-mono truncate">
-              <strong className="text-text-primary">Subject:</strong> {annSubject || "(No Subject)"}
-            </div>
-
-            <div className="flex-1 rounded-md border border-border-subtle bg-bg-card overflow-hidden h-[330px] shadow-inner">
-              <iframe
-                title="Announcement Email Preview"
-                srcDoc={emailHtmlPreview}
-                className="w-full h-full border-none"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Pro Claims List */}
-      <div className={CARD}>
-        <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-4">
-          <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2">
-            <Star className="h-4 w-4 text-amber-500 fill-amber-500" /> Pro Verification Queue
-          </h3>
-          <div className="flex items-center gap-1">
-            {(["pending", "approved", "denied", "all"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => { setProClaimsFilter(f); fetchProClaims(f); }}
-                className={`rounded-md px-2.5 py-1 text-[10px] font-semibold capitalize transition-all ${
-                  proClaimsFilter === f
-                    ? "bg-text-primary text-bg-card"
-                    : "border border-border-subtle bg-transparent text-text-secondary hover:bg-bg-primary"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {proClaimsLoading ? (
-          <p className="text-xs text-text-secondary italic py-2">Loading requests…</p>
-        ) : proClaims.length === 0 ? (
-          <p className="text-xs text-text-secondary italic py-2">No {proClaimsFilter} Pro requests found.</p>
-        ) : (
-          <div className="flex flex-col gap-2.5 max-h-[340px] overflow-y-auto pr-1">
-            {proClaims.map((claim) => (
-              <div
-                key={claim.id}
-                className={`flex items-start justify-between gap-4 rounded-lg border p-3.5 transition-colors ${
-                  claim.status === "pending"
-                    ? "border-amber-200 bg-amber-50/20"
-                    : claim.status === "approved"
-                    ? "border-[#bbf7d0] bg-[#f0fdf4]/20"
-                    : "border-[#fecaca] bg-[#fef2f2]/20"
-                }`}
-              >
-                <div className="min-w-0 flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
-                      claim.status === "pending" ? "bg-amber-100 text-amber-700"
-                      : claim.status === "approved" ? "bg-[#dcfce7] text-[#166534]"
-                      : "bg-[#fee2e2] text-[#991b1b]"
-                    }`}>
-                      {claim.status}
-                    </span>
-                    <span className="text-[10px] font-mono text-text-secondary">
-                      {claim.platform === "github" ? "🐙 GitHub" : "☕ BMAC"}
-                    </span>
-                  </div>
-                  <p className="text-[13px] font-semibold text-text-primary truncate max-w-[260px]">
-                    {claim.email || claim.displayName || claim.uid}
-                  </p>
-                  <p className="text-[11px] text-text-secondary">
-                    Handle: <span className="font-mono font-semibold text-text-primary">{claim.handle}</span>
-                  </p>
-                  {claim.note && (
-                    <p className="text-[11px] text-text-muted italic mt-0.5">&ldquo;{claim.note}&rdquo;</p>
-                  )}
-                  <p className="text-[9.5px] font-mono text-text-muted">
-                    {new Date(claim.submittedAt).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
-                  </p>
+              {/* Column 2: Live HTML Viewport Preview */}
+              <div className="flex flex-col gap-2 rounded-lg border border-border-subtle bg-bg-primary/20 p-4">
+                <div className="flex items-center justify-between border-b border-border-subtle pb-2 mb-2">
+                  <span className="font-mono text-[9px] font-bold text-text-secondary uppercase tracking-wider">LIVE EMAIL PREVIEW</span>
+                  <span className="text-[10px] text-text-muted italic">Updates in real-time</span>
+                </div>
+                
+                <div className="text-xs text-text-secondary mb-2 font-mono truncate">
+                  <strong className="text-text-primary">Subject:</strong> {annSubject || "(No Subject)"}
                 </div>
 
-                {claim.status === "pending" && (
-                  <div className="shrink-0 flex flex-col gap-1.5 mt-0.5">
-                    <button
-                      disabled={proActionLoading === claim.id}
-                      onClick={() => handleProAction(claim.id, "approve")}
-                      className="rounded-md border border-[#16a34a] bg-[#16a34a] px-2.5 py-1 text-[10.5px] font-semibold text-white transition-all hover:bg-[#15803d] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {proActionLoading === claim.id ? "…" : "Approve"}
-                    </button>
-                    <button
-                      disabled={proActionLoading === claim.id}
-                      onClick={() => handleProAction(claim.id, "deny")}
-                      className="rounded-md border border-[#dc2626] bg-transparent px-2.5 py-1 text-[10.5px] font-semibold text-[#dc2626] transition-all hover:bg-[#dc2626] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {proActionLoading === claim.id ? "…" : "Deny"}
-                    </button>
-                  </div>
-                )}
+                <div className="flex-1 rounded-md border border-border-subtle bg-bg-card overflow-hidden h-[330px] shadow-inner">
+                  <iframe
+                    title="Announcement Email Preview"
+                    srcDoc={emailHtmlPreview}
+                    className="w-full h-full border-none"
+                  />
+                </div>
               </div>
-            ))}
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {/* ──────────────── TAB: SYSTEM OPERATIONS ──────────────── */}
+      {activeTab === "system" && (
+        <div className="grid grid-cols-[1.5fr_1fr] gap-6 max-md:grid-cols-1 animate-[fadeIn_0.3s_ease-out_both]">
+          {/* Left Column: Cron Alerts Operations */}
+          <CronTriggerSection
+            previewLoading={previewLoading}
+            cronRunning={cronRunning}
+            sendPreviewEmail={sendPreviewEmail}
+            handleProductionCronClick={handleProductionCronClick}
+          />
+
+          {/* Right Column: Database / Cache Systems */}
+          <div className="flex flex-col gap-6">
+            <div className={`${CARD} flex flex-col gap-4`}>
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3">
+                <RefreshCw className="h-4 w-4" /> System Commands
+              </h3>
+              <p className="text-[12.5px] leading-relaxed text-text-secondary">
+                Flush Redis cache values or re-encrypt DB rows for every registered cloud user.
+              </p>
+
+              <div className="flex flex-col gap-2.5 mt-2">
+                <button
+                  disabled={flushLoading}
+                  onClick={flushCache}
+                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-full border border-text-primary bg-text-primary text-xs font-semibold text-bg-card py-2.5 transition-all hover:bg-[#2e2d27] disabled:opacity-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> {flushLoading ? "Flushing Cache..." : "Flush Redis Cache"}
+                </button>
+
+                <button
+                  disabled={migrationLoading}
+                  onClick={runEncryptionMigration}
+                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-full border border-border-subtle bg-transparent text-xs font-semibold text-text-primary py-2.5 transition-all hover:bg-bg-primary disabled:opacity-50"
+                >
+                  <Shield className="h-3.5 w-3.5" /> {migrationLoading ? "Encrypting Records..." : "Encrypt All Users' Data"}
+                </button>
+              </div>
+            </div>
+
+            {/* Quick Server Info */}
+            <div className={`${CARD} flex flex-col gap-4`}>
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3">
+                <Server className="h-4 w-4" /> System Info
+              </h3>
+              <div className="flex flex-col gap-2.5 font-mono text-[10px] text-text-secondary">
+                <div className="flex justify-between border-b border-border-subtle pb-1.5">
+                  <span>DEPLOYED URL</span>
+                  <span className="text-text-primary truncate max-w-[130px]">{user.email ? "https://continuum-home.vercel.app" : "http://localhost:3000"}</span>
+                </div>
+                <div className="flex justify-between border-b border-border-subtle pb-1.5">
+                  <span>REDIS STATUS</span>
+                  <span className="text-text-primary font-bold">CONNECTED</span>
+                </div>
+                <div className="flex justify-between border-b border-border-subtle pb-1.5">
+                  <span>ENCRYPTION</span>
+                  <span className="text-text-primary">AES-256-GCM</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ──────────────── TAB: PRO REQUESTS ──────────────── */}
+      {activeTab === "pro-requests" && (
+        <div className="animate-[fadeIn_0.3s_ease-out_both]">
+          <ProClaimsQueue
+            proClaims={proClaims}
+            proClaimsLoading={proClaimsLoading}
+            proClaimsFilter={proClaimsFilter}
+            setProClaimsFilter={setProClaimsFilter}
+            fetchProClaims={fetchProClaims}
+            proActionLoading={proActionLoading}
+            handleProAction={handleProAction}
+          />
+        </div>
+      )}
 
       {/* Confirmation Modal */}
       {confirmModal && typeof document !== "undefined" && createPortal(
