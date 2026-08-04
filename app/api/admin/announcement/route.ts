@@ -103,7 +103,7 @@ export async function POST(req: NextRequest) {
                 <!-- Header Inside Card -->
                 <tr><td style="border-bottom: 1px solid #eae8e0; padding-bottom: 16px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
-                    <td align="left" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; color: #1c1b18;">Continuum Dashboard</td>
+                    <td align="left" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; color: #1c1b18;">Continuum Home</td>
                     <td align="right" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 11px; font-weight: 500; color: #7c7a72;">Announcement</td>
                   </tr></table>
                 </td></tr>

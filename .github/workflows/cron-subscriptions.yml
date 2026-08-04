@@ -20,5 +20,5 @@ jobs:
             echo "Error: CRON_SECRET secret is not set."
             exit 1
           fi
-          curl -fail -L -X POST "${{ secrets.APP_URL }}/api/cron/subscriptions" \
+          curl --fail -sS -L -X POST "${{ secrets.APP_URL }}/api/cron/subscriptions" \
                -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
