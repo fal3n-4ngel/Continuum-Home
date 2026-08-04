@@ -162,3 +162,14 @@ export function buildCycleHistory(
   }
   return cycles;
 }
+
+/**
+ * Calculates current calendar date string in IST (Asia/Kolkata timezone: UTC+5:30)
+ */
+export function getIstDateString(d: Date = new Date()): string {
+  const tzDate = new Date(d.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  const yyyy = tzDate.getFullYear();
+  const mm = String(tzDate.getMonth() + 1).padStart(2, "0");
+  const dd = String(tzDate.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}

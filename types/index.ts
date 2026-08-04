@@ -117,3 +117,15 @@ export interface InvestmentQuote {
   exchange?: string;
   type?: string;
 }
+
+export interface ProClaim {
+  id: string;
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  platform: "github" | "bmac";
+  handle: string;
+  note: string;
+  status: "pending" | "approved" | "denied";
+  submittedAt: number;
+}

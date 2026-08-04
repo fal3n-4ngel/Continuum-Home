@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { FirebaseUser } from "@/types";
+import { FirebaseUser, ProClaim } from "@/types";
 import { 
   Shield, 
   Trash2, 
@@ -16,6 +16,8 @@ import {
   Activity,
   Server
 } from "lucide-react";
+import { ProClaimsQueue } from "./admin/ProClaimsQueue";
+import { CronTriggerSection } from "./admin/CronTriggerSection";
 
 interface AdminTabProps {
   user: FirebaseUser;
@@ -42,17 +44,7 @@ export function AdminTab({ user }: AdminTabProps) {
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
 
   // Pro Requests state
-  interface ProClaim {
-    id: string;
-    uid: string;
-    email: string | null;
-    displayName: string | null;
-    platform: "github" | "bmac";
-    handle: string;
-    note: string;
-    status: "pending" | "approved" | "denied";
-    submittedAt: number;
-  }
+  // Pro Requests state
   const [proClaims, setProClaims] = useState<ProClaim[]>([]);
   const [proClaimsLoading, setProClaimsLoading] = useState(false);
   const [proClaimsFilter, setProClaimsFilter] = useState<"pending" | "approved" | "denied" | "all">("pending");
@@ -498,94 +490,12 @@ Thank you for being part of our journey!`);
 
       <div className="grid grid-cols-[1.5fr_1fr] gap-6 max-md:grid-cols-1">
         {/* Left Column: Cron Alerts Operations */}
-        <div className="flex flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle">
-          <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3">
-            <Mail className="h-4 w-4" /> Trigger Automated Crons
-          </h3>
-          <p className="text-[12.5px] leading-relaxed text-text-secondary">
-            Manually trigger automated tasks. This fires notifications and emails to registered cloud users.
-          </p>
-
-          <div className="flex flex-col gap-3.5 mt-2">
-            <div className="flex items-center gap-2">
-              <div className="flex-1 border-t border-[#fecaca]" />
-              <span className="font-mono text-[8.5px] font-bold text-[#dc2626] tracking-widest flex items-center gap-1">
-                <AlertTriangle className="h-3 w-3" /> PRODUCTION CRONS
-              </span>
-              <div className="flex-1 border-t border-[#fecaca]" />
-            </div>
-
-            {[
-              {
-                id: "subscriptions",
-                previewId: "subscriptions",
-                title: "Subscription Warnings",
-                desc: "Alerts users of subscriptions renewing in 2-3 days.",
-                icon: <Bell className="h-4 w-4 text-text-secondary" />,
-                hasPreview: true,
-              },
-              {
-                id: "expenses_weekly",
-                previewId: "expenses_weekly",
-                title: "Weekly Expense Summary",
-                desc: "Dispatches 7-day category summary and burn rate.",
-                icon: <BarChart2 className="h-4 w-4 text-text-secondary" />,
-                hasPreview: true,
-              },
-              {
-                id: "expenses_monthly",
-                previewId: "expenses_monthly",
-                title: "Monthly Expense Summary",
-                desc: "Dispatches 30-day top outflows and category charts.",
-                icon: <BarChart2 className="h-4 w-4 text-text-secondary" />,
-                hasPreview: true,
-              },
-              {
-                id: "portfolio",
-                previewId: "portfolio",
-                title: "Daily Portfolio Wrap",
-                desc: "Calculates stock valuations and emails daily close Net P&L.",
-                icon: <Mail className="h-4 w-4 text-text-secondary" />,
-                hasPreview: true,
-              },
-              {
-                id: "recommendations",
-                previewId: null,
-                title: "Daily AI Recommendations",
-                desc: "Refreshes system suggestions for watchlist additions.",
-                icon: <Sparkles className="h-4 w-4 text-text-secondary" />,
-                hasPreview: false,
-              },
-            ].map((task) => (
-              <div key={task.id} className="rounded-lg border border-[#fecaca]/60 bg-[#fef2f2]/40 p-3.5 hover:bg-[#fef2f2]/60 transition-colors flex justify-between items-center gap-4">
-                <div className="min-w-0">
-                  <h4 className="text-[13px] font-bold text-text-primary flex items-center gap-2">
-                    {task.icon} {task.title}
-                  </h4>
-                  <p className="text-[11px] text-text-secondary mt-0.5 leading-relaxed">{task.desc}</p>
-                </div>
-                <div className="shrink-0 flex items-center gap-2">
-                  {task.hasPreview && (
-                    <button
-                      disabled={previewLoading || cronRunning !== null}
-                      onClick={() => sendPreviewEmail(task.previewId!)}
-                      className="cursor-pointer rounded-md border border-[#3b82f6] bg-[#eff6ff] text-[10.5px] font-semibold text-[#1d4ed8] px-2.5 py-1.5 transition-all hover:bg-[#dbeafe] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {previewLoading ? "..." : "Preview"}
-                    </button>
-                  )}
-                  <button
-                    disabled={cronRunning !== null}
-                    onClick={() => handleProductionCronClick(task.id, task.title)}
-                    className="cursor-pointer rounded-md border border-[#dc2626] bg-transparent text-[10.5px] font-semibold text-[#dc2626] px-2.5 py-1.5 transition-all hover:bg-[#dc2626] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {cronRunning === task.id ? "Running..." : "Run"}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        <CronTriggerSection
+          previewLoading={previewLoading}
+          cronRunning={cronRunning}
+          sendPreviewEmail={sendPreviewEmail}
+          handleProductionCronClick={handleProductionCronClick}
+        />
 
         {/* Right Column: Database / Cache Systems */}
         <div className="flex flex-col gap-6">
@@ -722,95 +632,15 @@ Thank you for being part of our journey!`);
       </div>
 
       {/* Pro Claims List */}
-      <div className={CARD}>
-        <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-4">
-          <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2">
-            <Star className="h-4 w-4 text-amber-500 fill-amber-500" /> Pro Verification Queue
-          </h3>
-          <div className="flex items-center gap-1">
-            {(["pending", "approved", "denied", "all"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => { setProClaimsFilter(f); fetchProClaims(f); }}
-                className={`rounded-md px-2.5 py-1 text-[10px] font-semibold capitalize transition-all ${
-                  proClaimsFilter === f
-                    ? "bg-text-primary text-bg-card"
-                    : "border border-border-subtle bg-transparent text-text-secondary hover:bg-bg-primary"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {proClaimsLoading ? (
-          <p className="text-xs text-text-secondary italic py-2">Loading requests…</p>
-        ) : proClaims.length === 0 ? (
-          <p className="text-xs text-text-secondary italic py-2">No {proClaimsFilter} Pro requests found.</p>
-        ) : (
-          <div className="flex flex-col gap-2.5 max-h-[340px] overflow-y-auto pr-1">
-            {proClaims.map((claim) => (
-              <div
-                key={claim.id}
-                className={`flex items-start justify-between gap-4 rounded-lg border p-3.5 transition-colors ${
-                  claim.status === "pending"
-                    ? "border-amber-200 bg-amber-50/20"
-                    : claim.status === "approved"
-                    ? "border-[#bbf7d0] bg-[#f0fdf4]/20"
-                    : "border-[#fecaca] bg-[#fef2f2]/20"
-                }`}
-              >
-                <div className="min-w-0 flex flex-col gap-1">
-                  <div className="flex items-center gap-2">
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
-                      claim.status === "pending" ? "bg-amber-100 text-amber-700"
-                      : claim.status === "approved" ? "bg-[#dcfce7] text-[#166534]"
-                      : "bg-[#fee2e2] text-[#991b1b]"
-                    }`}>
-                      {claim.status}
-                    </span>
-                    <span className="text-[10px] font-mono text-text-secondary">
-                      {claim.platform === "github" ? "🐙 GitHub" : "☕ BMAC"}
-                    </span>
-                  </div>
-                  <p className="text-[13px] font-semibold text-text-primary truncate max-w-[260px]">
-                    {claim.email || claim.displayName || claim.uid}
-                  </p>
-                  <p className="text-[11px] text-text-secondary">
-                    Handle: <span className="font-mono font-semibold text-text-primary">{claim.handle}</span>
-                  </p>
-                  {claim.note && (
-                    <p className="text-[11px] text-text-muted italic mt-0.5">&ldquo;{claim.note}&rdquo;</p>
-                  )}
-                  <p className="text-[9.5px] font-mono text-text-muted">
-                    {new Date(claim.submittedAt).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" })}
-                  </p>
-                </div>
-
-                {claim.status === "pending" && (
-                  <div className="shrink-0 flex flex-col gap-1.5 mt-0.5">
-                    <button
-                      disabled={proActionLoading === claim.id}
-                      onClick={() => handleProAction(claim.id, "approve")}
-                      className="rounded-md border border-[#16a34a] bg-[#16a34a] px-2.5 py-1 text-[10.5px] font-semibold text-white transition-all hover:bg-[#15803d] disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {proActionLoading === claim.id ? "…" : "Approve"}
-                    </button>
-                    <button
-                      disabled={proActionLoading === claim.id}
-                      onClick={() => handleProAction(claim.id, "deny")}
-                      className="rounded-md border border-[#dc2626] bg-transparent px-2.5 py-1 text-[10.5px] font-semibold text-[#dc2626] transition-all hover:bg-[#dc2626] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {proActionLoading === claim.id ? "…" : "Deny"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      <ProClaimsQueue
+        proClaims={proClaims}
+        proClaimsLoading={proClaimsLoading}
+        proClaimsFilter={proClaimsFilter}
+        setProClaimsFilter={setProClaimsFilter}
+        fetchProClaims={fetchProClaims}
+        proActionLoading={proActionLoading}
+        handleProAction={handleProAction}
+      />
 
       {/* Confirmation Modal */}
       {confirmModal && typeof document !== "undefined" && createPortal(

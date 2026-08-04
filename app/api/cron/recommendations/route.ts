@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { toErrorResponse } from "@/lib/errors";
 import { listAllUsers, adminListWatchlist, adminSaveDailyRecommendation, type AdminUser } from "@/lib/firebase-admin";
 import type { DailyRecommendation } from "@/lib/firebase";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -269,7 +270,6 @@ export async function POST(req: NextRequest) {
     const processedCount = results.filter((r) => r.sent).length;
     return NextResponse.json({ success: true, date: dateStr, usersProcessed: users.length, usersGenerated: processedCount, results });
   } catch (error: any) {
-    console.error("[Cron Recs Error]:", error);
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    return toErrorResponse(error, "Error in cron/recommendations");
   }
 }

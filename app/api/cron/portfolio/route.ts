@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { toErrorResponse } from "@/lib/errors";
 import { listAllUsers, adminGetPortfolio, adminUpdatePortfolioValuationHistory, type AdminUser } from "@/lib/firebase-admin";
 import { fetchAssetPrice, getUsdToInrRate } from "@/lib/prices";
 import { getEffectiveAmount } from "@/lib/fd";
 import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
+import { getIstDateString } from "@/lib/dates";
 
 export const dynamic = "force-dynamic";
 
@@ -61,15 +63,6 @@ async function processUser(user: AdminUser, usdToInr: number, resendApiKey: stri
   const isGreen = overallPnl >= 0;
   const pnlColor = isGreen ? "#166534" : "#991b1b";
   const pnlBg = isGreen ? "#f0fdf4" : "#fef2f2";
-
-  // Track valuation history for yesterday and last week comparisons
-  const getIstDateString = (d: Date = new Date()) => {
-    const tzDate = new Date(d.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
-    const yyyy = tzDate.getFullYear();
-    const mm = String(tzDate.getMonth() + 1).padStart(2, "0");
-    const dd = String(tzDate.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  };
 
   const todayDateStr = getIstDateString();
 
@@ -297,7 +290,6 @@ export async function POST(req: NextRequest) {
     const sentCount = results.filter((r) => r.sent).length;
     return NextResponse.json({ success: true, usersProcessed: users.length, emailsSent: sentCount, results });
   } catch (error: any) {
-    console.error("Error in cron/portfolio:", error);
-    return NextResponse.json({ error: error.message || "Failed to run portfolio close cron" }, { status: 500 });
+    return toErrorResponse(error, "Error in cron/portfolio");
   }
 }
