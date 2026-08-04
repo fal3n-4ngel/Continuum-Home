@@ -83,14 +83,26 @@ export async function GET(req: NextRequest) {
     }
 
     // 3. Compile users details list
-    const usersList = usersSet.map((identifier) => {
+    const usersListRaw = usersSet.map((identifier) => {
       const lastActiveMs = Number(userLastActive[identifier]) || 0;
-      const email = identifier.includes("@") ? identifier : uidToEmail.get(identifier) || identifier;
+      const email = identifier.includes("@") ? identifier : (uidToEmail.get(identifier) || uidMap[identifier] || identifier);
       return {
         email,
-        lastActive: lastActiveMs ? new Date(lastActiveMs).toISOString() : null,
+        lastActive: lastActiveMs,
       };
-    }).sort((a, b) => {
+    });
+
+    // Deduplicate legacy split entries by mapped email (taking latest activity)
+    const usersMap: Record<string, any> = {};
+    for (const u of usersListRaw) {
+      if (!usersMap[u.email] || (u.lastActive && usersMap[u.email].lastActive < u.lastActive)) {
+        usersMap[u.email] = u;
+      }
+    }
+    const usersList = Object.values(usersMap).map(u => ({
+        email: u.email,
+        lastActive: u.lastActive ? new Date(u.lastActive).toISOString() : null,
+    })).sort((a, b) => {
       const timeA = a.lastActive ? new Date(a.lastActive).getTime() : 0;
       const timeB = b.lastActive ? new Date(b.lastActive).getTime() : 0;
       return timeB - timeA; // newest active first

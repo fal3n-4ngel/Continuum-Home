@@ -32,6 +32,7 @@ import { OnboardingModal } from "@/components/dashboard/OnboardingModal";
 import { MediaDetailsModal } from "@/components/dashboard/MediaDetailsModal";
 import { KirokuChatBubble } from "@/components/dashboard/KirokuChatBubble";
 import { ClaimProModal } from "@/components/dashboard/ClaimProModal";
+import { DataCorrectionModal } from "@/components/dashboard/DataCorrectionModal";
 
 // Dynamically import heavy dashboard tabs to optimize initial bundle size
 const ExpensesTab = dynamic(() => import("@/components/dashboard/ExpensesTab").then((mod) => mod.ExpensesTab));
@@ -92,11 +93,6 @@ export default function Dashboard() {
   const [isAddingExpense, setIsAddingExpense] = useState(false);
 
   // Filters & Analytics
-  // Seeded from a localStorage cache so the dashboard renders with the
-  // user's last-known preference instantly instead of flashing back to the
-  // "all" default while the Firestore-backed /api/settings fetch is in
-  // flight; fetchSettings() below reconciles against the server copy once
-  // it lands (and keeps the cache in sync across devices).
   const [timeFilter, setTimeFilterState] = useState<"7" | "30" | "90" | "salary" | "all">(() => {
     if (typeof window === "undefined") return "all";
     const cached = window.localStorage.getItem("phub_time_filter");
@@ -117,14 +113,8 @@ export default function Dashboard() {
     const cached = parseFloat(window.localStorage.getItem("phub_additional_income") || "0");
     return isNaN(cached) ? 0 : cached;
   });
-  // Reconciliation answers keyed by pay-cycle start date — sparse and only
-  // meaningful once loaded from Firestore, so no localStorage seed here.
   const [reconciliations, setReconciliationsState] = useState<Record<string, number>>({});
-  // Logged paydays keyed by the payday itself — same sparse, Firestore-only
-  // loading pattern.
   const [salaryLog, setSalaryLogState] = useState<Record<string, { date: string; amount: number }>>({});
-  // Pro-tier flag from settings. Server-controlled (not patchable via the
-  // API), so it only changes when set directly in Firestore.
   const [isProUser, setIsProUser] = useState(false);
   const [showClaimPro, setShowClaimPro] = useState(false);
   const [activeChart, setActiveChart] = useState<"category" | "trend">("category");
@@ -160,18 +150,15 @@ export default function Dashboard() {
   const [letterboxdUsername, setLetterboxdUsername] = useState("");
   const [isImportingLetterboxd, setIsImportingLetterboxd] = useState(false);
 
+  // Data Correction
+  const [isDataCorrectionOpen, setIsDataCorrectionOpen] = useState(false);
+
   // Book Library State
   const [bookQuery, setBookQuery] = useState("");
   const [isSearchingBooks, setIsSearchingBooks] = useState(false);
   const [bookResults, setBookResults] = useState<SearchResult[]>([]);
   const [bookFilter, setBookFilter] = useState<"all" | "reading" | "to_read" | "completed">("all");
   const [isEnrichingBookCovers, setIsEnrichingBookCovers] = useState(false);
-
-  // Notes State
-  const [noteContent, setNoteContent] = useState("");
-  const [isFetchingNote, setIsFetchingNote] = useState(false);
-  const [isSavingNote, setIsSavingNote] = useState(false);
-  const saveNoteTimeout = useRef<NodeJS.Timeout | null>(null);
 
   // Investments State
   const [investments, setInvestments] = useState<InvestmentAsset[]>([]);
@@ -581,9 +568,6 @@ export default function Dashboard() {
           entries.push({
             title: item.movie.title,
             type: "movie",
-            // Being on Trakt's watchlist doesn't override a "dropped" or
-            // "paused" you set locally without removing it from Trakt's
-            // list too.
             status: existing?.status === "dropped" ? "dropped" : existing?.status === "paused" ? "paused" : "plan_to_watch",
             progress: 0,
             totalEpisodes: 1,
@@ -620,12 +604,6 @@ export default function Dashboard() {
               (w.title.toLowerCase().trim() === item.show.title.toLowerCase().trim() && w.type === "show")
           );
 
-          // Trakt's basic watched-shows response doesn't include a total
-          // episode count, so when we don't already know it locally, look
-          // it up directly rather than silently falling back to "watching"
-          // regardless of how much was actually watched (that fallback was
-          // reverting shows correctly marked completed back to watching on
-          // every re-sync).
           let totalEpisodes = existing?.totalEpisodes || null;
           if (!totalEpisodes && traktId) {
             try {
@@ -642,23 +620,10 @@ export default function Dashboard() {
           if (totalEpisodes && totalEpisodes > 0 && progress >= totalEpisodes) {
             status = "completed";
           } else if (!totalEpisodes && existing?.status === "completed" && progress >= (existing.progress || 0)) {
-            // Still couldn't determine a total — trust the existing
-            // completed status rather than reverting it, since the local
-            // mark (or an earlier push to Trakt) is at least as likely to
-            // be correct as an absent episode count.
             status = "completed";
           } else if (existing?.status === "dropped" && progress <= (existing.progress || 0)) {
-            // Trakt has no "dropped" concept — a show you dropped partway
-            // through still shows up here with whatever watch history
-            // already existed, which this block would otherwise read back
-            // as "watching" on every sync. Preserve the local "dropped"
-            // mark unless Trakt shows *more* progress than we already knew
-            // about (i.e. you actually went back and kept watching).
             status = "dropped";
           } else if (existing?.status === "paused" && progress <= (existing.progress || 0)) {
-            // Trakt has no "paused" concept either — same problem as
-            // "dropped" above. Preserve the local "paused" mark unless
-            // Trakt shows more progress than we already knew about.
             status = "paused";
           }
 
@@ -726,8 +691,6 @@ export default function Dashboard() {
           entries.push({
             title: item.show.title,
             type: "show",
-            // Same as movies above: don't let "still on Trakt's watchlist"
-            // override a local "dropped" or "paused" mark.
             status: existing?.status === "dropped" ? "dropped" : existing?.status === "paused" ? "paused" : "plan_to_watch",
             progress: 0,
             totalEpisodes: existing?.totalEpisodes || null,
@@ -963,8 +926,6 @@ export default function Dashboard() {
       const auth = getAuth(app);
       setFirebaseAuth({ auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut });
 
-      // Consume any pending redirect sign-in result (e.g. from popup-blocked browsers
-      // that fell back to signInWithRedirect — the credential lands here after redirect)
       getRedirectResult(auth).then((result) => {
         if (result?.user) {
           console.log("[Auth] Redirect sign-in consumed:", result.user.email);
@@ -1067,22 +1028,6 @@ export default function Dashboard() {
     }
   };
 
-  const fetchNote = async () => {
-    setIsFetchingNote(true);
-    try {
-      const res = await fetch("/api/notes", { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.content) setNoteContent(data.content);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsFetchingNote(false);
-      setNoteLoaded(true);
-    }
-  };
-
   const fetchInvestments = async () => {
     setIsFetchingInvestments(true);
     try {
@@ -1136,9 +1081,6 @@ export default function Dashboard() {
     }
   };
 
-  // Write-through setters: update local state + the localStorage cache
-  // immediately (instant UI, no network wait), then persist to Firestore
-  // in the background so the preference follows the user across devices.
   const setTimeFilter = (f: "7" | "30" | "90" | "salary" | "all") => {
     setTimeFilterState(f);
     localStorage.setItem("phub_time_filter", f);
@@ -1171,9 +1113,6 @@ export default function Dashboard() {
     }
   };
 
-  // Firestore's update mask replaces the whole `reconciliations` map, so we
-  // merge the new entry into the current one client-side before sending —
-  // same pattern as the portfolio's valuationHistory snapshots.
   const setReconciliation = (cycleStartDate: string, actualAmount: number) => {
     const next = { ...reconciliations, [cycleStartDate]: actualAmount };
     setReconciliationsState(next);
@@ -1195,7 +1134,6 @@ export default function Dashboard() {
       fetchExpenses();
       fetchWatchlist();
       fetchSubscriptions();
-      fetchNote();
       fetchInvestments();
       fetchSettings();
     }
@@ -1252,10 +1190,6 @@ export default function Dashboard() {
     }
   };
 
-  // From Financial Health's reconciliation: when the confirmed cash-on-hand
-  // is short of what the ledger predicted, log the gap as a real expense
-  // instead of just leaving it as a discrepancy message — so it actually
-  // corrects the ledger rather than needing the user to guess what it was.
   const logUnaccountedGap = async (amount: number) => {
     try {
       const res = await fetch("/api/expenses", {
@@ -1335,8 +1269,6 @@ export default function Dashboard() {
 
   const updateSubscriptionIcon = async (id: string, icon: string) => {
     const nextIcon = icon.trim() || null;
-    // Optimistic — the icon is cosmetic, so reflect it instantly and let the
-    // PATCH catch up rather than blocking the UI on a round-trip.
     setSubscriptions((prev) => prev.map((s) => (s.id === id ? { ...s, icon: nextIcon } : s)));
     try {
       await fetch(`/api/subscriptions/${id}`, {
@@ -1359,7 +1291,6 @@ export default function Dashboard() {
       });
     } catch (err) {
       console.error(err);
-      // Rollback on failure
       const res = await fetch("/api/subscriptions", { headers: getHeaders() });
       if (res.ok) {
         const data = await res.json();
@@ -1480,7 +1411,6 @@ export default function Dashboard() {
               if (imdbId) {
                 coverImage = await fetchOMDbPoster(imdbId);
               }
-              // TVMaze fallback for shows
               if (!coverImage && item.type === "show" && imdbId) {
                 try {
                   const tvmazeRes = await fetch(`https://api.tvmaze.com/lookup/shows?imdb=${imdbId}`);
@@ -1644,22 +1574,6 @@ export default function Dashboard() {
     if (apiRes.ok) fetchWatchlist();
   };
 
-  /* ─── Notes Actions ─── */
-  const updateNote = (newContent: string) => {
-    setNoteContent(newContent);
-    setIsSavingNote(true);
-    if (saveNoteTimeout.current) clearTimeout(saveNoteTimeout.current);
-    saveNoteTimeout.current = setTimeout(async () => {
-      try {
-        await fetch("/api/notes", { method: "POST", headers: getHeaders(), body: JSON.stringify({ content: newContent }) });
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsSavingNote(false);
-      }
-    }, 1000);
-  };
-
   /* ─── Investments Actions ─── */
   useEffect(() => {
     if (!invName.trim() || !TICKER_SEARCH_CATEGORIES.includes(invCategory)) {
@@ -1679,15 +1593,10 @@ export default function Dashboard() {
     }, 250);
 
     return () => clearTimeout(delayDebounce);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [invName, invCategory, user]);
 
   const selectSuggestion = (s: InvestmentQuote) => {
     setInvName(s.symbol || s.name || "");
-    // Only auto-detect the category from the search result when the user
-    // hasn't already made a deliberate choice — picking a mutual fund ticker
-    // while in SIP mode should stay SIP, not silently flip back to Mutual
-    // Fund (this previously made adding a SIP look like it "didn't work").
     if (invCategory === "equity" || invCategory === "crypto" || invCategory === "mutual_fund") {
       if (s.type === "EQUITY") setInvCategory("equity");
       else if (s.type === "CRYPTOCURRENCY") setInvCategory("crypto");
@@ -1777,7 +1686,7 @@ export default function Dashboard() {
           isSold: true,
           soldAt: now,
           soldPrice: soldPrice,
-          amount: 0, // Market value is 0 after sale
+          amount: 0,
         };
       }
       return a;
@@ -1801,7 +1710,7 @@ export default function Dashboard() {
     }
   };
 
-const updateMarketPrices = async () => {
+  const updateMarketPrices = async () => {
     setIsUpdatingPrices(true);
     try {
       const res = await fetch("/api/portfolio/prices", {
@@ -1812,8 +1721,6 @@ const updateMarketPrices = async () => {
       if (res.ok) {
         const data = await res.json();
         const pricedAssets = (data.assets || []).map((a: any) => {
-          // Recompute current value from quantity * live price when possible,
-          // otherwise fall back to the existing amount.
           const liveValue =
             a.quantity && a.currentPriceInr
               ? a.quantity * a.currentPriceInr
@@ -1846,14 +1753,9 @@ const updateMarketPrices = async () => {
     return Array.from(new Set([...defaultCats, ...Array.from(loadedCats)]));
   }, [expenses, customCategories]);
 
-  // Time/search/amount filters only — deliberately excludes the category
-  // filter so the analytics chart can keep showing every category (with the
-  // selected one highlighted and the rest dimmed) instead of collapsing down
-  // to a single bar whenever the ledger's category filter is active.
   const filteredExpensesBase = useMemo(() => {
     let list = expenses;
 
-    // Time filter
     if (timeFilter !== "all") {
       const now = new Date();
       if (timeFilter === "salary") {
@@ -1866,13 +1768,11 @@ const updateMarketPrices = async () => {
       }
     }
 
-    // Search filter
     if (expenseSearch.trim()) {
       const q = expenseSearch.toLowerCase();
       list = list.filter((e) => e.title.toLowerCase().includes(q) || (e.notes && e.notes.toLowerCase().includes(q)));
     }
 
-    // Amount range filter
     if (ledgerMinAmount) {
       const min = parseFloat(ledgerMinAmount);
       if (!isNaN(min)) list = list.filter((e) => (e.amount || 0) >= min);
@@ -1888,14 +1788,10 @@ const updateMarketPrices = async () => {
   const filteredExpenses = useMemo(() => {
     let list = filteredExpensesBase;
 
-    // Category filter
     if (ledgerCategoryFilter) {
       list = list.filter((e) => e.category === ledgerCategoryFilter);
     }
 
-    // Sorting is purely client-side on data already fetched — expenses are
-    // loaded in full up front, so re-sorting never costs an extra Firestore
-    // read no matter how often the user changes the sort order.
     const dir = ledgerSortDir === "asc" ? 1 : -1;
     list = [...list].sort((a, b) => {
       switch (ledgerSortField) {
@@ -1916,21 +1812,12 @@ const updateMarketPrices = async () => {
 
   const totalSpent = useMemo(() => filteredExpenses.reduce((acc, e) => acc + (e.amount || 0), 0), [filteredExpenses]);
 
-  // Resolved boundaries for the current cycle plus the 7 before it (index 0
-  // = current, in-progress cycle). Shared by the projection's historical
-  // baseline below and the Cycle History card, so cycle resolution and
-  // logged-payday snapping only happens once per render.
   const CYCLE_HISTORY_DEPTH = 7;
   const cycleHistoryRaw = useMemo(
     () => buildCycleHistory(salaryDay, salaryLog, CYCLE_HISTORY_DEPTH),
     [salaryDay, salaryLog]
   );
 
-  // Real pay-cycle analytics: spend so far THIS salary cycle (not a rolling
-  // 30-day window, which drifts out of sync with when salary actually
-  // lands), a pace-based projection for the rest of the cycle, and a
-  // same-shape comparison against the previous cycle so "burn rate" means
-  // something concrete instead of an arbitrary trailing average.
   const payCycle = useMemo(() => {
     const { startStr, endStr, loggedAmount, prevStartStr, prevEndStr } = resolvePayCycle(salaryDay, salaryLog);
     const todayStr = toLocalDateStr(new Date());
@@ -1952,70 +1839,39 @@ const updateMarketPrices = async () => {
     }, 0);
 
     const prevCycleExpenses = expenses.filter((e) => e.date && e.date >= prevStartStr && e.date <= prevEndStr);
-    const prevTransactionalSpend = prevCycleExpenses.reduce((acc, e) => acc + (e.amount || 0), 0);
-    const prevCycleSpend = prevTransactionalSpend + subMonthlyCost;
-
-    // How much you'd spent by this same point last cycle — the "by this
-    // day last month" baseline — for an apples-to-apples pace comparison
-    // instead of comparing a partial cycle to a full one.
     const prevSameDayEnd = new Date(`${prevStartStr}T00:00:00`);
     prevSameDayEnd.setDate(prevSameDayEnd.getDate() + elapsedDays - 1);
     const prevSameDayEndStr = toLocalDateStr(prevSameDayEnd);
     const prevCycleSpendToSameDay = prevCycleExpenses
       .filter((e) => e.date! <= prevSameDayEndStr)
       .reduce((acc, e) => acc + (e.amount || 0), 0);
+    const prevCycleTransactional = prevCycleExpenses.reduce((acc, e) => acc + (e.amount || 0), 0);
+    const prevCycleSpend = prevCycleTransactional + subMonthlyCost;
 
-    // One or two days of data isn't enough to trust a live pace projection
-    // at all — a single lumpy once-per-cycle payment (rent, tuition) logged
-    // on day 1 would get treated as a *daily* rate and extrapolated across
-    // the whole month (₹5,000 rent → "₹158,000/cycle pace"). Ignore the
-    // live pace entirely for the first couple of days, then ramp its
-    // weight up over the following week as enough real data accumulates
-    // to average out any single lumpy expense.
     const BLACKOUT_DAYS = 2;
     const WARMUP_DAYS = 7;
     const paceConfidence = Math.max(0, Math.min(1, (elapsedDays - BLACKOUT_DAYS) / WARMUP_DAYS));
     const dailyPace = elapsedDays > 0 ? spentSoFar / elapsedDays : 0;
     const paceProjectedTransactional = dailyPace * totalDays;
 
-    // Prefer averaging the last few COMPLETE cycles' actual spend over
-    // leaning on only the single immediately-previous one — one unusually
-    // cheap or expensive cycle shouldn't single-handedly define "normal."
-    // Falls back to just the previous cycle when that's all the history
-    // there is (or none at all, in which case there's nothing to blend
-    // with and the live pace is used outright).
     const HISTORY_CYCLES_FOR_BASELINE = 3;
     const pastCyclesSpend = cycleHistoryRaw
       .slice(1, 1 + HISTORY_CYCLES_FOR_BASELINE)
       .map((c) => expenses.filter((e) => e.date && e.date >= c.startStr && e.date <= c.endStr).reduce((acc, e) => acc + (e.amount || 0), 0))
       .filter((v) => v > 0);
     const historicalBaselineTransactional =
-      pastCyclesSpend.length > 0 ? pastCyclesSpend.reduce((a, b) => a + b, 0) / pastCyclesSpend.length : prevTransactionalSpend;
+      pastCyclesSpend.length > 0 ? pastCyclesSpend.reduce((a, b) => a + b, 0) / pastCyclesSpend.length : prevCycleTransactional;
 
     const projectedTransactional =
       historicalBaselineTransactional > 0
         ? paceConfidence * paceProjectedTransactional + (1 - paceConfidence) * historicalBaselineTransactional
-        : paceProjectedTransactional; // no prior-cycle data at all yet — nothing to blend with
+        : paceProjectedTransactional;
 
-    // Subscriptions (rent included) get logged to the expense ledger when
-    // they're actually paid, so the ledger-derived projection above already
-    // contains them — both in this cycle's pace and in the historical
-    // baseline. Adding subMonthlyCost on top would double-count every
-    // recurring bill (e.g. rent counted once as a logged expense and again
-    // as a subscription), which is what pushed expected savings negative.
-    // The one exception is a brand-new user with no ledger history at all:
-    // there the recurring commitment is the only knowable spend.
     const hasLedgerHistory = historicalBaselineTransactional > 0 || spentSoFar > 0;
     const projectedTotalSpend = hasLedgerHistory ? projectedTransactional : subMonthlyCost;
 
-    // Prefer this cycle's logged payday amount over the persistent "usual"
-    // salary figure, since the whole point of logging is to capture the
-    // rare cycle that actually paid out differently.
     const salaryThisCycle = loggedAmount ?? monthlySalary;
     const totalIncome = salaryThisCycle + additionalIncome;
-    // What you should have in hand right now, based purely on logged
-    // expenses against the salary you were credited at cycle start — the
-    // basis for the reconciliation check (does this match reality?).
     const expectedCashOnHand = totalIncome - spentSoFar;
     const expectedSavings = totalIncome - projectedTotalSpend;
     const savingsRate = totalIncome > 0 ? (expectedSavings / totalIncome) * 100 : 0;
@@ -2037,10 +1893,6 @@ const updateMarketPrices = async () => {
       spentSoFar,
       subMonthlyCost,
       projectedTotalSpend,
-      // Breakdown for the UI's transparent projection formula. Recurring
-      // commitment is shown as *context* (it's already inside the ledger
-      // figures, not added on top); projectedRemaining is what's still
-      // expected to be spent between today and the end of the cycle.
       committedSpend: subMonthlyCost,
       projectedRemaining: Math.max(0, projectedTotalSpend - spentSoFar),
       paceConfidence,
@@ -2056,11 +1908,6 @@ const updateMarketPrices = async () => {
     };
   }, [expenses, subscriptions, salaryDay, salaryLog, monthlySalary, additionalIncome, cycleHistoryRaw]);
 
-  // Per-cycle income/spend/savings for each past COMPLETE cycle (excludes
-  // the current, still-in-progress one at index 0) — the visible trend
-  // behind the multi-cycle projection baseline above. Cycles with neither
-  // a logged payday nor any expenses (e.g. before you started using the
-  // app) are dropped rather than shown as a misleading "₹0 spent."
   const cycleHistory = useMemo(() => {
     return cycleHistoryRaw
       .slice(1)
@@ -2112,9 +1959,6 @@ const updateMarketPrices = async () => {
     return Object.fromEntries(Object.entries(breakdown).sort(([, a], [, b]) => b - a));
   }, [filteredExpenses]);
 
-  // Same shape as catBreakdown, but derived from the pre-category-filter list
-  // so the Analytics chart always shows every category — the selected one
-  // highlighted, the rest dimmed — instead of collapsing to a single bar.
   const chartCatBreakdown = useMemo(() => {
     const breakdown: Record<string, number> = {};
     filteredExpensesBase.forEach((e) => {
@@ -2134,8 +1978,6 @@ const updateMarketPrices = async () => {
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-10);
   }, [filteredExpenses]);
 
-  /* ─── Sign In Screen ─── */
-  // Show loader while initializing firebase authentication OR while fetching user's data collections
   const isDataLoaded = !user || (expensesLoaded && watchlistLoaded && subscriptionsLoaded && noteLoaded && investmentsLoaded && settingsLoaded);
   const showLoader = authLoading || (user && !isDataLoaded);
 
@@ -2157,7 +1999,6 @@ const updateMarketPrices = async () => {
         `}</style>
         
         <div className="flex flex-col items-center gap-6">
-          {/* Animated Bento Grid Logo */}
           <div className="grid grid-cols-2 gap-1.5 w-11 h-11">
             <div className="bento-cell bento-cell-1 rounded-[4px] bg-text-primary" />
             <div className="bento-cell bento-cell-2 rounded-[4px] bg-text-primary/60" />
@@ -2197,11 +2038,8 @@ const updateMarketPrices = async () => {
     );
   }
 
-  /* ─── Main App Render ─── */
   return (
     <div className="flex min-h-screen max-md:flex-col max-md:overflow-x-hidden">
-
-      {/* Mobile Header & Bottom Navigation */}
       <MobileHeader
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -2218,7 +2056,6 @@ const updateMarketPrices = async () => {
         disconnectTrakt={disconnectTrakt}
       />
 
-      {/* Sidebar Navigation */}
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
@@ -2249,9 +2086,7 @@ const updateMarketPrices = async () => {
         setExpensesLoaded={setExpensesLoaded}
       />
 
-      {/* Main Canvas */}
       <main className="ml-[250px] flex max-w-[1300px] flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(68px+env(safe-area-inset-bottom))]">
-        {/* Expenses & Subscriptions */}
         {activeTab === "expenses" && (
           <>
             <ExpensesTab
@@ -2336,7 +2171,6 @@ const updateMarketPrices = async () => {
           </>
         )}
 
-        {/* Media Library (Watchlist, Books, Integrations) */}
         {activeTab === "media" && (
           <>
           <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">My Library</h1>
@@ -2418,8 +2252,9 @@ const updateMarketPrices = async () => {
                 isSyncingTrakt={isSyncingTrakt}
                 enrichMissingPosters={enrichMissingPosters}
                 isEnrichingPosters={isEnrichingPosters}
-                onItemClick={setSelectedMediaItem}
+                onItemClick={(item) => setSelectedMediaItem(item)}
                 idToken={user?.idToken}
+                openDataCorrection={() => setIsDataCorrectionOpen(true)}
               />
             )}
 
@@ -2469,7 +2304,6 @@ const updateMarketPrices = async () => {
           </>
         )}
 
-        {/* Investments & Portfolio */}
         {activeTab === "investments" && (
           <InvestmentsTab
             investments={investments}
@@ -2507,7 +2341,6 @@ const updateMarketPrices = async () => {
           />
         )}
 
-        {/* Financial Health (pro-only): income, real pay-cycle pace, savings reconciliation, wealth runway */}
         {activeTab === "financial" && isProUser && (
           <FinancialHealthTab
             currency={currency}
@@ -2530,8 +2363,6 @@ const updateMarketPrices = async () => {
           />
         )}
 
-
-        {/* Reports: filtered CSV exports for expenses and each media type */}
         {activeTab === "reports" && (
           <ReportsTab
             expenses={expenses}
@@ -2546,26 +2377,19 @@ const updateMarketPrices = async () => {
           />
         )}
 
-        {/* Admin Control Panel Tab */}
         {activeTab === "admin" && user && user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com") && (
           <AdminTab user={user} />
         )}
       </main>
 
-      {/* Themed Confirm & Alert Modal */}
       <ConfirmModal confirmDlg={confirmDlg} setConfirmDlg={setConfirmDlg} />
-
-      {/* Sync Preview Modal (itemized new/updated changes before applying a sync) */}
       <SyncPreviewModal preview={syncPreview} onClose={() => setSyncPreview((prev) => ({ ...prev, isOpen: false }))} />
-
-      {/* Feature Guide Onboarding Modal */}
       <OnboardingModal
         showOnboarding={showOnboarding}
         setShowOnboarding={setShowOnboarding}
         showInvestmentsTab={showInvestmentsTab}
       />
 
-      {/* Letterboxd Import Modal */}
       {showLetterboxdModal && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="flex w-[400px] flex-col gap-4 rounded-card border border-border-subtle bg-white p-6 shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)]">
@@ -2612,7 +2436,6 @@ const updateMarketPrices = async () => {
         <KirokuChatBubble idToken={user?.idToken} />
       )}
 
-      {/* Claim Pro Modal */}
       {user && (
         <ClaimProModal
           isOpen={showClaimPro}
@@ -2620,6 +2443,18 @@ const updateMarketPrices = async () => {
           idToken={user.idToken}
         />
       )}
+
+      <DataCorrectionModal
+        isOpen={isDataCorrectionOpen}
+        onClose={() => setIsDataCorrectionOpen(false)}
+        watchlist={watchlist}
+        getHeaders={getHeaders}
+        triggerAlert={triggerAlert}
+        onSuccess={() => {
+          setIsDataCorrectionOpen(false);
+          fetchWatchlist();
+        }}
+      />
     </div>
   );
 }

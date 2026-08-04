@@ -20,6 +20,7 @@ interface BooksTabProps {
   isEnrichingBookCovers?: boolean;
   onItemClick: (item: WatchlistItem) => void;
   idToken?: string;
+  openDataCorrection?: () => void;
 }
 
 const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
@@ -62,6 +63,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
   isEnrichingBookCovers = false,
   onItemClick,
   idToken,
+  openDataCorrection,
 }) => {
   const [titleSearch, setTitleSearch] = React.useState("");
   const [sortBy, setSortBy] = React.useState<"title" | "year_new" | "year_old">("title");
@@ -406,7 +408,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
           <h2 className="font-serif text-lg font-bold tracking-tight text-text-primary">Your Library</h2>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            {books.some((b) => !b.coverImage) && enrichMissingBookCovers && (
+            {enrichMissingBookCovers && (
               <button
                 onClick={enrichMissingBookCovers}
                 disabled={isEnrichingBookCovers}
@@ -415,6 +417,16 @@ export const BooksTab: React.FC<BooksTabProps> = ({
               >
                 <Sparkles className="h-3 w-3" strokeWidth={2.5} />
                 {isEnrichingBookCovers ? "Fetching..." : "Fetch Posters"}
+              </button>
+            )}
+
+            {openDataCorrection && (
+              <button
+                onClick={openDataCorrection}
+                className="flex h-[28px] items-center justify-center gap-2 rounded-md border border-orange-500/30 bg-orange-500/10 px-3 text-[11px] font-semibold text-orange-600 transition-all hover:bg-orange-500/20"
+                title="Clean up duplicate entries"
+              >
+                Clean Duplicates
               </button>
             )}
 

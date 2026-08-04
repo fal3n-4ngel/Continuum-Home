@@ -32,13 +32,7 @@ export default function manifest(): MetadataRoute.Manifest {
         url: "/?tab=media",
         icons: [{ src: "/icon-192", sizes: "192x192", type: "image/png" }]
       },
-      {
-        name: "Quick Notes",
-        short_name: "Notes",
-        description: "Write down thoughts in scratchpad",
-        url: "/?tab=notes",
-        icons: [{ src: "/icon-192", sizes: "192x192", type: "image/png" }]
-      }
+
     ]
   };
 }
