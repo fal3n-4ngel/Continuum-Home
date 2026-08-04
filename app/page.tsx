@@ -80,7 +80,6 @@ export default function Dashboard() {
   const [expensesLoaded, setExpensesLoaded] = useState(false);
   const [watchlistLoaded, setWatchlistLoaded] = useState(false);
   const [subscriptionsLoaded, setSubscriptionsLoaded] = useState(false);
-  const [noteLoaded, setNoteLoaded] = useState(false);
   const [investmentsLoaded, setInvestmentsLoaded] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [expenseTitle, setExpenseTitle] = useState("");
@@ -1978,7 +1977,7 @@ export default function Dashboard() {
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-10);
   }, [filteredExpenses]);
 
-  const isDataLoaded = !user || (expensesLoaded && watchlistLoaded && subscriptionsLoaded && noteLoaded && investmentsLoaded && settingsLoaded);
+  const isDataLoaded = !user || (expensesLoaded && watchlistLoaded && subscriptionsLoaded && investmentsLoaded && settingsLoaded);
   const showLoader = authLoading || (user && !isDataLoaded);
 
   if (showLoader) {
