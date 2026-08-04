@@ -170,20 +170,28 @@ export async function requireUser(req: NextRequest): Promise<Session> {
 async function trackApiMetrics(req: NextRequest, uid: string, email: string | null) {
   try {
     if (!redis) return;
-    const identifier = email || uid;
-    const endpoint = req.nextUrl.pathname;
+    const identifier = uid; // Always track by UID to prevent duplicate rows for same user
+    let endpoint = req.nextUrl.pathname;
+    
+    // Normalize dynamic routes so they group properly instead of creating a row per ID
+    endpoint = endpoint.replace(/\/(expenses|subscriptions|watchlist|portfolio)\/[^/]+(\/|$)/, '/$1/[id]$2');
     
     const clientHeader = req.headers.get("x-client") || "";
     const isWeb = clientHeader === "web";
     const isAgent = !isWeb;
     const scope = isWeb ? "web" : "agent";
 
-    // Global tracking: Most used endpoints & Uses per user (Separated by Web vs Agent)
-    await Promise.all([
+    const promises: Promise<any>[] = [
       redis.zincrby(`metrics:${scope}:endpoints`, 1, endpoint),
       redis.zincrby(`metrics:${scope}:users_volume`, 1, identifier),
       redis.hset(`metrics:${scope}:user_last_active`, { [identifier]: Date.now().toString() })
-    ]);
+    ];
+
+    if (email) {
+      promises.push(redis.hset("metrics:uid_to_email", { [identifier]: email }));
+    }
+
+    await Promise.all(promises);
 
     // Legacy GPT specific tracking (if requested by Custom GPT)
     if (isAgent) {
