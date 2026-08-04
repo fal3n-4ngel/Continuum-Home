@@ -6,6 +6,9 @@ on:
     - cron: '0 12 * * 1-5'
   workflow_dispatch: # Allows manual trigger from GitHub UI
 
+permissions:
+  contents: read
+
 jobs:
   trigger-cron:
     runs-on: ubuntu-latest
@@ -20,5 +23,5 @@ jobs:
             echo "Error: CRON_SECRET secret is not set."
             exit 1
           fi
-          curl -fail -L -X POST "${{ secrets.APP_URL }}/api/cron/portfolio" \
+          curl --fail -sS -L -X POST "${{ secrets.APP_URL }}/api/cron/portfolio" \
                -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"

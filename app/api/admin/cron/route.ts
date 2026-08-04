@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
     // 2. Parse payload
     const body = await req.json();
-    const triggerType = body?.triggerType; // "subscriptions" | "expenses_weekly" | "expenses_monthly" | "portfolio"
+    const triggerType = body?.triggerType || body?.task; // "subscriptions" | "expenses_weekly" | "expenses_monthly" | "portfolio" | "recommendations"
 
     let cronPath = "";
     if (triggerType === "subscriptions") {

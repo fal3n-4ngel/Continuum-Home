@@ -222,15 +222,15 @@ Thank you for being part of our journey!`);
     setStatusMessage(null);
 
     try {
-      const endpoint = id === "recommendations" ? "/api/admin/cron" : "/api/admin/cron";
+      const endpoint = "/api/admin/cron";
       const res = await fetch(endpoint, {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify({ task: id }),
+        body: JSON.stringify({ triggerType: id, task: id }),
       });
       const data = await res.json();
       if (res.ok) {
-        setStatusMessage({ text: `Production task fired successfully. Output: ${data.message || "OK"}`, type: "success" });
+        setStatusMessage({ text: `Production task fired successfully. Output: ${data.message || data.response?.message || "OK"}`, type: "success" });
       } else {
         setStatusMessage({ text: data.error || "Failed to fire production task.", type: "error" });
       }
@@ -388,7 +388,7 @@ Thank you for being part of our journey!`);
       <body>
         <div class="bento-card">
           <div class="header">
-            <span class="txt-main">Continuum Dashboard</span>
+            <span class="txt-main">Continuum Home</span>
             <span class="txt-muted">Announcement</span>
           </div>
           <div>

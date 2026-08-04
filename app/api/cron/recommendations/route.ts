@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { listAllUsers, adminListWatchlist, adminSaveDailyRecommendation, type AdminUser } from "@/lib/firebase-admin";
 import type { DailyRecommendation } from "@/lib/firebase";
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
 
 export const dynamic = "force-dynamic";
 // Gemini free-tier throttling (13s between calls, see GEMINI_MIN_INTERVAL_MS
@@ -73,7 +74,14 @@ async function generateThrottled(model: ReturnType<GoogleGenerativeAI["getGenera
   }
 }
 
-async function processUser(user: AdminUser, geminiApiKey: string, dateStr: string): Promise<ProcessResult> {
+async function processUser(user: AdminUser, geminiApiKey: string, dateStr: string, force: boolean = false): Promise<ProcessResult> {
+  if (!force) {
+    const alreadySent = await hasCronBeenSentToday("recommendations", user.uid, dateStr);
+    if (alreadySent) {
+      return { sent: false, reason: "recommendations already generated today (deduplicated)" };
+    }
+  }
+
   const allItems = await adminListWatchlist(user.uid);
   if (allItems.length === 0) {
     return { sent: false, reason: "empty watchlist" };
@@ -223,6 +231,7 @@ Return no other text or markdown blocks. Just the raw JSON object.
   if (generated === 0) {
     return { sent: false, reason: "all recommendation types failed" };
   }
+  await markCronAsSentToday("recommendations", user.uid, dateStr);
   return { sent: true, generated };
 }
 
@@ -241,6 +250,7 @@ export async function POST(req: NextRequest) {
     }
 
     const dateStr = getCalendarIstDate();
+    const force = req.nextUrl.searchParams.get("force") === "true";
 
     // 2. Fan out across every registered user via Admin SDK.
     const users = await listAllUsers();
@@ -248,7 +258,7 @@ export async function POST(req: NextRequest) {
     const results: { uid: string; email: string; sent: boolean; reason?: string; error?: string }[] = [];
     for (const user of users) {
       try {
-        const outcome = await processUser(user, geminiApiKey, dateStr);
+        const outcome = await processUser(user, geminiApiKey, dateStr, force);
         results.push({ uid: user.uid, email: user.email, sent: outcome.sent, reason: outcome.sent ? undefined : outcome.reason });
       } catch (err: any) {
         console.error(`Error in cron/recommendations for uid ${user.uid}:`, err);

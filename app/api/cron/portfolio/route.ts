@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { listAllUsers, adminGetPortfolio, adminUpdatePortfolioValuationHistory, type AdminUser } from "@/lib/firebase-admin";
 import { fetchAssetPrice, getUsdToInrRate } from "@/lib/prices";
 import { getEffectiveAmount } from "@/lib/fd";
+import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
 
 export const dynamic = "force-dynamic";
 
 type ProcessResult = { sent: false; reason: string } | { sent: true; valuation: number; pnl: number };
 
-async function processUser(user: AdminUser, usdToInr: number, resendApiKey: string): Promise<ProcessResult> {
+async function processUser(user: AdminUser, usdToInr: number, resendApiKey: string, force: boolean = false): Promise<ProcessResult> {
   const portfolio = await adminGetPortfolio(user.uid);
   if (!portfolio || !portfolio.assets || portfolio.assets.length === 0) {
     return { sent: false, reason: "empty portfolio" };
@@ -71,6 +72,13 @@ async function processUser(user: AdminUser, usdToInr: number, resendApiKey: stri
   };
 
   const todayDateStr = getIstDateString();
+
+  if (!force) {
+    const alreadySent = await hasCronBeenSentToday("portfolio", user.uid, todayDateStr);
+    if (alreadySent) {
+      return { sent: false, reason: "portfolio email already sent today (deduplicated)" };
+    }
+  }
   const valHistory = { ...(portfolio.valuationHistory || {}) };
 
   const sortedDates = Object.keys(valHistory)
@@ -253,6 +261,8 @@ async function processUser(user: AdminUser, usdToInr: number, resendApiKey: stri
     throw new Error(`Resend API failed: ${errText}`);
   }
 
+  await markCronAsSentToday("portfolio", user.uid, todayDateStr);
+
   return { sent: true, valuation: totalCurrent, pnl: overallPnl };
 }
 
@@ -269,13 +279,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing RESEND_API_KEY" }, { status: 500 });
     }
 
+    const force = req.nextUrl.searchParams.get("force") === "true";
     const users = await listAllUsers();
     const usdToInr = await getUsdToInrRate();
 
     const results: { uid: string; email: string; sent: boolean; reason?: string; error?: string }[] = [];
     for (const user of users) {
       try {
-        const outcome = await processUser(user, usdToInr, resendApiKey);
+        const outcome = await processUser(user, usdToInr, resendApiKey, force);
         results.push({ uid: user.uid, email: user.email, sent: outcome.sent, reason: outcome.sent ? undefined : (outcome as any).reason });
       } catch (err: any) {
         console.error(`Error in cron/portfolio for uid ${user.uid}:`, err);
