@@ -20,12 +20,32 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Redis cache is offline." }, { status: 500 });
     }
 
-    // 2. Fetch GPT metrics from Redis
+    // 2. Fetch legacy GPT metrics & New Global API metrics
     const totalCallsRaw = await redis.get<string>("metrics:gpt:total_calls");
     const totalCalls = Number(totalCallsRaw) || 0;
 
     const usersSet = await redis.smembers("metrics:gpt:users_set");
     const userLastActive = await redis.hgetall("metrics:gpt:user_last_active") as Record<string, string> || {};
+    
+    // New global metrics (separated by Web and Agent)
+    const topWebEndpointsRaw = await redis.zrange("metrics:web:endpoints", 0, 9, { rev: true, withScores: true }) as string[];
+    const topWebUsersRaw = await redis.zrange("metrics:web:users_volume", 0, 9, { rev: true, withScores: true }) as string[];
+    const topAgentEndpointsRaw = await redis.zrange("metrics:agent:endpoints", 0, 9, { rev: true, withScores: true }) as string[];
+    const topAgentUsersRaw = await redis.zrange("metrics:agent:users_volume", 0, 9, { rev: true, withScores: true }) as string[];
+    
+    // Format sorted sets (returns flat array: [member, score, member, score...])
+    const formatZset = (raw: string[]) => {
+      const formatted = [];
+      for (let i = 0; i < raw.length; i += 2) {
+        formatted.push({ name: raw[i], calls: Number(raw[i + 1]) });
+      }
+      return formatted;
+    };
+    
+    const topWebEndpoints = formatZset(topWebEndpointsRaw);
+    const topWebUsers = formatZset(topWebUsersRaw);
+    const topAgentEndpoints = formatZset(topAgentEndpointsRaw);
+    const topAgentUsers = formatZset(topAgentUsersRaw);
 
     // GPT users authenticated via a long-lived refresh token/API key have no
     // email on their session (see trackGptMetrics in lib/auth.ts), so the
@@ -76,6 +96,16 @@ export async function GET(req: NextRequest) {
       activeUsersCount: usersSet.length,
       users: usersList,
       dailyUsage,
+      globalMetrics: {
+        web: {
+          topEndpoints: topWebEndpoints,
+          topUsers: topWebUsers
+        },
+        agent: {
+          topEndpoints: topAgentEndpoints,
+          topUsers: topAgentUsers
+        }
+      }
     });
   } catch (error: any) {
     console.error("Error fetching admin metrics:", error);

@@ -167,14 +167,27 @@ export async function requireUser(req: NextRequest): Promise<Session> {
     throw new ApiError(401, "Missing bearer token.");
   }
 
-async function trackGptMetrics(req: NextRequest, uid: string, email: string | null) {
+async function trackApiMetrics(req: NextRequest, uid: string, email: string | null) {
   try {
     if (!redis) return;
-    const userAgent = req.headers.get("user-agent") || "";
-    if (userAgent.toLowerCase().includes("chatgpt") || userAgent.toLowerCase().includes("openai")) {
+    const identifier = email || uid;
+    const endpoint = req.nextUrl.pathname;
+    
+    const clientHeader = req.headers.get("x-client") || "";
+    const isWeb = clientHeader === "web";
+    const isAgent = !isWeb;
+    const scope = isWeb ? "web" : "agent";
+
+    // Global tracking: Most used endpoints & Uses per user (Separated by Web vs Agent)
+    await Promise.all([
+      redis.zincrby(`metrics:${scope}:endpoints`, 1, endpoint),
+      redis.zincrby(`metrics:${scope}:users_volume`, 1, identifier),
+      redis.hset(`metrics:${scope}:user_last_active`, { [identifier]: Date.now().toString() })
+    ]);
+
+    // Legacy GPT specific tracking (if requested by Custom GPT)
+    if (isAgent) {
       const todayStr = new Date().toISOString().slice(0, 10);
-      const identifier = email || uid;
-      
       await Promise.all([
         redis.incr("metrics:gpt:total_calls"),
         redis.incr(`metrics:gpt:daily_calls:${todayStr}`),
@@ -183,7 +196,7 @@ async function trackGptMetrics(req: NextRequest, uid: string, email: string | nu
       ]);
     }
   } catch (e) {
-    console.error("Failed to track GPT metrics in Redis:", e);
+    console.error("Failed to track API metrics in Redis:", e);
   }
 }
 
@@ -203,8 +216,8 @@ async function trackGptMetrics(req: NextRequest, uid: string, email: string | nu
     }
   }
 
-  // Track ChatGPT requests asynchronously
-  trackGptMetrics(req, user.uid, user.email).catch(() => {});
+  // Track API requests asynchronously
+  trackApiMetrics(req, user.uid, user.email).catch(() => {});
 
   const session = { creds, config, uid: user.uid, idToken: resolvedIdToken, user };
 
