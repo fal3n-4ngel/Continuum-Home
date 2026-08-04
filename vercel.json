@@ -1,0 +1,24 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/recommendations",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/subscriptions",
+      "schedule": "0 3 * * *"
+    },
+    {
+      "path": "/api/cron/expenses?period=weekly",
+      "schedule": "0 4 * * 0"
+    },
+    {
+      "path": "/api/cron/expenses?period=monthly",
+      "schedule": "30 4 1 * *"
+    },
+    {
+      "path": "/api/cron/portfolio",
+      "schedule": "0 12 * * 1-5"
+    }
+  ]
+}
