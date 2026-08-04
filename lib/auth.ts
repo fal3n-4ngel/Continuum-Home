@@ -167,6 +167,9 @@ export async function requireUser(req: NextRequest): Promise<Session> {
     throw new ApiError(401, "Missing bearer token.");
   }
 
+// Memory cache to deduplicate heavy Web SWR tracking (persists while Vercel Lambda is warm)
+const webTrackCache = new Map<string, number>();
+
 async function trackApiMetrics(req: NextRequest, uid: string, email: string | null) {
   try {
     if (!redis) return;
@@ -181,17 +184,35 @@ async function trackApiMetrics(req: NextRequest, uid: string, email: string | nu
     const isAgent = !isWeb;
     const scope = isWeb ? "web" : "agent";
 
-    const promises: Promise<any>[] = [
-      redis.zincrby(`metrics:${scope}:endpoints`, 1, endpoint),
-      redis.zincrby(`metrics:${scope}:users_volume`, 1, identifier),
-      redis.hset(`metrics:${scope}:user_last_active`, { [identifier]: Date.now().toString() })
-    ];
+    const promises: Promise<any>[] = [];
 
-    if (email) {
+    if (isAgent) {
+      // Agents: Track everything deeply
+      promises.push(
+        redis.zincrby(`metrics:agent:endpoints`, 1, endpoint),
+        redis.zincrby(`metrics:agent:users_volume`, 1, identifier),
+        redis.hset(`metrics:agent:user_last_active`, { [identifier]: Date.now().toString() })
+      );
+    } else {
+      // Web: Only track Active Sessions once per hour per warm lambda to save Redis costs
+      const now = Date.now();
+      const lastTracked = webTrackCache.get(identifier) || 0;
+      if (now - lastTracked > 3600_000) { // 1 hour threshold
+        webTrackCache.set(identifier, now);
+        promises.push(
+          redis.zincrby(`metrics:web:users_volume`, 1, identifier),
+          redis.hset(`metrics:web:user_last_active`, { [identifier]: now.toString() })
+        );
+      }
+    }
+
+    if (email && promises.length > 0) {
       promises.push(redis.hset("metrics:uid_to_email", { [identifier]: email }));
     }
 
-    await Promise.all(promises);
+    if (promises.length > 0) {
+      await Promise.all(promises);
+    }
 
     // Legacy GPT specific tracking (if requested by Custom GPT)
     if (isAgent) {
