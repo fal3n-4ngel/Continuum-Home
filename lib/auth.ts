@@ -167,23 +167,52 @@ export async function requireUser(req: NextRequest): Promise<Session> {
     throw new ApiError(401, "Missing bearer token.");
   }
 
+// Memory cache to deduplicate heavy Web SWR tracking (persists while Vercel Lambda is warm)
+const webTrackCache = new Map<string, number>();
+
 async function trackApiMetrics(req: NextRequest, uid: string, email: string | null) {
   try {
     if (!redis) return;
-    const identifier = email || uid;
-    const endpoint = req.nextUrl.pathname;
+    const identifier = uid; // Always track by UID to prevent duplicate rows for same user
+    let endpoint = req.nextUrl.pathname;
+    
+    // Normalize dynamic routes so they group properly instead of creating a row per ID
+    endpoint = endpoint.replace(/\/(expenses|subscriptions|watchlist|portfolio)\/[^/]+(\/|$)/, '/$1/[id]$2');
     
     const clientHeader = req.headers.get("x-client") || "";
     const isWeb = clientHeader === "web";
     const isAgent = !isWeb;
     const scope = isWeb ? "web" : "agent";
 
-    // Global tracking: Most used endpoints & Uses per user (Separated by Web vs Agent)
-    await Promise.all([
-      redis.zincrby(`metrics:${scope}:endpoints`, 1, endpoint),
-      redis.zincrby(`metrics:${scope}:users_volume`, 1, identifier),
-      redis.hset(`metrics:${scope}:user_last_active`, { [identifier]: Date.now().toString() })
-    ]);
+    const promises: Promise<any>[] = [];
+
+    if (isAgent) {
+      // Agents: Track everything deeply
+      promises.push(
+        redis.zincrby(`metrics:agent:endpoints`, 1, endpoint),
+        redis.zincrby(`metrics:agent:users_volume`, 1, identifier),
+        redis.hset(`metrics:agent:user_last_active`, { [identifier]: Date.now().toString() })
+      );
+    } else {
+      // Web: Only track Active Sessions once per hour per warm lambda to save Redis costs
+      const now = Date.now();
+      const lastTracked = webTrackCache.get(identifier) || 0;
+      if (now - lastTracked > 3600_000) { // 1 hour threshold
+        webTrackCache.set(identifier, now);
+        promises.push(
+          redis.zincrby(`metrics:web:users_volume`, 1, identifier),
+          redis.hset(`metrics:web:user_last_active`, { [identifier]: now.toString() })
+        );
+      }
+    }
+
+    if (email && promises.length > 0) {
+      promises.push(redis.hset("metrics:uid_to_email", { [identifier]: email }));
+    }
+
+    if (promises.length > 0) {
+      await Promise.all(promises);
+    }
 
     // Legacy GPT specific tracking (if requested by Custom GPT)
     if (isAgent) {

@@ -34,18 +34,41 @@ export async function GET(req: NextRequest) {
     const topAgentUsersRaw = await redis.zrange("metrics:agent:users_volume", 0, 9, { rev: true, withScores: true }) as string[];
     
     // Format sorted sets (returns flat array: [member, score, member, score...])
-    const formatZset = (raw: string[]) => {
-      const formatted = [];
-      for (let i = 0; i < raw.length; i += 2) {
-        formatted.push({ name: raw[i], calls: Number(raw[i + 1]) });
+    const uidMap = await redis.hgetall("metrics:uid_to_email") as Record<string, string> || {};
+
+    const formatZset = (raw: string[], isUsers = false) => {
+      if (!isUsers) {
+        const formatted = [];
+        for (let i = 0; i < raw.length; i += 2) {
+          formatted.push({ name: raw[i], calls: Number(raw[i + 1]) });
+        }
+        return formatted;
       }
-      return formatted;
+
+      // If it's users, combine scores for same email vs uid (historical patch)
+      const userScores: Record<string, number> = {};
+      for (let i = 0; i < raw.length; i += 2) {
+        let member = raw[i];
+        const score = Number(raw[i + 1]);
+        
+        // Map UID to email if available
+        if (uidMap[member]) {
+           member = uidMap[member];
+        }
+        
+        userScores[member] = (userScores[member] || 0) + score;
+      }
+      
+      return Object.entries(userScores)
+         .map(([name, calls]) => ({ name, calls }))
+         .sort((a, b) => b.calls - a.calls)
+         .slice(0, 10);
     };
     
-    const topWebEndpoints = formatZset(topWebEndpointsRaw);
-    const topWebUsers = formatZset(topWebUsersRaw);
-    const topAgentEndpoints = formatZset(topAgentEndpointsRaw);
-    const topAgentUsers = formatZset(topAgentUsersRaw);
+    const topWebEndpoints = formatZset(topWebEndpointsRaw, false);
+    const topWebUsers = formatZset(topWebUsersRaw, true);
+    const topAgentEndpoints = formatZset(topAgentEndpointsRaw, false);
+    const topAgentUsers = formatZset(topAgentUsersRaw, true);
 
     // GPT users authenticated via a long-lived refresh token/API key have no
     // email on their session (see trackGptMetrics in lib/auth.ts), so the
