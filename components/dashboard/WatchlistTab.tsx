@@ -39,6 +39,7 @@ interface WatchlistTabProps {
   isEnrichingPosters?: boolean;
   onItemClick: (item: WatchlistItem) => void;
   idToken?: string;
+  openDataCorrection?: () => void;
 }
 
 const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle";
@@ -95,6 +96,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
   isEnrichingPosters = false,
   onItemClick,
   idToken,
+  openDataCorrection,
 }) => {
   const exportLetterboxdCSV = () => {
     const movies = watchlist.filter((item) => item.type === "movie" && item.status === "completed");
@@ -164,6 +166,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
     fetch(`/api/assistant/recommendations?type=${activeCategoryTab}`, {
       headers: {
         authorization: `Bearer ${idToken}`,
+        "X-Client": "web",
       },
     })
       .then((res) => {
@@ -207,6 +210,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
         headers: {
           "Content-Type": "application/json",
           authorization: `Bearer ${idToken}`,
+          "X-Client": "web",
         },
         body: JSON.stringify(body),
       });
@@ -221,6 +225,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
         headers: {
           "Content-Type": "application/json",
           authorization: `Bearer ${idToken}`,
+          "X-Client": "web",
         },
         body: JSON.stringify({
           type: activeCategoryTab,
@@ -531,6 +536,15 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                     </button>
                   ))}
                 </div>
+                {openDataCorrection && (
+                  <button
+                    onClick={openDataCorrection}
+                    className="flex h-9 items-center justify-center gap-2 rounded-md border border-orange-500/30 bg-orange-500/10 px-4 text-xs font-medium text-orange-500 transition-all hover:bg-orange-500/20"
+                    title="Clean up duplicate entries"
+                  >
+                    Clean Duplicates
+                  </button>
+                )}
               </div>
             </div>
 

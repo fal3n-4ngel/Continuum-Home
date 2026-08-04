@@ -32,7 +32,7 @@ export async function GET() {
   const spec = {
     openapi: "3.1.0",
     info: {
-      title: "Personal Dashboard API",
+      title: "Continuum Home API",
       description:
         "API for a personal expense ledger, subscription tracker, investment portfolio, movie/show/anime/book watchlist, " +
         "and scratchpad notes, backed by Firestore. Every request must carry the user's Firebase ID token or Permanent API Key as a Bearer token; " +
@@ -417,32 +417,6 @@ export async function GET() {
             },
             "401": errorResponse("Missing or invalid authentication token"),
           },
-        },
-      },
-      "/api/notes": {
-        get: {
-          operationId: "getNote",
-          summary: "Get the scratchpad note",
-          description: "Retrieve the user's single auto-saving scratchpad note.",
-          "x-openai-isConsequential": false,
-          responses: {
-            "200": {
-              description: "The note",
-              content: { "application/json": { schema: { $ref: "#/components/schemas/NoteRecord" } } },
-            },
-            "401": errorResponse("Missing or invalid authentication token"),
-          },
-        },
-        post: {
-          operationId: "updateNote",
-          summary: "Replace the scratchpad note",
-          description: "Overwrite the entire contents of the user's scratchpad note.",
-          "x-openai-isConsequential": false,
-          requestBody: {
-            required: true,
-            content: { "application/json": { schema: { $ref: "#/components/schemas/NoteContent" } } },
-          },
-          responses: writeResult("Note saved"),
         },
       },
       "/api/settings": {

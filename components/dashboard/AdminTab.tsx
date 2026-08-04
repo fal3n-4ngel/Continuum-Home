@@ -54,9 +54,6 @@ export function AdminTab({ user }: AdminTabProps) {
   const [proClaimsFilter, setProClaimsFilter] = useState<"pending" | "approved" | "denied" | "all">("pending");
   const [proActionLoading, setProActionLoading] = useState<string | null>(null);
 
-  // Analytics sub-scope state
-  const [analyticsScope, setAnalyticsScope] = useState<"web" | "agent">("web");
-
   // Announcement states
   const [annSubject, setAnnSubject] = useState("Rebranding Notice: PHub is now Continuum");
   const [annTitle, setAnnTitle] = useState("PHub has officially rebranded to Continuum");
@@ -468,33 +465,15 @@ Thank you for being part of our journey!`);
           </div>
 
           {/* Global API Analytics */}
-          <div className="flex items-center justify-between mt-4">
-            <h2 className="font-serif text-[18px] italic font-medium text-text-primary">Global API Usage</h2>
-            <div className="flex bg-bg-primary/50 p-1 rounded-md border border-border-subtle">
-              <button 
-                onClick={() => setAnalyticsScope("web")}
-                className={`px-4 py-1 text-[11px] font-bold tracking-wide uppercase rounded-sm transition-all ${analyticsScope === "web" ? "bg-bg-card shadow-subtle text-text-primary" : "text-text-muted hover:text-text-primary"}`}
-              >
-                Web App
-              </button>
-              <button 
-                onClick={() => setAnalyticsScope("agent")}
-                className={`px-4 py-1 text-[11px] font-bold tracking-wide uppercase rounded-sm transition-all ${analyticsScope === "agent" ? "bg-bg-card shadow-subtle text-text-primary" : "text-text-muted hover:text-text-primary"}`}
-              >
-                AI Agent
-              </button>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
-            {/* Top Endpoints */}
+          <div className="grid grid-cols-2 gap-6 max-lg:grid-cols-1 mt-4">
+            {/* Top Endpoints (Agent Only - Web tracking was disabled to save Redis costs) */}
             <div className={CARD}>
               <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
-                <TerminalSquare className="h-4 w-4" /> Most Used Functionality ({analyticsScope === "web" ? "Web" : "Agent"})
+                <TerminalSquare className="h-4 w-4" /> Most Used Functionality (Agent)
               </h3>
-              {gptMetrics?.globalMetrics?.[analyticsScope]?.topEndpoints && gptMetrics.globalMetrics[analyticsScope].topEndpoints.length > 0 ? (
+              {gptMetrics?.globalMetrics?.agent?.topEndpoints && gptMetrics.globalMetrics.agent.topEndpoints.length > 0 ? (
                 <div className="flex flex-col gap-2">
-                  {gptMetrics.globalMetrics[analyticsScope].topEndpoints.map((ep: any, i: number) => (
+                  {gptMetrics.globalMetrics.agent.topEndpoints.map((ep: any, i: number) => (
                     <div key={ep.name} className="flex items-center gap-3">
                       <div className="w-5 text-center font-mono text-[10px] font-bold text-text-muted">{i + 1}</div>
                       <div className="flex-1 flex justify-between items-center rounded-lg border border-border-subtle bg-bg-primary/20 p-2.5 px-3">
@@ -511,12 +490,15 @@ Thank you for being part of our journey!`);
 
             {/* Power Users */}
             <div className={CARD}>
-              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
-                <Users className="h-4 w-4" /> API Uses Per User ({analyticsScope === "web" ? "Web" : "Agent"})
-              </h3>
-              {gptMetrics?.globalMetrics?.[analyticsScope]?.topUsers && gptMetrics.globalMetrics[analyticsScope].topUsers.length > 0 ? (
+              <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-4">
+                <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2">
+                  <Users className="h-4 w-4" /> API Uses Per User (Agent)
+                </h3>
+              </div>
+              
+              {gptMetrics?.globalMetrics?.agent?.topUsers && gptMetrics.globalMetrics.agent.topUsers.length > 0 ? (
                 <div className="flex flex-col gap-2">
-                  {gptMetrics.globalMetrics[analyticsScope].topUsers.map((u: any, i: number) => (
+                  {gptMetrics.globalMetrics.agent.topUsers.map((u: any, i: number) => (
                     <div key={u.name} className="flex items-center gap-3">
                       <div className="w-5 text-center font-mono text-[10px] font-bold text-text-muted">{i + 1}</div>
                       <div className="flex-1 flex justify-between items-center rounded-lg border border-border-subtle bg-bg-primary/20 p-2.5 px-3">

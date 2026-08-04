@@ -400,7 +400,7 @@ export async function archiveExpense(session: Session, id: string) {
 // to either its changed fields or null (= delete the item). `wholeItemIds`
 // marks brand-new items whose entire map should be replaced; other items are
 // masked per-field so partial patches don't wipe sibling fields.
-async function writeWatchlistItems(
+export async function writeWatchlistItems(
   session: Session,
   patches: Record<string, Record<string, unknown> | null>,
   wholeItemIds?: Set<string>
@@ -474,7 +474,7 @@ async function migrateLegacyWatchlist(session: Session): Promise<Record<string, 
   return items;
 }
 
-async function getRawWatchlist(session: Session): Promise<Record<string, WatchlistItem>> {
+export async function getRawWatchlist(session: Session): Promise<Record<string, WatchlistItem>> {
   const cacheKey = watchlistCacheKey(session);
   const cached = await cacheGet<Record<string, WatchlistItem>>(cacheKey);
   if (cached) return cached;
@@ -542,6 +542,11 @@ export async function updateWatchlistItem(
 // tracked fields didn't change), and commits every add/update in a single
 // masked write — a full library sync costs exactly 1 Firestore write no matter
 // how many titles changed.
+function normalizeTitle(title: string): string {
+  if (!title) return "";
+  return title.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
 export async function bulkSyncWatchlist(
   session: Session,
   source: SyncSource,
@@ -561,7 +566,7 @@ export async function bulkSyncWatchlist(
       }
     }
     if (item.title && item.type) {
-      const key = `${item.type.toLowerCase()}:${item.title.toLowerCase().trim()}`;
+      const key = `${item.type.toLowerCase()}:${normalizeTitle(item.title)}`;
       existingByTitleType.set(key, { id, item });
     }
   });
@@ -576,7 +581,7 @@ export async function bulkSyncWatchlist(
     let match = extId !== undefined && extId !== null ? existingByExternalId.get(Number(extId)) : undefined;
 
     if (!match && entry.title && entry.type) {
-      const key = `${entry.type.toLowerCase()}:${entry.title.toLowerCase().trim()}`;
+      const key = `${entry.type.toLowerCase()}:${normalizeTitle(entry.title)}`;
       match = existingByTitleType.get(key);
     }
 
