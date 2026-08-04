@@ -1,11 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listAllUsers, adminListSubscriptions, type AdminUser } from "@/lib/firebase-admin";
+import { getIstDateString, hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
 
 export const dynamic = "force-dynamic";
 
 type ProcessResult = { sent: false; reason: string } | { sent: true; emailed: number };
 
-async function processUser(user: AdminUser, resendApiKey: string): Promise<ProcessResult> {
+async function processUser(user: AdminUser, resendApiKey: string, force: boolean = false): Promise<ProcessResult> {
+  const todayDateStr = getIstDateString();
+  if (!force) {
+    const alreadySent = await hasCronBeenSentToday("subscriptions", user.uid, todayDateStr);
+    if (alreadySent) {
+      return { sent: false, reason: "subscription email already sent today (deduplicated)" };
+    }
+  }
   const subscriptions = await adminListSubscriptions(user.uid);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -156,6 +164,8 @@ async function processUser(user: AdminUser, resendApiKey: string): Promise<Proce
     throw new Error(`Resend API failed: ${errText}`);
   }
 
+  await markCronAsSentToday("subscriptions", user.uid, todayDateStr);
+
   return { sent: true, emailed: upcomingRenewals.length };
 }
 
@@ -172,13 +182,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing RESEND_API_KEY" }, { status: 500 });
     }
 
+    const force = req.nextUrl.searchParams.get("force") === "true";
+
     // 2. Fan out across every registered user via Admin SDK.
     const users = await listAllUsers();
 
     const results: { uid: string; email: string; sent: boolean; reason?: string; error?: string }[] = [];
     for (const user of users) {
       try {
-        const outcome = await processUser(user, resendApiKey);
+        const outcome = await processUser(user, resendApiKey, force);
         results.push({ uid: user.uid, email: user.email, sent: outcome.sent, reason: outcome.sent ? undefined : outcome.reason });
       } catch (err: any) {
         console.error(`Error in cron/subscriptions for uid ${user.uid}:`, err);

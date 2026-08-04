@@ -3,6 +3,7 @@ import { vi } from "vitest";
 
 // Mock Firebase Admin module globally for integration tests
 vi.mock("@/lib/firebase-admin", () => ({
+  getAdminDb: vi.fn().mockReturnValue(null),
   requireUser: vi.fn(),
   listAllUsers: vi.fn().mockResolvedValue([
     { uid: "admin123", email: "adiad.dev@gmail.com" },

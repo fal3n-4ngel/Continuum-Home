@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listAllUsers, adminListExpenses, type AdminUser } from "@/lib/firebase-admin";
+import { getIstDateString, hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
 
 export const dynamic = "force-dynamic";
 
 type ProcessResult = { sent: false; reason: string } | { sent: true; total: number };
 
-async function processUser(user: AdminUser, period: "weekly" | "monthly", daysLimit: number, resendApiKey: string): Promise<ProcessResult> {
+async function processUser(user: AdminUser, period: "weekly" | "monthly", daysLimit: number, resendApiKey: string, force: boolean = false): Promise<ProcessResult> {
+  const todayDateStr = getIstDateString();
+  const cronKey = `expenses_${period}`;
+  if (!force) {
+    const alreadySent = await hasCronBeenSentToday(cronKey, user.uid, todayDateStr);
+    if (alreadySent) {
+      return { sent: false, reason: `expense ${period} summary email already sent today (deduplicated)` };
+    }
+  }
   const allExpenses = await adminListExpenses(user.uid);
 
   const today = new Date();
@@ -200,6 +209,8 @@ async function processUser(user: AdminUser, period: "weekly" | "monthly", daysLi
     throw new Error(`Resend API failed: ${errText}`);
   }
 
+  await markCronAsSentToday(cronKey, user.uid, todayDateStr);
+
   return { sent: true, total: totalAmount };
 }
 
@@ -220,6 +231,7 @@ export async function POST(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const period = searchParams.get("period") === "monthly" ? "monthly" : "weekly";
     const daysLimit = period === "monthly" ? 30 : 7;
+    const force = searchParams.get("force") === "true";
 
     // 2. Fan out across every registered user via Admin SDK.
     const users = await listAllUsers();
@@ -227,7 +239,7 @@ export async function POST(req: NextRequest) {
     const results: { uid: string; email: string; sent: boolean; reason?: string; error?: string }[] = [];
     for (const user of users) {
       try {
-        const outcome = await processUser(user, period, daysLimit, resendApiKey);
+        const outcome = await processUser(user, period, daysLimit, resendApiKey, force);
         results.push({ uid: user.uid, email: user.email, sent: outcome.sent, reason: outcome.sent ? undefined : outcome.reason });
       } catch (err: any) {
         console.error(`Error in cron/expenses for uid ${user.uid}:`, err);
