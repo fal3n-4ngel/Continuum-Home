@@ -1,0 +1,15 @@
+meta {
+  name: List Expenses
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/expenses?q=&category=&from=&to=
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}

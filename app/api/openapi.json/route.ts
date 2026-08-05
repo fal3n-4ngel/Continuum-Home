@@ -18,7 +18,9 @@ export async function GET() {
     },
     "400": errorResponse("Invalid input"),
     "401": errorResponse("Missing or invalid authentication token"),
+    "403": errorResponse("Forbidden or permission denied"),
     "404": errorResponse("Record not found"),
+    "500": errorResponse("Internal server error"),
   });
 
   const idParam = (what: string) => ({

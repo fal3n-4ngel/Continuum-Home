@@ -1,0 +1,24 @@
+meta {
+  name: Create Expense
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/api/expenses
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
+
+body:json {
+  {
+    "title": "Milk",
+    "amount": 60,
+    "category": "Food",
+    "date": "2026-08-05"
+  }
+}
