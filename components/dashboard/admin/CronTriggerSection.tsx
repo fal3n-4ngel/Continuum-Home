@@ -15,8 +15,8 @@ export const CronTriggerSection: React.FC<CronTriggerSectionProps> = ({
   handleProductionCronClick,
 }) => {
   return (
-    <div className="flex flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle">
-      <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3">
+    <div className="flex flex-col gap-4 rounded-none border-2 border-border-subtle bg-bg-card p-6 shadow-subtle">
+      <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3">
         <Mail className="h-4 w-4" /> Trigger Automated Crons
       </h3>
       <p className="text-[12.5px] leading-relaxed text-text-secondary">
@@ -25,11 +25,11 @@ export const CronTriggerSection: React.FC<CronTriggerSectionProps> = ({
 
       <div className="flex flex-col gap-3.5 mt-2">
         <div className="flex items-center gap-2">
-          <div className="flex-1 border-t border-[#fecaca]" />
+          <div className="flex-1 border-t-2 border-[#fecaca]" />
           <span className="font-mono text-[8.5px] font-bold text-[#dc2626] tracking-widest flex items-center gap-1">
             <AlertTriangle className="h-3 w-3" /> PRODUCTION CRONS
           </span>
-          <div className="flex-1 border-t border-[#fecaca]" />
+          <div className="flex-1 border-t-2 border-[#fecaca]" />
         </div>
 
         {[
@@ -74,7 +74,7 @@ export const CronTriggerSection: React.FC<CronTriggerSectionProps> = ({
             hasPreview: false,
           },
         ].map((task) => (
-          <div key={task.id} className="rounded-lg border border-[#fecaca]/60 bg-[#fef2f2]/40 p-3.5 hover:bg-[#fef2f2]/60 transition-colors flex justify-between items-center gap-4">
+          <div key={task.id} className="rounded-none border-2 border-[#fecaca]/60 bg-[#fef2f2]/40 p-3.5 hover:bg-[#fef2f2]/60 transition-colors flex justify-between items-center gap-4">
             <div className="min-w-0">
               <h4 className="text-[13px] font-bold text-text-primary flex items-center gap-2">
                 {task.icon} {task.title}
@@ -86,7 +86,7 @@ export const CronTriggerSection: React.FC<CronTriggerSectionProps> = ({
                 <button
                   disabled={previewLoading || cronRunning !== null}
                   onClick={() => sendPreviewEmail(task.previewId!)}
-                  className="cursor-pointer rounded-md border border-[#3b82f6] bg-[#eff6ff] text-[10.5px] font-semibold text-[#1d4ed8] px-2.5 py-1.5 transition-all hover:bg-[#dbeafe] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="cursor-pointer rounded-none border-2 border-[#3b82f6] bg-[#eff6ff] text-[10.5px] font-semibold text-[#1d4ed8] px-2.5 py-1.5 transition-all hover:bg-[#dbeafe] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {previewLoading ? "..." : "Preview"}
                 </button>
@@ -94,7 +94,7 @@ export const CronTriggerSection: React.FC<CronTriggerSectionProps> = ({
               <button
                 disabled={cronRunning !== null}
                 onClick={() => handleProductionCronClick(task.id, task.title)}
-                className="cursor-pointer rounded-md border border-[#dc2626] bg-transparent text-[10.5px] font-semibold text-[#dc2626] px-2.5 py-1.5 transition-all hover:bg-[#dc2626] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                className="cursor-pointer rounded-none border-2 border-[#dc2626] bg-transparent text-[10.5px] font-semibold text-[#dc2626] px-2.5 py-1.5 transition-all hover:bg-[#dc2626] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {cronRunning === task.id ? "Running..." : "Run"}
               </button>

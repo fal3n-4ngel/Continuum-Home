@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/errors";
+import { waitUntil } from "@vercel/functions";
+import { sendDiscordEmbed } from "@/lib/discord";
 
 export const dynamic = "force-dynamic";
 
@@ -53,6 +55,13 @@ export async function POST(req: NextRequest) {
     if (!cronRes.ok) {
       return NextResponse.json({ error: data.error || "Cron trigger failed" }, { status: cronRes.status });
     }
+
+    waitUntil(sendDiscordEmbed(
+      "Admin Audit Log",
+      `Admin manually triggered cron task: **${triggerType}**`,
+      3447003, // Blue Hex
+      "Continuum Dashboard • Admin Audit"
+    ));
 
     return NextResponse.json({ success: true, response: data });
   } catch (error: any) {

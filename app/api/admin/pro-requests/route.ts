@@ -3,6 +3,8 @@ import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/errors";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { cacheInvalidate } from "@/lib/cache";
+import { waitUntil } from "@vercel/functions";
+import { sendDiscordEmbed } from "@/lib/discord";
 
 export const dynamic = "force-dynamic";
 
@@ -107,6 +109,13 @@ export async function POST(req: NextRequest) {
         // Non-fatal — cache will expire naturally
       }
     }
+
+    waitUntil(sendDiscordEmbed(
+      "Admin Audit Log",
+      `Admin **${action === "approve" ? "APPROVED" : "DENIED"}** Pro claim for user: \`${claimData.email || claimData.uid}\``,
+      action === "approve" ? 5763719 : 15548997, // Green for approve, Red for deny
+      "Continuum Dashboard • Admin Audit"
+    ));
 
     return NextResponse.json({
       success: true,

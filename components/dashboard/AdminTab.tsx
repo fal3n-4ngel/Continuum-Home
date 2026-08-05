@@ -71,6 +71,34 @@ Thank you for being part of our journey!`);
   const [annSending, setAnnSending] = useState<"preview" | "send" | null>(null);
   const [annConfirmModal, setAnnConfirmModal] = useState(false);
 
+  // Discord states
+  const [discordMsg, setDiscordMsg] = useState("");
+  const [discordSending, setDiscordSending] = useState(false);
+
+  const handleDiscordSend = async () => {
+    setDiscordSending(true);
+    setStatusMessage(null);
+    try {
+      const res = await fetch("/api/admin/discord", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ message: discordMsg }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatusMessage({ text: "Discord alert dispatched successfully!", type: "success" });
+        setDiscordMsg("");
+      } else {
+        setStatusMessage({ text: data.error || "Failed to dispatch Discord alert.", type: "error" });
+      }
+    } catch (err) {
+      console.error(err);
+      setStatusMessage({ text: "Network error occurred while dispatching Discord alert.", type: "error" });
+    } finally {
+      setDiscordSending(false);
+    }
+  };
+
   const handleAnnouncement = async (action: "preview" | "send") => {
     if (action === "send") {
       setAnnConfirmModal(false);
@@ -401,12 +429,12 @@ Thank you for being part of our journey!`);
     </html>
   `;
 
-  const CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
+  const CARD = "rounded-none border-2 border-border-subtle bg-bg-card p-6 shadow-subtle";
 
   return (
     <div className="flex flex-col gap-6 w-full">
       {/* Page Title & Tabs */}
-      <div className="border-b border-border-subtle pb-0">
+      <div className="border-b-2 border-border-subtle pb-0">
         <div className="flex items-center gap-3 mb-6">
           <Shield className="h-6 w-6 text-text-primary animate-pulse" />
           <div>
@@ -415,7 +443,7 @@ Thank you for being part of our journey!`);
           </div>
         </div>
 
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2">
           {["analytics", "communications", "system", "pro-requests"].map((tab) => (
             <button
               key={tab}
@@ -423,10 +451,10 @@ Thank you for being part of our journey!`);
                 setActiveTab(tab as any);
                 setStatusMessage(null); // Clear errors when switching tabs
               }}
-              className={`pb-3 text-[13px] font-semibold capitalize transition-all ${
+              className={`px-5 py-2.5 text-[12px] font-bold uppercase tracking-wide transition-all border-2 ${
                 activeTab === tab 
-                  ? "border-b-2 border-text-primary text-text-primary" 
-                  : "border-b-2 border-transparent text-text-secondary hover:text-text-primary"
+                  ? "border-text-primary bg-text-primary text-bg-card shadow-none" 
+                  : "border-transparent bg-transparent text-text-secondary hover:border-border-subtle hover:text-text-primary"
               }`}
             >
               {tab.replace("-", " ")}
@@ -437,7 +465,7 @@ Thank you for being part of our journey!`);
 
       {/* Global Status Message */}
       {statusMessage && (
-        <div className={`rounded-[8px] border px-4 py-3 text-xs animate-[heroFadeUp_0.3s_ease-out_both] ${
+        <div className={`rounded-none border px-4 py-3 text-xs animate-[heroFadeUp_0.3s_ease-out_both] ${
           statusMessage.type === "success" 
             ? "border-[#bbf7d0] bg-[#f0fdf4]/80 text-[#166534]" 
             : "border-[#fecaca] bg-[#fef2f2]/80 text-[#991b1b]"
@@ -457,7 +485,7 @@ Thank you for being part of our journey!`);
               { label: "LIBRARY ITEMS", val: statsLoading ? "..." : stats?.watchlist },
               { label: "PORTFOLIO VALUE", val: statsLoading ? "..." : `₹${stats?.portfolioValue?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) || 0}` },
             ].map((card, i) => (
-              <div key={i} className="flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-4.5 shadow-subtle">
+              <div key={i} className="flex flex-col gap-1 rounded-none border-2 border-border-subtle bg-bg-card p-4.5 shadow-subtle">
                 <span className="font-mono text-[9px] font-bold tracking-[0.8px] text-text-muted uppercase">{card.label}</span>
                 <span className="text-[20px] font-bold tracking-tight text-text-primary mt-1">{card.val}</span>
               </div>
@@ -468,7 +496,7 @@ Thank you for being part of our journey!`);
           <div className="grid grid-cols-2 gap-6 max-lg:grid-cols-1 mt-4">
             {/* Top Endpoints (Agent Only - Web tracking was disabled to save Redis costs) */}
             <div className={CARD}>
-              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
                 <TerminalSquare className="h-4 w-4" /> Most Used Functionality (Agent)
               </h3>
               {gptMetrics?.globalMetrics?.agent?.topEndpoints && gptMetrics.globalMetrics.agent.topEndpoints.length > 0 ? (
@@ -476,7 +504,7 @@ Thank you for being part of our journey!`);
                   {gptMetrics.globalMetrics.agent.topEndpoints.map((ep: any, i: number) => (
                     <div key={ep.name} className="flex items-center gap-3">
                       <div className="w-5 text-center font-mono text-[10px] font-bold text-text-muted">{i + 1}</div>
-                      <div className="flex-1 flex justify-between items-center rounded-lg border border-border-subtle bg-bg-primary/20 p-2.5 px-3">
+                      <div className="flex-1 flex justify-between items-center rounded-none border-2 border-border-subtle bg-bg-primary/20 p-2.5 px-3">
                         <div className="text-[12px] font-mono text-text-primary truncate max-w-[250px]">{ep.name}</div>
                         <div className="text-[11px] font-semibold text-text-secondary">{ep.calls} calls</div>
                       </div>
@@ -490,7 +518,7 @@ Thank you for being part of our journey!`);
 
             {/* Power Users */}
             <div className={CARD}>
-              <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-4">
+              <div className="flex items-center justify-between border-b-2 border-border-subtle pb-3 mb-4">
                 <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2">
                   <Users className="h-4 w-4" /> API Uses Per User (Agent)
                 </h3>
@@ -501,7 +529,7 @@ Thank you for being part of our journey!`);
                   {gptMetrics.globalMetrics.agent.topUsers.map((u: any, i: number) => (
                     <div key={u.name} className="flex items-center gap-3">
                       <div className="w-5 text-center font-mono text-[10px] font-bold text-text-muted">{i + 1}</div>
-                      <div className="flex-1 flex justify-between items-center rounded-lg border border-border-subtle bg-bg-primary/20 p-2.5 px-3">
+                      <div className="flex-1 flex justify-between items-center rounded-none border-2 border-border-subtle bg-bg-primary/20 p-2.5 px-3">
                         <div className="text-[12px] font-medium text-text-primary truncate max-w-[200px]">{u.name}</div>
                         <div className="text-[11px] font-semibold text-text-secondary">{u.calls} hits</div>
                       </div>
@@ -516,7 +544,7 @@ Thank you for being part of our journey!`);
 
           {/* Custom GPT Analytics */}
           <div className={CARD}>
-            <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
+            <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
               <Activity className="h-4 w-4" /> Custom GPT Actions Log
             </h3>
             <div className="grid grid-cols-[1.5fr_1fr] gap-6 max-md:grid-cols-1">
@@ -525,7 +553,7 @@ Thank you for being part of our journey!`);
                 {gptMetrics?.users && gptMetrics.users.length > 0 ? (
                   <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1">
                     {gptMetrics.users.map((gptUser: any) => (
-                      <div key={gptUser.email} className="flex justify-between items-center rounded-lg border border-border-subtle bg-bg-primary/20 p-3">
+                      <div key={gptUser.email} className="flex justify-between items-center rounded-none border-2 border-border-subtle bg-bg-primary/20 p-3">
                         <div className="text-[12.5px] font-medium text-text-primary truncate max-w-[200px]">{gptUser.email}</div>
                         <div className="text-[10px] font-mono text-text-secondary">
                           {gptUser.lastActive ? new Date(gptUser.lastActive).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" }) : "Never"}
@@ -538,7 +566,7 @@ Thank you for being part of our journey!`);
                 )}
               </div>
 
-              <div className="flex flex-col gap-5 border-l border-border-subtle pl-6 max-md:border-l-0 max-md:pl-0">
+              <div className="flex flex-col gap-5 border-l-2 border-border-subtle pl-6 max-md:border-l-0 max-md:pl-0">
                 <div>
                   <div className="text-[9px] font-bold font-mono tracking-wider text-text-muted uppercase">TOTAL GPT CALLS</div>
                   <div className="text-2xl font-bold mt-1 text-text-primary">{gptMetrics?.totalCalls || 0}</div>
@@ -548,7 +576,7 @@ Thank you for being part of our journey!`);
                   {gptMetrics?.dailyUsage ? (
                     <div className="flex flex-col gap-1.5 font-mono text-[11px] text-text-secondary">
                       {gptMetrics.dailyUsage.map((day: any) => (
-                        <div key={day.date} className="flex justify-between border-b border-bg-primary pb-1">
+                        <div key={day.date} className="flex justify-between border-b-2 border-bg-primary pb-1">
                           <span>{day.date}</span>
                           <span className="font-semibold text-text-primary">{day.calls} call{day.calls === 1 ? "" : "s"}</span>
                         </div>
@@ -567,9 +595,66 @@ Thank you for being part of our journey!`);
       {/* ──────────────── TAB: COMMUNICATIONS ──────────────── */}
       {activeTab === "communications" && (
         <div className="flex flex-col gap-6 animate-[fadeIn_0.3s_ease-out_both]">
+          {/* Custom Discord Alert Dispatcher */}
+          <div className={CARD}>
+            <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
+              <TerminalSquare className="h-4 w-4" /> Discord Bot Dispatcher
+            </h3>
+            <div className="grid grid-cols-[1.2fr_1fr] gap-6 max-lg:grid-cols-1">
+              {/* Form Side */}
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Custom Alert Message</label>
+                  <textarea
+                    value={discordMsg}
+                    onChange={(e) => setDiscordMsg(e.target.value)}
+                    placeholder="Type a message to instantly push to the Discord discussion channel (Markdown supported)..."
+                    rows={6}
+                    className="w-full rounded-none border-2 border-border-subtle bg-bg-primary px-3.5 py-2.5 text-xs text-text-primary outline-none transition-all focus:border-text-primary font-mono leading-relaxed resize-y"
+                  />
+                </div>
+                <div className="flex justify-end">
+                  <button
+                    disabled={discordSending || !discordMsg.trim()}
+                    onClick={handleDiscordSend}
+                    className="rounded-none border-2 border-text-primary bg-text-primary px-5 py-2 text-xs font-bold uppercase tracking-wide text-bg-card transition-all hover:bg-bg-primary hover:text-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {discordSending ? "Dispatching..." : "Send Discord Alert"}
+                  </button>
+                </div>
+              </div>
+
+              {/* Preview Side */}
+              <div className="flex flex-col gap-2 rounded-none border-2 border-border-subtle bg-bg-primary/20 p-4">
+                <div className="flex items-center justify-between border-b-2 border-border-subtle pb-2 mb-2">
+                  <span className="font-mono text-[9px] font-bold text-text-secondary uppercase tracking-wider">LIVE DISCORD PREVIEW</span>
+                </div>
+                
+                <div className="flex-1 bg-[#313338] p-4 flex gap-3 overflow-hidden shadow-inner">
+                  <div className="shrink-0 w-10 h-10 rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold text-lg">
+                    C
+                  </div>
+                  <div className="flex flex-col gap-1 min-w-0 flex-1">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-white font-medium text-[15px]">Continuum Alerts</span>
+                      <span className="text-[10px] bg-[#5865F2] text-white px-1 py-0.5 rounded-sm font-semibold tracking-wide">APP</span>
+                      <span className="text-[#949BA4] text-[12px]">Today at {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+                    </div>
+                    
+                    <div className="mt-1 border-l-4 border-[#d4c6b1] bg-[#2B2D31] rounded-r p-3">
+                      <div className="text-white font-semibold text-[15px] mb-1">System Notification</div>
+                      <div className="text-[#DBDEE1] text-[14px] whitespace-pre-wrap font-sans break-words leading-relaxed">{discordMsg || "Your message will appear here..."}</div>
+                      <div className="mt-3 text-[#DBDEE1]/60 text-[11px]">Continuum Dashboard • Manual Trigger</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* System Announcements */}
           <div className={CARD}>
-            <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
+            <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
               <Bell className="h-4 w-4" /> System Announcement Dispatcher
             </h3>
             
@@ -583,7 +668,7 @@ Thank you for being part of our journey!`);
                     value={annSubject}
                     onChange={(e) => setAnnSubject(e.target.value)}
                     placeholder="e.g. New updates and features on Continuum!"
-                    className="w-full rounded-md border border-border-subtle bg-bg-primary px-3.5 py-2 text-xs text-text-primary outline-none transition-all focus:border-text-primary"
+                    className="w-full rounded-none border-2 border-border-subtle bg-bg-primary px-3.5 py-2 text-xs text-text-primary outline-none transition-all focus:border-text-primary"
                   />
                 </div>
                 
@@ -594,7 +679,7 @@ Thank you for being part of our journey!`);
                     value={annTitle}
                     onChange={(e) => setAnnTitle(e.target.value)}
                     placeholder="e.g. Announcing Rebranding & Custom GPTs"
-                    className="w-full rounded-md border border-border-subtle bg-bg-primary px-3.5 py-2 text-xs text-text-primary outline-none transition-all focus:border-text-primary"
+                    className="w-full rounded-none border-2 border-border-subtle bg-bg-primary px-3.5 py-2 text-xs text-text-primary outline-none transition-all focus:border-text-primary"
                   />
                 </div>
 
@@ -605,7 +690,7 @@ Thank you for being part of our journey!`);
                     onChange={(e) => setAnnContent(e.target.value)}
                     placeholder="Type your markdown or text announcement here..."
                     rows={10}
-                    className="w-full rounded-md border border-border-subtle bg-bg-primary px-3.5 py-2.5 text-xs text-text-primary outline-none transition-all focus:border-text-primary font-sans leading-relaxed resize-y"
+                    className="w-full rounded-none border-2 border-border-subtle bg-bg-primary px-3.5 py-2.5 text-xs text-text-primary outline-none transition-all focus:border-text-primary font-sans leading-relaxed resize-y"
                   />
                 </div>
 
@@ -613,14 +698,14 @@ Thank you for being part of our journey!`);
                   <button
                     disabled={annSending !== null || !annSubject.trim() || !annTitle.trim() || !annContent.trim()}
                     onClick={() => handleAnnouncement("preview")}
-                    className="rounded-full border border-border-subtle bg-transparent px-4 py-2 text-xs font-semibold text-text-primary transition-all hover:bg-bg-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="rounded-none border-2 border-border-subtle bg-transparent px-4 py-2 text-xs font-bold uppercase tracking-wide text-text-primary transition-all hover:bg-bg-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {annSending === "preview" ? "Sending Test..." : "Send Test to Admin"}
                   </button>
                   <button
                     disabled={annSending !== null || !annSubject.trim() || !annTitle.trim() || !annContent.trim()}
                     onClick={() => setAnnConfirmModal(true)}
-                    className="rounded-full border border-text-primary bg-text-primary px-4 py-2 text-xs font-semibold text-bg-card transition-all hover:bg-[#2e2d27] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="rounded-none border-2 border-text-primary bg-text-primary px-4 py-2 text-xs font-bold uppercase tracking-wide text-bg-card transition-all hover:bg-[#2e2d27] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {annSending === "send" ? "Broadcasting..." : "Broadcast to All Users"}
                   </button>
@@ -628,8 +713,8 @@ Thank you for being part of our journey!`);
               </div>
 
               {/* Column 2: Live HTML Viewport Preview */}
-              <div className="flex flex-col gap-2 rounded-lg border border-border-subtle bg-bg-primary/20 p-4">
-                <div className="flex items-center justify-between border-b border-border-subtle pb-2 mb-2">
+              <div className="flex flex-col gap-2 rounded-none border-2 border-border-subtle bg-bg-primary/20 p-4">
+                <div className="flex items-center justify-between border-b-2 border-border-subtle pb-2 mb-2">
                   <span className="font-mono text-[9px] font-bold text-text-secondary uppercase tracking-wider">LIVE EMAIL PREVIEW</span>
                   <span className="text-[10px] text-text-muted italic">Updates in real-time</span>
                 </div>
@@ -638,7 +723,7 @@ Thank you for being part of our journey!`);
                   <strong className="text-text-primary">Subject:</strong> {annSubject || "(No Subject)"}
                 </div>
 
-                <div className="flex-1 rounded-md border border-border-subtle bg-bg-card overflow-hidden h-[330px] shadow-inner">
+                <div className="flex-1 rounded-none border-2 border-border-subtle bg-bg-card overflow-hidden h-[330px] shadow-inner">
                   <iframe
                     title="Announcement Email Preview"
                     srcDoc={emailHtmlPreview}
@@ -665,7 +750,7 @@ Thank you for being part of our journey!`);
           {/* Right Column: Database / Cache Systems */}
           <div className="flex flex-col gap-6">
             <div className={`${CARD} flex flex-col gap-4`}>
-              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3">
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3">
                 <RefreshCw className="h-4 w-4" /> System Commands
               </h3>
               <p className="text-[12.5px] leading-relaxed text-text-secondary">
@@ -676,7 +761,7 @@ Thank you for being part of our journey!`);
                 <button
                   disabled={flushLoading}
                   onClick={flushCache}
-                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-full border border-text-primary bg-text-primary text-xs font-semibold text-bg-card py-2.5 transition-all hover:bg-[#2e2d27] disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-none border-2 border-text-primary bg-text-primary text-xs font-semibold text-bg-card py-2.5 transition-all hover:bg-[#2e2d27] disabled:opacity-50"
                 >
                   <Trash2 className="h-3.5 w-3.5" /> {flushLoading ? "Flushing Cache..." : "Flush Redis Cache"}
                 </button>
@@ -684,7 +769,7 @@ Thank you for being part of our journey!`);
                 <button
                   disabled={migrationLoading}
                   onClick={runEncryptionMigration}
-                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-full border border-border-subtle bg-transparent text-xs font-semibold text-text-primary py-2.5 transition-all hover:bg-bg-primary disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-none border-2 border-border-subtle bg-transparent text-xs font-semibold text-text-primary py-2.5 transition-all hover:bg-bg-primary disabled:opacity-50"
                 >
                   <Shield className="h-3.5 w-3.5" /> {migrationLoading ? "Encrypting Records..." : "Encrypt All Users' Data"}
                 </button>
@@ -693,19 +778,19 @@ Thank you for being part of our journey!`);
 
             {/* Quick Server Info */}
             <div className={`${CARD} flex flex-col gap-4`}>
-              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3">
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3">
                 <Server className="h-4 w-4" /> System Info
               </h3>
               <div className="flex flex-col gap-2.5 font-mono text-[10px] text-text-secondary">
-                <div className="flex justify-between border-b border-border-subtle pb-1.5">
+                <div className="flex justify-between border-b-2 border-border-subtle pb-1.5">
                   <span>DEPLOYED URL</span>
                   <span className="text-text-primary truncate max-w-[130px]">{user.email ? "https://continuum-home.vercel.app" : "http://localhost:3000"}</span>
                 </div>
-                <div className="flex justify-between border-b border-border-subtle pb-1.5">
+                <div className="flex justify-between border-b-2 border-border-subtle pb-1.5">
                   <span>REDIS STATUS</span>
                   <span className="text-text-primary font-bold">CONNECTED</span>
                 </div>
-                <div className="flex justify-between border-b border-border-subtle pb-1.5">
+                <div className="flex justify-between border-b-2 border-border-subtle pb-1.5">
                   <span>ENCRYPTION</span>
                   <span className="text-text-primary">AES-256-GCM</span>
                 </div>
@@ -737,11 +822,11 @@ Thank you for being part of our journey!`);
           onClick={() => setConfirmModal(null)}
         >
           <div
-            className="relative w-[420px] max-w-[90vw] rounded-card border border-border-subtle bg-bg-card p-8 shadow-[0_20px_60px_rgba(0,0,0,0.1)] flex flex-col gap-5"
+            className="relative w-[420px] max-w-[90vw] rounded-none border-2 border-border-subtle bg-bg-card p-8 shadow-[0_20px_60px_rgba(0,0,0,0.1)] flex flex-col gap-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-4">
-              <div className="shrink-0 rounded-full bg-[#fef2f2] border border-[#fecaca] p-2.5">
+              <div className="shrink-0 rounded-none bg-[#fef2f2] border-2 border-[#fecaca] p-2.5">
                 <AlertTriangle className="h-5 w-5 text-[#dc2626]" />
               </div>
               <div>
@@ -752,20 +837,20 @@ Thank you for being part of our journey!`);
               </div>
             </div>
 
-            <div className="rounded-lg bg-[#fef2f2] border border-[#fecaca] px-4 py-3 text-xs text-[#991b1b] font-semibold">
+            <div className="rounded-none bg-[#fef2f2] border-2 border-[#fecaca] px-4 py-3 text-xs text-[#991b1b] font-semibold">
               ⚠️ Are you sure you want to proceed? This cannot be undone.
             </div>
 
             <div className="flex gap-3 mt-1">
               <button
                 onClick={() => setConfirmModal(null)}
-                className="flex-1 rounded-full border border-border-subtle bg-transparent py-2 text-xs font-semibold text-text-primary transition-all hover:bg-bg-primary"
+                className="flex-1 rounded-none border-2 border-border-subtle bg-transparent py-2 text-xs font-semibold text-text-primary transition-all hover:bg-bg-primary"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmAndRun}
-                className="flex-1 rounded-full border border-[#dc2626] bg-[#dc2626] py-2 text-xs font-semibold text-white transition-all hover:bg-[#b91c1c]"
+                className="flex-1 rounded-none border-2 border-[#dc2626] bg-[#dc2626] py-2 text-xs font-bold uppercase tracking-wide text-white transition-all hover:bg-[#b91c1c]"
               >
                 Yes, Run Cron
               </button>
@@ -782,11 +867,11 @@ Thank you for being part of our journey!`);
           onClick={() => setAnnConfirmModal(false)}
         >
           <div
-            className="relative w-[420px] max-w-[90vw] rounded-card border border-border-subtle bg-bg-card p-8 shadow-[0_20px_60px_rgba(0,0,0,0.1)] flex flex-col gap-5"
+            className="relative w-[420px] max-w-[90vw] rounded-none border-2 border-border-subtle bg-bg-card p-8 shadow-[0_20px_60px_rgba(0,0,0,0.1)] flex flex-col gap-5"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-4">
-              <div className="shrink-0 rounded-full bg-[#fef2f2] border border-[#fecaca] p-2.5">
+              <div className="shrink-0 rounded-none bg-[#fef2f2] border-2 border-[#fecaca] p-2.5">
                 <AlertTriangle className="h-5 w-5 text-[#dc2626]" />
               </div>
               <div>
@@ -797,20 +882,20 @@ Thank you for being part of our journey!`);
               </div>
             </div>
 
-            <div className="rounded-lg bg-[#fef2f2] border border-[#fecaca] px-4 py-3 text-xs text-[#991b1b] font-semibold">
+            <div className="rounded-none bg-[#fef2f2] border-2 border-[#fecaca] px-4 py-3 text-xs text-[#991b1b] font-semibold">
               ⚠️ Are you sure you want to broadcast? This will email all active users.
             </div>
 
             <div className="flex gap-3 mt-1">
               <button
                 onClick={() => setAnnConfirmModal(false)}
-                className="flex-1 rounded-full border border-border-subtle bg-transparent py-2 text-xs font-semibold text-text-primary transition-all hover:bg-bg-primary"
+                className="flex-1 rounded-none border-2 border-border-subtle bg-transparent py-2 text-xs font-semibold text-text-primary transition-all hover:bg-bg-primary"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleAnnouncement("send")}
-                className="flex-1 rounded-full border border-[#dc2626] bg-[#dc2626] py-2 text-xs font-semibold text-white transition-all hover:bg-[#b91c1c]"
+                className="flex-1 rounded-none border-2 border-[#dc2626] bg-[#dc2626] py-2 text-xs font-bold uppercase tracking-wide text-white transition-all hover:bg-[#b91c1c]"
               >
                 Yes, Send Broadcast
               </button>

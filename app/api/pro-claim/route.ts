@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/errors";
 import { getAdminDb } from "@/lib/firebase-admin";
+import { waitUntil } from "@vercel/functions";
+import { sendDiscordEmbed } from "@/lib/discord";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +65,13 @@ export async function POST(req: NextRequest) {
       submittedAt: Date.now(),
       reviewedAt: null,
     });
+
+    waitUntil(sendDiscordEmbed(
+      "Admin Audit Log",
+      `🔔 **NEW PRO REQUEST**\nUser \`${session.user.email || session.uid}\` requested Pro status via ${platform} (Handle: ${sanitizedHandle}).\nCheck the Admin Panel to approve or deny.`,
+      16776960, // Yellow Hex
+      "Continuum Dashboard • Admin Audit"
+    ));
 
     return NextResponse.json({ success: true, message: "Your Pro request has been submitted. We'll review it shortly!" });
   } catch (error) {
