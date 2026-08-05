@@ -96,7 +96,7 @@ export default function AdminPage() {
   if (!user) {
     return (
       <div className="flex h-screen items-center justify-center bg-bg-primary">
-        <div className="flex w-[400px] flex-col gap-6 rounded-card border border-border-subtle bg-bg-card p-8 text-center shadow-subtle">
+        <div className="flex w-[400px] flex-col gap-6 rounded-none border-2 border-border-subtle bg-bg-card p-8 text-center shadow-none">
           <Shield className="mx-auto h-12 w-12 text-text-muted" />
           <div>
             <h1 className="font-serif text-2xl font-medium italic text-text-primary">Admin Access</h1>
@@ -104,7 +104,7 @@ export default function AdminPage() {
           </div>
           <button
             onClick={login}
-            className="cursor-pointer rounded-full border border-text-primary bg-text-primary py-2.5 text-xs font-semibold text-bg-card transition-all hover:bg-[#2e2d27]"
+            className="cursor-pointer rounded-none border-2 border-text-primary bg-text-primary py-2.5 text-xs font-bold uppercase tracking-wide text-bg-card transition-all hover:bg-bg-primary hover:text-text-primary"
           >
             Sign In with Google
           </button>
@@ -120,7 +120,7 @@ export default function AdminPage() {
   if (!isAdmin) {
     return (
       <div className="flex h-screen items-center justify-center bg-bg-primary">
-        <div className="flex w-[400px] flex-col gap-6 rounded-card border border-border-subtle bg-[#fef2f2]/60 p-8 text-center shadow-subtle">
+        <div className="flex w-[400px] flex-col gap-6 rounded-none border-2 border-[#dc2626] bg-[#fef2f2] p-8 text-center shadow-none">
           <Shield className="mx-auto h-12 w-12 text-[#dc2626]" />
           <div>
             <h1 className="font-serif text-2xl font-medium italic text-[#991b1b]">Access Denied</h1>
@@ -129,7 +129,7 @@ export default function AdminPage() {
           <div className="flex flex-col gap-2.5">
             <button
               onClick={logout}
-              className="cursor-pointer rounded-full border border-[#dc2626] bg-[#dc2626] py-2.5 text-xs font-semibold text-white transition-all hover:bg-[#b91c1c]"
+              className="cursor-pointer rounded-none border-2 border-[#dc2626] bg-[#dc2626] py-2.5 text-xs font-bold uppercase tracking-wide text-white transition-all hover:bg-white hover:text-[#dc2626]"
             >
               Sign Out
             </button>
@@ -147,11 +147,11 @@ export default function AdminPage() {
     <div className="min-h-screen bg-bg-primary p-10 max-md:p-5">
       <div className="mx-auto max-w-[900px] flex flex-col gap-6">
         {/* Header Action Nav */}
-        <div className="flex items-center justify-end gap-3 border-b border-border-subtle pb-4">
-          <Link href="/" className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card px-4 py-2 text-xs font-semibold text-text-primary hover:bg-bg-primary no-underline transition-all">
+        <div className="flex items-center justify-end gap-3 border-b-2 border-border-subtle pb-4">
+          <Link href="/" className="flex items-center gap-1.5 rounded-none border-2 border-border-subtle bg-bg-card px-4 py-2 text-xs font-bold uppercase tracking-wide text-text-primary hover:bg-bg-primary no-underline transition-all">
             <Home className="h-3.5 w-3.5" /> Dashboard
           </Link>
-          <button onClick={logout} className="flex items-center gap-1.5 cursor-pointer rounded-full border border-border-subtle bg-bg-card px-4 py-2 text-xs font-semibold text-[#b3666b] hover:bg-[#b3666b]/10 transition-all">
+          <button onClick={logout} className="flex items-center gap-1.5 cursor-pointer rounded-none border-2 border-border-subtle bg-bg-card px-4 py-2 text-xs font-bold uppercase tracking-wide text-[#dc2626] hover:bg-[#fef2f2] hover:border-[#dc2626] transition-all">
             <LogOut className="h-3.5 w-3.5" /> Sign Out
           </button>
         </div>

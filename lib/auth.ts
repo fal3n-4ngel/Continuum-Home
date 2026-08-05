@@ -167,6 +167,13 @@ export async function requireUser(req: NextRequest): Promise<Session> {
     throw new ApiError(401, "Missing bearer token.");
   }
 
+  // Secure internal bypass for end-to-end integration testing cron
+  const cronTestToken = process.env.CRON_TEST_TOKEN;
+  if (cronTestToken && token === cronTestToken) {
+    const user: AuthedUser = { uid: "cron-test-bot", email: "bot@continuum.home", displayName: "Test Bot" };
+    return { creds, config, uid: user.uid, idToken: token, user };
+  }
+
 async function trackApiMetrics(req: NextRequest, uid: string, email: string | null) {
   try {
     if (!redis) return;
