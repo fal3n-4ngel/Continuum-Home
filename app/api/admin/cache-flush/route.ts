@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { redis } from "@/lib/redis";
 import { ApiError } from "@/lib/errors";
+import { waitUntil } from "@vercel/functions";
+import { sendDiscordEmbed } from "@/lib/discord";
 
 export const dynamic = "force-dynamic";
 
@@ -25,6 +27,13 @@ export async function POST(req: NextRequest) {
 
     // 3. Flush all keys from the Redis DB
     const res = await redis.flushdb();
+
+    waitUntil(sendDiscordEmbed(
+      "Admin Audit Log",
+      `Admin flushed the global Redis cache.`,
+      15105570, // Orange Hex
+      "Continuum Dashboard • Admin Audit"
+    ));
 
     return NextResponse.json({ success: true, message: "Redis cache flushed successfully.", result: res });
   } catch (error: any) {
