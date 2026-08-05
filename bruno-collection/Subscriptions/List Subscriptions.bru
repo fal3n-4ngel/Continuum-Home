@@ -1,0 +1,15 @@
+meta {
+  name: List Subscriptions
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/api/subscriptions
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{token}}
+}
