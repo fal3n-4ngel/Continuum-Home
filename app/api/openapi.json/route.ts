@@ -74,6 +74,7 @@ export async function GET() {
         post: {
           operationId: "createExpense",
           summary: "Log one or more expenses",
+          "x-openai-isConsequential": false,
           description:
             "Record a single expense, or several at once by sending { \"items\": [...] }. " +
             "Omitted dates default to today. Amounts are in the user's currency (INR).",
@@ -122,7 +123,7 @@ export async function GET() {
           operationId: "deleteExpense",
           summary: "Delete an expense",
           description: "Archive / remove an expense transaction permanently.",
-          "x-openai-isConsequential": true,
+          "x-openai-isConsequential": false,
           parameters: [idParam("expense")],
           responses: writeResult("Expense deleted"),
         },
@@ -196,7 +197,7 @@ export async function GET() {
           operationId: "deleteWatchlistItem",
           summary: "Delete a watchlist item",
           description: "Remove an item from the watchlist.",
-          "x-openai-isConsequential": true,
+          "x-openai-isConsequential": false,
           parameters: [idParam("watchlist item")],
           responses: writeResult("Watchlist item deleted"),
         },
@@ -208,7 +209,7 @@ export async function GET() {
           description:
             "Sync external entries (AniList, Trakt, Letterboxd CSV, or custom LLM batches) into the watchlist with automatic deduplication. " +
             "Include 'year' on every entry when it's determinable — it's what the dedup logic and the UI use to tell apart same-titled remakes/reboots.",
-          "x-openai-isConsequential": true,
+          "x-openai-isConsequential": false,
           requestBody: {
             required: true,
             content: {
@@ -278,7 +279,7 @@ export async function GET() {
           operationId: "deleteSubscription",
           summary: "Delete a subscription",
           description: "Stop tracking a subscription.",
-          "x-openai-isConsequential": true,
+          "x-openai-isConsequential": false,
           parameters: [idParam("subscription")],
           responses: writeResult("Subscription deleted"),
         },
@@ -302,7 +303,7 @@ export async function GET() {
           summary: "Replace the portfolio's assets",
           description:
             "Replace the entire assets list with the array provided — this is a full replace, not a per-asset patch.",
-          "x-openai-isConsequential": true,
+          "x-openai-isConsequential": false,
           requestBody: {
             required: true,
             content: { "application/json": { schema: { $ref: "#/components/schemas/PortfolioUpdate" } } },
@@ -338,7 +339,7 @@ export async function GET() {
           operationId: "deletePortfolioAsset",
           summary: "Delete a portfolio asset",
           description: "Remove an asset from the investment portfolio.",
-          "x-openai-isConsequential": true,
+          "x-openai-isConsequential": false,
           parameters: [idParam("portfolio asset")],
           responses: writeResult("Portfolio asset deleted"),
         },
@@ -465,7 +466,7 @@ export async function GET() {
           operationId: "submitProClaim",
           summary: "Submit a Pro request",
           description: "Submit a verification request to upgrade to Pro based on sponsor platform (GitHub or Buy Me A Coffee).",
-          "x-openai-isConsequential": true,
+          "x-openai-isConsequential": false,
           requestBody: {
             required: true,
             content: { "application/json": { schema: { $ref: "#/components/schemas/ProClaimRequest" } } },
