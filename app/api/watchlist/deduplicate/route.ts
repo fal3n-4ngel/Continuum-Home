@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/errors";
-import { getRawWatchlist, writeWatchlistItems } from "@/lib/firebase";
+import { getRawWatchlist, writeWatchlistItems, watchlistCacheKey } from "@/lib/firebase";
+import { cacheInvalidate } from "@/lib/cache";
 import { WatchlistItem } from "@/types";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +56,7 @@ export async function POST(req: NextRequest) {
     }
 
     await writeWatchlistItems(session, patches, new Set());
+    await cacheInvalidate(watchlistCacheKey(session));
 
     return NextResponse.json({ success: true, merged: 1, deleted: duplicateIds.length });
   } catch (error) {

@@ -432,9 +432,9 @@ Thank you for being part of our journey!`);
   const CARD = "rounded-none border-2 border-border-subtle bg-bg-card p-6 shadow-subtle";
 
   return (
-    <div className="flex flex-col gap-6 w-full">
+    <div className="flex flex-col gap-6 w-full max-md:pb-8">
       {/* Page Title & Tabs */}
-      <div className="border-b-2 border-border-subtle pb-0">
+      <div>
         <div className="flex items-center gap-3 mb-6">
           <Shield className="h-6 w-6 text-text-primary animate-pulse" />
           <div>
@@ -443,7 +443,7 @@ Thank you for being part of our journey!`);
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex gap-6 border-b border-border-subtle max-sm:gap-4 max-sm:overflow-x-auto max-sm:scrollbar-none max-sm:-mx-1 max-sm:px-1">
           {["analytics", "communications", "system", "pro-requests"].map((tab) => (
             <button
               key={tab}
@@ -451,13 +451,16 @@ Thank you for being part of our journey!`);
                 setActiveTab(tab as any);
                 setStatusMessage(null); // Clear errors when switching tabs
               }}
-              className={`px-5 py-2.5 text-[12px] font-bold uppercase tracking-wide transition-all border-2 ${
+              className={`relative pb-3 text-[13px] font-medium transition-all whitespace-nowrap capitalize ${
                 activeTab === tab 
-                  ? "border-text-primary bg-text-primary text-bg-card shadow-none" 
-                  : "border-transparent bg-transparent text-text-secondary hover:border-border-subtle hover:text-text-primary"
+                  ? "text-text-primary" 
+                  : "text-text-muted hover:text-text-primary"
               }`}
             >
               {tab.replace("-", " ")}
+              {activeTab === tab && (
+                <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-text-primary" />
+              )}
             </button>
           ))}
         </div>
