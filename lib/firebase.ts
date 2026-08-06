@@ -208,7 +208,7 @@ function expenseCacheKey(session: Session): string {
   return `expenses:${session.config.projectId}:${session.uid}`;
 }
 
-function watchlistCacheKey(session: Session): string {
+export function watchlistCacheKey(session: Session): string {
   return `watchlist:${session.config.projectId}:${session.uid}`;
 }
 
@@ -808,6 +808,8 @@ export interface PortfolioRecord {
   updatedAt: number;
   valuationHistory?: Record<string, number>;
 }
+
+
 
 const PORTFOLIO_CACHE_TTL = 3_600_000;
 function portfolioCacheKey(session: Session): string { return `portfolio:${session.config.projectId}:${session.uid}`; }
