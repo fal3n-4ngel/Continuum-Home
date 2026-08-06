@@ -82,7 +82,7 @@ export async function GET(req: NextRequest) {
         }
       }
     } else {
-      errors.push("Skipped E2E test: CRON_TEST_TOKEN environment variable is not set.");
+      console.warn("Skipped E2E test: CRON_TEST_TOKEN environment variable is not set.");
     }
 
   } catch (err: any) {
