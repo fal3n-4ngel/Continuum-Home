@@ -96,12 +96,15 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           </a>
 
           <a
-            href="/assistant"
-            title="AI Integration Setup"
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-secondary transition-colors hover:text-text-primary"
+            onClick={() => setActiveTab("agent")}
+            title="Kiroku Assistant"
+            className={`flex h-7 w-7 items-center justify-center rounded-full border border-border-subtle cursor-pointer transition-colors ${
+              activeTab === "agent"
+                ? "bg-text-primary text-bg-card"
+                : "bg-bg-primary text-text-secondary hover:text-text-primary"
+            }`}
           >
            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>
-         
           </a>
           {user && user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL) && (
             <a
@@ -166,6 +169,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         <div onClick={() => setActiveTab("reports")} className={mobileNavLinkClass(activeTab === "reports")}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Reports</span>
+        </div>
+        <div onClick={() => setActiveTab("agent")} className={mobileNavLinkClass(activeTab === "agent")}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>
+          <span>Agent</span>
         </div>
       </nav>
     </>

@@ -30,7 +30,7 @@ import { ConfirmModal, ConfirmState } from "@/components/dashboard/ConfirmModal"
 import { SyncPreviewModal, SyncPreviewState, SyncPreviewItem } from "@/components/dashboard/SyncPreviewModal";
 import { OnboardingModal } from "@/components/dashboard/OnboardingModal";
 import { MediaDetailsModal } from "@/components/dashboard/MediaDetailsModal";
-import { KirokuChatBubble } from "@/components/dashboard/KirokuChatBubble";
+import { KirokuTab } from "@/components/dashboard/KirokuTab";
 import { ClaimProModal } from "@/components/dashboard/ClaimProModal";
 import { DataCorrectionModal } from "@/components/dashboard/DataCorrectionModal";
 
@@ -2376,6 +2376,10 @@ export default function Dashboard() {
           />
         )}
 
+        {activeTab === "agent" && (
+          <KirokuTab idToken={user?.idToken} />
+        )}
+
         {activeTab === "admin" && user && user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com") && (
           <AdminTab user={user} />
         )}
@@ -2431,9 +2435,7 @@ export default function Dashboard() {
         />
       )}
 
-      {enableChatAssistant && isProUser && (
-        <KirokuChatBubble idToken={user?.idToken} />
-      )}
+
 
       {user && (
         <ClaimProModal
