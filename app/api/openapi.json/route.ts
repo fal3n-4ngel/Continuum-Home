@@ -326,7 +326,8 @@ export async function GET() {
         patch: {
           operationId: "updatePortfolioAsset",
           summary: "Update a portfolio asset",
-          description: "Update name, category, amount, investedAmount, quantity, prices, or notes of an asset in the investment portfolio.",
+          description:
+            "Update any subset of an asset's fields — name, category, amounts, quantity, prices, notes, sold status, AMFI scheme code, SIP schedule, or fixed-deposit terms.",
           "x-openai-isConsequential": false,
           parameters: [idParam("portfolio asset")],
           requestBody: {
@@ -633,17 +634,61 @@ export async function GET() {
         InvestmentAsset: {
           type: "object",
           required: ["name", "category", "amount", "investedAmount"],
+          description:
+            "A portfolio holding. Note that replacePortfolioAssets overwrites the whole list, so every field on an existing asset must be sent back unchanged — dropping isSold/soldAt/soldPrice would silently un-sell a closed position.",
           properties: {
             id: { type: "string", description: "Unique asset id. Omit when adding a brand-new asset — the server generates one." },
             name: { type: "string", maxLength: 200, examples: ["Nifty 50 Index Fund"] },
-            category: { type: "string", enum: ["equity", "crypto", "mutual_fund", "sip", "gold", "cash", "other"] },
+            category: { type: "string", enum: ["equity", "crypto", "mutual_fund", "sip", "gold", "cash", "fixed_deposit", "other"] },
             amount: { type: "number", minimum: 0, description: "Current value of the holding (INR)" },
             investedAmount: { type: "number", minimum: 0, description: "Total amount originally invested (INR)" },
-            quantity: { type: "number", minimum: 0, description: "Units/shares/coins held" },
+            quantity: {
+              type: "number",
+              minimum: 0,
+              description: "Units/shares/coins held. For category 'sip' this is the recurring installment amount (INR), not a unit count.",
+            },
             buyPrice: { type: "number", minimum: 0, description: "Average purchase price per unit" },
             currentPrice: { type: "number", minimum: 0, description: "Latest known price per unit" },
+            previousClose: { type: ["number", "null"], minimum: 0, description: "Previous session's close, used for day-change figures" },
             notes: { type: "string", maxLength: 1000 },
             createdAt: { type: "integer", description: "Creation time (Unix ms)" },
+            isSold: { type: "boolean", description: "True once the position has been closed. Sold assets are excluded from portfolio totals." },
+            soldAt: { type: "number", description: "Time the position was closed (Unix ms)" },
+            soldPrice: { type: "number", minimum: 0, description: "Proceeds received when the position was closed (INR)" },
+            mfSchemeCode: {
+              type: "string",
+              pattern: "^\\d{1,10}$",
+              description:
+                "AMFI scheme code for an Indian mutual fund, used to fetch live NAV. Numeric only. Applies to category 'mutual_fund' and 'sip'.",
+              examples: ["118989"],
+            },
+            sipDay: {
+              type: "integer",
+              minimum: 1,
+              maximum: 31,
+              description: "Day of the month the SIP installment is debited. Only meaningful for category 'sip'.",
+            },
+            interestRate: {
+              type: "number",
+              minimum: 0,
+              maximum: 100,
+              description: "Annual interest rate (%). Only meaningful for category 'fixed_deposit'.",
+            },
+            startDate: {
+              type: "string",
+              format: "date",
+              description: "YYYY-MM-DD. Deposit start date for 'fixed_deposit', or the date the SIP began for 'sip'.",
+            },
+            maturityDate: {
+              type: "string",
+              format: "date",
+              description: "YYYY-MM-DD maturity date. Must not precede startDate. Only meaningful for category 'fixed_deposit'.",
+            },
+            compounding: {
+              type: "string",
+              enum: ["monthly", "quarterly", "half_yearly", "yearly"],
+              description: "Interest compounding frequency. Only meaningful for category 'fixed_deposit'.",
+            },
           },
         },
         InvestmentAssetPatch: {
@@ -651,16 +696,23 @@ export async function GET() {
           description: "Any subset of portfolio asset fields to change.",
           properties: {
             name: { type: "string", maxLength: 200 },
-            category: { type: "string", enum: ["equity", "crypto", "mutual_fund", "sip", "gold", "cash", "other"] },
+            category: { type: "string", enum: ["equity", "crypto", "mutual_fund", "sip", "gold", "cash", "fixed_deposit", "other"] },
             amount: { type: "number", minimum: 0 },
             investedAmount: { type: "number", minimum: 0 },
-            quantity: { type: "number", minimum: 0 },
+            quantity: { type: "number", minimum: 0, description: "For category 'sip' this is the recurring installment amount (INR), not a unit count." },
             buyPrice: { type: "number", minimum: 0 },
             currentPrice: { type: "number", minimum: 0 },
+            previousClose: { type: ["number", "null"], minimum: 0 },
             notes: { type: "string", maxLength: 1000 },
             isSold: { type: "boolean" },
             soldAt: { type: "number" },
-            soldPrice: { type: "number" },
+            soldPrice: { type: "number", minimum: 0 },
+            mfSchemeCode: { type: "string", pattern: "^\\d{1,10}$", description: "AMFI scheme code (numeric only) for live NAV lookup." },
+            sipDay: { type: "integer", minimum: 1, maximum: 31, description: "Day of the month the SIP installment is debited." },
+            interestRate: { type: "number", minimum: 0, maximum: 100, description: "Annual interest rate (%) for a fixed deposit." },
+            startDate: { type: "string", format: "date", description: "YYYY-MM-DD. FD start date, or the date a SIP began." },
+            maturityDate: { type: "string", format: "date", description: "YYYY-MM-DD FD maturity date. Must not precede startDate." },
+            compounding: { type: "string", enum: ["monthly", "quarterly", "half_yearly", "yearly"], description: "FD interest compounding frequency." },
           },
         },
         PortfolioRecord: {
