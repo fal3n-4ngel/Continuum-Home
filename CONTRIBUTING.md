@@ -1,6 +1,6 @@
 # Contributing to Continuum
 
-This document outlines the standard operating procedures for contributing to the Continuum repository. Adherence to these guidelines ensures a stable, reviewable, and predictable release cycle.
+This document covers how to get set up locally and what's expected of a PR — issue tracking, branch naming, and the checks that run before a merge.
 
 ---
 
@@ -44,13 +44,9 @@ Branch from `main` using the following standardized namespaces:
    ```
 
 4. **Environment Configuration:**
-   Initialize a `.env.local` using the provided template:
-   ```env
-   NEXT_PUBLIC_IMDB_API_KEY=your_omdb_api_key
-   NEXT_PUBLIC_ANILIST_CLIENT_ID=46468
-   NEXT_PUBLIC_TRAKT_CLIENT_ID=your_trakt_client_id
-   FIREBASE_CONFIG={"apiKey":"...","authDomain":"...","projectId":"..."}
-   ENCRYPTION_KEY="your-custom-secret-key"
+   Copy the template and fill in `FIREBASE_CONFIG` + `ENCRYPTION_KEY` at minimum — see [`.env.example`](.env.example) for the full list (Trakt, AniList, TMDb are optional):
+   ```bash
+   cp .env.example .env.local
    ```
 
 5. **Start Development Server:**
@@ -82,6 +78,8 @@ Continuum utilizes an automated CI/CD pipeline. Prior to submitting a Pull Reque
   npm run build
   ```
 
+PRs are also checked by `dependency-review` (fails on a newly introduced dependency with a known high/critical vulnerability) and CodeQL's default code scanning — neither has a local equivalent to run beforehand, but both show up as PR checks.
+
 ---
 
 ## 🚀 Pull Request Protocol
@@ -92,4 +90,4 @@ Continuum utilizes an automated CI/CD pipeline. Prior to submitting a Pull Reque
    ```
 2. Open a Pull Request targeting the `main` branch.
 3. Link the PR to its associated issue (e.g., `Fixes #12` or `Resolves #45`).
-4. Ensure all automated GitHub Actions checks (Lint, Typecheck, Test, Build) return a `0` exit code.
+4. Ensure all automated GitHub Actions checks (lint, typecheck, test, build, dependency review) pass.
