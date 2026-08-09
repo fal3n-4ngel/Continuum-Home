@@ -3,6 +3,7 @@ import { toErrorResponse } from "@/lib/errors";
 import { listAllUsers, adminListExpenses, type AdminUser } from "@/lib/firebase-admin";
 import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
 import { getIstDateString } from "@/lib/dates";
+import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron-alert";
 
 export const dynamic = "force-dynamic";
 
@@ -227,6 +228,7 @@ export async function POST(req: NextRequest) {
 
     const resendApiKey = process.env.RESEND_API_KEY;
     if (!resendApiKey) {
+      reportCronAbort("expenses", "Missing RESEND_API_KEY");
       return NextResponse.json({ error: "Missing RESEND_API_KEY" }, { status: 500 });
     }
 
@@ -238,7 +240,7 @@ export async function POST(req: NextRequest) {
     // 2. Fan out across every registered user via Admin SDK.
     const users = await listAllUsers();
 
-    const results: { uid: string; email: string; sent: boolean; reason?: string; error?: string }[] = [];
+    const results: CronUserResult[] = [];
     for (const user of users) {
       try {
         const outcome = await processUser(user, period, daysLimit, resendApiKey, force);
@@ -248,6 +250,8 @@ export async function POST(req: NextRequest) {
         results.push({ uid: user.uid, email: user.email, sent: false, error: err.message || "Unknown error" });
       }
     }
+
+    reportCronFailures(`expenses (${period})`, results);
 
     const sentCount = results.filter((r) => r.sent).length;
     return NextResponse.json({ success: true, period, usersProcessed: users.length, emailsSent: sentCount, results });

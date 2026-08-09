@@ -48,3 +48,15 @@ jobs:
           NEXT_PUBLIC_ANILIST_CLIENT_ID: "46468"
           NEXT_PUBLIC_TRAKT_CLIENT_ID: "dummy_client_id"
           FIREBASE_CONFIG: '{"apiKey": "dummy", "authDomain": "dummy", "projectId": "dummy", "storageBucket": "dummy", "messagingSenderId": "dummy", "appId": "dummy"}'
+
+  # Only alerts for pushes to the default branch — a PR author already sees
+  # their own red check, but a broken main is what actually needs chasing.
+  alert:
+    needs: validate
+    if: failure() && github.event_name == 'push'
+    uses: ./.github/workflows/discord-notify.yml
+    with:
+      title: "🚨 CI Failed on ${{ github.ref_name }}"
+      description: "`${{ github.workflow }}` failed for commit `${{ github.sha }}` by ${{ github.actor }}."
+    secrets:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

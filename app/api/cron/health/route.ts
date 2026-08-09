@@ -89,7 +89,12 @@ export async function GET(req: NextRequest) {
     errors.push(`Exception during health check: ${err.message}`);
   }
 
-  // 3. Alerting via Resend
+  // 3. Alerting via Resend.
+  //
+  // No Discord alert here on purpose: this route returns 500 below when it
+  // finds errors, and the health-cron workflow already fails on that and
+  // posts the response body (including this `errors` array) to Discord.
+  // Alerting from both sides would double-notify every 5 minutes.
   if (errors.length > 0) {
     const resendApiKey = process.env.RESEND_API_KEY;
     const adminEmail = process.env.ADMIN_EMAIL; // You must set this in Vercel

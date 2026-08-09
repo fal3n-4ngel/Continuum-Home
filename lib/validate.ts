@@ -303,6 +303,17 @@ function validateFdDates(startDate: string | undefined, maturityDate: string | u
   }
 }
 
+// AMFI scheme codes are numeric. Pinning the shape here matters beyond input
+// hygiene: the stored value is interpolated into the mfapi.in NAV request in
+// lib/prices.ts, so an unconstrained string would let a client steer the path
+// of a server-side request.
+function asSchemeCode(value: unknown): string | undefined {
+  const code = asTrimmedString(value, "mfSchemeCode", 10, false);
+  if (code === undefined) return undefined;
+  if (!/^\d+$/.test(code)) badRequest("Field 'mfSchemeCode' must be a numeric AMFI scheme code.");
+  return code;
+}
+
 function validateInvestmentAsset(raw: unknown, index: number): InvestmentAsset {
   const b = requireObject(raw, "Asset");
   try {
@@ -324,10 +335,12 @@ function validateInvestmentAsset(raw: unknown, index: number): InvestmentAsset {
       isSold: b.isSold !== undefined && b.isSold !== null ? Boolean(b.isSold) : undefined,
       soldAt: b.soldAt !== undefined && b.soldAt !== null ? asNumber(b.soldAt, "soldAt", { min: 0 }) : undefined,
       soldPrice: b.soldPrice !== undefined && b.soldPrice !== null ? asNumber(b.soldPrice, "soldPrice", { min: 0 }) : undefined,
+      mfSchemeCode: asSchemeCode(b.mfSchemeCode),
       interestRate: b.interestRate !== undefined && b.interestRate !== null && b.interestRate !== "" ? asNumber(b.interestRate, "interestRate", { min: 0, max: 100 }) : undefined,
       startDate,
       maturityDate,
       compounding: asEnum(b.compounding, "compounding", FD_COMPOUNDING_OPTIONS, false),
+      sipDay: b.sipDay !== undefined && b.sipDay !== null && b.sipDay !== "" ? asNumber(b.sipDay, "sipDay", { min: 1, max: 31, integer: true }) : undefined,
     };
   } catch (error) {
     if (error instanceof ApiError) throw new ApiError(400, `Asset ${index + 1}: ${error.message}`);
@@ -360,11 +373,13 @@ export function validatePortfolioAssetPatch(body: unknown): Partial<InvestmentAs
   if (b.isSold !== undefined) patch.isSold = b.isSold !== null ? Boolean(b.isSold) : undefined;
   if (b.soldAt !== undefined) patch.soldAt = b.soldAt !== null ? asNumber(b.soldAt, "soldAt", { min: 0 }) : undefined;
   if (b.soldPrice !== undefined) patch.soldPrice = b.soldPrice !== null ? asNumber(b.soldPrice, "soldPrice", { min: 0 }) : undefined;
+  if (b.mfSchemeCode !== undefined) patch.mfSchemeCode = asSchemeCode(b.mfSchemeCode);
   if (b.interestRate !== undefined) patch.interestRate = b.interestRate !== null && b.interestRate !== "" ? asNumber(b.interestRate, "interestRate", { min: 0, max: 100 }) : undefined;
   if (b.startDate !== undefined) patch.startDate = asDate(b.startDate, "startDate");
   if (b.maturityDate !== undefined) patch.maturityDate = asDate(b.maturityDate, "maturityDate");
   if (patch.startDate !== undefined || patch.maturityDate !== undefined) validateFdDates(patch.startDate, patch.maturityDate);
   if (b.compounding !== undefined) patch.compounding = asEnum(b.compounding, "compounding", FD_COMPOUNDING_OPTIONS, false);
+  if (b.sipDay !== undefined) patch.sipDay = b.sipDay !== null && b.sipDay !== "" ? asNumber(b.sipDay, "sipDay", { min: 1, max: 31, integer: true }) : undefined;
 
   if (Object.keys(patch).length === 0) {
     badRequest("Patch body must include at least one asset property to update.");

@@ -31,8 +31,12 @@ vi.mock("@/lib/firebase-admin", () => ({
 }));
 
 // Mock prices module
+const mockPrice = { priceInr: 2600, priceUsd: 31.14, previousCloseInr: 2580, previousCloseUsd: 30.9 };
 vi.mock("@/lib/prices", () => ({
-  fetchAssetPrice: vi.fn().mockResolvedValue({ priceInr: 2600 }),
+  fetchAssetPrice: vi.fn().mockResolvedValue(mockPrice),
+  // Mirrors the real factory's shape — the cron routes call this once per run
+  // and pass the returned fetcher down into per-user processing.
+  createPriceFetcher: vi.fn(() => vi.fn().mockResolvedValue(mockPrice)),
   getUsdToInrRate: vi.fn().mockResolvedValue(83.5),
 }));
 

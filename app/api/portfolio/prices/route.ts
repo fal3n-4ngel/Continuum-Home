@@ -22,6 +22,7 @@ const REFRESH_COOLDOWN = 30 * 1000; // 30 seconds cooldown limit
 interface AssetPriceInput {
   category?: string;
   name?: string;
+  mfSchemeCode?: string;
   [key: string]: unknown;
 }
 
@@ -58,7 +59,7 @@ export async function POST(req: NextRequest) {
     const updatedAssets = await Promise.all(assets.map(async (asset) => {
       const category = asset.category || "";
       const name = asset.name || "";
-      const cacheKey = `${category}:${name}`;
+      const cacheKey = `${category}:${name}:${asset.mfSchemeCode || ""}`;
       
       // Return cached price if valid and we're not doing a valid forceRefresh
       if (!forceRefresh || isCooldownActive) {
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Fetch new price using shared utility
-      const priceInfo = await fetchAssetPrice(category, name, usdToInr);
+      const priceInfo = await fetchAssetPrice(category, name, usdToInr, asset.mfSchemeCode);
       if (priceInfo) {
         priceCache[cacheKey] = {
           priceUsd: priceInfo.priceUsd,

@@ -4,6 +4,7 @@ import { listAllUsers, adminListWatchlist, adminSaveDailyRecommendation, type Ad
 import type { DailyRecommendation } from "@/lib/firebase";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
+import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron-alert";
 
 export const dynamic = "force-dynamic";
 // Gemini free-tier throttling (13s between calls, see GEMINI_MIN_INTERVAL_MS
@@ -247,6 +248,7 @@ export async function POST(req: NextRequest) {
 
     const geminiApiKey = process.env.GEMINI_API_KEY;
     if (!geminiApiKey) {
+      reportCronAbort("recommendations", "Missing GEMINI_API_KEY");
       return NextResponse.json({ error: "Missing GEMINI_API_KEY" }, { status: 500 });
     }
 
@@ -256,7 +258,7 @@ export async function POST(req: NextRequest) {
     // 2. Fan out across every registered user via Admin SDK.
     const users = await listAllUsers();
 
-    const results: { uid: string; email: string; sent: boolean; reason?: string; error?: string }[] = [];
+    const results: CronUserResult[] = [];
     for (const user of users) {
       try {
         const outcome = await processUser(user, geminiApiKey, dateStr, force);
@@ -266,6 +268,8 @@ export async function POST(req: NextRequest) {
         results.push({ uid: user.uid, email: user.email, sent: false, error: err.message || "Unknown error" });
       }
     }
+
+    reportCronFailures("recommendations", results);
 
     const processedCount = results.filter((r) => r.sent).length;
     return NextResponse.json({ success: true, date: dateStr, usersProcessed: users.length, usersGenerated: processedCount, results });

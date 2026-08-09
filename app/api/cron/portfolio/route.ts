@@ -1,16 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { toErrorResponse } from "@/lib/errors";
 import { listAllUsers, adminGetPortfolio, adminUpdatePortfolioValuationHistory, type AdminUser } from "@/lib/firebase-admin";
-import { fetchAssetPrice, getUsdToInrRate } from "@/lib/prices";
+import { createPriceFetcher, getUsdToInrRate, type PriceFetcher } from "@/lib/prices";
 import { getEffectiveAmount } from "@/lib/fd";
 import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
 import { getIstDateString } from "@/lib/dates";
+import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron-alert";
 
 export const dynamic = "force-dynamic";
 
 type ProcessResult = { sent: false; reason: string } | { sent: true; valuation: number; pnl: number };
 
-async function processUser(user: AdminUser, usdToInr: number, resendApiKey: string, force: boolean = false): Promise<ProcessResult> {
+async function processUser(
+  user: AdminUser,
+  usdToInr: number,
+  resendApiKey: string,
+  fetchPrice: PriceFetcher,
+  force: boolean = false
+): Promise<ProcessResult> {
   const portfolio = await adminGetPortfolio(user.uid);
   if (!portfolio || !portfolio.assets || portfolio.assets.length === 0) {
     return { sent: false, reason: "empty portfolio" };
@@ -19,15 +26,20 @@ async function processUser(user: AdminUser, usdToInr: number, resendApiKey: stri
   let totalInvested = 0;
   let totalCurrent = 0;
 
+  const activeAssets = portfolio.assets.filter((asset) => !asset.isSold);
+  if (activeAssets.length === 0) {
+    return { sent: false, reason: "no active holdings (all assets sold)" };
+  }
+
   const enrichedAssets = await Promise.all(
-    portfolio.assets.map(async (asset) => {
+    activeAssets.map(async (asset) => {
       const category = asset.category || "equity";
       const name = asset.name || "";
 
       let currentPrice = asset.currentPrice || asset.buyPrice || 0;
       let isLive = false;
 
-      const priceInfo = await fetchAssetPrice(category, name, usdToInr);
+      const priceInfo = await fetchPrice(category, name, usdToInr, asset.mfSchemeCode);
       if (priceInfo) {
         currentPrice = priceInfo.priceInr;
         isLive = true;
@@ -41,6 +53,10 @@ async function processUser(user: AdminUser, usdToInr: number, resendApiKey: stri
         // No live price feed for FDs — value comes from compound interest
         // accrual on the principal instead.
         currentValue = getEffectiveAmount(asset);
+      } else if (category === "sip") {
+        // SIP's "quantity" field records the recurring installment amount,
+        // not units held — multiplying it by NAV would be nonsense. SIP
+        // valuation stays whatever the user last entered as Total Valuation.
       } else if (asset.quantity !== undefined && currentPrice > 0) {
         currentValue = quantity * currentPrice;
       } else if (isLive) {
@@ -61,8 +77,6 @@ async function processUser(user: AdminUser, usdToInr: number, resendApiKey: stri
   const overallPnlPercent = totalInvested > 0 ? (overallPnl / totalInvested) * 100 : 0;
 
   const isGreen = overallPnl >= 0;
-  const pnlColor = isGreen ? "#166534" : "#991b1b";
-  const pnlBg = isGreen ? "#f0fdf4" : "#fef2f2";
 
   const todayDateStr = getIstDateString();
 
@@ -93,10 +107,7 @@ async function processUser(user: AdminUser, usdToInr: number, resendApiKey: stri
       : null;
 
   const dailyChange = yesterdayVal !== null ? totalCurrent - yesterdayVal : 0;
-  const dailyChangePercent = yesterdayVal ? (dailyChange / yesterdayVal) * 100 : 0;
-
   const weeklyChange = lastWeekVal !== null ? totalCurrent - lastWeekVal : 0;
-  const weeklyChangePercent = lastWeekVal ? (weeklyChange / lastWeekVal) * 100 : 0;
 
   // Save today's valuation history
   valHistory[todayDateStr] = totalCurrent;
@@ -269,23 +280,28 @@ export async function POST(req: NextRequest) {
 
     const resendApiKey = process.env.RESEND_API_KEY;
     if (!resendApiKey) {
+      reportCronAbort("portfolio", "Missing RESEND_API_KEY");
       return NextResponse.json({ error: "Missing RESEND_API_KEY" }, { status: 500 });
     }
 
     const force = req.nextUrl.searchParams.get("force") === "true";
     const users = await listAllUsers();
     const usdToInr = await getUsdToInrRate();
+    // Shared across the whole fan-out so overlapping holdings are fetched once.
+    const fetchPrice = createPriceFetcher();
 
-    const results: { uid: string; email: string; sent: boolean; reason?: string; error?: string }[] = [];
+    const results: CronUserResult[] = [];
     for (const user of users) {
       try {
-        const outcome = await processUser(user, usdToInr, resendApiKey, force);
+        const outcome = await processUser(user, usdToInr, resendApiKey, fetchPrice, force);
         results.push({ uid: user.uid, email: user.email, sent: outcome.sent, reason: outcome.sent ? undefined : (outcome as any).reason });
       } catch (err: any) {
         console.error(`Error in cron/portfolio for uid ${user.uid}:`, err);
         results.push({ uid: user.uid, email: user.email, sent: false, error: err.message || "Unknown error" });
       }
     }
+
+    reportCronFailures("portfolio", results);
 
     const sentCount = results.filter((r) => r.sent).length;
     return NextResponse.json({ success: true, usersProcessed: users.length, emailsSent: sentCount, results });

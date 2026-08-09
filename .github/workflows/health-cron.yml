@@ -2,16 +2,20 @@ name: API Health Check
 
 on:
   schedule:
-    - cron: '*/5 * * * *'
+    - cron: '*/15 * * * *'
   workflow_dispatch:
 
-permissions: {}
+permissions:
+  contents: read
 
 jobs:
-  ping-health:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Vercel Health Check
-        run: |
-          curl -s -X GET https://continuum-home.vercel.app/api/cron/health \
-          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+  trigger-cron:
+    uses: ./.github/workflows/shared-cron-action.yml
+    with:
+      endpoint: /api/cron/health
+      job_name: API Health Check
+      method: GET
+    secrets:
+      APP_URL: ${{ secrets.APP_URL }}
+      CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

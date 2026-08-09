@@ -1,0 +1,69 @@
+# Reusable Discord alert step.
+#
+# Deliberately separate from the in-app alerting in lib/cron-alert.ts, which
+# reports *per-user* failures from inside a cron that ran. This one covers the
+# case the app can never report on itself: the deployment being unreachable,
+# returning a non-2xx, or the workflow failing before it got that far.
+name: Discord Notify
+
+on:
+  workflow_call:
+    inputs:
+      title:
+        required: true
+        type: string
+      description:
+        required: false
+        type: string
+        default: ''
+      color:
+        required: false
+        type: number
+        default: 16711680 # red
+    secrets:
+      # Optional so the workflow degrades to a no-op (see the guard in the
+      # step below) rather than erroring when the secret isn't configured.
+      DISCORD_WEBHOOK_URL:
+        required: false
+
+permissions: {}
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post to Discord
+        env:
+          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          TITLE: ${{ inputs.title }}
+          DESCRIPTION: ${{ inputs.description }}
+          COLOR: ${{ inputs.color }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          if [ -z "${WEBHOOK_URL:-}" ]; then
+            echo "DISCORD_WEBHOOK_URL not set — skipping alert."
+            exit 0
+          fi
+          # jq builds the JSON so that quotes/newlines/backticks in an error
+          # body can't break out and produce an invalid payload (which Discord
+          # would reject with a 400, silently losing the alert).
+          jq -n \
+            --arg title "$TITLE" \
+            --arg description "$DESCRIPTION" \
+            --arg run_url "$RUN_URL" \
+            --argjson color "$COLOR" \
+            '{
+              username: "Continuum Alerts",
+              embeds: [{
+                title: $title,
+                description: (if $description == "" then null else $description end),
+                color: $color,
+                fields: [{ name: "Workflow Run", value: $run_url }],
+                footer: { text: "Continuum System • GitHub Actions" },
+                timestamp: (now | todate)
+              }]
+            }' > payload.json
+          curl --fail -sS -X POST "$WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d @payload.json

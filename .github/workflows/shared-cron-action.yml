@@ -7,25 +7,93 @@ on:
         required: true
         type: string
         description: 'The API endpoint to trigger (e.g. /api/cron/portfolio)'
+      job_name:
+        required: false
+        type: string
+        default: ''
+        description: 'Human-readable job name used in the Discord alert'
+      method:
+        required: false
+        type: string
+        default: 'POST'
+        description: 'HTTP method to use (the health endpoint is a GET)'
     secrets:
       APP_URL:
         required: true
       CRON_SECRET:
         required: true
+      DISCORD_WEBHOOK_URL:
+        required: false
+
+# contents: read is needed to resolve the local reusable workflow the alert
+# job calls; the cron trigger itself needs no repo access.
+permissions:
+  contents: read
 
 jobs:
   trigger-cron:
     runs-on: ubuntu-latest
+    outputs:
+      failure_detail: ${{ steps.trigger.outputs.failure_detail }}
     steps:
       - name: Trigger Cron Endpoint
+        id: trigger
+        env:
+          # Passed through env rather than interpolated straight into the
+          # script body, so nothing in a secret can be parsed as shell.
+          APP_URL: ${{ secrets.APP_URL }}
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          ENDPOINT: ${{ inputs.endpoint }}
+          METHOD: ${{ inputs.method }}
         run: |
-          if [ -z "${{ secrets.APP_URL }}" ]; then
+          set -uo pipefail
+          if [ -z "${APP_URL:-}" ]; then
+            echo "failure_detail=APP_URL secret is not set." >> "$GITHUB_OUTPUT"
             echo "Error: APP_URL secret is not set."
             exit 1
           fi
-          if [ -z "${{ secrets.CRON_SECRET }}" ]; then
+          if [ -z "${CRON_SECRET:-}" ]; then
+            echo "failure_detail=CRON_SECRET secret is not set." >> "$GITHUB_OUTPUT"
             echo "Error: CRON_SECRET secret is not set."
             exit 1
           fi
-          curl --fail -sS -L -X POST "${{ secrets.APP_URL }}${{ inputs.endpoint }}" \
-               -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
+
+          # --max-time is generous because the recommendations cron throttles
+          # itself against Gemini's free tier and legitimately runs for minutes.
+          HTTP_CODE=$(curl -sS -L -X "${METHOD}" "${APP_URL}${ENDPOINT}" \
+            -H "Authorization: Bearer ${CRON_SECRET}" \
+            --max-time 900 \
+            -o response.txt -w '%{http_code}')
+          CURL_EXIT=$?
+
+          BODY=$(head -c 1200 response.txt 2>/dev/null || echo '<no response body>')
+          echo "HTTP $HTTP_CODE"
+          echo "$BODY"
+
+          write_detail() {
+            {
+              echo "failure_detail<<CRON_EOF"
+              echo "$1"
+              echo "CRON_EOF"
+            } >> "$GITHUB_OUTPUT"
+          }
+
+          if [ "$CURL_EXIT" -ne 0 ]; then
+            write_detail "$(printf '`%s` was unreachable (curl exit %s). The deployment may be down.' "$ENDPOINT" "$CURL_EXIT")"
+            exit 1
+          fi
+          if [ "$HTTP_CODE" -lt 200 ] || [ "$HTTP_CODE" -ge 300 ]; then
+            write_detail "$(printf '`%s` returned HTTP %s.\n```\n%s\n```' "$ENDPOINT" "$HTTP_CODE" "$BODY")"
+            exit 1
+          fi
+          echo "Cron endpoint acknowledged the request."
+
+  alert:
+    needs: trigger-cron
+    if: failure()
+    uses: ./.github/workflows/discord-notify.yml
+    with:
+      title: "🚨 Cron Workflow Failed: ${{ inputs.job_name != '' && inputs.job_name || inputs.endpoint }}"
+      description: ${{ needs.trigger-cron.outputs.failure_detail }}
+    secrets:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

@@ -163,6 +163,7 @@ export default function Dashboard() {
   const [investments, setInvestments] = useState<InvestmentAsset[]>([]);
   const [isFetchingInvestments, setIsFetchingInvestments] = useState(false);
   const [invName, setInvName] = useState("");
+  const [invMfSchemeCode, setInvMfSchemeCode] = useState("");
   const [invCategory, setInvCategory] = useState<InvestmentCategory>("equity");
   const [invAmount, setInvAmount] = useState("");
   const [invQuantity, setInvQuantity] = useState("");
@@ -172,6 +173,7 @@ export default function Dashboard() {
   const [invStartDate, setInvStartDate] = useState("");
   const [invMaturityDate, setInvMaturityDate] = useState("");
   const [invCompounding, setInvCompounding] = useState<FdCompounding>("quarterly");
+  const [invSipDay, setInvSipDay] = useState("");
   const [isAddingAsset, setIsAddingAsset] = useState(false);
   const [isUpdatingPrices, setIsUpdatingPrices] = useState(false);
   const [invSuggestions, setInvSuggestions] = useState<InvestmentQuote[]>([]);
@@ -1581,7 +1583,9 @@ export default function Dashboard() {
     }
     const delayDebounce = setTimeout(async () => {
       try {
-        const res = await fetch(`/api/portfolio/search?q=${encodeURIComponent(invName)}`, { headers: getHeaders() });
+        const res = await fetch(`/api/portfolio/search?q=${encodeURIComponent(invName)}&category=${encodeURIComponent(invCategory)}`, {
+          headers: getHeaders(),
+        });
         if (res.ok) {
           const data = await res.json();
           setInvSuggestions(data.quotes || []);
@@ -1594,8 +1598,22 @@ export default function Dashboard() {
     return () => clearTimeout(delayDebounce);
   }, [invName, invCategory, user]);
 
+  // Wraps setInvName for manual typing so a stale mfSchemeCode from a
+  // previously selected mutual fund suggestion doesn't stick to a new name.
+  const handleInvNameChange = (value: string) => {
+    setInvName(value);
+    setInvMfSchemeCode("");
+  };
+
   const selectSuggestion = (s: InvestmentQuote) => {
+    if (s.type === "MUTUALFUND_IN" && s.schemeCode) {
+      setInvName(s.name || "");
+      setInvMfSchemeCode(s.schemeCode);
+      setInvSuggestions([]);
+      return;
+    }
     setInvName(s.symbol || s.name || "");
+    setInvMfSchemeCode("");
     if (invCategory === "equity" || invCategory === "crypto" || invCategory === "mutual_fund") {
       if (s.type === "EQUITY") setInvCategory("equity");
       else if (s.type === "CRYPTOCURRENCY") setInvCategory("crypto");
@@ -1631,6 +1649,9 @@ export default function Dashboard() {
               quantity: invQuantity ? parseFloat(invQuantity) : undefined,
               buyPrice: invBuyPrice ? parseFloat(invBuyPrice) : undefined,
               notes: invNotes.trim() || undefined,
+              mfSchemeCode: invMfSchemeCode || undefined,
+              startDate: invCategory === "sip" && invStartDate ? invStartDate : undefined,
+              sipDay: invCategory === "sip" && invSipDay ? parseInt(invSipDay, 10) : undefined,
             };
       const res = await fetch("/api/portfolio", {
         method: "POST",
@@ -1641,6 +1662,7 @@ export default function Dashboard() {
       });
       if (res.ok) {
         setInvName("");
+        setInvMfSchemeCode("");
         setInvAmount("");
         setInvQuantity("");
         setInvBuyPrice("");
@@ -1648,6 +1670,7 @@ export default function Dashboard() {
         setInvInterestRate("");
         setInvStartDate("");
         setInvMaturityDate("");
+        setInvSipDay("");
         fetchInvestments();
       }
     } catch (err) {
@@ -1720,8 +1743,11 @@ export default function Dashboard() {
       if (res.ok) {
         const data = await res.json();
         const pricedAssets = (data.assets || []).map((a: any) => {
+          // SIP's "quantity" is the recurring installment amount, not units
+          // held, so it can't be multiplied by NAV to get a valuation —
+          // leave Total Valuation as whatever the user last entered.
           const liveValue =
-            a.quantity && a.currentPriceInr
+            a.category !== "sip" && a.quantity && a.currentPriceInr
               ? a.quantity * a.currentPriceInr
               : a.amount;
           return { ...a, amount: liveValue };
@@ -2308,7 +2334,7 @@ export default function Dashboard() {
             investments={investments}
             currency={currency}
             invName={invName}
-            setInvName={setInvName}
+            setInvName={handleInvNameChange}
             invCategory={invCategory}
             setInvCategory={setInvCategory}
             invQuantity={invQuantity}
@@ -2327,6 +2353,8 @@ export default function Dashboard() {
             setInvMaturityDate={setInvMaturityDate}
             invCompounding={invCompounding}
             setInvCompounding={setInvCompounding}
+            invSipDay={invSipDay}
+            setInvSipDay={setInvSipDay}
             isAddingAsset={isAddingAsset}
             addInvestment={addInvestment}
             deleteInvestment={deleteInvestment}
