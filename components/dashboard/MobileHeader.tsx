@@ -96,13 +96,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           </a>
 
           <a
-            onClick={() => setActiveTab("agent")}
-            title="Kiroku Assistant"
-            className={`flex h-7 w-7 items-center justify-center rounded-full border border-border-subtle cursor-pointer transition-colors ${
-              activeTab === "agent"
-                ? "bg-text-primary text-bg-card"
-                : "bg-bg-primary text-text-secondary hover:text-text-primary"
-            }`}
+            href="/assistant"
+            title="AI Integration Setup"
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-secondary transition-colors hover:text-text-primary"
           >
            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>
           </a>

@@ -796,10 +796,12 @@ export interface InvestmentAsset {
   isSold?: boolean;
   soldAt?: number;
   soldPrice?: number;
+  mfSchemeCode?: string;
   interestRate?: number;
   startDate?: string;
   maturityDate?: string;
   compounding?: FdCompounding;
+  sipDay?: number;
 }
 
 export interface PortfolioRecord {
@@ -841,10 +843,12 @@ export function encryptAsset(a: InvestmentAsset): Record<string, unknown> {
     isSold: a.isSold ?? null,
     soldAt: a.soldAt ?? null,
     soldPrice: a.soldPrice !== undefined ? encrypt(String(a.soldPrice)) : null,
+    mfSchemeCode: a.mfSchemeCode ? encrypt(a.mfSchemeCode) : null,
     interestRate: a.interestRate !== undefined ? encrypt(String(a.interestRate)) : null,
     startDate: a.startDate ? encrypt(a.startDate) : null,
     maturityDate: a.maturityDate ? encrypt(a.maturityDate) : null,
     compounding: a.compounding ?? null,
+    sipDay: a.sipDay !== undefined ? encrypt(String(a.sipDay)) : null,
   };
 }
 
@@ -865,10 +869,12 @@ export function decryptAsset(a: Record<string, unknown>): InvestmentAsset {
     isSold: a.isSold !== undefined && a.isSold !== null ? Boolean(a.isSold) : undefined,
     soldAt: a.soldAt !== undefined && a.soldAt !== null ? Number(a.soldAt) : undefined,
     soldPrice: decryptNumber(a.soldPrice),
+    mfSchemeCode: typeof a.mfSchemeCode === "string" ? decrypt(a.mfSchemeCode) || undefined : undefined,
     interestRate: decryptNumber(a.interestRate),
     startDate: typeof a.startDate === "string" ? decrypt(a.startDate) || undefined : undefined,
     maturityDate: typeof a.maturityDate === "string" ? decrypt(a.maturityDate) || undefined : undefined,
     compounding: typeof a.compounding === "string" ? (a.compounding as FdCompounding) : undefined,
+    sipDay: decryptNumber(a.sipDay),
   };
 }
 

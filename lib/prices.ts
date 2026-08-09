@@ -30,11 +30,68 @@ function getYahooTicker(name: string): string {
   return clean;
 }
 
+export interface AssetPrice {
+  priceInr: number;
+  priceUsd: number;
+  previousCloseInr: number | null;
+  previousCloseUsd: number | null;
+}
+
+export type PriceFetcher = (category: string, name: string, usdToInr: number, mfSchemeCode?: string) => Promise<AssetPrice | null>;
+
+// Dedupes identical price lookups for the lifetime of the returned function.
+// The cron routes fan out across every user, and holdings overlap heavily
+// (everyone owns some BTC or NIFTY tracker), so without this a single run
+// hammers Yahoo/Binance/AMFI with the same request once per user — slow, and
+// a good way to get rate-limited mid-run.
+//
+// Promises are cached rather than resolved values so that concurrent lookups
+// of the same asset (assets within a user are fetched via Promise.all) share
+// one in-flight request instead of racing to start several.
+export function createPriceFetcher(): PriceFetcher {
+  const inFlight = new Map<string, Promise<AssetPrice | null>>();
+  return (category, name, usdToInr, mfSchemeCode) => {
+    const key = `${category}:${name.trim().toUpperCase()}:${mfSchemeCode || ""}`;
+    let pending = inFlight.get(key);
+    if (!pending) {
+      pending = fetchAssetPrice(category, name, usdToInr, mfSchemeCode);
+      inFlight.set(key, pending);
+    }
+    return pending;
+  };
+}
+
 export async function fetchAssetPrice(
   category: string,
   name: string,
-  usdToInr: number
-): Promise<{ priceInr: number; priceUsd: number; previousCloseInr: number | null; previousCloseUsd: number | null } | null> {
+  usdToInr: number,
+  mfSchemeCode?: string
+): Promise<AssetPrice | null> {
+  if ((category === 'mutual_fund' || category === 'sip') && mfSchemeCode) {
+    // Indian AMC mutual fund/SIP schemes are priced by AMFI NAV, not by a
+    // Yahoo-style ticker — mfapi.in mirrors the daily AMFI NAV feed.
+    try {
+      const res = await fetch(`https://api.mfapi.in/mf/${mfSchemeCode}`);
+      if (res.ok) {
+        const data = await res.json();
+        const history = Array.isArray(data?.data) ? data.data : [];
+        const nav = history[0] ? parseFloat(history[0].nav) : NaN;
+        if (!isNaN(nav)) {
+          const prevNav = history[1] ? parseFloat(history[1].nav) : NaN;
+          return {
+            priceInr: nav,
+            priceUsd: nav / usdToInr,
+            previousCloseInr: !isNaN(prevNav) ? prevNav : null,
+            previousCloseUsd: !isNaN(prevNav) ? prevNav / usdToInr : null,
+          };
+        }
+      }
+    } catch (err) {
+      console.error(`Error fetching MF NAV for scheme ${mfSchemeCode}:`, err);
+    }
+    return null;
+  }
+
   if (category === 'crypto') {
     const binanceSymbol = getBinanceSymbol(name);
     if (binanceSymbol) {

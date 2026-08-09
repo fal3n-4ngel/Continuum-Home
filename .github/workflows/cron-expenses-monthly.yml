@@ -14,6 +14,8 @@ jobs:
     uses: ./.github/workflows/shared-cron-action.yml
     with:
       endpoint: /api/cron/expenses?period=monthly
+      job_name: Monthly Expense Summary
     secrets:
       APP_URL: ${{ secrets.APP_URL }}
       CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

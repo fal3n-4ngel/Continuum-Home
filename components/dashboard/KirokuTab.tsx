@@ -212,10 +212,10 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
             <button
               type="submit"
               disabled={loading || !input.trim() || !idToken}
-              className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-text-primary text-white flex items-center justify-center hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed transition-all cursor-pointer shadow-md"
+              className="absolute right-2 top-1/2 -translate-y-1/2  h-12 w-12 rounded-full bg-text-primary text-white flex items-center justify-center hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed transition-all cursor-pointer shadow-md"
               aria-label="Send message"
             >
-              <Send className="h-4 w-4 relative right-[1px] top-[1px]" />
+              <Send className="h-24 w-24 z-1000 scale-175" />
             </button>
           </form>
           <div className="text-center mt-3">

@@ -85,13 +85,21 @@ export interface InvestmentAsset {
   isSold?: boolean;
   soldAt?: number;
   soldPrice?: number;
+  // AMFI scheme code (mfapi.in) — set when the asset was picked from Indian
+  // mutual fund search results, so price lookups use NAV instead of Yahoo.
+  mfSchemeCode?: string;
   // Fixed Deposit terms — only meaningful when category === "fixed_deposit".
   // The accrued current value is derived from these (see lib/fd.ts) rather
   // than stored, since there's no live price feed for an FD.
   interestRate?: number;
+  // startDate is also used by category === "sip" to record when the SIP
+  // was set up (maturityDate/compounding stay FD-only).
   startDate?: string;
   maturityDate?: string;
   compounding?: FdCompounding;
+  // Day of month (1-31) the SIP installment is auto-debited — only
+  // meaningful when category === "sip".
+  sipDay?: number;
 }
 
 export interface Note {
@@ -116,6 +124,7 @@ export interface InvestmentQuote {
   name?: string;
   exchange?: string;
   type?: string;
+  schemeCode?: string;
 }
 
 export interface ProClaim {

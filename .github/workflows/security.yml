@@ -1,0 +1,112 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  schedule:
+    # 05:30 UTC Monday (11:00 AM IST) — catches advisories published against
+    # dependencies that haven't changed, which push/PR triggers never would.
+    - cron: '30 5 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dependency-audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Audit production dependencies
+        id: audit
+        run: |
+          set -uo pipefail
+          # Only --omit=dev fails the build: a vulnerable devDependency can't
+          # be reached by the deployed app, and transitive dev advisories are
+          # frequent enough that failing on them trains you to ignore this job.
+          npm audit --omit=dev --audit-level=high --json > audit.json
+          AUDIT_EXIT=$?
+
+          if [ "$AUDIT_EXIT" -ne 0 ]; then
+            # Human-readable version in the log next to the parsed summary.
+            npm audit --omit=dev --audit-level=high || true
+            SUMMARY=$(jq -r '
+              .vulnerabilities // {} | to_entries
+              | map(select(.value.severity == "high" or .value.severity == "critical"))
+              | map("- \(.key) (\(.value.severity)): \(.value.via | map(if type == "object" then .title else . end) | unique | join(", "))")
+              | .[0:15] | join("\n")
+            ' audit.json)
+            {
+              echo "summary<<AUDIT_EOF"
+              echo "$SUMMARY"
+              echo "AUDIT_EOF"
+            } >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo "No high or critical advisories in production dependencies."
+
+      - name: Report full audit (informational)
+        if: always()
+        run: npm audit || true
+    outputs:
+      summary: ${{ steps.audit.outputs.summary }}
+
+  codeql:
+    name: CodeQL
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+
+  # Flags dependencies a PR introduces that already carry known advisories,
+  # before they ever reach main.
+  dependency-review:
+    name: Dependency Review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Review dependency changes
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+
+  alert:
+    needs: [dependency-audit, codeql]
+    if: failure() && github.event_name != 'pull_request'
+    uses: ./.github/workflows/discord-notify.yml
+    with:
+      title: "🔐 Security Audit Failed"
+      description: ${{ needs.dependency-audit.outputs.summary != '' && needs.dependency-audit.outputs.summary || 'A security scan failed — check the run for details.' }}
+      color: 16753920
+    secrets:
+      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

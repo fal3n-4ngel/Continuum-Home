@@ -13,6 +13,12 @@ interface AssetRowProps {
 
 const LEDGER_TD = "border-b border-border-subtle px-3.5 py-4 align-middle text-[13px] text-text-primary";
 
+function ordinal(n: number): string {
+  const suffixes = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return `${n}${suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]}`;
+}
+
 export const AssetRow: React.FC<AssetRowProps> = ({
   asset,
   currency,
@@ -24,15 +30,24 @@ export const AssetRow: React.FC<AssetRowProps> = ({
   const investedVal = asset.investedAmount || asset.amount || 0;
   const assetProfit = currentVal - investedVal;
   const assetProfitPct = investedVal > 0 ? (assetProfit / investedVal) * 100 : 0;
-  const avgBuy = asset.quantity && asset.quantity > 0 ? investedVal / asset.quantity : (asset.buyPrice || 0);
-  const hasDayChange = !!asset.quantity && asset.currentPrice != null && asset.previousClose != null;
+  // "sip" repurposes `quantity` to hold the installment amount, not units
+  // held, so it can't be divided/multiplied against price like other categories.
+  const isSip = asset.category === "sip";
+  const avgBuy = !isSip && asset.quantity && asset.quantity > 0 ? investedVal / asset.quantity : (asset.buyPrice || 0);
+  const hasDayChange = !isSip && !!asset.quantity && asset.currentPrice != null && asset.previousClose != null;
   const dayChange = hasDayChange ? asset.quantity! * (asset.currentPrice! - asset.previousClose!) : null;
   const dayChangePct = hasDayChange && asset.previousClose! > 0 ? ((asset.currentPrice! - asset.previousClose!) / asset.previousClose!) * 100 : null;
+  const sipStartedLabel =
+    asset.category === "sip" && asset.startDate
+      ? new Date(`${asset.startDate}T00:00:00Z`).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })
+      : null;
+  const sipDayLabel = asset.category === "sip" && asset.sipDay ? `Pays on the ${ordinal(asset.sipDay)}` : null;
 
   return (
     <tr className="hover:bg-bg-secondary/40 transition-colors">
       <td className={`${LEDGER_TD} font-bold`}>
         {asset.name}
+        {sipStartedLabel && <p className="mt-1 text-[10px] text-text-muted font-normal">Started {sipStartedLabel}</p>}
         {asset.notes && <p className="mt-1 text-[10px] text-text-muted font-normal">{asset.notes}</p>}
       </td>
       <td className={LEDGER_TD}>
@@ -46,9 +61,11 @@ export const AssetRow: React.FC<AssetRowProps> = ({
       <td className={`${LEDGER_TD} text-right font-mono font-medium`}>
         {asset.category === "fixed_deposit" && asset.interestRate
           ? `${asset.interestRate}% p.a.`
-          : asset.quantity
-            ? asset.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })
-            : "—"}
+          : isSip && asset.quantity
+            ? `${currency}${asset.quantity.toLocaleString(undefined, { maximumFractionDigits: 2 })}/mo`
+            : asset.quantity
+              ? asset.quantity.toLocaleString(undefined, { maximumFractionDigits: 4 })
+              : "—"}
       </td>
       <td className={`${LEDGER_TD} text-right font-mono`}>
         <div>{currency}{investedVal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
@@ -84,6 +101,8 @@ export const AssetRow: React.FC<AssetRowProps> = ({
             <div>{dayChange >= 0 ? "+" : ""}{currency}{dayChange.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             {dayChangePct !== null && <div className="text-[10px] font-bold">{dayChangePct >= 0 ? "+" : ""}{dayChangePct.toFixed(2)}%</div>}
           </>
+        ) : sipDayLabel ? (
+          <span className="text-[10px] font-semibold text-text-secondary">{sipDayLabel}</span>
         ) : (
           <span className="text-text-muted">—</span>
         )}

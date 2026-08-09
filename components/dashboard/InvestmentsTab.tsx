@@ -44,6 +44,8 @@ interface InvestmentsTabProps {
   setInvMaturityDate: (s: string) => void;
   invCompounding: FdCompounding;
   setInvCompounding: (c: FdCompounding) => void;
+  invSipDay: string;
+  setInvSipDay: (s: string) => void;
   isAddingAsset: boolean;
   addInvestment: (e: React.FormEvent) => void;
   deleteInvestment: (id: string) => void;
@@ -130,7 +132,7 @@ const getFieldConfig = (category: InvestmentCategory): DynamicFieldConfig => {
         notesLabel: "Fund House / Scheme Details",
         notesPlaceholder: "e.g. Fidelity, BlackRock",
         description: "Pooled investments managed by professionals. Diversifies across baskets of stocks/bonds.",
-        trackingTip: "💡 Tip: Log the total capital invested and current value to track returns.",
+        trackingTip: "💡 Tip: Search Indian AMC scheme names (e.g. HDFC Mid Cap) above to pull live AMFI NAV automatically.",
       };
     case "sip":
       return {
@@ -142,10 +144,10 @@ const getFieldConfig = (category: InvestmentCategory): DynamicFieldConfig => {
         quantityPlaceholder: "Amount invested per period (e.g. 500)",
         buyPriceLabel: "Invested Cost (Optional)",
         buyPricePlaceholder: "Total sum of all installments to date",
-        notesLabel: "SIP Schedule / Day",
-        notesPlaceholder: "e.g. Monthly on 5th",
+        notesLabel: "Fund House / Folio Details",
+        notesPlaceholder: "e.g. Folio 123456, HDFC AMC",
         description: "Systematic Investment Plan. A method to invest fixed amounts regularly in mutual funds, averaging out purchase costs.",
-        trackingTip: "💡 Tip: SIP automates savings. Periodically update your Total Valuation to reflect fund growth.",
+        trackingTip: "💡 Tip: Search Indian AMC scheme names (e.g. HDFC Mid Cap) above to pull live AMFI NAV automatically.",
       };
     case "gold":
       return {
@@ -233,6 +235,8 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
   setInvMaturityDate,
   invCompounding,
   setInvCompounding,
+  invSipDay,
+  setInvSipDay,
   isAddingAsset,
   addInvestment,
   deleteInvestment,
@@ -264,7 +268,9 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
   const totalRealizedProfit = totalRealizedReturn - totalRealizedCost;
   const realizedProfitPct = totalRealizedCost > 0 ? (totalRealizedProfit / totalRealizedCost) * 100 : 0;
 
-  const trackableForDaily = activeInvestments.filter((a) => a.quantity && a.currentPrice != null && a.previousClose != null);
+  // Excludes "sip" — its quantity field holds the installment amount, not
+  // units held, so it can't be multiplied by price for a day-change figure.
+  const trackableForDaily = activeInvestments.filter((a) => a.category !== "sip" && a.quantity && a.currentPrice != null && a.previousClose != null);
   const hasDailyData = trackableForDaily.length > 0;
   const todaysPnl = trackableForDaily.reduce((acc, a) => acc + a.quantity! * (a.currentPrice! - a.previousClose!), 0);
   const yesterdayTrackedValue = trackableForDaily.reduce((acc, a) => acc + a.quantity! * a.previousClose!, 0);
@@ -790,8 +796,17 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                       onClick={() => selectSuggestion(s)}
                       className="flex cursor-pointer justify-between rounded px-2.5 py-2 text-[11px] hover:bg-bg-secondary"
                     >
-                      <span className="font-bold text-text-primary">{s.symbol || s.name}</span>
-                      <span className="text-[10px] text-text-muted truncate max-w-[150px]">{s.name}</span>
+                      {s.type === "MUTUALFUND_IN" ? (
+                        <>
+                          <span className="font-bold text-text-primary truncate max-w-[280px]">{s.name}</span>
+                          <span className="text-[10px] text-text-muted shrink-0 pl-2">AMFI</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="font-bold text-text-primary">{s.symbol || s.name}</span>
+                          <span className="text-[10px] text-text-muted truncate max-w-[150px]">{s.name}</span>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -929,6 +944,33 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                     className={INPUT_CLASS}
                   />
                 </div>
+
+                {invCategory === "sip" && (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">SIP Start Date</span>
+                      <input
+                        type="date"
+                        value={invStartDate}
+                        onChange={(e) => setInvStartDate(e.target.value)}
+                        className={INPUT_CLASS}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">Payment Day</span>
+                      <input
+                        type="number"
+                        placeholder="e.g. 5"
+                        value={invSipDay}
+                        onChange={(e) => setInvSipDay(e.target.value)}
+                        min="1"
+                        max="31"
+                        step="1"
+                        className={INPUT_CLASS}
+                      />
+                    </div>
+                  </div>
+                )}
               </>
             )}
 
