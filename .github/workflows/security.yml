@@ -24,10 +24,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 20
           cache: npm
@@ -66,24 +66,15 @@ jobs:
     outputs:
       summary: ${{ steps.audit.outputs.summary }}
 
-  codeql:
-    name: CodeQL
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
-          queries: security-and-quality
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+  # No CodeQL job here on purpose.
+  #
+  # This repo runs CodeQL via GitHub's *default setup* (Settings → Code
+  # security → Code scanning), which already scans every push and PR — it's
+  # what flagged the SSRF and format-string issues in lib/prices.ts. GitHub
+  # rejects SARIF uploads from a workflow-based ("advanced") config while
+  # default setup is enabled, so adding one here fails the run rather than
+  # adding coverage. To move to an advanced config, disable default setup in
+  # repo settings first.
 
   # Flags dependencies a PR introduces that already carry known advisories,
   # before they ever reach main.
@@ -93,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Review dependency changes
         uses: actions/dependency-review-action@v4
@@ -101,7 +92,7 @@ jobs:
           fail-on-severity: high
 
   alert:
-    needs: [dependency-audit, codeql]
+    needs: [dependency-audit]
     if: failure() && github.event_name != 'pull_request'
     uses: ./.github/workflows/discord-notify.yml
     with:
