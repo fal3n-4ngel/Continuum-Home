@@ -65,6 +65,32 @@ export default function Dashboard() {
   const [authLoading, setAuthLoading] = useState(true);
   const [selectedMediaItem, setSelectedMediaItem] = useState<WatchlistItem | null>(null);
   const [firebaseAuth, setFirebaseAuth] = useState<FirebaseAuthModule | null>(null);
+  const [isEmbedded, setIsEmbedded] = useState(false);
+
+  /* ─── URL Tab Router (for iframe embedding & deep linking) ─── */
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get("embedded") === "true") {
+        setIsEmbedded(true);
+      }
+      const queryTab = searchParams.get("tab");
+      const hashTab = window.location.hash.replace("#", "");
+      const tab = queryTab || hashTab;
+
+      if (tab) {
+        if (["expenses", "subscriptions", "investments", "financial", "reports", "agent", "admin"].includes(tab)) {
+          setActiveTab(tab);
+        } else if (["watchlist", "books", "integrations"].includes(tab)) {
+          setActiveTab("media");
+          setMediaSubTab(tab as any);
+        } else if (tab === "health") {
+          setActiveTab("financial");
+        }
+      }
+    }
+  }, []);
+
 
   // Integrations
   const [anilistUser, setAnilistUser] = useState<AniListUser | null>(null);
@@ -2065,53 +2091,58 @@ export default function Dashboard() {
 
   return (
     <div className="flex min-h-screen max-md:flex-col max-md:overflow-x-hidden">
-      <MobileHeader
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        user={user}
-        showInvestmentsTab={showInvestmentsTab}
-        isProUser={isProUser}
-        onClaimPro={() => setShowClaimPro(true)}
-        triggerConfirm={triggerConfirm}
-        firebaseAuth={firebaseAuth}
-        setExpenses={setExpenses}
-        setWatchlist={setWatchlist}
-        setExpensesLoaded={setExpensesLoaded}
-        disconnectAnilist={disconnectAnilist}
-        disconnectTrakt={disconnectTrakt}
-      />
+      {!isEmbedded && (
+        <>
+          <MobileHeader
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            user={user}
+            showInvestmentsTab={showInvestmentsTab}
+            isProUser={isProUser}
+            onClaimPro={() => setShowClaimPro(true)}
+            triggerConfirm={triggerConfirm}
+            firebaseAuth={firebaseAuth}
+            setExpenses={setExpenses}
+            setWatchlist={setWatchlist}
+            setExpensesLoaded={setExpensesLoaded}
+            disconnectAnilist={disconnectAnilist}
+            disconnectTrakt={disconnectTrakt}
+          />
 
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        user={user}
-        anilistUser={anilistUser}
-        traktUser={traktUser}
-        connectAnilist={connectAnilist}
-        disconnectAnilist={disconnectAnilist}
-        syncAnilist={syncAnilist}
-        isSyncingAnilist={isSyncingAnilist}
-        connectTrakt={connectTrakt}
-        disconnectTrakt={disconnectTrakt}
-        syncTrakt={syncTrakt}
-        isSyncingTrakt={isSyncingTrakt}
-        letterboxdUsername={letterboxdUsername || null}
-        connectLetterboxd={() => setShowLetterboxdModal(true)}
-        disconnectLetterboxd={disconnectLetterboxd}
-        syncLetterboxd={handleLetterboxdImport}
-        isSyncingLetterboxd={isImportingLetterboxd}
-        showInvestmentsTab={showInvestmentsTab}
-        isProUser={isProUser}
-        onClaimPro={() => setShowClaimPro(true)}
-        setShowOnboarding={setShowOnboarding}
-        triggerConfirm={triggerConfirm}
-        firebaseAuth={firebaseAuth}
-        setExpenses={setExpenses}
-        setWatchlist={setWatchlist}
-        setExpensesLoaded={setExpensesLoaded}
-      />
+          <Sidebar
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            user={user}
+            anilistUser={anilistUser}
+            traktUser={traktUser}
+            connectAnilist={connectAnilist}
+            disconnectAnilist={disconnectAnilist}
+            syncAnilist={syncAnilist}
+            isSyncingAnilist={isSyncingAnilist}
+            connectTrakt={connectTrakt}
+            disconnectTrakt={disconnectTrakt}
+            syncTrakt={syncTrakt}
+            isSyncingTrakt={isSyncingTrakt}
+            letterboxdUsername={letterboxdUsername || null}
+            connectLetterboxd={() => setShowLetterboxdModal(true)}
+            disconnectLetterboxd={disconnectLetterboxd}
+            syncLetterboxd={handleLetterboxdImport}
+            isSyncingLetterboxd={isImportingLetterboxd}
+            showInvestmentsTab={showInvestmentsTab}
+            isProUser={isProUser}
+            onClaimPro={() => setShowClaimPro(true)}
+            setShowOnboarding={setShowOnboarding}
+            triggerConfirm={triggerConfirm}
+            firebaseAuth={firebaseAuth}
+            setExpenses={setExpenses}
+            setWatchlist={setWatchlist}
+            setExpensesLoaded={setExpensesLoaded}
+          />
+        </>
+      )}
 
-      <main className="ml-[250px] flex max-w-[1300px] flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(68px+env(safe-area-inset-bottom))]">
+      <main className={`${isEmbedded ? "w-full max-w-full p-4 sm:p-6" : "ml-[250px] flex max-w-[1300px] flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(68px+env(safe-area-inset-bottom))]"}`}>
+
         {activeTab === "expenses" && (
           <>
             <ExpensesTab
