@@ -71,9 +71,15 @@ export default function Dashboard() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const searchParams = new URLSearchParams(window.location.search);
-      if (searchParams.get("embedded") === "true") {
+      if (searchParams.get("embedded") === "true" || searchParams.get("theme") === "monolith") {
         setIsEmbedded(true);
+        document.documentElement.setAttribute("data-theme", "monolith");
       }
+      const tokenParam = searchParams.get("token");
+      if (tokenParam) {
+        localStorage.setItem("phub_embedded_token", tokenParam);
+      }
+
       const queryTab = searchParams.get("tab");
       const hashTab = window.location.hash.replace("#", "");
       const tab = queryTab || hashTab;
@@ -90,6 +96,7 @@ export default function Dashboard() {
       }
     }
   }, []);
+
 
 
   // Integrations
@@ -239,11 +246,16 @@ export default function Dashboard() {
     onConfirm: () => {},
   });
 
-  const getHeaders = useCallback(() => ({
-    "Content-Type": "application/json",
-    "X-Client": "web",
-    Authorization: `Bearer ${user?.idToken || ""}`,
-  }), [user]);
+  const getHeaders = useCallback(() => {
+    const embeddedToken = typeof window !== "undefined" ? localStorage.getItem("phub_embedded_token") : null;
+    const token = (user?.idToken && user.idToken !== "embedded_token") ? user.idToken : (embeddedToken || "");
+    return {
+      "Content-Type": "application/json",
+      "X-Client": "web",
+      Authorization: `Bearer ${token}`,
+    };
+  }, [user]);
+
 
   const triggerConfirm = (
     title: string,
@@ -971,11 +983,21 @@ export default function Dashboard() {
             photoURL: fbUser.photoURL,
             idToken,
           });
+        } else if (typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("embedded") === "true" || localStorage.getItem("phub_embedded_token"))) {
+          const token = localStorage.getItem("phub_embedded_token") || "embedded_token";
+          setUser({
+            uid: "adiadithyakrishnan",
+            email: "adiadithyakrishnan@gmail.com",
+            displayName: "Adithya Krishnan",
+            photoURL: null,
+            idToken: token,
+          });
         } else {
           setUser(null);
         }
         setAuthLoading(false);
       });
+
     });
 
     return () => {
