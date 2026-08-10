@@ -2163,7 +2163,8 @@ export default function Dashboard() {
         </>
       )}
 
-      <main className={`${isEmbedded ? "w-full max-w-full p-4 sm:p-6" : "ml-[250px] flex max-w-[1300px] flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(68px+env(safe-area-inset-bottom))]"}`}>
+      <main className={`${isEmbedded ? "w-full max-w-full flex flex-col gap-7 p-4 sm:p-6 lg:p-8" : "ml-[250px] flex max-w-[1300px] flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(68px+env(safe-area-inset-bottom))]"}`}>
+
 
         {activeTab === "expenses" && (
           <>
