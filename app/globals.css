@@ -55,6 +55,21 @@
   --font-body: 'Plus Jakarta Sans', sans-serif;
 }
 
+[data-theme="monolith"] {
+  --bg-primary: #F3F8FA;
+  --bg-secondary: #E6F0F5;
+  --bg-card: #FFFFFF;
+  --bg-sidebar: #FFFFFF;
+  --text-primary: #0A1628;
+  --text-secondary: #4A5A6E;
+  --text-muted: #8A9AA8;
+  --border-subtle: #E2EEF4;
+  --border-hover: #CBDDE7;
+  --radius-card: 24px;
+}
+
+
+
 * {
   box-sizing: border-box;
   margin: 0;
