@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCredentials, parseFirebaseConfig } from "@/lib/credentials";
 import { verifyIdToken } from "@/lib/auth";
 import { redis } from "@/lib/redis";
+import { isAllowedOAuthRedirect } from "@/lib/oauth-clients";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
@@ -15,6 +16,10 @@ export async function GET(req: NextRequest) {
 
   if (!clientId || !redirectUri || !state) {
     return new NextResponse("Missing required OAuth 2.0 query parameters (client_id, redirect_uri, state).", { status: 400 });
+  }
+
+  if (!isAllowedOAuthRedirect(clientId, redirectUri)) {
+    return new NextResponse("Unrecognized client_id/redirect_uri — this client is not registered.", { status: 400 });
   }
 
   const creds = await getCredentials(req);
@@ -304,6 +309,10 @@ export async function POST(req: NextRequest) {
 
     if (!idToken || !refreshToken || !clientId || !redirectUri || !state) {
       return NextResponse.json({ error: "Missing required parameters." }, { status: 400 });
+    }
+
+    if (!isAllowedOAuthRedirect(clientId, redirectUri)) {
+      return NextResponse.json({ error: "Unrecognized client_id/redirect_uri — this client is not registered." }, { status: 400 });
     }
 
     // 1. Verify user identity token
