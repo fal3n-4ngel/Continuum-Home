@@ -2,6 +2,7 @@ export interface PostbackPayload {
   eventType: string;
   severity?: "INFO" | "WARN" | "ERROR" | "CRITICAL";
   userId?: string;
+  eventId?: string;
   metadata?: Record<string, unknown>;
   context?: Record<string, unknown>;
   prodOnly?: boolean;

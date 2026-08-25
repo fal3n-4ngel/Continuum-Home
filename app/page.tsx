@@ -17,7 +17,6 @@ import {
 } from "@/types";
 import { getNextFutureBillingDate, resolvePayCycle, buildCycleHistory, toLocalDateStr } from "@/lib/utils";
 import { getCurrencySymbol } from "@/lib/utils";
-import { sendAuditPostback } from "@/lib/audit-postback";
 import { anilistQuery } from "@/lib/integrations";
 import { traktRequest } from "@/lib/integrations";
 import { pushWatchlistUpdate } from "@/lib/firebase";
@@ -265,15 +264,18 @@ export default function Dashboard() {
   }, [user]);
 
   useEffect(() => {
-    if (user?.uid) {
-      sendAuditPostback({
-        eventType: "USER_SESSION_ACTIVE",
-        userId: user.uid,
-        metadata: { email: user.email, authProvider: "google" },
-        oncePerSession: true,
-      }).catch(() => {});
+    if (!user?.uid) return;
+
+    const sessionKey = "monolith_audit_sent_USER_SESSION_ACTIVE";
+    try {
+      if (sessionStorage.getItem(sessionKey)) return;
+      sessionStorage.setItem(sessionKey, "1");
+    } catch {
+      console.warn("Session storage not available; skipping session audit.");
     }
-  }, [user?.uid, user?.email]);
+
+    fetch("/api/audit/session", { method: "POST", headers: getHeaders() }).catch(() => {});
+  }, [user?.uid, getHeaders]);
 
 
   const triggerConfirm = (

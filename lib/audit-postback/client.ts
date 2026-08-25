@@ -47,6 +47,7 @@ function buildBody(payload: PostbackPayload, environment: string): string | null
 
   const body = JSON.stringify({
     sourceApp: "continuum-home",
+    eventId: payload.eventId || crypto.randomUUID(),
     eventType: payload.eventType,
     severity: payload.severity || "INFO",
     userId: payload.userId || "anonymous",
@@ -54,11 +55,6 @@ function buildBody(payload: PostbackPayload, environment: string): string | null
     metadata: payload.metadata || {},
     context: {
       environment,
-      // The receiver reads Origin, Referer, and User-Agent from the request headers
-      // itself and trusts those over anything in the body, so re-sending them here
-      // is wasted bytes and duplicate index entries.
-      // Path without query string: query params routinely carry identifiers we have
-      // no reason to put in an audit log.
       ...(isBrowser ? { clientPath: window.location.pathname } : {}),
       ...(payload.context || {}),
     },
