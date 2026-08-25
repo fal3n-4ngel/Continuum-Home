@@ -45,6 +45,9 @@ export async function sendAuditPostback(payload: PostbackPayload): Promise<void>
       context: {
         environment: env.ENVIRONMENT,
         isUat: env.ENVIRONMENT === "uat",
+        clientOrigin: typeof window !== "undefined" ? window.location.origin : undefined,
+        clientHref: typeof window !== "undefined" ? window.location.href : undefined,
+        userAgent: typeof window !== "undefined" ? navigator.userAgent : undefined,
         ...(payload.context || {}),
       },
     });
