@@ -270,6 +270,7 @@ export default function Dashboard() {
         eventType: "USER_SESSION_ACTIVE",
         userId: user.uid,
         metadata: { email: user.email, authProvider: "google" },
+        oncePerSession: true,
       }).catch(() => {});
     }
   }, [user?.uid, user?.email]);

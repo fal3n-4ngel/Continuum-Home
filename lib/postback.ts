@@ -7,14 +7,35 @@ export interface PostbackPayload {
   metadata?: Record<string, unknown>;
   context?: Record<string, unknown>;
   prodOnly?: boolean;
+  oncePerSession?: boolean;
 }
 
 const DEFAULT_MONOLITH_API_URL = "https://api.adithyakrishnan.com";
 
+// High-value analytics & audit event types
+export const AUDIT_EVENT_TYPES = {
+  EXPENSE_CREATED: "EXPENSE_CREATED",
+  EXPENSE_BATCH_CREATED: "EXPENSE_BATCH_CREATED",
+  INVESTMENT_MUTATED: "INVESTMENT_MUTATED",
+  SUBSCRIPTION_PAID: "SUBSCRIPTION_PAID",
+  USER_SESSION_ACTIVE: "USER_SESSION_ACTIVE",
+  SECURITY_ALERT: "SECURITY_ALERT",
+  CRON_EXECUTED: "CRON_EXECUTED",
+} as const;
+
 export async function sendAuditPostback(payload: PostbackPayload): Promise<void> {
-  // If explicitly flagged as prodOnly and we're not in production, skip dispatching
+  // 1. If explicitly flagged as prodOnly and we're not in production, skip dispatching
   if (payload.prodOnly && !env.IS_PRODUCTION) {
     return;
+  }
+
+  // 2. Session Throttling: If oncePerSession is requested, check sessionStorage
+  if (payload.oncePerSession && typeof window !== "undefined") {
+    const sessionKey = `monolith_audit_sent_${payload.eventType}`;
+    if (sessionStorage.getItem(sessionKey)) {
+      return; // Skip duplicate dispatch in the same browser session
+    }
+    sessionStorage.setItem(sessionKey, "1");
   }
 
   const rawUrl =
@@ -28,7 +49,6 @@ export async function sendAuditPostback(payload: PostbackPayload): Promise<void>
 
   if (!rawUrl) return;
 
-  // Resolve target endpoint whether rawUrl is base domain or explicit Cloud Function path
   const baseUrl = rawUrl.replace(/\/$/, "");
   const targetEndpoint = baseUrl.includes("/postback")
     ? baseUrl
@@ -52,9 +72,7 @@ export async function sendAuditPostback(payload: PostbackPayload): Promise<void>
       },
     });
 
-    console.log(`[AuditPostback] 🚀 Dispatching [${payload.eventType}] to ${targetEndpoint}`);
-
-    // Non-blocking background fire-and-forget postback to Monolith API / Cloud Functions
+    // Zero-cost non-blocking background dispatch
     fetch(targetEndpoint, {
       method: "POST",
       headers: {
@@ -67,16 +85,17 @@ export async function sendAuditPostback(payload: PostbackPayload): Promise<void>
       .then(async (res) => {
         if (res.ok) {
           const data = await res.json().catch(() => ({}));
-          console.log(`[AuditPostback] ✅ Success [${res.status}] Log ID: ${data.logId || "recorded"}`);
-        } else {
-          const errText = await res.text().catch(() => "");
-          console.warn(`[AuditPostback] ⚠️ Server returned HTTP ${res.status}: ${errText}`);
+          if (env.ENVIRONMENT === "development") {
+            console.log(`[AuditPostback] ✅ Success [${res.status}] Log ID: ${data.logId || "recorded"}`);
+          }
         }
       })
       .catch((err) => {
-        console.warn("[AuditPostback] ❌ Non-blocking audit dispatch network error:", err?.message || err);
+        if (env.ENVIRONMENT === "development") {
+          console.warn("[AuditPostback] Non-blocking audit dispatch network notice:", err?.message || err);
+        }
       });
-  } catch (err: any) {
-    console.warn("[AuditPostback] Unexpected error creating postback payload:", err?.message || err);
+  } catch {
+    // Silently ignore postback failure so Continuum core flow is never impacted
   }
 }
