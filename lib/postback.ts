@@ -17,7 +17,7 @@ export async function sendAuditPostback(payload: PostbackPayload): Promise<void>
     return;
   }
 
-  const postbackUrl =
+  const rawUrl =
     process.env.NEXT_PUBLIC_POSTBACK_API_URL ||
     process.env.MONOLITH_API_URL ||
     DEFAULT_MONOLITH_API_URL;
@@ -26,7 +26,13 @@ export async function sendAuditPostback(payload: PostbackPayload): Promise<void>
     process.env.NEXT_PUBLIC_POSTBACK_API_KEY ||
     process.env.MONOLITH_API_KEY;
 
-  if (!postbackUrl) return;
+  if (!rawUrl) return;
+
+  // Resolve target endpoint whether rawUrl is base domain or explicit Cloud Function path
+  const baseUrl = rawUrl.replace(/\/$/, "");
+  const targetEndpoint = baseUrl.includes("/postback")
+    ? baseUrl
+    : `${baseUrl}/api/v1/audit/postback`;
 
   try {
     const body = JSON.stringify({
@@ -43,8 +49,8 @@ export async function sendAuditPostback(payload: PostbackPayload): Promise<void>
       },
     });
 
-    // Non-blocking background fire-and-forget postback to Monolith API
-    fetch(`${postbackUrl.replace(/\/$/, "")}/api/v1/audit/postback`, {
+    // Non-blocking background fire-and-forget postback to Monolith API / Cloud Functions
+    fetch(targetEndpoint, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
