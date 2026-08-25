@@ -56,6 +56,43 @@ lib/
 └── utils/             # Dates, formatters, encryption, cache, redis, errors, route-handlers, site config
 ```
 
+## Architecture
+
+Every caller — a signed-in browser or an external AI client that completed the OAuth flow — ends up with the same kind of bearer token and hits the same API routes; there is no separate "AI" surface. Those routes read through an in-memory + Redis cache in front of Firestore, using the *caller's own* ID token, so per-user isolation is enforced by Firestore security rules rather than app code. Crons are the one exception: they have no user token to act with, so they carry a service account through the Admin SDK instead, which bypasses those same rules.
+
+The other structural decision is that audit telemetry leaves the building entirely: `lib/audit-postback` doesn't write to this app's own Firestore, it posts to **monolith-api**, a separate service this app has no further visibility into. Route handlers also call out to Trakt, AniList, OMDb, and Gemini for sync, enrichment, and the AI assistant — those are plain leaf API calls, not part of the request's control flow, so they're omitted below.
+
+```mermaid
+flowchart TB
+    Browser["Browser"]
+    GPT["Custom GPT / Gemini Gem /<br/>Claude Project"]
+    API["Next.js API routes<br/>(one set, every caller)"]
+
+    Cache["memory + Redis"]
+    FSRest["Firestore REST"]
+    Firestore[("Firestore")]
+
+    CronEP["Vercel Cron"]
+    FSAdmin["Admin SDK"]
+
+    AuditClient["audit-postback client"]
+    Monolith["monolith-api<br/>(external service)"]
+
+    Browser -- "Google sign-in → ID token" --> API
+    GPT -- "OAuth code → same token type" --> API
+
+    API -- "read" --> Cache
+    Cache -- "hit: skip Firestore" --> API
+    Cache -- "miss, caller's own token" --> FSRest
+    FSRest -- "security rules enforce isolation" --> Firestore
+
+    CronEP -- "no user token available" --> FSAdmin
+    FSAdmin -- "bypasses security rules" --> Firestore
+
+    API -- "session + Custom GPT events" --> AuditClient
+    AuditClient -- "fire-and-forget POST" --> Monolith
+```
+
 ## Run Using Node.js
 
 ### Clone the Repository
@@ -99,7 +136,7 @@ FIREBASE_CONFIG={"apiKey":"...","authDomain":"...","projectId":"..."}
 ENCRYPTION_KEY="your-custom-super-secret-key-phrase"
 ```
 
-Optional keys for Trakt, AniList, and TMDb can also go here — see [`.env.example`](.env.example).
+Optional keys for Trakt, AniList, and OMDb can also go here — see [`.env.example`](.env.example).
 
 > [!TIP]
 > **Bring-your-own-config mode:** server-wide env vars for third-party APIs are optional. Users can instead supply their own credentials per-request via HTTP headers (`X-Firebase-Config`, `X-Trakt-Client-Id`, etc.) — see `lib/auth/credentials.ts`.
