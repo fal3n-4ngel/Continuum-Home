@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { redis } from "@/lib/redis";
-import { ApiError } from "@/lib/errors";
+import { redis } from "@/lib/utils";
+import { ApiError } from "@/lib/utils";
 import { waitUntil } from "@vercel/functions";
-import { sendDiscordEmbed } from "@/lib/discord";
+import { sendDiscordEmbed } from "@/lib/integrations";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Authenticate user
     const session = await requireUser(req);
     const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL ||"";
 
@@ -17,7 +16,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden: Admin access required." }, { status: 403 });
     }
 
-    // 2. Validate Redis
     if (!redis) {
       return NextResponse.json(
         { error: "Redis cache is not active or configured on this server." },
@@ -25,7 +23,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Flush all keys from the Redis DB
     const res = await redis.flushdb();
 
     waitUntil(sendDiscordEmbed(

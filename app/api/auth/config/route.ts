@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCredentials, parseFirebaseConfig } from "@/lib/credentials";
-import { toErrorResponse } from "@/lib/errors";
+import { getCredentials, parseFirebaseConfig } from "@/lib/auth";
+import { toErrorResponse } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 

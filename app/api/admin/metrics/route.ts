@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { redis } from "@/lib/redis";
-import { ApiError } from "@/lib/errors";
-import { listAllUsers } from "@/lib/firebase-admin";
+import { redis } from "@/lib/utils";
+import { ApiError } from "@/lib/utils";
+import { listAllUsers } from "@/lib/firebase/firebase-admin";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
-    // 1. Authenticate user
     const session = await requireUser(req);
     const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com";
 
@@ -20,7 +19,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Redis cache is offline." }, { status: 500 });
     }
 
-    // 2. Fetch legacy GPT metrics & New Global API metrics
     const totalCallsRaw = await redis.get<string>("metrics:gpt:total_calls");
     const totalCalls = Number(totalCallsRaw) || 0;
 
@@ -82,7 +80,6 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 3. Compile users details list
     const usersListRaw = usersSet.map((identifier) => {
       const lastActiveMs = Number(userLastActive[identifier]) || 0;
       const email = identifier.includes("@") ? identifier : (uidToEmail.get(identifier) || uidMap[identifier] || identifier);
@@ -108,7 +105,6 @@ export async function GET(req: NextRequest) {
       return timeB - timeA; // newest active first
     });
 
-    // 4. Fetch daily usage for the last 7 days
     const dailyUsage: { date: string; calls: number }[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();

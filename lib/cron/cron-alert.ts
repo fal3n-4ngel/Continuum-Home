@@ -8,7 +8,7 @@
 // from the outside. This module is the only thing that surfaces those.
 
 import { waitUntil } from "@vercel/functions";
-import { postDiscordEmbed, codeBlock, DISCORD_RED, DISCORD_ORANGE } from "./discord";
+import { postDiscordEmbed, codeBlock, DISCORD_RED, DISCORD_ORANGE } from "@/lib/integrations";
 
 export interface CronUserResult {
   uid: string;

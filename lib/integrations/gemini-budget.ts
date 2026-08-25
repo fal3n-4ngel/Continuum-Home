@@ -1,4 +1,4 @@
-import { redis } from "./redis";
+import { redis } from "@/lib/utils";
 
 // Google's free tier caps gemini-2.5-flash at 20 requests/day PER PROJECT
 // (not per user) — shared across every caller: the recommendations cron

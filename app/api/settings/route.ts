@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { ApiError, toErrorResponse } from "@/lib/errors";
+import { ApiError, toErrorResponse } from "@/lib/utils";
 import { getSettings, updateSettings } from "@/lib/firebase";
-import { validateSettingsPatch } from "@/lib/validate";
+import { validateSettingsPatch } from "@/lib/firebase";
 
 export const dynamic = "force-dynamic";
 

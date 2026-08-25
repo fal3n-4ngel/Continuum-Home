@@ -1,8 +1,8 @@
 import { randomUUID } from "crypto";
-import { Session } from "./auth";
-import { ApiError } from "./errors";
-import { cacheGet, cacheSet, cacheInvalidate } from "./cache";
-import { encrypt, decrypt } from "./encryption";
+import { Session } from "@/lib/auth";
+import { ApiError } from "@/lib/utils";
+import { cacheGet, cacheSet, cacheInvalidate } from "@/lib/utils";
+import { encrypt, decrypt } from "@/lib/utils";
 
 export interface ExpenseEntry {
   title: string;

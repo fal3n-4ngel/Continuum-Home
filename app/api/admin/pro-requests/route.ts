@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { ApiError, toErrorResponse } from "@/lib/errors";
-import { getAdminDb } from "@/lib/firebase-admin";
-import { cacheInvalidate } from "@/lib/cache";
+import { ApiError, toErrorResponse } from "@/lib/utils";
+import { getAdminDb } from "@/lib/firebase/firebase-admin";
+import { cacheInvalidate } from "@/lib/utils";
+import { env } from "@/lib/utils";
 import { waitUntil } from "@vercel/functions";
-import { sendDiscordEmbed } from "@/lib/discord";
+import { sendDiscordEmbed } from "@/lib/integrations";
 
 export const dynamic = "force-dynamic";
 
@@ -100,7 +101,7 @@ export async function POST(req: NextRequest) {
       // Bust settings cache so the user gets the new value on next load
       // Cache key mirrors the pattern in lib/firebase.ts: settings:<projectId>:<uid>
       try {
-        const rawConfig = process.env.FIREBASE_CONFIG;
+        const rawConfig = env.FIREBASE_CONFIG;
         if (rawConfig) {
           const { projectId } = JSON.parse(rawConfig) as { projectId?: string };
           if (projectId) await cacheInvalidate(`settings:${projectId}:${uid}`);

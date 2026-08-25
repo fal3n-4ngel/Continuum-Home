@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { fetchAssetPrice, getUsdToInrRate } from "@/lib/prices";
+import { fetchAssetPrice, getUsdToInrRate } from "@/lib/finance";
 
 export const dynamic = "force-dynamic";
 

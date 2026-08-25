@@ -9,8 +9,7 @@
 import { getApps, initializeApp, cert, type App } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, type Firestore } from "firebase-admin/firestore";
-import { encrypt, decrypt } from "./encryption";
-import { ApiError } from "./errors";
+import { encrypt, decrypt, ApiError, env } from "@/lib/utils";
 import {
   encryptAsset,
   decryptAsset,
@@ -33,7 +32,7 @@ function getAdminApp(): App {
     return adminApp;
   }
 
-  const raw = process.env.FIREBASE_SERVICE_ACCOUNT;
+  const raw = env.FIREBASE_SERVICE_ACCOUNT;
   if (!raw) {
     throw new ApiError(500, "FIREBASE_SERVICE_ACCOUNT is not configured on this server.");
   }

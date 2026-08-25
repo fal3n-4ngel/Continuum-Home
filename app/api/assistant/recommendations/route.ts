@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { listWatchlist, getDailyRecommendation, saveDailyRecommendation, DailyRecommendation } from "@/lib/firebase";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { ApiError, toErrorResponse } from "@/lib/errors";
-import { reserveGeminiCall, acquireGenerationLock, isGeminiQuotaError } from "@/lib/gemini-budget";
+import { ApiError, toErrorResponse } from "@/lib/utils";
+import { reserveGeminiCall, acquireGenerationLock, isGeminiQuotaError } from "@/lib/integrations";
 
 export const dynamic = "force-dynamic";
 
@@ -31,13 +31,12 @@ export async function GET(req: NextRequest) {
     const dateStr = getActiveIstDate();
     const key = `${type}_${dateStr}`;
 
-    // 1. Check if recommendation is already generated in Firestore
     const currentRec = await getDailyRecommendation(session, type, dateStr);
     if (currentRec) {
       return NextResponse.json({ recommendation: currentRec });
     }
 
-    // 2. Fallback: Generate on-the-fly if not present (e.g. cron missed it).
+    // Fallback for users the nightly cron missed.
     // Rate-guarded on two axes since this path (unlike the cron) can be hit
     // concurrently and unboundedly — by multiple tabs/widgets for the same
     // user, and by every user at once — against a tiny 20/day free-tier cap

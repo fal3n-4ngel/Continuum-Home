@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { waitUntil } from "@vercel/functions";
-import { postDiscordEmbed, codeBlock, DISCORD_RED, DISCORD_ORANGE, type DiscordEmbedField } from "./discord";
+import { postDiscordEmbed, codeBlock, DISCORD_RED, DISCORD_ORANGE, type DiscordEmbedField } from "@/lib/integrations";
 
 // Error with an HTTP status, safe to surface to the client verbatim.
 export class ApiError extends Error {

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AUTHOR, SITE_NAME } from "@/lib/site";
+import { AUTHOR, SITE_NAME } from "@/lib/utils";
 import { LogoMark as BentoLogo } from "@/components/Logo";
 
 interface LandingPageProps {

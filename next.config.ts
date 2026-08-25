@@ -1,9 +1,15 @@
 import type { NextConfig } from "next";
 
+// Mirrors the USE_UAT_CONFIG flip in lib/env.ts. This runs at build time, so
+// it cannot import that module — without this the /__/auth rewrite would still
+// proxy to production Firebase while the running app talked to UAT.
 function getFirebaseProjectId(): string {
+  const raw =
+    (process.env.USE_UAT_CONFIG === "true" && process.env.UAT_FIREBASE_CONFIG) ||
+    process.env.FIREBASE_CONFIG;
   try {
-    if (process.env.FIREBASE_CONFIG) {
-      const parsed = JSON.parse(process.env.FIREBASE_CONFIG);
+    if (raw) {
+      const parsed = JSON.parse(raw);
       if (parsed.projectId) return parsed.projectId;
     }
   } catch {}

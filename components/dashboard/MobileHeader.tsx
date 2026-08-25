@@ -1,7 +1,7 @@
 import React from "react";
 import { FirebaseUser } from "@/types";
-import { isSafeImageUrl } from "@/lib/safe-url";
-import { AUTHOR, SITE_NAME } from "@/lib/site";
+import { isSafeImageUrl } from "@/lib/utils";
+import { AUTHOR, SITE_NAME } from "@/lib/utils";
 import { LogoMark } from "@/components/Logo";
 
 interface MobileHeaderProps {

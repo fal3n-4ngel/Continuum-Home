@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCredentials, parseFirebaseConfig } from "@/lib/credentials";
+import { getCredentials, parseFirebaseConfig } from "@/lib/auth";
 import { verifyIdToken } from "@/lib/auth";
-import { redis } from "@/lib/redis";
-import { isAllowedOAuthRedirect } from "@/lib/oauth-clients";
+import { redis } from "@/lib/utils";
+import { isAllowedOAuthRedirect } from "@/lib/auth";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
@@ -196,7 +196,6 @@ export async function GET(req: NextRequest) {
       </div>
 
       <script>
-        // 1. Initialize Firebase
         const config = ${JSON.stringify(firebaseConfig)};
         firebase.initializeApp(config);
         const auth = firebase.auth();
@@ -208,10 +207,9 @@ export async function GET(req: NextRequest) {
 
         let currentUser = null;
 
-        // 2. Consume any pending redirect result first (popup-blocked fallback)
+        // Consume a pending redirect result first — the popup-blocked fallback path.
         auth.getRedirectResult().catch(() => { /* no pending redirect */ });
 
-        // 3. Auth State Observer
         auth.onAuthStateChanged(async (user) => {
           loadingDiv.style.display = 'none';
           if (user) {
@@ -236,7 +234,6 @@ export async function GET(req: NextRequest) {
           }
         });
 
-        // 3. Button Click Actions
         document.getElementById('login-btn').onclick = () => {
           const provider = new firebase.auth.GoogleAuthProvider();
           auth.signInWithPopup(provider).catch(err => {
@@ -315,7 +312,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unrecognized client_id/redirect_uri — this client is not registered." }, { status: 400 });
     }
 
-    // 1. Verify user identity token
     const creds = await getCredentials(req);
     const config = parseFirebaseConfig(creds);
     await verifyIdToken(config, idToken);
@@ -324,14 +320,12 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Upstash Redis DB is offline." }, { status: 500 });
     }
 
-    // 2. Generate authorization code (UUID)
     const authCode = crypto.randomUUID();
     const cacheKey = `oauth:code:${authCode}`;
 
     // Store auth code mapped to user's Firebase Refresh Token (5 min TTL)
     await redis.set(cacheKey, refreshToken, { ex: 300 });
 
-    // 3. Formulate redirect URI back to ChatGPT callback
     const redirectUrl = `${redirectUri}?code=${authCode}&state=${state}`;
 
     return NextResponse.json({ redirectUrl });

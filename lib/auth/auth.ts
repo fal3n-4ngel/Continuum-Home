@@ -1,9 +1,9 @@
 import { createHash } from "crypto";
 import { NextRequest } from "next/server";
 import { Credentials, FirebaseWebConfig, getCredentials, parseFirebaseConfig } from "./credentials";
-import { ApiError } from "./errors";
-import { cacheGet, cacheSet } from "./cache";
-import { redis } from "./redis";
+import { ApiError } from "@/lib/utils";
+import { cacheGet, cacheSet } from "@/lib/utils";
+import { redis } from "@/lib/utils";
 
 export interface AuthedUser {
   uid: string;

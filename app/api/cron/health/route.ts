@@ -1,21 +1,31 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GET as getOpenApi } from "@/app/api/openapi.json/route";
+import { env, configWarnings } from "@/lib/utils";
+import { redisStatus } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
-  const cronSecret = process.env.CRON_SECRET;
   const authHeader = req.headers.get("authorization");
 
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  if (!env.CRON_SECRET || authHeader !== `Bearer ${env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const errors: string[] = [];
-  const baseUrl = process.env.APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "http://localhost:3000");
+  const baseUrl = env.APP_URL;
+
+  // Cache failures degrade silently — every read falls through to Firestore at
+  // full cost while the app still looks healthy. Only a probe surfaces it.
+  const cache = await redisStatus();
+  if (cache.state === "error") {
+    errors.push(`Redis Error: cache is configured but unreachable — ${cache.detail}`);
+  }
+
+  const warnings = configWarnings();
 
   try {
-    // 1. Schema Validation (Prevent ChatGPT UI Bug regressions)
+    // Consequential ops must stay flagged or the ChatGPT UI regression returns.
     const openApiRes = await getOpenApi();
     const schema = await openApiRes.json();
     
@@ -29,7 +39,6 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // 2. End-to-End Expense Flow
     const testToken = process.env.CRON_TEST_TOKEN;
     if (testToken) {
       const headers = {
@@ -37,7 +46,6 @@ export async function GET(req: NextRequest) {
         "Authorization": `Bearer ${testToken}`
       };
 
-      // POST
       const postRes = await fetch(`${baseUrl}/api/expenses`, {
         method: "POST",
         headers,
@@ -57,7 +65,6 @@ export async function GET(req: NextRequest) {
         const id = postData.id || postData.results?.[0]?.id; // handles single or batch
 
         if (id) {
-          // PATCH
           const patchRes = await fetch(`${baseUrl}/api/expenses/${id}`, {
             method: "PATCH",
             headers,
@@ -68,7 +75,6 @@ export async function GET(req: NextRequest) {
             errors.push(`E2E PATCH Error: Returned ${patchRes.status} - ${await patchRes.text()}`);
           }
 
-          // DELETE
           const delRes = await fetch(`${baseUrl}/api/expenses/${id}`, {
             method: "DELETE",
             headers
@@ -89,17 +95,14 @@ export async function GET(req: NextRequest) {
     errors.push(`Exception during health check: ${err.message}`);
   }
 
-  // 3. Alerting via Resend.
-  //
   // No Discord alert here on purpose: this route returns 500 below when it
   // finds errors, and the health-cron workflow already fails on that and
   // posts the response body (including this `errors` array) to Discord.
   // Alerting from both sides would double-notify every 5 minutes.
   if (errors.length > 0) {
-    const resendApiKey = process.env.RESEND_API_KEY;
-    const adminEmail = process.env.ADMIN_EMAIL; // You must set this in Vercel
+    const adminEmail = env.ADMIN_EMAIL;
 
-    if (resendApiKey && adminEmail) {
+    if (env.RESEND_API_KEY && adminEmail) {
       const emailHtml = `
         <h2 style="color: #d9534f;">API Health Check Failed!</h2>
         <p>The following errors occurred during the automated health check:</p>
@@ -111,9 +114,9 @@ export async function GET(req: NextRequest) {
 
       await fetch("https://api.resend.com/emails", {
         method: "POST",
-        headers: { Authorization: `Bearer ${resendApiKey}`, "Content-Type": "application/json" },
+        headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          from: process.env.CRON_SENDER_EMAIL || "Personal Dashboard <onboarding@resend.dev>",
+          from: env.CRON_SENDER_EMAIL,
           to: [adminEmail],
           subject: `🚨 API Health Check Alert: ${errors.length} error(s) detected`,
           html: emailHtml,
@@ -122,8 +125,14 @@ export async function GET(req: NextRequest) {
     }
 
     // Fail the GitHub Action step by returning 500
-    return NextResponse.json({ success: false, errors }, { status: 500 });
+    return NextResponse.json({ success: false, environment: env.ENVIRONMENT, cache: cache.state, warnings, errors }, { status: 500 });
   }
 
-  return NextResponse.json({ success: true, message: "All systems go. Endpoints and schema verified." });
+  return NextResponse.json({
+    success: true,
+    environment: env.ENVIRONMENT,
+    cache: cache.state,
+    warnings,
+    message: "All systems go. Endpoints and schema verified.",
+  });
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import { WatchlistItem, SearchResult } from "@/types";
-import { isSafeImageUrl } from "@/lib/safe-url";
+import { isSafeImageUrl } from "@/lib/utils";
 import { Search, Trash2, Sparkles } from "lucide-react";
 
 interface BooksTabProps {

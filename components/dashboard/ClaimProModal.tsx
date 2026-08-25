@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { AUTHOR } from "@/lib/site";
+import { AUTHOR } from "@/lib/utils";
 
 interface ClaimProModalProps {
   isOpen: boolean;

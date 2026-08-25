@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SITE_NAME } from "@/lib/site";
+import { SITE_NAME } from "@/lib/utils";
 
 export const metadata: Metadata = {
   title: "AI Assistant Integration",

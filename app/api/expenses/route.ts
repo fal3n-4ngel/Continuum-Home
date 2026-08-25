@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { ApiError, toErrorResponse } from "@/lib/errors";
+import { ApiError, toErrorResponse } from "@/lib/utils";
 import { listExpenses, createExpense, createExpenseBatch } from "@/lib/firebase";
-import { validateExpenseEntry, validateExpenseBatch } from "@/lib/validate";
+import { validateExpenseEntry, validateExpenseBatch } from "@/lib/firebase";
+import { checkAndSendCustomGptAudit } from "@/lib/audit-postback/gpt-detector";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,14 @@ export async function POST(req: NextRequest) {
 
     const entry = validateExpenseEntry(body);
     const result = await createExpense(session, entry);
+
+    // Audit postback ONLY if request originated from a Custom GPT / ChatGPT Action
+    checkAndSendCustomGptAudit(req, session.uid, "CREATE_EXPENSE", {
+      expenseId: result.id,
+      amount: entry.amount,
+      category: entry.category,
+    });
+
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
     return toErrorResponse(error, "POST /api/expenses");

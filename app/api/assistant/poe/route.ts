@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
           return;
         }
 
-        // 1. Authenticate user using Permanent Key
         const fakeHeaders = new Headers();
         fakeHeaders.set("authorization", `Bearer ${key}`);
         
@@ -44,7 +43,6 @@ export async function POST(req: NextRequest) {
           return;
         }
 
-        // 2. Parse Poe request body
         let body: any;
         try {
           body = await req.json();
@@ -71,7 +69,6 @@ export async function POST(req: NextRequest) {
           parts: [{ text: q.content }]
         }));
 
-        // 3. Delegate execution directly to the existing Gemini Assistant endpoint
         const origin = req.nextUrl.origin;
         const chatRes = await fetch(`${origin}/api/assistant/chat`, {
           method: "POST",
@@ -93,7 +90,6 @@ export async function POST(req: NextRequest) {
         const chatData = await chatRes.json();
         const replyText = chatData.reply || "";
 
-        // 4. Stream reply back to Poe
         sendEvent("text", { text: replyText });
         sendEvent("done", {});
       } catch (err: any) {

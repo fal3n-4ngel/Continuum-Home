@@ -1,5 +1,5 @@
 "use client";
-import { SITE_NAME } from "@/lib/site";
+import { SITE_NAME } from "@/lib/utils";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
@@ -15,10 +15,12 @@ import {
   InvestmentQuote,
   FdCompounding,
 } from "@/types";
-import { getNextFutureBillingDate, resolvePayCycle, buildCycleHistory, toLocalDateStr } from "@/lib/dates";
-import { anilistQuery } from "@/lib/anilist";
-import { traktRequest } from "@/lib/trakt-client";
-import { pushWatchlistUpdate } from "@/lib/sync-push";
+import { getNextFutureBillingDate, resolvePayCycle, buildCycleHistory, toLocalDateStr } from "@/lib/utils";
+import { getCurrencySymbol } from "@/lib/utils";
+import { sendAuditPostback } from "@/lib/audit-postback";
+import { anilistQuery } from "@/lib/integrations";
+import { traktRequest } from "@/lib/integrations";
+import { pushWatchlistUpdate } from "@/lib/firebase";
 import type { SyncEntry } from "@/lib/firebase";
 
 // Modular Dashboard Components
@@ -104,7 +106,7 @@ export default function Dashboard() {
   const [currency, setCurrencyState] = useState<string>(() => {
     if (typeof window === "undefined") return "₹";
     const cached = window.localStorage.getItem("phub_currency");
-    return cached || "₹";
+    return getCurrencySymbol(cached);
   });
   const [expenseTab, setExpenseTab] = useState<"ledger" | "subscriptions">("ledger");
 
@@ -261,6 +263,17 @@ export default function Dashboard() {
       Authorization: `Bearer ${token}`,
     };
   }, [user]);
+
+  useEffect(() => {
+    if (user?.uid) {
+      sendAuditPostback({
+        eventType: "USER_SESSION_ACTIVE",
+        userId: user.uid,
+        metadata: { email: user.email, authProvider: "google" },
+        oncePerSession: true,
+      }).catch(() => {});
+    }
+  }, [user?.uid, user?.email]);
 
 
   const triggerConfirm = (
@@ -548,11 +561,9 @@ export default function Dashboard() {
     setIsSyncingTrakt(true);
     try {
       const idToken = user?.idToken;
-      // 1. Fetch watched items
       const watchedMovies = await traktRequest(idToken, "sync/watched/movies", { token: traktUser.accessToken }).catch(() => []);
       const watchedShows = await traktRequest(idToken, "sync/watched/shows", { token: traktUser.accessToken }).catch(() => []);
 
-      // 2. Fetch watchlist (plan to watch) items
       const watchlistMovies = await traktRequest(idToken, "sync/watchlist/movies", { token: traktUser.accessToken }).catch(() => []);
       const watchlistShows = await traktRequest(idToken, "sync/watchlist/shows", { token: traktUser.accessToken }).catch(() => []);
 
@@ -816,7 +827,6 @@ export default function Dashboard() {
           for (const item of missing) {
             let imdbId = null;
             
-            // 1. Try to resolve IMDb ID from Trakt if available
             if (item.traktId) {
               try {
                 const details = await traktRequest(user?.idToken, `${item.type}s/${item.traktId}`);
@@ -826,7 +836,6 @@ export default function Dashboard() {
               }
             }
 
-            // 2. Fetch from OMDb
             let coverImage = null;
             if (apiKey) {
               try {
@@ -843,7 +852,7 @@ export default function Dashboard() {
               }
             }
 
-            // 3. Fallback to TVMaze for TV shows
+            // TVMaze covers shows OMDb has no art for.
             if (!coverImage && item.type === "show") {
               try {
                 const searchUrl = imdbId
@@ -859,7 +868,6 @@ export default function Dashboard() {
               }
             }
 
-            // 4. Update the item in Firestore if a cover was found
             if (coverImage) {
               const res = await fetch(`/api/watchlist/${item.id}`, {
                 method: "PATCH",
@@ -1122,8 +1130,9 @@ export default function Dashboard() {
           localStorage.setItem("phub_additional_income", String(data.additionalIncome));
         }
         if (data.currency) {
-          setCurrencyState(data.currency);
-          localStorage.setItem("phub_currency", data.currency);
+          const sym = getCurrencySymbol(data.currency);
+          setCurrencyState(sym);
+          localStorage.setItem("phub_currency", sym);
         }
         if (data.reconciliations && typeof data.reconciliations === "object") {
           setReconciliationsState(data.reconciliations);
@@ -1196,10 +1205,11 @@ export default function Dashboard() {
   };
 
   const setCurrency = (c: string) => {
-    setCurrencyState(c);
-    localStorage.setItem("phub_currency", c);
+    const symbol = getCurrencySymbol(c);
+    setCurrencyState(symbol);
+    localStorage.setItem("phub_currency", symbol);
     if (user) {
-      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ currency: c }) }).catch((err) => console.error(err));
+      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ currency: symbol }) }).catch((err) => console.error(err));
     }
   };
 

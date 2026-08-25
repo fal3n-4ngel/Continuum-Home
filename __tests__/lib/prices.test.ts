@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
-// vitest.setup.ts mocks @/lib/prices globally for the cron integration tests,
+// vitest.setup.ts mocks @/lib/finance globally for the cron integration tests,
 // so this suite has to reach past that to exercise the real implementation.
-const { createPriceFetcher, fetchAssetPrice } = await vi.importActual<typeof import("@/lib/prices")>("@/lib/prices");
+const { createPriceFetcher, fetchAssetPrice } = await vi.importActual<typeof import("@/lib/finance")>("@/lib/finance");
 
 describe("createPriceFetcher", () => {
   let fetchSpy: ReturnType<typeof vi.spyOn>;

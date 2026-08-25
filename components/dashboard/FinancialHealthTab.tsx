@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Calendar, CalendarCheck, ScanSearch, IndianRupee, Shield, BarChart3, TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
 import { InvestmentAsset } from "@/types";
-import { getEffectiveAmount } from "@/lib/fd";
+import { getEffectiveAmount } from "@/lib/finance";
 
 interface PayCycle {
   startStr: string;

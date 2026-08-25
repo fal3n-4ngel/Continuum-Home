@@ -1,6 +1,6 @@
 import React from "react";
 import { InvestmentAsset, InvestmentCategory } from "@/types";
-import { daysUntil } from "@/lib/fd";
+import { daysUntil } from "@/lib/finance";
 import { Trash2, Tag } from "lucide-react";
 
 interface AssetRowProps {

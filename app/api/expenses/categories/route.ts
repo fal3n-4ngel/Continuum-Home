@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { toErrorResponse } from "@/lib/errors";
+import { toErrorResponse } from "@/lib/utils";
 import { getCategories } from "@/lib/firebase";
 
 export const dynamic = "force-dynamic";
