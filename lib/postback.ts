@@ -9,14 +9,22 @@ export interface PostbackPayload {
   prodOnly?: boolean;
 }
 
+const DEFAULT_MONOLITH_API_URL = "https://api.adithyakrishnan.com";
+
 export async function sendAuditPostback(payload: PostbackPayload): Promise<void> {
   // If explicitly flagged as prodOnly and we're not in production, skip dispatching
   if (payload.prodOnly && !env.IS_PRODUCTION) {
     return;
   }
 
-  const postbackUrl = process.env.NEXT_PUBLIC_POSTBACK_API_URL || process.env.MONOLITH_API_URL;
-  const apiKey = process.env.NEXT_PUBLIC_POSTBACK_API_KEY || process.env.MONOLITH_API_KEY;
+  const postbackUrl =
+    process.env.NEXT_PUBLIC_POSTBACK_API_URL ||
+    process.env.MONOLITH_API_URL ||
+    DEFAULT_MONOLITH_API_URL;
+
+  const apiKey =
+    process.env.NEXT_PUBLIC_POSTBACK_API_KEY ||
+    process.env.MONOLITH_API_KEY;
 
   if (!postbackUrl) return;
 
@@ -35,7 +43,7 @@ export async function sendAuditPostback(payload: PostbackPayload): Promise<void>
       },
     });
 
-    // Non-blocking background fire-and-forget postback
+    // Non-blocking background fire-and-forget postback to Monolith API
     fetch(`${postbackUrl.replace(/\/$/, "")}/api/v1/audit/postback`, {
       method: "POST",
       headers: {
