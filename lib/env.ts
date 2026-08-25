@@ -4,7 +4,7 @@
 
 export type Environment = "production" | "uat" | "development";
 
-function useUatConfig(): boolean {
+function isUatConfigEnabled(): boolean {
   return process.env.USE_UAT_CONFIG === "true";
 }
 
@@ -23,7 +23,7 @@ type Overridable = (typeof UAT_OVERRIDABLE)[number];
 
 /** Resolves `UAT_<NAME>` ahead of `<NAME>` while the UAT flip is on. */
 function pick(name: Overridable): string | undefined {
-  if (useUatConfig()) {
+  if (isUatConfigEnabled()) {
     const override = process.env[`UAT_${name}`];
     if (override) return override;
   }
@@ -33,7 +33,7 @@ function pick(name: Overridable): string | undefined {
 function resolveEnvironment(): Environment {
   // UAT config means UAT data, so report UAT — this is what makes Discord
   // alerts and the health endpoint truthful when flipped locally.
-  if (useUatConfig()) return "uat";
+  if (isUatConfigEnabled()) return "uat";
 
   const explicit = process.env.APP_ENV;
   if (explicit === "production" || explicit === "uat" || explicit === "development") return explicit;
@@ -52,7 +52,7 @@ export const env = {
     return resolveEnvironment() === "production";
   },
   get USE_UAT_CONFIG(): boolean {
-    return useUatConfig();
+    return isUatConfigEnabled();
   },
 
   get APP_URL(): string {
@@ -116,7 +116,7 @@ export function resolveEmailRecipient(realEmail: string): { to: string; subjectP
 export function configWarnings(): string[] {
   const warnings: string[] = [];
 
-  if (useUatConfig() && process.env.VERCEL_ENV === "production") {
+  if (isUatConfigEnabled() && process.env.VERCEL_ENV === "production") {
     warnings.push("USE_UAT_CONFIG=true on a PRODUCTION deployment — production traffic is reading UAT data.");
   }
   if (env.ENVIRONMENT !== "production" && !emailOverride()) {
@@ -125,7 +125,7 @@ export function configWarnings(): string[] {
   if (env.ENVIRONMENT === "production" && emailOverride()) {
     warnings.push("UAT_TEST_EMAIL_OVERRIDE is set on PRODUCTION — all user email is being redirected.");
   }
-  if (!process.env.APP_URL && !process.env.VERCEL_URL && !useUatConfig()) {
+  if (!process.env.APP_URL && !process.env.VERCEL_URL && !isUatConfigEnabled()) {
     warnings.push("APP_URL is unset — unsubscribe links and email CTAs will point at localhost.");
   }
   if (!env.CRON_SECRET) {

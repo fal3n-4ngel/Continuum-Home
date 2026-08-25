@@ -1,6 +1,6 @@
 import { Session } from "@/lib/auth";
 import { FirestoreClient } from "../firebase-client";
-import { WatchlistItem, WatchlistItemSchema } from "@/lib/validators/watchlist.schema";
+import { WatchlistItem } from "@/lib/validators/watchlist.schema";
 import { cacheGet, cacheSet, cacheInvalidate } from "@/lib/cache";
 
 const WATCHLIST_CACHE_TTL = 3_600_000;

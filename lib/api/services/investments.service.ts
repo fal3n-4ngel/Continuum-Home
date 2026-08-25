@@ -1,6 +1,6 @@
 import { Session } from "@/lib/auth";
 import { FirestoreClient } from "../firebase-client";
-import { InvestmentAsset, InvestmentAssetSchema } from "@/lib/validators/investment.schema";
+import { InvestmentAsset } from "@/lib/validators/investment.schema";
 import { decrypt } from "@/lib/encryption";
 import { cacheGet, cacheSet, cacheInvalidate } from "@/lib/cache";
 

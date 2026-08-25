@@ -1,7 +1,7 @@
 import { Session } from "@/lib/auth";
 import { FirestoreClient } from "../firebase-client";
-import { ExpenseRecord, ExpenseRecordSchema } from "@/lib/validators/expense.schema";
-import { decrypt, encrypt } from "@/lib/encryption";
+import { ExpenseRecord } from "@/lib/validators/expense.schema";
+import { decrypt } from "@/lib/encryption";
 import { cacheGet, cacheSet, cacheInvalidate } from "@/lib/cache";
 
 const EXPENSE_CACHE_TTL = 3_600_000;

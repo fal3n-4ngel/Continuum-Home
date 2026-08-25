@@ -25,7 +25,7 @@ export async function hasCronBeenSentToday(cronKey: string, uid: string, dateStr
       const snap = await docRef.get();
       if (snap.exists) return true;
     }
-  } catch (e) {
+  } catch {
     // Firestore not configured or uninitialized — fail open safely
   }
 
