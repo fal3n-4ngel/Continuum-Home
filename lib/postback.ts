@@ -1,4 +1,4 @@
-// Non-blocking async audit postback client for Continuum Home to send operational events to monolith-api
+import { env } from "@/lib/env";
 
 export interface PostbackPayload {
   eventType: string;
@@ -6,9 +6,15 @@ export interface PostbackPayload {
   userId?: string;
   metadata?: Record<string, unknown>;
   context?: Record<string, unknown>;
+  prodOnly?: boolean;
 }
 
 export async function sendAuditPostback(payload: PostbackPayload): Promise<void> {
+  // If explicitly flagged as prodOnly and we're not in production, skip dispatching
+  if (payload.prodOnly && !env.IS_PRODUCTION) {
+    return;
+  }
+
   const postbackUrl = process.env.NEXT_PUBLIC_POSTBACK_API_URL || process.env.MONOLITH_API_URL;
   const apiKey = process.env.NEXT_PUBLIC_POSTBACK_API_KEY || process.env.MONOLITH_API_KEY;
 
@@ -22,8 +28,10 @@ export async function sendAuditPostback(payload: PostbackPayload): Promise<void>
       userId: payload.userId || "anonymous",
       timestamp: Date.now(),
       metadata: payload.metadata || {},
-      context: payload.context || {
-        environment: process.env.NODE_ENV,
+      context: {
+        environment: env.ENVIRONMENT,
+        isUat: env.ENVIRONMENT === "uat",
+        ...(payload.context || {}),
       },
     });
 
