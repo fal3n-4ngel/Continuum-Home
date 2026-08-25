@@ -17,7 +17,7 @@ import {
 } from "@/types";
 import { getNextFutureBillingDate, resolvePayCycle, buildCycleHistory, toLocalDateStr } from "@/lib/dates";
 import { getCurrencySymbol } from "@/lib/formatters";
-import { sendAuditPostback } from "@/lib/postback";
+import { sendAuditPostback } from "@/lib/audit-postback";
 import { anilistQuery } from "@/lib/anilist";
 import { traktRequest } from "@/lib/trakt-client";
 import { pushWatchlistUpdate } from "@/lib/sync-push";
