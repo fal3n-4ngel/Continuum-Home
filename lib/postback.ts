@@ -12,15 +12,11 @@ export interface PostbackPayload {
 
 const DEFAULT_MONOLITH_API_URL = "https://api.adithyakrishnan.com";
 
-// High-value analytics & audit event types
+// Security & Session Postback Event Types
 export const AUDIT_EVENT_TYPES = {
-  EXPENSE_CREATED: "EXPENSE_CREATED",
-  EXPENSE_BATCH_CREATED: "EXPENSE_BATCH_CREATED",
-  INVESTMENT_MUTATED: "INVESTMENT_MUTATED",
-  SUBSCRIPTION_PAID: "SUBSCRIPTION_PAID",
   USER_SESSION_ACTIVE: "USER_SESSION_ACTIVE",
+  USER_LOGIN: "USER_LOGIN",
   SECURITY_ALERT: "SECURITY_ALERT",
-  CRON_EXECUTED: "CRON_EXECUTED",
 } as const;
 
 export async function sendAuditPostback(payload: PostbackPayload): Promise<void> {

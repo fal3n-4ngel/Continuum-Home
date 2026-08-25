@@ -3,7 +3,6 @@ import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/errors";
 import { listExpenses, createExpense, createExpenseBatch } from "@/lib/firebase";
 import { validateExpenseEntry, validateExpenseBatch } from "@/lib/validate";
-import { sendAuditPostback } from "@/lib/postback";
 
 export const dynamic = "force-dynamic";
 
@@ -47,13 +46,6 @@ export async function POST(req: NextRequest) {
 
     const entry = validateExpenseEntry(body);
     const result = await createExpense(session, entry);
-
-    // Non-blocking audit postback to monolith-api
-    sendAuditPostback({
-      eventType: "EXPENSE_CREATED",
-      userId: session.uid,
-      metadata: { expenseId: result.id, title: entry.title, amount: entry.amount, category: entry.category },
-    }).catch(() => {});
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
