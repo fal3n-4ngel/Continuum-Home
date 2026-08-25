@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { toErrorResponse } from "@/lib/errors";
 import { listAllUsers, adminGetPortfolio, adminUpdatePortfolioValuationHistory, adminGetEmailSubscriptions, type AdminUser } from "@/lib/firebase-admin";
 import { createPriceFetcher, getUsdToInrRate, type PriceFetcher } from "@/lib/prices";
 import { getEffectiveAmount } from "@/lib/fd";
 import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
 import { getIstDateString } from "@/lib/dates";
-import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron-alert";
+import { reportCronFailures, type CronUserResult } from "@/lib/cron-alert";
+import { withCron } from "@/lib/route-handlers";
 import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
 import { buildPortfolioEmail } from "@/emails/templates/portfolio";
 import { env, resolveEmailRecipient } from "@/lib/env";
@@ -162,18 +162,9 @@ async function processUser(
   return { sent: true, valuation: totalCurrent, pnl: overallPnl };
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    const authHeader = req.headers.get("authorization");
-    if (!env.CRON_SECRET || authHeader !== `Bearer ${env.CRON_SECRET}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!env.RESEND_API_KEY) {
-      reportCronAbort("portfolio", "Missing RESEND_API_KEY");
-      return NextResponse.json({ error: "Missing RESEND_API_KEY" }, { status: 500 });
-    }
-
+export const POST = withCron(
+  "portfolio",
+  async (req) => {
     const force = req.nextUrl.searchParams.get("force") === "true";
     const users = await listAllUsers();
     const usdToInr = await getUsdToInrRate();
@@ -184,10 +175,10 @@ export async function POST(req: NextRequest) {
     for (const user of users) {
       try {
         const outcome = await processUser(user, usdToInr, env.RESEND_API_KEY, fetchPrice, force);
-        results.push({ uid: user.uid, email: user.email, sent: outcome.sent, reason: outcome.sent ? undefined : (outcome as any).reason });
-      } catch (err: any) {
+        results.push({ uid: user.uid, email: user.email, sent: outcome.sent, reason: outcome.sent ? undefined : outcome.reason });
+      } catch (err) {
         console.error(`Error in cron/portfolio for uid ${user.uid}:`, err);
-        results.push({ uid: user.uid, email: user.email, sent: false, error: err.message || "Unknown error" });
+        results.push({ uid: user.uid, email: user.email, sent: false, error: err instanceof Error ? err.message : "Unknown error" });
       }
     }
 
@@ -195,7 +186,6 @@ export async function POST(req: NextRequest) {
 
     const sentCount = results.filter((r) => r.sent).length;
     return NextResponse.json({ success: true, usersProcessed: users.length, emailsSent: sentCount, results });
-  } catch (error: any) {
-    return toErrorResponse(error, "Error in cron/portfolio");
-  }
-}
+  },
+  { requireResend: true }
+);

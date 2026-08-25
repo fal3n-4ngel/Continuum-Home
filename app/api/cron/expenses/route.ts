@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { toErrorResponse } from "@/lib/errors";
 import { listAllUsers, adminListExpenses, adminGetEmailSubscriptions, type AdminUser } from "@/lib/firebase-admin";
 import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
 import { getIstDateString } from "@/lib/dates";
-import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron-alert";
+import { reportCronFailures, type CronUserResult } from "@/lib/cron-alert";
+import { withCron } from "@/lib/route-handlers";
 import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
 import { buildExpensesEmail, expensesPeriodTitle } from "@/emails/templates/expenses";
 import { env, resolveEmailRecipient } from "@/lib/env";
@@ -94,25 +94,14 @@ async function processUser(user: AdminUser, period: "weekly" | "monthly", daysLi
   return { sent: true, total: totalAmount };
 }
 
-export async function POST(req: NextRequest) {
-  try {
-    // 1. Verify cron secret key
-    const authHeader = req.headers.get("authorization");
-    if (!env.CRON_SECRET || authHeader !== `Bearer ${env.CRON_SECRET}`) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!env.RESEND_API_KEY) {
-      reportCronAbort("expenses", "Missing RESEND_API_KEY");
-      return NextResponse.json({ error: "Missing RESEND_API_KEY" }, { status: 500 });
-    }
-
+export const POST = withCron(
+  "expenses",
+  async (req) => {
     const { searchParams } = new URL(req.url);
     const period = searchParams.get("period") === "monthly" ? "monthly" : "weekly";
     const daysLimit = period === "monthly" ? 30 : 7;
     const force = searchParams.get("force") === "true";
 
-    // 2. Fan out across every registered user via Admin SDK.
     const users = await listAllUsers();
 
     const results: CronUserResult[] = [];
@@ -120,9 +109,9 @@ export async function POST(req: NextRequest) {
       try {
         const outcome = await processUser(user, period, daysLimit, env.RESEND_API_KEY, force);
         results.push({ uid: user.uid, email: user.email, sent: outcome.sent, reason: outcome.sent ? undefined : outcome.reason });
-      } catch (err: any) {
+      } catch (err) {
         console.error(`Error in cron/expenses for uid ${user.uid}:`, err);
-        results.push({ uid: user.uid, email: user.email, sent: false, error: err.message || "Unknown error" });
+        results.push({ uid: user.uid, email: user.email, sent: false, error: err instanceof Error ? err.message : "Unknown error" });
       }
     }
 
@@ -130,7 +119,6 @@ export async function POST(req: NextRequest) {
 
     const sentCount = results.filter((r) => r.sent).length;
     return NextResponse.json({ success: true, period, usersProcessed: users.length, emailsSent: sentCount, results });
-  } catch (error: any) {
-    return toErrorResponse(error, "Error in cron/expenses");
-  }
-}
+  },
+  { requireResend: true }
+);
