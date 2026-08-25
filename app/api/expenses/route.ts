@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/errors";
 import { listExpenses, createExpense, createExpenseBatch } from "@/lib/firebase";
 import { validateExpenseEntry, validateExpenseBatch } from "@/lib/validate";
+import { checkAndSendCustomGptAudit } from "@/lib/postback";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,13 @@ export async function POST(req: NextRequest) {
 
     const entry = validateExpenseEntry(body);
     const result = await createExpense(session, entry);
+
+    // Audit postback ONLY if request originated from a Custom GPT / ChatGPT Action
+    checkAndSendCustomGptAudit(req, session.uid, "CREATE_EXPENSE", {
+      expenseId: result.id,
+      amount: entry.amount,
+      category: entry.category,
+    });
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
