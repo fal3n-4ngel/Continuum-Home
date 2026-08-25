@@ -1,22 +1,18 @@
-// Composable wrappers for the auth + error handling every API route repeats.
-//
-// Each wrapper owns one authorization model and funnels failures through
-// toErrorResponse, so a route body only contains the work it actually does and
-// an unhandled throw can never leak a stack trace to a caller.
+// Auth + error-handling wrappers shared by the API routes. Each owns one
+// authorization model and funnels throws through toErrorResponse, so an
+// unhandled error can never leak a stack trace to a caller.
 
 import { NextRequest, NextResponse } from "next/server";
-import { requireUser } from "@/lib/auth";
+import { requireUser, type Session } from "@/lib/auth";
 import { toErrorResponse } from "@/lib/errors";
 import { env } from "@/lib/env";
-import type { Session } from "@/lib/auth";
 
 export type RouteContext = { params: Promise<Record<string, string>> };
 
-// ctx is optional: Next.js always supplies it, but static routes never read it
-// and tests invoke handlers directly with just a request.
+// ctx is optional: Next.js always supplies it, but static routes ignore it and
+// tests invoke handlers with just a request.
 type Handler = (req: NextRequest, ctx?: RouteContext) => Promise<NextResponse>;
 
-/** Wraps a handler so any throw becomes a structured error response. */
 export function withErrors(label: string, handler: Handler): Handler {
   return async (req, ctx) => {
     try {
@@ -27,7 +23,6 @@ export function withErrors(label: string, handler: Handler): Handler {
   };
 }
 
-/** Requires a signed-in user and passes the resolved session to the handler. */
 export function withUser(
   label: string,
   handler: (req: NextRequest, session: Session, ctx?: RouteContext) => Promise<NextResponse>
@@ -38,7 +33,6 @@ export function withUser(
   });
 }
 
-/** Requires the signed-in user to be the configured admin. */
 export function withAdmin(
   label: string,
   handler: (req: NextRequest, session: Session, ctx?: RouteContext) => Promise<NextResponse>
@@ -52,11 +46,8 @@ export function withAdmin(
 }
 
 /**
- * Requires the shared cron bearer token.
- *
- * `requireResend` exists because a cron that mails users is useless without a
- * key: it lets the route fail fast with a 500 the workflow surfaces, instead
- * of fanning out across every user and failing once per account.
+ * `requireResend` fails the whole run fast rather than fanning out across every
+ * user and failing once per account.
  */
 export function withCron(
   job: string,

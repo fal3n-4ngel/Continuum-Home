@@ -9,7 +9,6 @@ export { getIstDateString } from "@/lib/dates";
 export async function hasCronBeenSentToday(cronKey: string, uid: string, dateStr: string): Promise<boolean> {
   const lockKey = `cron_sent:${cronKey}:${uid}:${dateStr}`;
 
-  // 1. Check Redis key if available
   if (redis) {
     try {
       const sent = await redis.get<string>(lockKey);
@@ -19,7 +18,6 @@ export async function hasCronBeenSentToday(cronKey: string, uid: string, dateStr
     }
   }
 
-  // 2. Fallback to Firestore check if Admin SDK is initialized
   try {
     const db = getAdminDb();
     if (db) {
@@ -40,7 +38,7 @@ export async function hasCronBeenSentToday(cronKey: string, uid: string, dateStr
 export async function markCronAsSentToday(cronKey: string, uid: string, dateStr: string): Promise<void> {
   const lockKey = `cron_sent:${cronKey}:${uid}:${dateStr}`;
 
-  // 1. Set Redis key with 48h (172,800s) TTL
+  // 48h TTL outlives any same-day retry without pinning the key forever.
   if (redis) {
     try {
       await redis.set(lockKey, "1", { ex: 172800 });
@@ -49,7 +47,6 @@ export async function markCronAsSentToday(cronKey: string, uid: string, dateStr:
     }
   }
 
-  // 2. Store Firestore lock record
   try {
     const db = getAdminDb();
     if (db) {

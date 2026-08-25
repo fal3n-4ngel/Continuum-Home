@@ -7,7 +7,6 @@ import { env } from "@/lib/env";
 export const dynamic = "force-dynamic";
 
 export const POST = withAdmin("POST /api/admin/cron", async (req) => {
-  // 2. Parse payload
   const body = await req.json();
   const triggerType = body?.triggerType || body?.task; // "subscriptions" | "expenses_weekly" | "expenses_monthly" | "portfolio" | "recommendations"
 
@@ -30,7 +29,6 @@ export const POST = withAdmin("POST /api/admin/cron", async (req) => {
     return NextResponse.json({ error: "CRON_SECRET is not configured on the server." }, { status: 500 });
   }
 
-  // 3. Make internal request using the request origin
   const origin = req.nextUrl.origin;
   const cronUrl = `${origin}${cronPath}`;
 

@@ -1,17 +1,14 @@
-// Structural chrome shared by every email: document shell, centred body
-// table, masthead, and footer. Templates supply only their own content rows.
+// Document shell, body table, masthead and footer. Templates supply only
+// their own content rows.
 
 import { EMAIL_CSS, COLORS } from "./theme";
 
 export interface FooterOptions {
   ctaHref: string;
   ctaLabel: string;
-  /** Small print above the unsubscribe line. May contain inline HTML (e.g. <br>). */
+  /** Small print above the unsubscribe line. May contain inline HTML. */
   note: string;
-  /**
-   * Omitted for transactional mail (admin previews, health alerts) that has no
-   * subscription to leave. Present on everything sent to a real user's list.
-   */
+  /** Omitted for transactional mail, which has no subscription to leave. */
   unsubscribe?: { url: string; label: string };
 }
 
@@ -31,7 +28,6 @@ export function htmlDoc(title: string, body: string): string {
 </html>`;
 }
 
-/** Centres content rows in the fixed-width table layout email clients need. */
 export function wrap(bodyRows: string, maxWidth = 680): string {
   return `
   <table width="100%" bgcolor="${COLORS.canvas}" cellpadding="0" cellspacing="0" style="background-color:${COLORS.canvas};background-image:linear-gradient(${COLORS.canvas},${COLORS.canvas})!important;">
@@ -43,7 +39,6 @@ export function wrap(bodyRows: string, maxWidth = 680): string {
   </table>`;
 }
 
-/** Brand masthead with a free-form right slot (a date, or a status pill). */
 export function header(rightHtml: string): string {
   return `
           <tr>
@@ -65,10 +60,7 @@ export function dateStamp(text: string): string {
   return `<span class="txt-muted font-sans" style="font-size:12px;">${text}</span>`;
 }
 
-/**
- * Banner marking an email as sample data. Only the admin preview route uses
- * this — it is what stops a preview from being mistaken for a real report.
- */
+/** Marks an email as sample data, so a preview is never mistaken for a real report. */
 export function previewBanner(): string {
   return `
           <tr><td style="background-color:${COLORS.warnBg};background-image:linear-gradient(${COLORS.warnBg},${COLORS.warnBg});border:1px solid ${COLORS.warnBorder};border-radius:8px;padding:10px 16px;">

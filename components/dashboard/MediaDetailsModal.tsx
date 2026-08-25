@@ -355,7 +355,6 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
       let foundCover: string | null = null;
 
       try {
-        // 1. Anime (AniList)
         if (item.type === "anime" && item.anilistId) {
           const r = await lookupAnime(item.anilistId);
           if (active && r.synopsis) setSynopsis(r.synopsis);
@@ -366,7 +365,6 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
           if (r.stop && active) return;
         }
 
-        // 2. TV Show / Movie via Trakt Details
         if ((item.type === "movie" || item.type === "show") && item.traktId) {
           try {
             const r = await lookupTraktDetails(user.idToken, item.type, Number(item.traktId));
@@ -381,7 +379,7 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
           }
         }
 
-        // 3. Fallback: TV Show TVMaze check
+        // TVMaze fallback for shows Trakt misses.
         if (item.type === "show") {
           const r = await lookupTvMazeSummary(item.title);
           if (active && r.synopsis) setSynopsis(r.synopsis);
@@ -391,7 +389,7 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
           if (r.stop && active) return;
         }
 
-        // 4. Fallback: Movie/Show OMDb Plot check
+        // OMDb fallback when Trakt has no synopsis.
         if (item.type === "movie" || item.type === "show") {
           const r = await lookupOmdbByTitle(item.title);
           if (active && r.director) setDirector(r.director);
@@ -403,7 +401,6 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
           }
         }
 
-        // 5. Books via Google Books API with OpenLibrary Fallback
         if (item.type === "book") {
           const r = await lookupBooks(item.title);
           if (active && r.author) setAuthor(r.author);

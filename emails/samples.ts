@@ -1,9 +1,6 @@
-// Fixed sample data for admin email previews.
-//
-// Previews render through the *same* template functions the crons use, so the
-// only difference between a preview and a real send is this data plus the
-// `isPreview` banner. That is what keeps previews honest — a template change
-// cannot land in production without also changing what the preview shows.
+// Sample data for admin previews. Previews render through the same template
+// functions the crons use, so a template change cannot reach production
+// without also changing the preview.
 
 import type { PortfolioEmailData } from "./templates/portfolio";
 import type { ExpensesEmailData, ExpensePeriod } from "./templates/expenses";

@@ -548,11 +548,9 @@ export default function Dashboard() {
     setIsSyncingTrakt(true);
     try {
       const idToken = user?.idToken;
-      // 1. Fetch watched items
       const watchedMovies = await traktRequest(idToken, "sync/watched/movies", { token: traktUser.accessToken }).catch(() => []);
       const watchedShows = await traktRequest(idToken, "sync/watched/shows", { token: traktUser.accessToken }).catch(() => []);
 
-      // 2. Fetch watchlist (plan to watch) items
       const watchlistMovies = await traktRequest(idToken, "sync/watchlist/movies", { token: traktUser.accessToken }).catch(() => []);
       const watchlistShows = await traktRequest(idToken, "sync/watchlist/shows", { token: traktUser.accessToken }).catch(() => []);
 
@@ -816,7 +814,6 @@ export default function Dashboard() {
           for (const item of missing) {
             let imdbId = null;
             
-            // 1. Try to resolve IMDb ID from Trakt if available
             if (item.traktId) {
               try {
                 const details = await traktRequest(user?.idToken, `${item.type}s/${item.traktId}`);
@@ -826,7 +823,6 @@ export default function Dashboard() {
               }
             }
 
-            // 2. Fetch from OMDb
             let coverImage = null;
             if (apiKey) {
               try {
@@ -843,7 +839,7 @@ export default function Dashboard() {
               }
             }
 
-            // 3. Fallback to TVMaze for TV shows
+            // TVMaze covers shows OMDb has no art for.
             if (!coverImage && item.type === "show") {
               try {
                 const searchUrl = imdbId
@@ -859,7 +855,6 @@ export default function Dashboard() {
               }
             }
 
-            // 4. Update the item in Firestore if a cover was found
             if (coverImage) {
               const res = await fetch(`/api/watchlist/${item.id}`, {
                 method: "PATCH",

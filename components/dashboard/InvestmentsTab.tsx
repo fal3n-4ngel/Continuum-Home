@@ -406,7 +406,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
       return tips;
     }
 
-    // 1. Diversification Check
     const maxGroup = Object.entries(actualGroupTotals).sort((a, b) => b[1] - a[1])[0];
     const maxGroupPct = totalValue > 0 ? (maxGroup[1] / totalValue) * 100 : 0;
     if (maxGroupPct > 60) {
@@ -421,7 +420,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
       });
     }
 
-    // 2. Emergency Fund Check
     const cashPct = totalValue > 0 ? (actualGroupTotals.cash / totalValue) * 100 : 0;
     if (cashPct < 15) {
       tips.push({
@@ -435,7 +433,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
       });
     }
 
-    // 3. Crypto Exposure Check
     const cryptoPct = totalValue > 0 ? (actualGroupTotals.crypto / totalValue) * 100 : 0;
     if (cryptoPct > 12) {
       tips.push({
@@ -444,7 +441,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
       });
     }
 
-    // 4. Growth Assets check
     const growthPct = totalValue > 0 ? ((actualGroupTotals.equity + actualGroupTotals.mutual_fund) / totalValue) * 100 : 0;
     if (growthPct === 0) {
       tips.push({

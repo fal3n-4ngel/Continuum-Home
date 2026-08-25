@@ -251,7 +251,6 @@ Return no other text or markdown blocks. Just the raw JSON object.
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Verify cron authorization
     const authHeader = req.headers.get("authorization");
     if (!env.CRON_SECRET || authHeader !== `Bearer ${env.CRON_SECRET}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -266,7 +265,6 @@ export async function POST(req: NextRequest) {
     const dateStr = getCalendarIstDate();
     const force = req.nextUrl.searchParams.get("force") === "true";
 
-    // 2. Fan out across every registered user via Admin SDK.
     const users = await listAllUsers();
 
     const results: CronUserResult[] = [];

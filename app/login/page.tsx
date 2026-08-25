@@ -23,13 +23,11 @@ export default function LoginPage() {
           await import("firebase/auth");
         const auth = getAuth(app);
 
-        // 1. If already signed in, go home immediately
         if (auth.currentUser) {
           window.location.replace("/");
           return;
         }
 
-        // 2. Listen for auth state
         const unsubscribe = onAuthStateChanged(auth, (user) => {
           if (user && !cancelled) {
             sessionStorage.removeItem("redirect_sent");
@@ -37,7 +35,6 @@ export default function LoginPage() {
           }
         });
 
-        // 3. Process redirect result if coming back from Google
         try {
           const result = await getRedirectResult(auth);
           if (result?.user && !cancelled) {
@@ -49,7 +46,6 @@ export default function LoginPage() {
           console.warn("[Login] Redirect result error:", redirectErr);
         }
 
-        // 4. If not logged in after checking, determine whether to redirect or stop loop
         if (!cancelled && !auth.currentUser) {
           const hasAttempted = sessionStorage.getItem("redirect_sent");
           if (hasAttempted) {

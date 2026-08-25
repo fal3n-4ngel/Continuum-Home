@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { headers } from "next/headers";
 import { ApiError } from "./errors";
+import { env } from "./env";
 
 export interface FirebaseWebConfig {
   apiKey: string;
@@ -55,7 +56,7 @@ export async function getCredentials(req?: NextRequest): Promise<Credentials> {
   } catch {
     // Fallback if headers context is unavailable (e.g. static rendering)
     return {
-      firebaseConfig: process.env.FIREBASE_CONFIG || null,
+      firebaseConfig: env.FIREBASE_CONFIG || null,
       traktClientId: process.env.TRAKT_CLIENT_ID || null,
       traktClientSecret: process.env.TRAKT_CLIENT_SECRET || null,
       traktRefreshToken: process.env.TRAKT_REFRESH_TOKEN || null,
@@ -67,7 +68,7 @@ export async function getCredentials(req?: NextRequest): Promise<Credentials> {
   const getHeader = (name: string) => reqHeaders.get(name) || null;
 
   return {
-    firebaseConfig: getHeader("x-firebase-config") || process.env.FIREBASE_CONFIG || null,
+    firebaseConfig: getHeader("x-firebase-config") || env.FIREBASE_CONFIG || null,
     traktClientId: getHeader("x-trakt-client-id") || process.env.TRAKT_CLIENT_ID || null,
     traktClientSecret: getHeader("x-trakt-client-secret") || process.env.TRAKT_CLIENT_SECRET || null,
     traktRefreshToken: getHeader("x-trakt-refresh-token") || process.env.TRAKT_REFRESH_TOKEN || null,

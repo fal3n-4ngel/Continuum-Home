@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { env } from "./env";
 
 // AES-256-GCM configuration
 const ALGORITHM = "aes-256-gcm";
@@ -6,14 +7,14 @@ const IV_LENGTH = 12; // 96 bits for GCM
 
 // Get or derive a 32-byte encryption key
 function getEncryptionKey(useFallbackOnly: boolean = false): Buffer {
-  const secret = useFallbackOnly ? null : process.env.ENCRYPTION_KEY;
+  const secret = useFallbackOnly ? null : env.ENCRYPTION_KEY;
   if (secret) {
     // If key is provided, hash it to ensure exactly 32 bytes
     return crypto.createHash("sha256").update(secret).digest();
   }
   
   // Fallback for local development using Firebase config key
-  const fbConfig = process.env.FIREBASE_CONFIG || "fallback-secret-key-phrase";
+  const fbConfig = env.FIREBASE_CONFIG || "fallback-secret-key-phrase";
   return crypto.createHash("sha256").update(fbConfig).digest();
 }
 
@@ -65,7 +66,7 @@ export function decrypt(encryptedText: string, useFallbackOnly: boolean = false)
     
     return decrypted;
   } catch (err) {
-    if (!useFallbackOnly && process.env.ENCRYPTION_KEY) {
+    if (!useFallbackOnly && env.ENCRYPTION_KEY) {
       // If decryption failed using the main key, attempt to decrypt with the fallback key
       return decrypt(encryptedText, true);
     }

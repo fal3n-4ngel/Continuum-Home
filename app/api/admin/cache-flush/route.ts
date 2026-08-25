@@ -9,7 +9,6 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    // 1. Authenticate user
     const session = await requireUser(req);
     const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL ||"";
 
@@ -17,7 +16,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden: Admin access required." }, { status: 403 });
     }
 
-    // 2. Validate Redis
     if (!redis) {
       return NextResponse.json(
         { error: "Redis cache is not active or configured on this server." },
@@ -25,7 +23,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 3. Flush all keys from the Redis DB
     const res = await redis.flushdb();
 
     waitUntil(sendDiscordEmbed(

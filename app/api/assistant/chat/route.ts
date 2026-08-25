@@ -225,7 +225,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing message query." }, { status: 400 });
     }
 
-    // 1. Initialize Google Gen AI client with the gemini-2.5-flash model
     const genAI = new GoogleGenerativeAI(geminiApiKey);
     const model = genAI.getGenerativeModel({
       model: "gemini-2.5-flash",
@@ -233,7 +232,6 @@ export async function POST(req: NextRequest) {
       tools: [{ functionDeclarations }]
     });
 
-    // 2. Format history for Google Gen AI SDK
     // SDK expects format: [{ role: "user" | "model", parts: [{ text: "..." } | { functionCall: ... } | { functionResponse: ... }] }]
     const sdkHistory = history.map((h: any) => ({
       role: h.role,
@@ -244,11 +242,9 @@ export async function POST(req: NextRequest) {
       history: sdkHistory
     });
 
-    // 3. Send prompt
     let response = await chat.sendMessage(message);
     let attempts = 0;
 
-    // 4. Handle tool calls loop
     while (attempts < 5) {
       const functionCalls = response.response.functionCalls();
       if (functionCalls && functionCalls.length > 0) {

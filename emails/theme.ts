@@ -1,16 +1,9 @@
-// Single source of truth for email CSS.
-//
-// Email clients strip <link> and most modern CSS, so everything is inlined
-// utility classes plus belt-and-braces overrides:
-//   - `!important` + `-webkit-text-fill-color` together, because iOS Mail and
-//     Gmail dark mode override plain `color` but respect text-fill-color.
-//   - `background-image: linear-gradient(X, X)` alongside `background-color`,
-//     because Outlook and Gmail dark mode repaint flat background-colors but
-//     leave gradients alone. The gradient is a solid colour by design.
-//
-// This is the union of every class any template uses. Unused classes in a
-// given template are inert, and one shared block is what keeps the real cron
-// emails and the admin preview from drifting apart.
+// Single source of truth for email CSS, shared by the crons and the admin
+// preview. Two defensive quirks are deliberate:
+//   `-webkit-text-fill-color` alongside `color`, because iOS Mail and Gmail
+//   dark mode override plain colour; and `linear-gradient(X, X)` alongside
+//   `background-color`, because those clients repaint flat backgrounds but
+//   leave gradients alone. Both gradients are solid colours by design.
 
 export const EMAIL_CSS = `
     :root { color-scheme: light; supported-color-schemes: light; }
