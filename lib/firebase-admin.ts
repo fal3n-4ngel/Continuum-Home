@@ -194,6 +194,33 @@ export async function adminListWatchlist(uid: string): Promise<WatchlistItem[]> 
     .filter((item) => typeof item.title === "string" && item.title.length > 0);
 }
 
+export interface EmailSubscriptions {
+  expenses: boolean;
+  portfolio: boolean;
+  subscriptions: boolean;
+}
+
+// Users predate this field, so absence of a key means "still subscribed"
+// (opt-out model) rather than defaulting new fields to off.
+export async function adminGetEmailSubscriptions(uid: string): Promise<EmailSubscriptions> {
+  const db = getAdminDb();
+  const doc = await db.collection("settings").doc(uid).get();
+  const raw = (doc.exists ? doc.data()?.emailSubscriptions : undefined) || {};
+  return {
+    expenses: raw.expenses !== false,
+    portfolio: raw.portfolio !== false,
+    subscriptions: raw.subscriptions !== false,
+  };
+}
+
+// Uses set-with-merge (deep merge on Firestore nested maps) rather than the
+// REST updateMask path in lib/firebase.ts, so a single-category unsubscribe
+// link can flip one key without needing to read-then-write the whole map.
+export async function adminSetEmailSubscriptions(uid: string, updates: Partial<EmailSubscriptions>): Promise<void> {
+  const db = getAdminDb();
+  await db.collection("settings").doc(uid).set({ emailSubscriptions: updates, updatedAt: Date.now() }, { merge: true });
+}
+
 export async function adminSaveDailyRecommendation(
   uid: string,
   type: string,

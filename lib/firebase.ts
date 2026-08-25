@@ -985,6 +985,9 @@ export interface DashboardSettings {
   salaryDay: number;
   monthlySalary?: number;
   additionalIncome?: number;
+  // Display-only symbol prefixed onto amounts — doesn't convert or affect
+  // stored numeric values, purely cosmetic.
+  currency?: string;
   // Keyed by pay-cycle start date (YYYY-MM-DD) — the actual "cash on hand"
   // amount the user confirmed during the Financial Health reconciliation
   // check, so it survives reloads instead of resetting every visit.
@@ -998,6 +1001,14 @@ export interface DashboardSettings {
   // through the API — deliberately absent from validateSettingsPatch so a
   // client can't self-grant it; set it directly in Firestore instead.
   isPro?: boolean;
+  // Per-category opt-out for the cron-sent emails. Missing keys mean
+  // "subscribed" — see adminGetEmailSubscriptions in firebase-admin.ts,
+  // which is what the crons actually check before sending.
+  emailSubscriptions?: {
+    expenses: boolean;
+    portfolio: boolean;
+    subscriptions: boolean;
+  };
   updatedAt: number;
 }
 
@@ -1027,14 +1038,22 @@ export async function getSettings(session: Session): Promise<DashboardSettings |
       }
     });
 
+    const emailSubsRaw = data.emailSubscriptions && typeof data.emailSubscriptions === "object" ? (data.emailSubscriptions as Record<string, unknown>) : {};
+
     const record: DashboardSettings = {
       timeFilter: (data.timeFilter as DashboardSettings["timeFilter"]) || "all",
       salaryDay: Number(data.salaryDay || 1),
       monthlySalary: Number(data.monthlySalary || 0),
       additionalIncome: Number(data.additionalIncome || 0),
+      currency: typeof data.currency === "string" && data.currency ? data.currency : "₹",
       reconciliations,
       salaryLog,
       isPro: data.isPro === true,
+      emailSubscriptions: {
+        expenses: emailSubsRaw.expenses !== false,
+        portfolio: emailSubsRaw.portfolio !== false,
+        subscriptions: emailSubsRaw.subscriptions !== false,
+      },
       updatedAt: Number(data.updatedAt || 0),
     };
     await cacheSet(cacheKey, record, SETTINGS_CACHE_TTL);

@@ -8,6 +8,7 @@ const BILLING_CYCLES = ["monthly", "yearly"] as const;
 const ASSET_CATEGORIES = ["equity", "crypto", "mutual_fund", "sip", "gold", "cash", "fixed_deposit", "other"] as const;
 const FD_COMPOUNDING_OPTIONS = ["monthly", "quarterly", "half_yearly", "yearly"] as const;
 const TIME_FILTERS = ["7", "30", "90", "salary", "all"] as const;
+const CURRENCY_SYMBOLS = ["₹", "$", "€", "£", "¥"] as const;
 
 export const MAX_PORTFOLIO_ASSETS = 500;
 
@@ -59,6 +60,11 @@ function asEnum<T extends string>(value: unknown, field: string, allowed: readon
     badRequest(`Field '${field}' must be one of: ${allowed.join(", ")}.`);
   }
   return value as T;
+}
+
+function asBoolean(value: unknown, field: string): boolean {
+  if (typeof value !== "boolean") badRequest(`Field '${field}' must be a boolean.`);
+  return value;
 }
 
 function requireObject(body: unknown, what: string): Record<string, unknown> {
@@ -271,10 +277,19 @@ export function validateSettingsPatch(body: unknown): Partial<Omit<DashboardSett
   if (b.salaryDay !== undefined) patch.salaryDay = asNumber(b.salaryDay, "salaryDay", { min: 1, max: 31, integer: true });
   if (b.monthlySalary !== undefined) patch.monthlySalary = asNumber(b.monthlySalary, "monthlySalary", { min: 0 });
   if (b.additionalIncome !== undefined) patch.additionalIncome = asNumber(b.additionalIncome, "additionalIncome", { min: 0 });
+  if (b.currency !== undefined) patch.currency = asEnum(b.currency, "currency", CURRENCY_SYMBOLS, true)!;
   if (b.reconciliations !== undefined) patch.reconciliations = asReconciliationsMap(b.reconciliations, "reconciliations");
-  if (b.salaryLog !== undefined) patch.salaryLog = asSalaryLogMap(b.salaryLog, "salaryLog");  
+  if (b.salaryLog !== undefined) patch.salaryLog = asSalaryLogMap(b.salaryLog, "salaryLog");
+  if (b.emailSubscriptions !== undefined) {
+    const es = requireObject(b.emailSubscriptions, "emailSubscriptions");
+    patch.emailSubscriptions = {
+      expenses: asBoolean(es.expenses, "emailSubscriptions.expenses"),
+      portfolio: asBoolean(es.portfolio, "emailSubscriptions.portfolio"),
+      subscriptions: asBoolean(es.subscriptions, "emailSubscriptions.subscriptions"),
+    };
+  }
   if (Object.keys(patch).length === 0) {
-    badRequest("Patch body must include at least one of: timeFilter, salaryDay, monthlySalary, additionalIncome, reconciliations.");
+    badRequest("Patch body must include at least one of: timeFilter, salaryDay, monthlySalary, additionalIncome, currency, reconciliations, emailSubscriptions.");
   }
   return patch;
 }

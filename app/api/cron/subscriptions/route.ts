@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { toErrorResponse } from "@/lib/errors";
-import { listAllUsers, adminListSubscriptions, type AdminUser } from "@/lib/firebase-admin";
+import { listAllUsers, adminListSubscriptions, adminGetEmailSubscriptions, type AdminUser } from "@/lib/firebase-admin";
 import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
 import { getIstDateString } from "@/lib/dates";
 import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron-alert";
+import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
 
 export const dynamic = "force-dynamic";
 
@@ -16,6 +17,10 @@ async function processUser(user: AdminUser, resendApiKey: string, force: boolean
     if (alreadySent) {
       return { sent: false, reason: "subscription email already sent today (deduplicated)" };
     }
+  }
+  const emailPrefs = await adminGetEmailSubscriptions(user.uid);
+  if (!emailPrefs.subscriptions) {
+    return { sent: false, reason: "user unsubscribed from subscription renewal emails" };
   }
   const subscriptions = await adminListSubscriptions(user.uid);
   const today = new Date();
@@ -33,6 +38,7 @@ async function processUser(user: AdminUser, resendApiKey: string, force: boolean
     return { sent: false, reason: "no renewals in the 2-3 day window" };
   }
 
+  const unsubscribeUrl = buildUnsubscribeUrl(user.uid, "subscriptions");
   const emailHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -143,6 +149,7 @@ async function processUser(user: AdminUser, resendApiKey: string, force: boolean
             <td align="center" style="padding:48px 0 24px 0;border-top:1px solid #eae8e0;margin-top:32px;display:block;">
               <a href="${process.env.APP_URL || 'http://localhost:3000'}" class="btn-primary font-sans">Manage Subscriptions</a>
               <p class="font-sans txt-muted" style="font-size:11px;margin-top:16px;">This is an automated security alert from your dashboard.</p>
+              <p class="font-sans txt-muted" style="font-size:11px;margin-top:8px;"><a href="${unsubscribeUrl}" style="color:#7c7a72;text-decoration:underline;">Unsubscribe from renewal alerts</a></p>
             </td>
           </tr>
       </table>
@@ -159,6 +166,10 @@ async function processUser(user: AdminUser, resendApiKey: string, force: boolean
       to: [user.email],
       subject: `Alert: ${upcomingRenewals.length} Upcoming Subscription Renewals`,
       html: emailHtml,
+      headers: {
+        "List-Unsubscribe": `<${unsubscribeUrl}>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      },
     }),
   });
 

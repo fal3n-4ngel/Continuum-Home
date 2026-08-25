@@ -44,6 +44,7 @@ const InvestmentsTab = dynamic(() => import("@/components/dashboard/InvestmentsT
 const FinancialHealthTab = dynamic(() => import("@/components/dashboard/FinancialHealthTab").then((mod) => mod.FinancialHealthTab));
 const ReportsTab = dynamic(() => import("@/components/dashboard/ReportsTab").then((mod) => mod.ReportsTab));
 const AdminTab = dynamic(() => import("@/components/dashboard/AdminTab").then((mod) => mod.AdminTab));
+const SettingsTab = dynamic(() => import("@/components/dashboard/SettingsTab").then((mod) => mod.SettingsTab));
 
 interface FirebaseAuthModule {
   auth: any;
@@ -81,7 +82,7 @@ export default function Dashboard() {
       const tab = queryTab || hashTab;
 
       if (tab) {
-        if (["expenses", "subscriptions", "investments", "financial", "reports", "agent", "admin"].includes(tab)) {
+        if (["expenses", "subscriptions", "investments", "financial", "reports", "agent", "admin", "settings"].includes(tab)) {
           setActiveTab(tab);
         } else if (["watchlist", "books", "integrations"].includes(tab)) {
           setActiveTab("media");
@@ -100,7 +101,11 @@ export default function Dashboard() {
   const [traktUser, setTraktUser] = useState<TraktUser | null>(null);
 
   // Currency & Navigation
-  const [currency, setCurrency] = useState<string>("₹");
+  const [currency, setCurrencyState] = useState<string>(() => {
+    if (typeof window === "undefined") return "₹";
+    const cached = window.localStorage.getItem("phub_currency");
+    return cached || "₹";
+  });
   const [expenseTab, setExpenseTab] = useState<"ledger" | "subscriptions">("ledger");
 
   // Expenses State
@@ -143,6 +148,11 @@ export default function Dashboard() {
   });
   const [reconciliations, setReconciliationsState] = useState<Record<string, number>>({});
   const [salaryLog, setSalaryLogState] = useState<Record<string, { date: string; amount: number }>>({});
+  const [emailSubscriptions, setEmailSubscriptionsState] = useState<{ expenses: boolean; portfolio: boolean; subscriptions: boolean }>({
+    expenses: true,
+    portfolio: true,
+    subscriptions: true,
+  });
   const [isProUser, setIsProUser] = useState(false);
   const [showClaimPro, setShowClaimPro] = useState(false);
   const [activeChart, setActiveChart] = useState<"category" | "trend">("category");
@@ -1111,11 +1121,22 @@ export default function Dashboard() {
           setAdditionalIncomeState(data.additionalIncome);
           localStorage.setItem("phub_additional_income", String(data.additionalIncome));
         }
+        if (data.currency) {
+          setCurrencyState(data.currency);
+          localStorage.setItem("phub_currency", data.currency);
+        }
         if (data.reconciliations && typeof data.reconciliations === "object") {
           setReconciliationsState(data.reconciliations);
         }
         if (data.salaryLog && typeof data.salaryLog === "object") {
           setSalaryLogState(data.salaryLog);
+        }
+        if (data.emailSubscriptions && typeof data.emailSubscriptions === "object") {
+          setEmailSubscriptionsState({
+            expenses: data.emailSubscriptions.expenses !== false,
+            portfolio: data.emailSubscriptions.portfolio !== false,
+            subscriptions: data.emailSubscriptions.subscriptions !== false,
+          });
         }
         setIsProUser(data.isPro === true);
       }
@@ -1171,6 +1192,21 @@ export default function Dashboard() {
     setSalaryLogState(next);
     if (user) {
       fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ salaryLog: next }) }).catch((err) => console.error(err));
+    }
+  };
+
+  const setCurrency = (c: string) => {
+    setCurrencyState(c);
+    localStorage.setItem("phub_currency", c);
+    if (user) {
+      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ currency: c }) }).catch((err) => console.error(err));
+    }
+  };
+
+  const setEmailSubscriptions = (next: { expenses: boolean; portfolio: boolean; subscriptions: boolean }) => {
+    setEmailSubscriptionsState(next);
+    if (user) {
+      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ emailSubscriptions: next }) }).catch((err) => console.error(err));
     }
   };
 
@@ -2452,6 +2488,21 @@ export default function Dashboard() {
 
         {activeTab === "agent" && (
           <KirokuTab idToken={user?.idToken} />
+        )}
+
+        {activeTab === "settings" && (
+          <SettingsTab
+            emailSubscriptions={emailSubscriptions}
+            setEmailSubscriptions={setEmailSubscriptions}
+            currency={currency}
+            setCurrency={setCurrency}
+            salaryDay={salaryDay}
+            setSalaryDay={setSalaryDay}
+            monthlySalary={monthlySalary}
+            setMonthlySalary={setMonthlySalary}
+            additionalIncome={additionalIncome}
+            setAdditionalIncome={setAdditionalIncome}
+          />
         )}
 
         {activeTab === "admin" && user && user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com") && (
