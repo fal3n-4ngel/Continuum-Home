@@ -269,10 +269,10 @@ export default function Dashboard() {
       sendAuditPostback({
         eventType: "USER_SESSION_ACTIVE",
         userId: user.uid,
-        metadata: { email: user.email, authProvider: user.authProvider || "google" },
+        metadata: { email: user.email, authProvider: "google" },
       }).catch(() => {});
     }
-  }, [user?.uid, user?.email, user?.authProvider]);
+  }, [user?.uid, user?.email]);
 
 
   const triggerConfirm = (
