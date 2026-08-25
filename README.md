@@ -62,36 +62,7 @@ Every caller — a signed-in browser or an external AI client that completed the
 
 The other structural decision is that audit telemetry leaves the building entirely: `lib/audit-postback` doesn't write to this app's own Firestore, it posts to **monolith-api**, a separate service this app has no further visibility into. Route handlers also call out to Trakt, AniList, OMDb, and Gemini for sync, enrichment, and the AI assistant — those are plain leaf API calls, not part of the request's control flow, so they're omitted below.
 
-```mermaid
-flowchart TB
-    Browser["Browser"]
-    GPT["Custom GPT<br/>(or other OpenAPI-action clients)"]
-    API["Next.js API routes<br/>(one set, every caller)"]
-
-    Cache["memory + Redis"]
-    FSRest["Firestore REST"]
-    Firestore[("Firestore")]
-
-    CronEP["Vercel Cron"]
-    FSAdmin["Admin SDK"]
-
-    AuditClient["audit-postback client"]
-    Monolith["monolith-api<br/>(external service)"]
-
-    Browser -- "Google sign-in → ID token" --> API
-    GPT -- "OAuth code → same token type" --> API
-
-    API -- "read" --> Cache
-    Cache -- "hit: skip Firestore" --> API
-    Cache -- "miss, caller's own token" --> FSRest
-    FSRest -- "security rules enforce isolation" --> Firestore
-
-    CronEP -- "no user token available" --> FSAdmin
-    FSAdmin -- "bypasses security rules" --> Firestore
-
-    API -- "session + Custom GPT events" --> AuditClient
-    AuditClient -- "fire-and-forget POST" --> Monolith
-```
+![Continuum Architecture Diagram](architecture-diagram.svg)
 
 ## Run Using Node.js
 
