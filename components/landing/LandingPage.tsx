@@ -214,7 +214,7 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
     question: "How does the ChatGPT / AI agent integration work?",
     answer:
-      "Every API route is documented with a standard OpenAPI schema (at /api/openapi.json), so you can plug it directly into a Custom GPT Action, or point Gemini/Claude developer APIs at the same schema to log expenses or manage your watchlist in plain English.",
+      "Every API route is documented with a standard OpenAPI schema (at /api/openapi.json), so you can plug it directly into a Custom GPT Action, or into any other OpenAPI-schema-powered action or MCP setup, to log expenses or manage your watchlist in plain English.",
   },
   {
     question: "Can I import my existing expense or watchlist data?",
@@ -844,7 +844,7 @@ export default function LandingPage({
               </span>
             </h2>
             <p className={`${STEP_DESC} mb-8 max-w-[440px] text-sm`}>
-              Every route in this API exposes a clean, standard OpenAPI spec. Plug the schema directly into custom ChatGPT Actions out-of-the-box, or pass it to Gemini and Claude developer APIs to perform actions in plain English.
+              Every route in this API exposes a clean, standard OpenAPI spec. Plug the schema directly into custom ChatGPT Actions out-of-the-box, or into any other OpenAPI-schema-powered actions or MCP setup, to perform actions in plain English.
             </p>
             <ul className="mb-8 flex list-none flex-col gap-3.5 p-0">
               <li className="flex items-start gap-3 text-sm leading-[1.5] text-[#1c1b18]">

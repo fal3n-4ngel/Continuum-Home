@@ -3,8 +3,8 @@ import { AUTHOR, SITE_URL } from "@/lib/utils";
 
 export const dynamic = "force-static";
 
-// OpenAPI 3.1 spec consumed by ChatGPT Custom GPT Actions, Claude Projects, and
-// AI Agent integrations (imported from /api/openapi.json). Keep operationIds stable.
+// OpenAPI 3.1 spec consumed by ChatGPT Custom GPT Actions and other
+// OpenAPI-schema-powered actions/MCP integrations (imported from /api/openapi.json). Keep operationIds stable.
 export async function GET() {
   const errorResponse = (description: string) => ({
     description,

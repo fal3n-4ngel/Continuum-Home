@@ -39,7 +39,7 @@ Architecture: Modular Domain-Driven Subdirectories (lib/audit-postback, lib/auth
 - Book library backed by the OpenLibrary API with reading-progress tracking.
 - Subscription tracker that normalizes monthly and annual costs into a true effective monthly spend.
 - Auto-saving scratchpad for quick, persistent notes.
-- Built-in OpenAPI 3.1 schema for Custom GPT Actions, Gemini Gems, or Claude Projects — add expenses, log media, or update your portfolio in plain English.
+- Built-in OpenAPI 3.1 schema (`/api/openapi.json`) for Custom GPT Actions — add expenses, log media, or update your portfolio in plain English. Any other assistant with an equivalent OpenAPI-action builder works the same way; as of now that's Custom GPTs — Gemini Gems and Claude Projects don't expose one in their consumer UI.
 - Real-time audit postback module (`lib/audit-postback/`) for login session auditing and Custom GPT action tracking.
 - AES-256-GCM encryption on sensitive fields, with no admin service account — every request is authenticated with the caller's own Firebase ID token.
 
@@ -65,7 +65,7 @@ The other structural decision is that audit telemetry leaves the building entire
 ```mermaid
 flowchart TB
     Browser["Browser"]
-    GPT["Custom GPT / Gemini Gem /<br/>Claude Project"]
+    GPT["Custom GPT<br/>(or other OpenAPI-action clients)"]
     API["Next.js API routes<br/>(one set, every caller)"]
 
     Cache["memory + Redis"]
