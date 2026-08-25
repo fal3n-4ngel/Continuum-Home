@@ -6,6 +6,7 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
 import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron-alert";
 import { reserveGeminiCall } from "@/lib/gemini-budget";
+import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 // Gemini free-tier throttling (13s between calls, see GEMINI_MIN_INTERVAL_MS
@@ -252,8 +253,7 @@ export async function POST(req: NextRequest) {
   try {
     // 1. Verify cron authorization
     const authHeader = req.headers.get("authorization");
-    const cronSecret = process.env.CRON_SECRET;
-    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+    if (!env.CRON_SECRET || authHeader !== `Bearer ${env.CRON_SECRET}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

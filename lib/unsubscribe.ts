@@ -4,8 +4,11 @@
 //
 // Signed with CRON_SECRET rather than a new env var — it's already a
 // required, server-only secret in every deployment that runs the email
-// crons, so there's nothing extra to provision.
+// crons, so there's nothing extra to provision. Since it's per-deployment
+// (Production and UAT each have their own CRON_SECRET), a token signed on
+// one deployment is never valid on another.
 import crypto from "crypto";
+import { env } from "./env";
 
 export const EMAIL_CATEGORIES = ["expenses", "portfolio", "subscriptions"] as const;
 export type EmailCategory = (typeof EMAIL_CATEGORIES)[number];
@@ -20,15 +23,12 @@ export const EMAIL_CATEGORY_LABELS: Record<EmailCategory, string> = {
   subscriptions: "Subscription Renewal Alerts",
 };
 
-function getSigningSecret(): string {
-  // Falls back to a fixed string only so local dev without CRON_SECRET set
-  // doesn't crash — production always has CRON_SECRET configured (the
-  // cron routes themselves refuse to run without it).
-  return process.env.CRON_SECRET || "local-dev-unsubscribe-secret";
-}
-
 export function signUnsubscribeToken(uid: string): string {
-  return crypto.createHmac("sha256", getSigningSecret()).update(uid).digest("hex");
+  // Falls back to a fixed string only so local dev without CRON_SECRET set
+  // doesn't crash — every real deployment has CRON_SECRET configured (the
+  // cron routes themselves refuse to run without it).
+  const signingSecret = env.CRON_SECRET || "local-dev-unsubscribe-secret";
+  return crypto.createHmac("sha256", signingSecret).update(uid).digest("hex");
 }
 
 export function verifyUnsubscribeToken(uid: string, token: string): boolean {
@@ -40,12 +40,8 @@ export function verifyUnsubscribeToken(uid: string, token: string): boolean {
   return crypto.timingSafeEqual(a, b);
 }
 
-function getAppUrl(): string {
-  return process.env.APP_URL || "http://localhost:3000";
-}
-
 export function buildUnsubscribeUrl(uid: string, category: UnsubscribeCategory): string {
   const token = signUnsubscribeToken(uid);
   const params = new URLSearchParams({ uid, category, token });
-  return `${getAppUrl()}/api/unsubscribe?${params.toString()}`;
+  return `${env.APP_URL}/api/unsubscribe?${params.toString()}`;
 }

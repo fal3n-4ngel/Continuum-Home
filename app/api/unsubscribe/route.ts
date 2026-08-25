@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminSetEmailSubscriptions, type EmailSubscriptions } from "@/lib/firebase-admin";
 import { EMAIL_CATEGORIES, EMAIL_CATEGORY_LABELS, verifyUnsubscribeToken, type EmailCategory, type UnsubscribeCategory } from "@/lib/unsubscribe";
+import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -99,6 +100,6 @@ export async function POST(req: NextRequest) {
     "Unsubscribed — Continuum Home",
     `<div class="icon">✓</div><h1>You're unsubscribed</h1>
      <p>You won't receive <span class="cat">${categoryLabel(parsed.category)}</span> anymore. Changed your mind? Sign in and re-enable it from Settings anytime.</p>
-     <a class="btn" href="${process.env.APP_URL || "http://localhost:3000"}/?tab=settings">Manage Email Preferences</a>`
+     <a class="btn" href="${env.APP_URL}/?tab=settings">Manage Email Preferences</a>`
   );
 }

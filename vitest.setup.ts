@@ -28,6 +28,10 @@ vi.mock("@/lib/firebase-admin", () => ({
   ]),
   adminUpdatePortfolioValuationHistory: vi.fn().mockResolvedValue(true),
   adminSaveDailyRecommendation: vi.fn().mockResolvedValue(true),
+  // Opted in to everything, matching the real "missing key means subscribed"
+  // default — so cron tests exercise the send path rather than the skip path.
+  adminGetEmailSubscriptions: vi.fn().mockResolvedValue({ expenses: true, portfolio: true, subscriptions: true }),
+  adminSetEmailSubscriptions: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Mock prices module

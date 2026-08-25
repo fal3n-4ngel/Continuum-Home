@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/errors";
 import { waitUntil } from "@vercel/functions";
 import { sendDiscordEmbed } from "@/lib/discord";
+import { env } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -10,9 +11,8 @@ export async function POST(req: NextRequest) {
   try {
     // 1. Authenticate user
     const session = await requireUser(req);
-    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com";
 
-    if (session.user.email !== adminEmail) {
+    if (session.user.email !== env.ADMIN_EMAIL) {
       return NextResponse.json({ error: "Forbidden: Admin access required." }, { status: 403 });
     }
 
@@ -35,8 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid trigger type." }, { status: 400 });
     }
 
-    const cronSecret = process.env.CRON_SECRET;
-    if (!cronSecret) {
+    if (!env.CRON_SECRET) {
       return NextResponse.json({ error: "CRON_SECRET is not configured on the server." }, { status: 500 });
     }
 
@@ -47,7 +46,7 @@ export async function POST(req: NextRequest) {
     const cronRes = await fetch(cronUrl, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${cronSecret}`,
+        Authorization: `Bearer ${env.CRON_SECRET}`,
       },
     });
 
