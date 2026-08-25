@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Trash2 } from "lucide-react";
 import { WatchlistItem, SearchResult } from "@/types";
-import { isSafeImageUrl } from "@/lib/safe-url";
+import { isSafeImageUrl } from "@/lib/utils";
 
 interface WatchlistTabProps {
   watchlist: WatchlistItem[];

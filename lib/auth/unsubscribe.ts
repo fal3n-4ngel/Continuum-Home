@@ -6,7 +6,7 @@
 // are sent, and it differs per deployment — so a UAT link is inert against
 // Production.
 import crypto from "crypto";
-import { env } from "./env";
+import { env } from "@/lib/utils";
 
 export const EMAIL_CATEGORIES = ["expenses", "portfolio", "subscriptions"] as const;
 export type EmailCategory = (typeof EMAIL_CATEGORIES)[number];

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LogoMark } from "@/components/Logo";
-import { SITE_NAME } from "@/lib/site";
+import { SITE_NAME } from "@/lib/utils";
 
 export default function LoginPage() {
   const [status, setStatus] = useState<"loading" | "redirecting" | "error">("loading");

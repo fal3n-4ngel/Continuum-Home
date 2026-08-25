@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAdmin } from "@/lib/route-handlers";
-import { listAllUsers } from "@/lib/firebase-admin";
+import { withAdmin } from "@/lib/utils/route-handlers";
+import { listAllUsers } from "@/lib/firebase/firebase-admin";
 import { waitUntil } from "@vercel/functions";
-import { sendDiscordEmbed } from "@/lib/discord";
-import { env, resolveEmailRecipient } from "@/lib/env";
+import { sendDiscordEmbed } from "@/lib/integrations";
+import { env, resolveEmailRecipient } from "@/lib/utils";
 import { buildAnnouncementEmail } from "@/emails/templates/announcement";
 
 export const dynamic = "force-dynamic";

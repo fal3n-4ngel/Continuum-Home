@@ -1,5 +1,5 @@
 import React from "react";
-import { SITE_NAME } from "@/lib/site";
+import { SITE_NAME } from "@/lib/utils";
 
 // Single source of truth for the Continuum "bento grid" brand mark — a 2x2 grid
 // of rounded squares (top-left solid, top-right & bottom-left muted, bottom-

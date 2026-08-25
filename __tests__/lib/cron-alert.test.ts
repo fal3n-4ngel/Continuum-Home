@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron-alert";
+import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron";
 
 // waitUntil normally hands the promise to the platform to finish after the
 // response is sent; here we collect them so assertions can await delivery.

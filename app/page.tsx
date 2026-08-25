@@ -1,5 +1,5 @@
 "use client";
-import { SITE_NAME } from "@/lib/site";
+import { SITE_NAME } from "@/lib/utils";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
@@ -15,12 +15,12 @@ import {
   InvestmentQuote,
   FdCompounding,
 } from "@/types";
-import { getNextFutureBillingDate, resolvePayCycle, buildCycleHistory, toLocalDateStr } from "@/lib/dates";
-import { getCurrencySymbol } from "@/lib/formatters";
+import { getNextFutureBillingDate, resolvePayCycle, buildCycleHistory, toLocalDateStr } from "@/lib/utils";
+import { getCurrencySymbol } from "@/lib/utils";
 import { sendAuditPostback } from "@/lib/audit-postback";
-import { anilistQuery } from "@/lib/anilist";
-import { traktRequest } from "@/lib/trakt-client";
-import { pushWatchlistUpdate } from "@/lib/sync-push";
+import { anilistQuery } from "@/lib/integrations";
+import { traktRequest } from "@/lib/integrations";
+import { pushWatchlistUpdate } from "@/lib/firebase";
 import type { SyncEntry } from "@/lib/firebase";
 
 // Modular Dashboard Components

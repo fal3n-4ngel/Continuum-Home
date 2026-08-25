@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listAllUsers, adminGetPortfolio, adminUpdatePortfolioValuationHistory, adminGetEmailSubscriptions, type AdminUser } from "@/lib/firebase-admin";
-import { createPriceFetcher, getUsdToInrRate, type PriceFetcher } from "@/lib/prices";
-import { getEffectiveAmount } from "@/lib/fd";
-import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
-import { getIstDateString } from "@/lib/dates";
-import { reportCronFailures, type CronUserResult } from "@/lib/cron-alert";
-import { withCron } from "@/lib/route-handlers";
-import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
+import { listAllUsers, adminGetPortfolio, adminUpdatePortfolioValuationHistory, adminGetEmailSubscriptions, type AdminUser } from "@/lib/firebase/firebase-admin";
+import { createPriceFetcher, getUsdToInrRate, type PriceFetcher } from "@/lib/finance";
+import { getEffectiveAmount } from "@/lib/finance";
+import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron";
+import { getIstDateString } from "@/lib/utils";
+import { reportCronFailures, type CronUserResult } from "@/lib/cron";
+import { withCron } from "@/lib/utils/route-handlers";
+import { buildUnsubscribeUrl } from "@/lib/auth";
 import { buildPortfolioEmail } from "@/emails/templates/portfolio";
-import { env, resolveEmailRecipient } from "@/lib/env";
+import { env, resolveEmailRecipient } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 

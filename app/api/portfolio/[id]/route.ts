@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { ApiError, toErrorResponse } from "@/lib/errors";
+import { ApiError, toErrorResponse } from "@/lib/utils";
 import { deletePortfolioAsset, updatePortfolioAsset } from "@/lib/firebase";
-import { validatePortfolioAssetPatch } from "@/lib/validate";
+import { validatePortfolioAssetPatch } from "@/lib/firebase";
 
 export const dynamic = "force-dynamic";
 

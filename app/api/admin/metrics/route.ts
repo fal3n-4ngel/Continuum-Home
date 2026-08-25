@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { redis } from "@/lib/redis";
-import { ApiError } from "@/lib/errors";
-import { listAllUsers } from "@/lib/firebase-admin";
+import { redis } from "@/lib/utils";
+import { ApiError } from "@/lib/utils";
+import { listAllUsers } from "@/lib/firebase/firebase-admin";
 
 export const dynamic = "force-dynamic";
 

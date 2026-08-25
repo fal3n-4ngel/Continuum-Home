@@ -1,8 +1,8 @@
-export * from "@/lib/validators/user.schema";
-export * from "@/lib/validators/expense.schema";
-export * from "@/lib/validators/investment.schema";
-export * from "@/lib/validators/watchlist.schema";
-export * from "@/lib/validators/subscription.schema";
+export * from "@/lib/firebase/validators/user.schema";
+export * from "@/lib/firebase/validators/expense.schema";
+export * from "@/lib/firebase/validators/investment.schema";
+export * from "@/lib/firebase/validators/watchlist.schema";
+export * from "@/lib/firebase/validators/subscription.schema";
 
 export interface Note {
   content: string;

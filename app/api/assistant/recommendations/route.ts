@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { listWatchlist, getDailyRecommendation, saveDailyRecommendation, DailyRecommendation } from "@/lib/firebase";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { ApiError, toErrorResponse } from "@/lib/errors";
-import { reserveGeminiCall, acquireGenerationLock, isGeminiQuotaError } from "@/lib/gemini-budget";
+import { ApiError, toErrorResponse } from "@/lib/utils";
+import { reserveGeminiCall, acquireGenerationLock, isGeminiQuotaError } from "@/lib/integrations";
 
 export const dynamic = "force-dynamic";
 

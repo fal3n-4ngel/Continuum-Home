@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { validatePortfolioAssets, validatePortfolioAssetPatch } from "@/lib/validate";
+import { validatePortfolioAssets, validatePortfolioAssetPatch } from "@/lib/firebase";
 
 function assetWith(mfSchemeCode: unknown) {
   return { assets: [{ name: "HDFC Mid Cap", category: "sip", amount: 1000, investedAmount: 1000, mfSchemeCode }] };

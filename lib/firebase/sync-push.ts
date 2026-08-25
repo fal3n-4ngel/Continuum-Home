@@ -1,5 +1,4 @@
-import { anilistQuery, TO_ANILIST_STATUS_MAP } from "./anilist";
-import { traktRequest } from "./trakt-client";
+import { anilistQuery, TO_ANILIST_STATUS_MAP, traktRequest } from "@/lib/integrations";
 import { WatchlistItem } from "./firebase";
 
 /**

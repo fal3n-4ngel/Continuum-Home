@@ -2,9 +2,7 @@ import { NextRequest } from "next/server";
 import { sendAuditPostback } from "./client";
 import { AUDIT_EVENT_TYPES } from "./types";
 
-/**
- * Detects if an incoming HTTP request originated from an OpenAI Custom GPT / ChatGPT Action agent.
- */
+// Check if request originated from ChatGPT / Custom GPT
 export function isCustomGptRequest(req: NextRequest): boolean {
   const userAgent = req.headers.get("user-agent") || "";
   const clientHeader = req.headers.get("x-client") || "";
@@ -16,9 +14,7 @@ export function isCustomGptRequest(req: NextRequest): boolean {
   );
 }
 
-/**
- * Dispatches a non-blocking audit postback if the request is identified as a Custom GPT action.
- */
+// Log postback if request is from a Custom GPT
 export async function checkAndSendCustomGptAudit(
   req: NextRequest,
   userId: string,

@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { Shield, ArrowLeft } from "lucide-react";
-import { SITE_NAME, AUTHOR } from "@/lib/site";
+import { SITE_NAME, AUTHOR } from "@/lib/utils";
 
 export const metadata = {
   title: "Privacy Policy",

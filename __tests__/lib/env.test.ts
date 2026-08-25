@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { env, isUatDeployment, resolveEmailRecipient, configWarnings } from "@/lib/env";
+import { env, isUatDeployment, resolveEmailRecipient, configWarnings } from "@/lib/utils";
 
 const KEYS = ["APP_ENV", "VERCEL_ENV", "VERCEL_URL", "APP_URL", "UAT_TEST_EMAIL_OVERRIDE", "CRON_SECRET", "ADMIN_EMAIL", "NEXT_PUBLIC_ADMIN_EMAIL"] as const;
 

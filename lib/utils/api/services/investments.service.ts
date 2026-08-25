@@ -1,8 +1,8 @@
 import { Session } from "@/lib/auth";
 import { FirestoreClient } from "../firebase-client";
-import { InvestmentAsset } from "@/lib/validators/investment.schema";
-import { decrypt } from "@/lib/encryption";
-import { cacheGet, cacheSet, cacheInvalidate } from "@/lib/cache";
+import { InvestmentAsset } from "@/lib/firebase/validators/investment.schema";
+import { decrypt } from "@/lib/utils";
+import { cacheGet, cacheSet, cacheInvalidate } from "@/lib/utils";
 
 const INVESTMENTS_CACHE_TTL = 3_600_000;
 

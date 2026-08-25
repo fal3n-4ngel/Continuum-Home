@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminSetEmailSubscriptions, type EmailSubscriptions } from "@/lib/firebase-admin";
-import { EMAIL_CATEGORIES, EMAIL_CATEGORY_LABELS, verifyUnsubscribeToken, type EmailCategory, type UnsubscribeCategory } from "@/lib/unsubscribe";
-import { env } from "@/lib/env";
+import { adminSetEmailSubscriptions, type EmailSubscriptions } from "@/lib/firebase/firebase-admin";
+import { EMAIL_CATEGORIES, EMAIL_CATEGORY_LABELS, verifyUnsubscribeToken, type EmailCategory, type UnsubscribeCategory } from "@/lib/auth";
+import { env } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { listAllUsers } from "@/lib/firebase-admin";
-import { cacheGet, cacheSet } from "@/lib/cache";
+import { listAllUsers } from "@/lib/firebase/firebase-admin";
+import { cacheGet, cacheSet } from "@/lib/utils";
 
 // Public, non-personalized, and safe to go stale for an hour — let Next/Vercel
 // cache the response at the edge so most requests never invoke this function

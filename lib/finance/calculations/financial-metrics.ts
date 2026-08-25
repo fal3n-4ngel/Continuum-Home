@@ -1,5 +1,5 @@
 import { ExpenseRecord, InvestmentAsset, Subscription } from "@/types";
-import { getEffectiveAmount } from "@/lib/fd";
+import { getEffectiveAmount } from "@/lib/finance";
 
 export function calculateTotalExpenses(expenses: ExpenseRecord[]): number {
   return expenses.reduce((sum, item) => sum + (item.amount || 0), 0);

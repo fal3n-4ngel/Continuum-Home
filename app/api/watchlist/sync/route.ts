@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { ApiError, toErrorResponse } from "@/lib/errors";
+import { ApiError, toErrorResponse } from "@/lib/utils";
 import { bulkSyncWatchlist } from "@/lib/firebase";
-import { validateSyncPayload } from "@/lib/validate";
-import { redis } from "@/lib/redis";
+import { validateSyncPayload } from "@/lib/firebase";
+import { redis } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 

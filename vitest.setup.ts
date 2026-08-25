@@ -2,7 +2,7 @@ import "@testing-library/jest-dom";
 import { vi } from "vitest";
 
 // Mock Firebase Admin module globally for integration tests
-vi.mock("@/lib/firebase-admin", () => ({
+vi.mock("@/lib/firebase/firebase-admin", () => ({
   getAdminDb: vi.fn().mockReturnValue(null),
   requireUser: vi.fn(),
   listAllUsers: vi.fn().mockResolvedValue([

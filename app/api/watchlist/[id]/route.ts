@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { ApiError, toErrorResponse } from "@/lib/errors";
+import { ApiError, toErrorResponse } from "@/lib/utils";
 import { updateWatchlistItem, deleteWatchlistItem } from "@/lib/firebase";
-import { validateWatchlistPatch } from "@/lib/validate";
+import { validateWatchlistPatch } from "@/lib/firebase";
 
 export const dynamic = "force-dynamic";
 

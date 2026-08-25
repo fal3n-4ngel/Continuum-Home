@@ -1,5 +1,5 @@
 import { Session } from "@/lib/auth";
-import { ApiError } from "@/lib/errors";
+import { ApiError } from "@/lib/utils";
 
 const FIRESTORE_HOST = "https://firestore.googleapis.com/v1";
 const DOC_ID_RE = /^[A-Za-z0-9_-]{1,128}$/;

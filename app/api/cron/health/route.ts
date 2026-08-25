@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GET as getOpenApi } from "@/app/api/openapi.json/route";
-import { env, configWarnings } from "@/lib/env";
-import { redisStatus } from "@/lib/redis";
+import { env, configWarnings } from "@/lib/utils";
+import { redisStatus } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 

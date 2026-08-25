@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeFdValue, getEffectiveAmount, daysUntil } from "@/lib/fd";
+import { computeFdValue, getEffectiveAmount, daysUntil } from "@/lib/finance";
 
 describe("Fixed Deposit Financial Math Tests", () => {
   it("calculates compound interest correctly for 1 year at 10% quarterly compounding", () => {

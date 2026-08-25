@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAdmin } from "@/lib/route-handlers";
+import { withAdmin } from "@/lib/utils/route-handlers";
 import { waitUntil } from "@vercel/functions";
-import { sendDiscordEmbed } from "@/lib/discord";
-import { env } from "@/lib/env";
+import { sendDiscordEmbed } from "@/lib/integrations";
+import { env } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 

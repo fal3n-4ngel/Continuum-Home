@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
-import { ApiError, toErrorResponse } from "@/lib/errors";
-import { getAdminDb } from "@/lib/firebase-admin";
-import { cacheInvalidate } from "@/lib/cache";
-import { env } from "@/lib/env";
+import { ApiError, toErrorResponse } from "@/lib/utils";
+import { getAdminDb } from "@/lib/firebase/firebase-admin";
+import { cacheInvalidate } from "@/lib/utils";
+import { env } from "@/lib/utils";
 import { waitUntil } from "@vercel/functions";
-import { sendDiscordEmbed } from "@/lib/discord";
+import { sendDiscordEmbed } from "@/lib/integrations";
 
 export const dynamic = "force-dynamic";
 

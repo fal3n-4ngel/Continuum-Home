@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { ApiError } from "./errors";
+import { ApiError } from "@/lib/utils";
 import type { DashboardSettings, ExpenseEntry, InvestmentAsset, SubscriptionEntry, SubscriptionRecord, SyncEntry, SyncSource, WatchlistItem } from "./firebase";
 
 const MEDIA_TYPES = ["movie", "show", "anime", "book"] as const;

@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { headers } from "next/headers";
-import { ApiError } from "./errors";
-import { env } from "./env";
+import { ApiError } from "@/lib/utils";
+import { env } from "@/lib/utils";
 
 export interface FirebaseWebConfig {
   apiKey: string;

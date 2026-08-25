@@ -1,7 +1,7 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import { InvestmentAsset, InvestmentCategory, InvestmentQuote, FdCompounding } from "@/types";
-import { getEffectiveAmount, computeFdMaturityValue, daysUntil, FD_COMPOUNDING_LABELS } from "@/lib/fd";
+import { getEffectiveAmount, computeFdMaturityValue, daysUntil, FD_COMPOUNDING_LABELS } from "@/lib/finance";
 import { 
   TrendingUp, 
   TrendingDown, 

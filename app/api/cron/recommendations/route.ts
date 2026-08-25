@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { toErrorResponse } from "@/lib/errors";
-import { listAllUsers, adminListWatchlist, adminSaveDailyRecommendation, type AdminUser } from "@/lib/firebase-admin";
+import { toErrorResponse } from "@/lib/utils";
+import { listAllUsers, adminListWatchlist, adminSaveDailyRecommendation, type AdminUser } from "@/lib/firebase/firebase-admin";
 import type { DailyRecommendation } from "@/lib/firebase";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
-import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron-alert";
-import { reserveGeminiCall } from "@/lib/gemini-budget";
-import { env } from "@/lib/env";
+import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron";
+import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron";
+import { reserveGeminiCall } from "@/lib/integrations";
+import { env } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 // Gemini free-tier throttling (13s between calls, see GEMINI_MIN_INTERVAL_MS

@@ -1,6 +1,6 @@
 import React from "react";
 import { Subscription } from "@/types";
-import { getSubLogoUrl } from "@/lib/subscription-logos";
+import { getSubLogoUrl } from "@/lib/finance";
 
 interface SubscriptionsTabProps {
   subscriptions: Subscription[];

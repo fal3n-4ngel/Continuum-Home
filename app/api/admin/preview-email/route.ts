@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { withAdmin } from "@/lib/route-handlers";
-import { env } from "@/lib/env";
+import { withAdmin } from "@/lib/utils/route-handlers";
+import { env } from "@/lib/utils";
 import { buildPortfolioEmail } from "@/emails/templates/portfolio";
 import { buildExpensesEmail } from "@/emails/templates/expenses";
 import { buildSubscriptionsEmail } from "@/emails/templates/subscriptions";
@@ -41,7 +41,7 @@ export const POST = withAdmin("POST /api/admin/preview-email", async (req, sessi
     return NextResponse.json({ error: `Unknown preview type: ${type}` }, { status: 400 });
   }
 
-  const { buildUnsubscribeUrl } = await import("@/lib/unsubscribe");
+  const { buildUnsubscribeUrl } = await import("@/lib/auth");
   const category = type.startsWith("expenses") ? "expenses" : (type as "portfolio" | "subscriptions");
   const { subject, html } = render(type, env.APP_URL, buildUnsubscribeUrl(session.user.uid, category));
 

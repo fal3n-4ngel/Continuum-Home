@@ -7,7 +7,7 @@ import {
   adminGetPortfolio,
   adminUpdatePortfolioAssets,
   adminUpdatePortfolioValuationHistory,
-} from "@/lib/firebase-admin";
+} from "@/lib/firebase/firebase-admin";
 
 export const dynamic = "force-dynamic";
 

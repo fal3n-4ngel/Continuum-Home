@@ -1,19 +1,18 @@
-import { env } from "@/lib/env";
+import { env } from "@/lib/utils";
 import { PostbackPayload } from "./types";
 
 const DEFAULT_MONOLITH_API_URL = "https://api.adithyakrishnan.com";
 
 export async function sendAuditPostback(payload: PostbackPayload): Promise<void> {
-  // 1. Skip non-production if prodOnly is flagged
   if (payload.prodOnly && !env.IS_PRODUCTION) {
     return;
   }
 
-  // 2. Session Throttling: If oncePerSession is requested, check sessionStorage
+  // Deduplicate per browser session if flagged
   if (payload.oncePerSession && typeof window !== "undefined") {
     const sessionKey = `monolith_audit_sent_${payload.eventType}`;
     if (sessionStorage.getItem(sessionKey)) {
-      return; // Skip duplicate dispatch in the same browser session
+      return;
     }
     sessionStorage.setItem(sessionKey, "1");
   }
@@ -52,7 +51,7 @@ export async function sendAuditPostback(payload: PostbackPayload): Promise<void>
       },
     });
 
-    // Zero-cost non-blocking background dispatch
+    // Fire and forget fetch call
     fetch(targetEndpoint, {
       method: "POST",
       headers: {
@@ -65,15 +64,15 @@ export async function sendAuditPostback(payload: PostbackPayload): Promise<void>
       .then(async (res) => {
         if (res.ok && env.ENVIRONMENT === "development") {
           const data = await res.json().catch(() => ({}));
-          console.log(`[AuditPostback] ✅ Success [${res.status}] Log ID: ${data.logId || "recorded"}`);
+          console.log(`[AuditPostback] Success [${res.status}] Log ID: ${data.logId || "recorded"}`);
         }
       })
       .catch((err) => {
         if (env.ENVIRONMENT === "development") {
-          console.warn("[AuditPostback] Non-blocking audit dispatch network notice:", err?.message || err);
+          console.warn("[AuditPostback] Postback network notice:", err?.message || err);
         }
       });
   } catch {
-    // Silently ignore postback failure so Continuum core flow is never impacted
+    // Ignore postback errors to keep UI flow unblocked
   }
 }

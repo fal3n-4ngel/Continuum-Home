@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { WatchlistItem, FirebaseUser } from "@/types";
-import { anilistQuery } from "@/lib/anilist";
-import { traktRequest } from "@/lib/trakt-client";
-import { isSafeImageUrl } from "@/lib/safe-url";
+import { anilistQuery } from "@/lib/integrations";
+import { traktRequest } from "@/lib/integrations";
+import { isSafeImageUrl } from "@/lib/utils";
 import { Pencil } from "lucide-react";
 
 interface MediaDetailsModalProps {

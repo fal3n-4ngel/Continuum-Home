@@ -4,8 +4,8 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, type Session } from "@/lib/auth";
-import { toErrorResponse } from "@/lib/errors";
-import { env } from "@/lib/env";
+import { toErrorResponse } from "@/lib/utils";
+import { env } from "@/lib/utils";
 
 export type RouteContext = { params: Promise<Record<string, string>> };
 
@@ -61,7 +61,7 @@ export function withCron(
     }
 
     if (opts.requireResend && !env.RESEND_API_KEY) {
-      const { reportCronAbort } = await import("@/lib/cron-alert");
+      const { reportCronAbort } = await import("@/lib/cron");
       reportCronAbort(job, "Missing RESEND_API_KEY");
       return NextResponse.json({ error: "Missing RESEND_API_KEY" }, { status: 500 });
     }

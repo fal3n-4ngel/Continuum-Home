@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listAllUsers, adminListSubscriptions, adminGetEmailSubscriptions, type AdminUser } from "@/lib/firebase-admin";
-import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
-import { getIstDateString } from "@/lib/dates";
-import { reportCronFailures, type CronUserResult } from "@/lib/cron-alert";
-import { withCron } from "@/lib/route-handlers";
-import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
+import { listAllUsers, adminListSubscriptions, adminGetEmailSubscriptions, type AdminUser } from "@/lib/firebase/firebase-admin";
+import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron";
+import { getIstDateString } from "@/lib/utils";
+import { reportCronFailures, type CronUserResult } from "@/lib/cron";
+import { withCron } from "@/lib/utils/route-handlers";
+import { buildUnsubscribeUrl } from "@/lib/auth";
 import { buildSubscriptionsEmail } from "@/emails/templates/subscriptions";
-import { env, resolveEmailRecipient } from "@/lib/env";
+import { env, resolveEmailRecipient } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
