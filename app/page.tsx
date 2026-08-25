@@ -16,6 +16,7 @@ import {
   FdCompounding,
 } from "@/types";
 import { getNextFutureBillingDate, resolvePayCycle, buildCycleHistory, toLocalDateStr } from "@/lib/dates";
+import { getCurrencySymbol } from "@/lib/formatters";
 import { anilistQuery } from "@/lib/anilist";
 import { traktRequest } from "@/lib/trakt-client";
 import { pushWatchlistUpdate } from "@/lib/sync-push";
@@ -104,7 +105,7 @@ export default function Dashboard() {
   const [currency, setCurrencyState] = useState<string>(() => {
     if (typeof window === "undefined") return "₹";
     const cached = window.localStorage.getItem("phub_currency");
-    return cached || "₹";
+    return getCurrencySymbol(cached);
   });
   const [expenseTab, setExpenseTab] = useState<"ledger" | "subscriptions">("ledger");
 
@@ -1117,8 +1118,9 @@ export default function Dashboard() {
           localStorage.setItem("phub_additional_income", String(data.additionalIncome));
         }
         if (data.currency) {
-          setCurrencyState(data.currency);
-          localStorage.setItem("phub_currency", data.currency);
+          const sym = getCurrencySymbol(data.currency);
+          setCurrencyState(sym);
+          localStorage.setItem("phub_currency", sym);
         }
         if (data.reconciliations && typeof data.reconciliations === "object") {
           setReconciliationsState(data.reconciliations);
@@ -1191,10 +1193,11 @@ export default function Dashboard() {
   };
 
   const setCurrency = (c: string) => {
-    setCurrencyState(c);
-    localStorage.setItem("phub_currency", c);
+    const symbol = getCurrencySymbol(c);
+    setCurrencyState(symbol);
+    localStorage.setItem("phub_currency", symbol);
     if (user) {
-      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ currency: c }) }).catch((err) => console.error(err));
+      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ currency: symbol }) }).catch((err) => console.error(err));
     }
   };
 

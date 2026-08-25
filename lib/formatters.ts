@@ -1,4 +1,19 @@
 /**
+ * Maps currency symbols or currency codes (e.g., "INR" -> "₹", "USD" -> "$")
+ * ensuring the UI displays only the concise currency symbol.
+ */
+export function getCurrencySymbol(currencySymbolOrCode?: string | null): string {
+  if (!currencySymbolOrCode) return "₹";
+  const trimmed = currencySymbolOrCode.trim();
+  if (trimmed === "INR") return "₹";
+  if (trimmed === "USD") return "$";
+  if (trimmed === "EUR") return "€";
+  if (trimmed === "GBP") return "£";
+  if (trimmed === "JPY") return "¥";
+  return trimmed;
+}
+
+/**
  * Formats a number as Indian Rupees (INR) with standard en-IN locale grouping.
  * @param amount The number to format
  * @param maxFractions Maximum fractional digits (default: 2)
