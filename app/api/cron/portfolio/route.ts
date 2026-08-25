@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { toErrorResponse } from "@/lib/errors";
-import { listAllUsers, adminGetPortfolio, adminUpdatePortfolioValuationHistory, type AdminUser } from "@/lib/firebase-admin";
+import { listAllUsers, adminGetPortfolio, adminUpdatePortfolioValuationHistory, adminGetEmailSubscriptions, type AdminUser } from "@/lib/firebase-admin";
 import { createPriceFetcher, getUsdToInrRate, type PriceFetcher } from "@/lib/prices";
 import { getEffectiveAmount } from "@/lib/fd";
 import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
 import { getIstDateString } from "@/lib/dates";
 import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron-alert";
+import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
 
 export const dynamic = "force-dynamic";
 
@@ -86,6 +87,10 @@ async function processUser(
       return { sent: false, reason: "portfolio email already sent today (deduplicated)" };
     }
   }
+  const emailPrefs = await adminGetEmailSubscriptions(user.uid);
+  if (!emailPrefs.portfolio) {
+    return { sent: false, reason: "user unsubscribed from portfolio update emails" };
+  }
   const valHistory = { ...(portfolio.valuationHistory || {}) };
 
   const sortedDates = Object.keys(valHistory)
@@ -114,6 +119,7 @@ async function processUser(
   await adminUpdatePortfolioValuationHistory(user.uid, valHistory);
 
   const todayStr = new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "short", day: "numeric" });
+  const unsubscribeUrl = buildUnsubscribeUrl(user.uid, "portfolio");
   const emailHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -241,6 +247,7 @@ async function processUser(
           <p class="font-sans txt-muted" style="font-size:11px;margin-top:16px;">
             Automated daily wrap-up from your dashboard.<br>USD to INR Rate: ₹${usdToInr.toFixed(2)}
           </p>
+          <p class="font-sans txt-muted" style="font-size:11px;margin-top:8px;"><a href="${unsubscribeUrl}" style="color:#7c7a72;text-decoration:underline;">Unsubscribe from portfolio updates</a></p>
         </td></tr>
 
       </table>
@@ -257,6 +264,10 @@ async function processUser(
       to: [user.email],
       subject: `Daily Portfolio Close: ₹${totalCurrent.toLocaleString('en-IN', { maximumFractionDigits: 0 })} (${overallPnlPercent >= 0 ? "+" : ""}${overallPnlPercent.toFixed(1)}%)`,
       html: emailHtml,
+      headers: {
+        "List-Unsubscribe": `<${unsubscribeUrl}>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      },
     }),
   });
 

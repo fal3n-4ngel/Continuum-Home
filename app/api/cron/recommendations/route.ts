@@ -5,6 +5,7 @@ import type { DailyRecommendation } from "@/lib/firebase";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
 import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron-alert";
+import { reserveGeminiCall } from "@/lib/gemini-budget";
 
 export const dynamic = "force-dynamic";
 // Gemini free-tier throttling (13s between calls, see GEMINI_MIN_INTERVAL_MS
@@ -105,6 +106,16 @@ async function processUser(user: AdminUser, geminiApiKey: string, dateStr: strin
     outcomes.push(
       await (async () => {
       try {
+        // Shared daily budget with the on-demand fallback route
+        // (app/api/assistant/recommendations) — this cron run alone can use
+        // up to users × 4 types, so it needs to respect the same cap rather
+        // than assuming it owns the whole day's quota.
+        const withinBudget = await reserveGeminiCall();
+        if (!withinBudget) {
+          console.warn(`[Cron Recs] Daily Gemini budget exhausted, skipping "${type}" for uid ${user.uid}`);
+          return false;
+        }
+
         let prompt = "";
         if (type === "book") {
           const books = allItems.filter((i) => i.type === "book");

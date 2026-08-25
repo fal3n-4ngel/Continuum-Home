@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { toErrorResponse } from "@/lib/errors";
-import { listAllUsers, adminListExpenses, type AdminUser } from "@/lib/firebase-admin";
+import { listAllUsers, adminListExpenses, adminGetEmailSubscriptions, type AdminUser } from "@/lib/firebase-admin";
 import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron-guard";
 import { getIstDateString } from "@/lib/dates";
 import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron-alert";
+import { buildUnsubscribeUrl } from "@/lib/unsubscribe";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,10 @@ async function processUser(user: AdminUser, period: "weekly" | "monthly", daysLi
     if (alreadySent) {
       return { sent: false, reason: `expense ${period} summary email already sent today (deduplicated)` };
     }
+  }
+  const emailPrefs = await adminGetEmailSubscriptions(user.uid);
+  if (!emailPrefs.expenses) {
+    return { sent: false, reason: "user unsubscribed from expense summary emails" };
   }
   const allExpenses = await adminListExpenses(user.uid);
 
@@ -48,6 +53,7 @@ async function processUser(user: AdminUser, period: "weekly" | "monthly", daysLi
 
   const periodTitle = period === "monthly" ? "Monthly Expense Summary" : "Weekly Expense Summary";
   const periodRange = `${cutoffStr} to ${today.toISOString().slice(0, 10)}`;
+  const unsubscribeUrl = buildUnsubscribeUrl(user.uid, "expenses");
 
   const emailHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -188,6 +194,7 @@ async function processUser(user: AdminUser, period: "weekly" | "monthly", daysLi
             <td align="center" style="padding:48px 0 24px 0;border-top:1px solid #eae8e0;margin-top:32px;display:block;">
               <a href="${process.env.APP_URL || 'http://localhost:3000'}" class="btn-primary font-sans">View Ledger</a>
               <p class="font-sans txt-muted" style="font-size:11px;margin-top:16px;">This is an automated summary email generated from your dashboard.</p>
+              <p class="font-sans txt-muted" style="font-size:11px;margin-top:8px;"><a href="${unsubscribeUrl}" style="color:#7c7a72;text-decoration:underline;">Unsubscribe from expense summaries</a></p>
             </td>
           </tr>
       </table>
@@ -204,6 +211,10 @@ async function processUser(user: AdminUser, period: "weekly" | "monthly", daysLi
       to: [user.email],
       subject: `${periodTitle}: ₹${totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 0 })} spent`,
       html: emailHtml,
+      headers: {
+        "List-Unsubscribe": `<${unsubscribeUrl}>`,
+        "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+      },
     }),
   });
 

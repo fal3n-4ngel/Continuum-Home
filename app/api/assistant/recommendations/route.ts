@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { listWatchlist, getDailyRecommendation, saveDailyRecommendation, DailyRecommendation } from "@/lib/firebase";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ApiError, toErrorResponse } from "@/lib/errors";
+import { reserveGeminiCall, acquireGenerationLock, isGeminiQuotaError } from "@/lib/gemini-budget";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,31 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ recommendation: currentRec });
     }
 
-    // 2. Fallback: Generate on-the-fly if not present (e.g. cron missed it)
+    // 2. Fallback: Generate on-the-fly if not present (e.g. cron missed it).
+    // Rate-guarded on two axes since this path (unlike the cron) can be hit
+    // concurrently and unboundedly — by multiple tabs/widgets for the same
+    // user, and by every user at once — against a tiny 20/day free-tier cap
+    // shared across the whole project:
+    //   - acquireGenerationLock: only one concurrent request per (user, type,
+    //     day) actually calls Gemini; the rest just miss this round and pick
+    //     up the saved result on their next poll.
+    //   - reserveGeminiCall: a shared daily budget across this route AND the
+    //     cron, so this fallback can't blow through whatever the cron
+    //     already spent today.
+    // Both degrade to an empty recommendation (200, recommendation: null)
+    // rather than an error — the frontend already treats that as "nothing to
+    // show yet," so no error UI and no Discord alert for an expected,
+    // handled condition.
+    const gotLock = await acquireGenerationLock(session.uid, type, dateStr);
+    if (!gotLock) {
+      return NextResponse.json({ recommendation: null });
+    }
+
+    const withinBudget = await reserveGeminiCall();
+    if (!withinBudget) {
+      return NextResponse.json({ recommendation: null });
+    }
+
     const geminiApiKey = process.env.GEMINI_API_KEY;
     if (!geminiApiKey) {
       throw new ApiError(500, "Server GEMINI_API_KEY is not configured.");
@@ -103,8 +128,20 @@ Return no other text, comments or markdown blocks. Just the raw JSON object.
       },
     });
 
-    const response = await model.generateContent(prompt);
-    const replyText = response.response.text();
+    let replyText: string;
+    try {
+      const response = await model.generateContent(prompt);
+      replyText = response.response.text();
+    } catch (err) {
+      // Safety net: reserveGeminiCall()'s own count can still drift from
+      // Google's real usage (the cron spends against the same budget from a
+      // separate process). Degrade the same way a budget/lock miss does,
+      // instead of a raw 500 + Discord alert for an already-expected condition.
+      if (isGeminiQuotaError(err)) {
+        return NextResponse.json({ recommendation: null });
+      }
+      throw err;
+    }
     const geminiResult = JSON.parse(replyText.trim());
 
     // Quick single-attempt lookup
