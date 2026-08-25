@@ -17,6 +17,7 @@ import {
 } from "@/types";
 import { getNextFutureBillingDate, resolvePayCycle, buildCycleHistory, toLocalDateStr } from "@/lib/dates";
 import { getCurrencySymbol } from "@/lib/formatters";
+import { sendAuditPostback } from "@/lib/postback";
 import { anilistQuery } from "@/lib/anilist";
 import { traktRequest } from "@/lib/trakt-client";
 import { pushWatchlistUpdate } from "@/lib/sync-push";
@@ -262,6 +263,16 @@ export default function Dashboard() {
       Authorization: `Bearer ${token}`,
     };
   }, [user]);
+
+  useEffect(() => {
+    if (user?.uid) {
+      sendAuditPostback({
+        eventType: "USER_SESSION_ACTIVE",
+        userId: user.uid,
+        metadata: { email: user.email, authProvider: user.authProvider || "google" },
+      }).catch(() => {});
+    }
+  }, [user?.uid, user?.email, user?.authProvider]);
 
 
   const triggerConfirm = (

@@ -52,6 +52,8 @@ export async function sendAuditPostback(payload: PostbackPayload): Promise<void>
       },
     });
 
+    console.log(`[AuditPostback] 🚀 Dispatching [${payload.eventType}] to ${targetEndpoint}`);
+
     // Non-blocking background fire-and-forget postback to Monolith API / Cloud Functions
     fetch(targetEndpoint, {
       method: "POST",
@@ -61,10 +63,20 @@ export async function sendAuditPostback(payload: PostbackPayload): Promise<void>
       },
       body,
       keepalive: true,
-    }).catch((err) => {
-      console.warn("[Postback] Non-blocking audit dispatch error:", err?.message || err);
-    });
-  } catch {
-    // Silently ignore postback failure so Continuum core flow is never impacted
+    })
+      .then(async (res) => {
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          console.log(`[AuditPostback] ✅ Success [${res.status}] Log ID: ${data.logId || "recorded"}`);
+        } else {
+          const errText = await res.text().catch(() => "");
+          console.warn(`[AuditPostback] ⚠️ Server returned HTTP ${res.status}: ${errText}`);
+        }
+      })
+      .catch((err) => {
+        console.warn("[AuditPostback] ❌ Non-blocking audit dispatch network error:", err?.message || err);
+      });
+  } catch (err: any) {
+    console.warn("[AuditPostback] Unexpected error creating postback payload:", err?.message || err);
   }
 }
