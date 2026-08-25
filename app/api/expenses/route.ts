@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/utils";
 import { listExpenses, createExpense, createExpenseBatch } from "@/lib/firebase";
 import { validateExpenseEntry, validateExpenseBatch } from "@/lib/firebase";
-import { checkAndSendCustomGptAudit } from "@/lib/audit-postback";
+import { checkAndSendCustomGptAudit } from "@/lib/audit-postback/gpt-detector";
 
 export const dynamic = "force-dynamic";
 

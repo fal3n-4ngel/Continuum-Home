@@ -29,6 +29,7 @@ Continuum is a self-hosted, privacy-first dashboard that replaces a pile of sing
 Framework: Next.js 16 (App Router, Turbopack) + React 19 + TypeScript
 Styling: Tailwind CSS
 Database & Auth: Firebase (Google Sign-In + Firestore REST API)
+Architecture: Modular Domain-Driven Subdirectories (lib/audit-postback, lib/auth, lib/cron, lib/finance, lib/firebase, lib/integrations, lib/utils)
 ```
 
 ## Features
@@ -39,7 +40,21 @@ Database & Auth: Firebase (Google Sign-In + Firestore REST API)
 - Subscription tracker that normalizes monthly and annual costs into a true effective monthly spend.
 - Auto-saving scratchpad for quick, persistent notes.
 - Built-in OpenAPI 3.1 schema for Custom GPT Actions, Gemini Gems, or Claude Projects — add expenses, log media, or update your portfolio in plain English.
+- Real-time audit postback module (`lib/audit-postback/`) for login session auditing and Custom GPT action tracking.
 - AES-256-GCM encryption on sensitive fields, with no admin service account — every request is authenticated with the caller's own Firebase ID token.
+
+## Project Structure
+
+```
+lib/
+├── audit-postback/    # Ingest client, session throttling, Custom GPT action detector
+├── auth/              # Auth session, tokens, credentials, OAuth clients, unsubscribe logic
+├── cron/              # Cron execution guards, scheduling, Discord alerting
+├── finance/           # Asset pricing, fixed deposit calculations, subscription logos, metrics
+├── firebase/          # Firestore REST client, admin SDK, sync-push, Zod validators
+├── integrations/      # AniList, Trakt, Discord Webhooks, Gemini AI Budget
+└── utils/             # Dates, formatters, encryption, cache, redis, errors, route-handlers, site config
+```
 
 ## Run Using Node.js
 
@@ -87,7 +102,7 @@ ENCRYPTION_KEY="your-custom-super-secret-key-phrase"
 Optional keys for Trakt, AniList, and TMDb can also go here — see [`.env.example`](.env.example).
 
 > [!TIP]
-> **Bring-your-own-config mode:** server-wide env vars for third-party APIs are optional. Users can instead supply their own credentials per-request via HTTP headers (`X-Firebase-Config`, `X-Trakt-Client-Id`, etc.) — see `lib/credentials.ts`.
+> **Bring-your-own-config mode:** server-wide env vars for third-party APIs are optional. Users can instead supply their own credentials per-request via HTTP headers (`X-Firebase-Config`, `X-Trakt-Client-Id`, etc.) — see `lib/auth/credentials.ts`.
 
 ### Run the Development Server
 
@@ -119,7 +134,7 @@ http://{ip}:3000
 
 ## 🤖 Talk to Continuum via ChatGPT
 
-Continuum exposes an OpenAPI schema (`/api/openapi.json`) so you can add expenses, log media, or check your portfolio from a chat window instead of the UI.
+Continuum exposes an OpenAPI schema (`/api/openapi.json`) so you can add expenses, log media, or check your portfolio from a chat window instead of the UI. Requests originating from ChatGPT Actions are automatically detected (`isCustomGptRequest`) and recorded in audit telemetry.
 
 ### Official Public Custom GPT
 Open the **[Continuum Assistant](https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-Home-public)**. Authorization runs through standard OAuth 2.0 on your first prompt.
@@ -205,7 +220,7 @@ Interested in improving Continuum? I welcome contributions! See [CONTRIBUTING.md
 >
 > Anyways, hosting a custom gpt is kinda costly so not sure how long I might keep that up, feel free to host your own one or sponsor me via the button below :)
 
-<a href="https://www.buymeacoffee.com/fal3n4ngel" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
+<a href="https://www.buymeacoffee.com/fal3n-4ngel" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
 
 <!-- GitAds-Verify: 1VTRJ98N18CZX9P4A3NYHVY5CBSXTDFB -->
 
