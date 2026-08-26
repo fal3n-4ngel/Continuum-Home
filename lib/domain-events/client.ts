@@ -6,7 +6,6 @@ const DEFAULT_MONOLITH_API_URL = "https://api.adithyakrishnan.com";
 const MAX_BODY_BYTES = 16_000;
 const TIMEOUT_MS = 3_000;
 
-/** Set by a 429 so a rate-limited monolith isn't hammered by every subsequent request. */
 let mutedUntil = 0;
 
 function resolveEndpoint(): string | null {
@@ -16,10 +15,9 @@ function resolveEndpoint(): string | null {
 }
 
 /**
- * Unlike the audit postback, this endpoint requires a real credential — which is exactly why
- * domain events are server-only. A `NEXT_PUBLIC_` key would be readable by anyone with
- * devtools, and an unauthenticated events endpoint would let anyone fabricate an expense
- * record. No key configured means no events, rather than events nobody can trust.
+ * Unlike the audit postback, this endpoint requires a real credential — a `NEXT_PUBLIC_` key
+ * would be readable by anyone with devtools. No key configured means no events, not events
+ * nobody can trust.
  */
 function authHeader(): Record<string, string> | null {
   const key = process.env.MONOLITH_API_KEY;
@@ -27,23 +25,18 @@ function authHeader(): Record<string, string> | null {
 }
 
 /**
- * Fire-and-forget domain event.
- *
- * <p>Never throws and never blocks the response: the record it describes is already committed
- * in Firestore by the time this runs, so failing to report it must not fail the request that
- * succeeded. Scheduled via `after()` so it runs once the response is already on its way.
+ * Fire-and-forget domain event. Never throws and never blocks the response — scheduled via
+ * `after()` so it runs once the response is already on its way.
  */
 export function recordDomainEvent(event: DomainEvent): void {
-  // Server-only by construction: the credential below must never reach a bundle, and `after()`
-  // has no meaning in a browser. Guarded rather than enforced with the `server-only` package to
-  // avoid taking a dependency for a single import.
+  // Server-only: the credential above must never reach a bundle, and after() is a no-op
+  // in the browser anyway.
   if (typeof window !== "undefined") return;
 
   after(async () => {
     const environment = env.ENVIRONMENT;
-    // Misconfiguration and delivery failures stay visible on uat and locally — this pipeline
-    // requires a credential (unlike the audit postback), so "silently didn't send" is a real,
-    // easy-to-hit failure mode that must show up somewhere outside production noise.
+    // This pipeline requires a credential, so misconfiguration is an easy, silent failure
+    // mode — worth logging outside production, not just in local dev.
     const verbose = environment !== "production";
 
     if (Date.now() < mutedUntil) return;
@@ -88,8 +81,7 @@ export function recordDomainEvent(event: DomainEvent): void {
         return;
       }
 
-      // A 400 means the event name isn't on the monolith's allowlist — a bug worth seeing
-      // rather than a transient failure, so it's logged in every environment.
+      // A 400 means eventType isn't on the monolith's allowlist — a bug worth seeing always.
       if (response.status === 400) {
         console.warn(`[DomainEvent] Rejected "${event.eventType}" — not in monolith allowlist`);
         return;
@@ -97,8 +89,6 @@ export function recordDomainEvent(event: DomainEvent): void {
 
       if (verbose) console.log(`[DomainEvent] ${response.status} — ${event.eventType}`);
     } catch (error) {
-      // Network failures and timeouts are expected and uninteresting in steady state, but
-      // worth seeing outside production while this pipeline is still new.
       if (verbose) {
         console.warn("[DomainEvent] Delivery failed:", error instanceof Error ? error.message : error);
       }

@@ -45,8 +45,7 @@ export async function POST(req: NextRequest) {
       const results = await createExpenseBatch(session, entries);
       const added = results.filter((r) => r.success).length;
 
-      // One event for the whole batch, not one per row: a CSV import would otherwise
-      // burn the monolith's per-IP minute budget and add no information.
+      // One event for the whole batch, not one per row.
       if (added > 0) {
         recordDomainEvent({
           eventType: DOMAIN_EVENTS.EXPENSE_CREATED,
@@ -69,8 +68,7 @@ export async function POST(req: NextRequest) {
       category: entry.category,
     });
 
-    // Structured fields only. `title` and `notes` are free-text personal content and stay in
-    // Firestore, encrypted, where they belong — the analytics store has no use for them.
+    // Structured fields only — title/notes are free-text and stay in Firestore, encrypted.
     recordDomainEvent({
       eventType: DOMAIN_EVENTS.EXPENSE_CREATED,
       userId: session.uid,

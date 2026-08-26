@@ -29,8 +29,6 @@ export async function PATCH(
       eventType: DOMAIN_EVENTS.WATCHLIST_UPDATED,
       userId: session.uid,
       entityId: id,
-      // `status` is the field worth analysing over time (want → watching → done), so it
-      // ships as a value rather than just a changed-field name.
       payload: { fields: Object.keys(patch), status: patch.status },
     });
 

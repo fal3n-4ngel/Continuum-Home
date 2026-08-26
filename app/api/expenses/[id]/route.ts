@@ -29,8 +29,7 @@ export async function PATCH(
       eventType: DOMAIN_EVENTS.EXPENSE_UPDATED,
       userId: session.uid,
       entityId: id,
-      // Which fields changed, not what they changed to: enough to analyse edit behaviour
-      // without copying the values into a second store.
+      // Which fields changed, not their new values.
       payload: { fields: Object.keys(patch) },
     });
 
