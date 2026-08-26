@@ -41,14 +41,17 @@ export function recordDomainEvent(event: DomainEvent): void {
 
   after(async () => {
     const environment = env.ENVIRONMENT;
-    const isDev = environment === "development";
+    // Misconfiguration and delivery failures stay visible on uat and locally — this pipeline
+    // requires a credential (unlike the audit postback), so "silently didn't send" is a real,
+    // easy-to-hit failure mode that must show up somewhere outside production noise.
+    const verbose = environment !== "production";
 
     if (Date.now() < mutedUntil) return;
 
     const endpoint = resolveEndpoint();
     const auth = authHeader();
     if (!endpoint || !auth) {
-      if (isDev && !auth) {
+      if (verbose && !auth) {
         console.warn("[DomainEvent] MONOLITH_API_KEY unset; skipping", event.eventType);
       }
       return;
@@ -66,7 +69,7 @@ export function recordDomainEvent(event: DomainEvent): void {
     });
 
     if (body.length > MAX_BODY_BYTES) {
-      if (isDev) console.warn(`[DomainEvent] Dropped oversized "${event.eventType}" event`);
+      if (verbose) console.warn(`[DomainEvent] Dropped oversized "${event.eventType}" event`);
       return;
     }
 
@@ -81,7 +84,7 @@ export function recordDomainEvent(event: DomainEvent): void {
       if (response.status === 429) {
         const retryAfter = Number(response.headers.get("Retry-After")) || 60;
         mutedUntil = Date.now() + retryAfter * 1000;
-        if (isDev) console.warn(`[DomainEvent] Rate limited; muted for ${retryAfter}s`);
+        if (verbose) console.warn(`[DomainEvent] Rate limited; muted for ${retryAfter}s`);
         return;
       }
 
@@ -92,10 +95,11 @@ export function recordDomainEvent(event: DomainEvent): void {
         return;
       }
 
-      if (isDev) console.log(`[DomainEvent] ${response.status} — ${event.eventType}`);
+      if (verbose) console.log(`[DomainEvent] ${response.status} — ${event.eventType}`);
     } catch (error) {
-      // Network failures and timeouts are expected and uninteresting: delivery is best-effort.
-      if (isDev) {
+      // Network failures and timeouts are expected and uninteresting in steady state, but
+      // worth seeing outside production while this pipeline is still new.
+      if (verbose) {
         console.warn("[DomainEvent] Delivery failed:", error instanceof Error ? error.message : error);
       }
     }
