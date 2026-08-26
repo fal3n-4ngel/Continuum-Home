@@ -52,13 +52,15 @@ export function recordDomainEvent(event: DomainEvent): void {
 
     const body = JSON.stringify({
       sourceApp: "continuum-home",
-      eventId: crypto.randomUUID(),
+      eventId: event.eventId || crypto.randomUUID(),
       eventType: event.eventType,
       userId: event.userId,
       entityId: event.entityId,
       itemCount: event.itemCount ?? 1,
       timestamp: Date.now(),
-      payload: event.payload ?? {},
+      // environment rides in payload rather than as its own DTO field: Monolith already
+      // captures payload as freeform JSON, so this needs no schema change on that side.
+      payload: { ...(event.payload ?? {}), environment },
     });
 
     if (body.length > MAX_BODY_BYTES) {

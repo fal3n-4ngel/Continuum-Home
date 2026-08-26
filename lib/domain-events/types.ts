@@ -31,6 +31,9 @@ export interface DomainEvent {
 
   entityId?: string;
 
+  /** Identifies the logical event, not the delivery attempt — a retry must reuse this id. */
+  eventId?: string;
+
   /** Set for batch operations so one CSV import is one event, not one per row. */
   itemCount?: number;
 
