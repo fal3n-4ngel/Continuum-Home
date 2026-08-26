@@ -66,7 +66,11 @@ export function recordDomainEvent(event: DomainEvent): void {
       timestamp: Date.now(),
       // environment rides in payload rather than as its own DTO field: Monolith already
       // captures payload as freeform JSON, so this needs no schema change on that side.
-      payload: { ...(event.payload ?? {}), environment },
+      payload: {
+        ...(event.payload ?? {}),
+        ...(event.userEmail ? { userEmail: event.userEmail } : {}),
+        environment,
+      },
     });
 
     if (body.length > MAX_BODY_BYTES) {
