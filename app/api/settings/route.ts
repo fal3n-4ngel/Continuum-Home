@@ -3,6 +3,8 @@ import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/utils";
 import { getSettings, updateSettings } from "@/lib/firebase";
 import { validateSettingsPatch } from "@/lib/firebase";
+import { recordDomainEvent } from "@/lib/domain-events/client";
+import { DOMAIN_EVENTS } from "@/lib/domain-events/types";
 
 export const dynamic = "force-dynamic";
 
@@ -29,6 +31,29 @@ export async function PATCH(req: NextRequest) {
 
     const patch = validateSettingsPatch(body);
     await updateSettings(session, patch);
+
+    // Dispatch Monolith Audit Telemetry for Salary Updates & Preference Logs
+    if (patch.monthlySalary !== undefined || patch.salaryDay !== undefined) {
+      recordDomainEvent({
+        eventType: DOMAIN_EVENTS.SALARY_UPDATED,
+        userId: session.uid,
+        payload: {
+          monthlySalary: patch.monthlySalary,
+          salaryDay: patch.salaryDay,
+        },
+      });
+    }
+
+    if (patch.salaryLog !== undefined) {
+      recordDomainEvent({
+        eventType: DOMAIN_EVENTS.SALARY_LOGGED,
+        userId: session.uid,
+        payload: {
+          entriesCount: Object.keys(patch.salaryLog || {}).length,
+        },
+      });
+    }
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return toErrorResponse(error, "PATCH /api/settings");
