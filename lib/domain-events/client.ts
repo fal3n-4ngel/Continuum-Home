@@ -7,6 +7,8 @@ const MAX_BODY_BYTES = 16_000;
 const TIMEOUT_MS = 3_000;
 
 let mutedUntil = 0;
+const recentEvents = new Map<string, number>();
+const DUP_WINDOW_MS = 500;
 
 function resolveEndpoint(): string | null {
   const rawUrl = process.env.MONOLITH_API_URL || DEFAULT_MONOLITH_API_URL;
@@ -14,24 +16,28 @@ function resolveEndpoint(): string | null {
   return `${rawUrl.replace(/\/$/, "")}/api/v1/events/postback`;
 }
 
-/**
- * Unlike the audit postback, this endpoint requires a real credential — a `NEXT_PUBLIC_` key
- * would be readable by anyone with devtools. No key configured means no events, not events
- * nobody can trust.
- */
+/** Resolves MONOLITH_API_KEY authorization header. */
 function authHeader(): Record<string, string> | null {
   const key = process.env.MONOLITH_API_KEY;
   return key ? { Authorization: `Bearer ${key}` } : null;
 }
 
-/**
- * Fire-and-forget domain event. Never throws and never blocks the response — scheduled via
- * `after()` so it runs once the response is already on its way.
- */
+/** Fire-and-forget domain event dispatch scheduled via Next.js after(). */
 export function recordDomainEvent(event: DomainEvent): void {
-  // Server-only: the credential above must never reach a bundle, and after() is a no-op
-  // in the browser anyway.
   if (typeof window !== "undefined") return;
+
+  const dedupKey = `${event.eventType}:${event.entityId || ""}`;
+  const now = Date.now();
+  const lastEmitted = recentEvents.get(dedupKey) || 0;
+  if (now - lastEmitted < DUP_WINDOW_MS) {
+    return;
+  }
+  recentEvents.set(dedupKey, now);
+  // Keep cache small
+  if (recentEvents.size > 100) {
+    const oldestKey = recentEvents.keys().next().value;
+    if (oldestKey) recentEvents.delete(oldestKey);
+  }
 
   after(async () => {
     const environment = env.ENVIRONMENT;
