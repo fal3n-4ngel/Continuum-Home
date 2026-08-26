@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/utils";
 import { updateExpense, archiveExpense } from "@/lib/firebase";
 import { validateExpensePatch } from "@/lib/firebase";
+import { recordDomainEvent, DOMAIN_EVENTS } from "@/lib/domain-events";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,16 @@ export async function PATCH(
 
     const patch = validateExpensePatch(body);
     const result = await updateExpense(session, id, patch);
+
+    recordDomainEvent({
+      eventType: DOMAIN_EVENTS.EXPENSE_UPDATED,
+      userId: session.uid,
+      entityId: id,
+      // Which fields changed, not what they changed to: enough to analyse edit behaviour
+      // without copying the values into a second store.
+      payload: { fields: Object.keys(patch) },
+    });
+
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
     return toErrorResponse(error, "PATCH /api/expenses/[id]");
@@ -37,6 +48,13 @@ export async function DELETE(
     const session = await requireUser(req);
     const { id } = await params;
     const result = await archiveExpense(session, id);
+
+    recordDomainEvent({
+      eventType: DOMAIN_EVENTS.EXPENSE_DELETED,
+      userId: session.uid,
+      entityId: id,
+    });
+
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
     return toErrorResponse(error, "DELETE /api/expenses/[id]");

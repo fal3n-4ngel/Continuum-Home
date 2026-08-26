@@ -4,6 +4,7 @@ import { ApiError, toErrorResponse } from "@/lib/utils";
 import { listExpenses, createExpense, createExpenseBatch } from "@/lib/firebase";
 import { validateExpenseEntry, validateExpenseBatch } from "@/lib/firebase";
 import { checkAndSendCustomGptAudit } from "@/lib/audit-postback/gpt-detector";
+import { recordDomainEvent, DOMAIN_EVENTS } from "@/lib/domain-events";
 
 export const dynamic = "force-dynamic";
 
@@ -42,7 +43,20 @@ export async function POST(req: NextRequest) {
     if (batchItems) {
       const entries = validateExpenseBatch(batchItems);
       const results = await createExpenseBatch(session, entries);
-      return NextResponse.json({ success: true, added: results.filter((r) => r.success).length, results });
+      const added = results.filter((r) => r.success).length;
+
+      // One event for the whole batch, not one per row: a CSV import would otherwise
+      // burn the monolith's per-IP minute budget and add no information.
+      if (added > 0) {
+        recordDomainEvent({
+          eventType: DOMAIN_EVENTS.EXPENSE_CREATED,
+          userId: session.uid,
+          itemCount: added,
+          payload: { batch: true, submitted: entries.length },
+        });
+      }
+
+      return NextResponse.json({ success: true, added, results });
     }
 
     const entry = validateExpenseEntry(body);
@@ -53,6 +67,15 @@ export async function POST(req: NextRequest) {
       expenseId: result.id,
       amount: entry.amount,
       category: entry.category,
+    });
+
+    // Structured fields only. `title` and `notes` are free-text personal content and stay in
+    // Firestore, encrypted, where they belong — the analytics store has no use for them.
+    recordDomainEvent({
+      eventType: DOMAIN_EVENTS.EXPENSE_CREATED,
+      userId: session.uid,
+      entityId: result.id,
+      payload: { amount: entry.amount, category: entry.category, date: entry.date },
     });
 
     return NextResponse.json({ success: true, ...result });
