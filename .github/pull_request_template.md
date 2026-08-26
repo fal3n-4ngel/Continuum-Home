@@ -11,6 +11,8 @@ Closes #[issue_number]
 - [ ] Chore / Documentation update
 
 ## Checklist
-- [ ] I have verified that `npm run lint` passes locally without any errors.
-- [ ] I have verified that `npm run build` compiles successfully.
+- [ ] `npx tsc --noEmit` passes with no type errors.
+- [ ] `npm run lint` passes with no errors.
+- [ ] `npm run test` passes.
+- [ ] `npm run build` compiles successfully.
 - [ ] I have added/updated comments on complex or new logic.

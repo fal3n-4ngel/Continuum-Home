@@ -1,0 +1,67 @@
+name: Bug Report
+description: Something in the dashboard is broken or behaving unexpectedly.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What you expected vs. what actually happened.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where is this happening?
+      options:
+        - Expense ledger
+        - Investment portfolio
+        - Media watchlist (AniList / Trakt / Letterboxd import)
+        - Book library
+        - Subscription tracker
+        - Scratchpad
+        - Auth / Google Sign-In
+        - Custom GPT / OpenAPI Actions
+        - Cron jobs (recurring expenses, portfolio pricing, recommendations)
+        - Something else
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. See error
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: false
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser/OS, and whether you're self-hosting or using a hosted instance.
+      placeholder: |
+        Browser: Chrome 128 on Windows 11
+        Deployment: self-hosted / Vercel
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs, error messages, or screenshots
+      render: shell
+    validations:
+      required: false

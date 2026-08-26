@@ -1,0 +1,42 @@
+name: Feature Request
+description: Suggest an idea or improvement for the dashboard.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: What are you trying to do that isn't possible (or is painful) today?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which area does this affect?
+      options:
+        - Expense ledger
+        - Investment portfolio
+        - Media watchlist / Book library
+        - Subscription tracker
+        - Custom GPT / OpenAPI Actions
+        - Integrations (AniList, Trakt, OMDb, TVMaze, Discord)
+        - Something else
+    validations:
+      required: false
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: What would you like to see instead?
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+    validations:
+      required: false

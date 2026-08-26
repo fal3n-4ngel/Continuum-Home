@@ -18,6 +18,7 @@
 /out/
 
 /scripts/*
+/scratch/*
 
 # production
 /build

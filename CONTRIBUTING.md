@@ -29,8 +29,8 @@ Branch from `main` using the following standardized namespaces:
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/fal3n-4ngel/Continuum-Home.git
-   cd Continuum-Home
+   git clone https://github.com/fal3n-4ngel/personal-dashboard.git
+   cd personal-dashboard
    ```
 
 2. **Initialize Branch:**
