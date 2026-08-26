@@ -17,7 +17,6 @@ import {
 } from "@/types";
 import { getNextFutureBillingDate, resolvePayCycle, buildCycleHistory, toLocalDateStr } from "@/lib/utils";
 import { getCurrencySymbol } from "@/lib/utils";
-import { sendAuditPostback } from "@/lib/audit-postback";
 import { anilistQuery } from "@/lib/integrations";
 import { traktRequest } from "@/lib/integrations";
 import { pushWatchlistUpdate } from "@/lib/firebase";
@@ -263,18 +262,6 @@ export default function Dashboard() {
       Authorization: `Bearer ${token}`,
     };
   }, [user]);
-
-  useEffect(() => {
-    if (user?.uid) {
-      sendAuditPostback({
-        eventType: "USER_SESSION_ACTIVE",
-        userId: user.uid,
-        metadata: { email: user.email, authProvider: "google" },
-        oncePerSession: true,
-      }).catch(() => {});
-    }
-  }, [user?.uid, user?.email]);
-
 
   const triggerConfirm = (
     title: string,

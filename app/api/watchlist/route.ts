@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/utils";
 import { listWatchlist, addWatchlistItem, updateWatchlistItem } from "@/lib/firebase";
 import { validateNewWatchlistItem } from "@/lib/firebase";
+import { recordDomainEvent, DOMAIN_EVENTS } from "@/lib/domain-events";
 
 export const dynamic = "force-dynamic";
 
@@ -128,6 +129,13 @@ export async function POST(req: NextRequest) {
         console.error("Autohealing background error:", err);
       });
     }
+
+    recordDomainEvent({
+      eventType: DOMAIN_EVENTS.WATCHLIST_ADDED,
+      userId: session.uid,
+      entityId: result.id,
+      payload: { type: item.type, status: item.status, year: item.year },
+    });
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {

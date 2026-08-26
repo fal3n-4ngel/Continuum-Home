@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/utils";
 import { updateWatchlistItem, deleteWatchlistItem } from "@/lib/firebase";
 import { validateWatchlistPatch } from "@/lib/firebase";
+import { recordDomainEvent, DOMAIN_EVENTS } from "@/lib/domain-events";
 
 export const dynamic = "force-dynamic";
 
@@ -23,6 +24,14 @@ export async function PATCH(
 
     const patch = validateWatchlistPatch(body);
     const result = await updateWatchlistItem(session, id, patch);
+
+    recordDomainEvent({
+      eventType: DOMAIN_EVENTS.WATCHLIST_UPDATED,
+      userId: session.uid,
+      entityId: id,
+      payload: { fields: Object.keys(patch), status: patch.status },
+    });
+
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
     return toErrorResponse(error, "PATCH /api/watchlist/[id]");
@@ -37,6 +46,13 @@ export async function DELETE(
     const session = await requireUser(req);
     const { id } = await params;
     const result = await deleteWatchlistItem(session, id);
+
+    recordDomainEvent({
+      eventType: DOMAIN_EVENTS.WATCHLIST_REMOVED,
+      userId: session.uid,
+      entityId: id,
+    });
+
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
     return toErrorResponse(error, "DELETE /api/watchlist/[id]");

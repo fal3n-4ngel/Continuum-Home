@@ -39,7 +39,7 @@ Architecture: Modular Domain-Driven Subdirectories (lib/audit-postback, lib/auth
 - Book library backed by the OpenLibrary API with reading-progress tracking.
 - Subscription tracker that normalizes monthly and annual costs into a true effective monthly spend.
 - Auto-saving scratchpad for quick, persistent notes.
-- Built-in OpenAPI 3.1 schema for Custom GPT Actions, Gemini Gems, or Claude Projects — add expenses, log media, or update your portfolio in plain English.
+- Built-in OpenAPI 3.1 schema (`/api/openapi.json`) for Custom GPT Actions — add expenses, log media, or update your portfolio in plain English. Any other assistant with an equivalent OpenAPI-action builder works the same way; as of now that's Custom GPTs — Gemini Gems and Claude Projects don't expose one in their consumer UI.
 - Real-time audit postback module (`lib/audit-postback/`) for login session auditing and Custom GPT action tracking.
 - AES-256-GCM encryption on sensitive fields, with no admin service account — every request is authenticated with the caller's own Firebase ID token.
 
@@ -60,38 +60,9 @@ lib/
 
 Every caller — a signed-in browser or an external AI client that completed the OAuth flow — ends up with the same kind of bearer token and hits the same API routes; there is no separate "AI" surface. Those routes read through an in-memory + Redis cache in front of Firestore, using the *caller's own* ID token, so per-user isolation is enforced by Firestore security rules rather than app code. Crons are the one exception: they have no user token to act with, so they carry a service account through the Admin SDK instead, which bypasses those same rules.
 
-The other structural decision is that audit telemetry leaves the building entirely: `lib/audit-postback` doesn't write to this app's own Firestore, it posts to **monolith-api**, a separate service this app has no further visibility into. Route handlers also call out to Trakt, AniList, OMDb, and Gemini for sync, enrichment, and the AI assistant — those are plain leaf API calls, not part of the request's control flow, so they're omitted below.
+The other structural decision is that audit telemetry leaves the building entirely: `lib/audit-postback` doesn't write to this app's own Firestore, it posts to **monolith-api**, a separate service this app has no further visibility into. Route handlers also call out to Trakt, AniList, OMDb, and Gemini for sync, enrichment, and the AI assistant — plain leaf API calls shown alongside the core flow in the diagram below.
 
-```mermaid
-flowchart TB
-    Browser["Browser"]
-    GPT["Custom GPT / Gemini Gem /<br/>Claude Project"]
-    API["Next.js API routes<br/>(one set, every caller)"]
-
-    Cache["memory + Redis"]
-    FSRest["Firestore REST"]
-    Firestore[("Firestore")]
-
-    CronEP["Vercel Cron"]
-    FSAdmin["Admin SDK"]
-
-    AuditClient["audit-postback client"]
-    Monolith["monolith-api<br/>(external service)"]
-
-    Browser -- "Google sign-in → ID token" --> API
-    GPT -- "OAuth code → same token type" --> API
-
-    API -- "read" --> Cache
-    Cache -- "hit: skip Firestore" --> API
-    Cache -- "miss, caller's own token" --> FSRest
-    FSRest -- "security rules enforce isolation" --> Firestore
-
-    CronEP -- "no user token available" --> FSAdmin
-    FSAdmin -- "bypasses security rules" --> Firestore
-
-    API -- "session + Custom GPT events" --> AuditClient
-    AuditClient -- "fire-and-forget POST" --> Monolith
-```
+![Continuum Architecture Diagram](architecture-diagram.svg)
 
 ## Run Using Node.js
 

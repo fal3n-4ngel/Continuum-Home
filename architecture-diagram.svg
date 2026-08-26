@@ -1,0 +1,296 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1680 1020" width="100%" height="100%" style="background:#f5f4f0; font-family:'JetBrains Mono', 'SF Mono', Consolas, sans-serif;">
+  <defs>
+    <!-- Light Dot Grid Pattern -->
+    <pattern id="dot-grid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="12" cy="12" r="1.2" fill="#c7c3b5"/>
+    </pattern>
+
+    <!-- Card Shadow -->
+    <filter id="card-shadow" x="-8%" y="-8%" width="116%" height="120%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#1c1917" flood-opacity="0.06"/>
+    </filter>
+
+    <!-- Active Core Card Glow -->
+    <filter id="core-glow" x="-10%" y="-10%" width="120%" height="125%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#ea580c" flood-opacity="0.18"/>
+    </filter>
+
+    <!-- Arrow Markers -->
+    <marker id="arrow-std" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#475569"/>
+    </marker>
+
+    <marker id="arrow-orange" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#ea580c"/>
+    </marker>
+
+    <marker id="arrow-yellow" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#d97706"/>
+    </marker>
+
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#2563eb"/>
+    </marker>
+
+    <marker id="arrow-teal" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#0d9488"/>
+    </marker>
+
+    <marker id="arrow-discord" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#5865f2"/>
+    </marker>
+
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#8b5cf6"/>
+    </marker>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="1680" height="1020" fill="#f5f4f0"/>
+  <rect width="1680" height="1020" fill="url(#dot-grid)"/>
+
+  <!-- Top Header Title -->
+  <g transform="translate(60, 45)">
+    <text x="0" y="0" fill="#47443c" font-size="12" font-weight="800" letter-spacing="2">CONTINUUM — REQUEST &amp; DOMAIN EVENT PATH</text>
+  </g>
+
+
+  <!-- ================= CARDS / NODES ================= -->
+
+  <!-- COLUMN 1: CLIENTS & SCHEDULED TRIGGERS (X = 60) -->
+
+  <!-- Card 1: Browser Client -->
+  <g transform="translate(60, 90)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="250" height="125" rx="10" fill="#ffffff" stroke="#dcd8cd" stroke-width="1.5"/>
+    <circle cx="20" cy="22" r="4" fill="#64748b"/>
+    <text x="32" y="25" fill="#64748b" font-size="9" font-weight="800" letter-spacing="1">CLIENT</text>
+    <text x="18" y="54" fill="#1c1917" font-size="15" font-weight="700">Browser</text>
+    <text x="18" y="74" fill="#6e6b63" font-size="10">Google Sign-In</text>
+  </g>
+
+  <!-- Card 2: Custom GPT Client -->
+  <g transform="translate(60, 260)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="250" height="125" rx="10" fill="#ffffff" stroke="#dcd8cd" stroke-width="1.5"/>
+    <circle cx="20" cy="22" r="4" fill="#64748b"/>
+    <text x="32" y="25" fill="#64748b" font-size="9" font-weight="800" letter-spacing="1">CLIENT</text>
+    <text x="18" y="54" fill="#1c1917" font-size="15" font-weight="700">Custom GPT</text>
+    <text x="18" y="74" fill="#6e6b63" font-size="10">OAuth 2.0</text>
+  </g>
+
+  <!-- Card 3: GitHub Actions Cron Trigger -->
+  <g transform="translate(60, 470)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="250" height="125" rx="10" fill="#ffffff" stroke="#dcd8cd" stroke-width="1.5"/>
+    <circle cx="20" cy="22" r="4" fill="#d97706"/>
+    <text x="32" y="25" fill="#b45309" font-size="9" font-weight="800" letter-spacing="1">SCHEDULED</text>
+    <text x="18" y="54" fill="#1c1917" font-size="15" font-weight="700">GitHub Actions</text>
+    <text x="18" y="74" fill="#6e6b63" font-size="10">no user session</text>
+  </g>
+
+
+  <!-- COLUMN 2: CORE & ENTRYPOINTS (X = 450) -->
+
+  <!-- Card 4: Next.js API routes (Active Highlighted Core) -->
+  <g transform="translate(450, 175)" filter="url(#core-glow)">
+    <rect x="0" y="0" width="300" height="145" rx="10" fill="#ffffff" stroke="#ea580c" stroke-width="2"/>
+    <circle cx="22" cy="22" r="4.5" fill="#ea580c"/>
+    <text x="36" y="25" fill="#c2410c" font-size="9.5" font-weight="800" letter-spacing="1">CORE</text>
+    <text x="20" y="56" fill="#1c1917" font-size="16" font-weight="800">Next.js API routes</text>
+    <text x="20" y="78" fill="#ea580c" font-size="10.5" font-weight="700">one surface –</text>
+    <text x="20" y="94" fill="#6e6b63" font-size="10.5">every caller alike</text>
+  </g>
+
+  <!-- Card 5: Admin SDK (Cron Path) -->
+  <g transform="translate(450, 470)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="300" height="125" rx="10" fill="#ffffff" stroke="#dcd8cd" stroke-width="1.5"/>
+    <circle cx="20" cy="22" r="4" fill="#d97706"/>
+    <text x="32" y="25" fill="#b45309" font-size="9" font-weight="800" letter-spacing="1">CRON PATH</text>
+    <text x="18" y="54" fill="#1c1917" font-size="15" font-weight="700">Admin SDK</text>
+    <text x="18" y="74" fill="#6e6b63" font-size="10">service account</text>
+  </g>
+
+
+  <!-- COLUMN 3: DATA PATH (X = 880) -->
+
+  <!-- Card 7: memory + Redis -->
+  <g transform="translate(880, 90)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="270" height="125" rx="10" fill="#ffffff" stroke="#dcd8cd" stroke-width="1.5"/>
+    <circle cx="20" cy="22" r="4" fill="#2563eb"/>
+    <text x="32" y="25" fill="#1d4ed8" font-size="9" font-weight="800" letter-spacing="1">DATA PATH</text>
+    <text x="18" y="54" fill="#1c1917" font-size="15" font-weight="700">memory + Redis</text>
+    <text x="18" y="74" fill="#6e6b63" font-size="10">in front of Firestore</text>
+  </g>
+
+  <!-- Card 8: Firestore REST -->
+  <g transform="translate(880, 270)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="270" height="125" rx="10" fill="#ffffff" stroke="#dcd8cd" stroke-width="1.5"/>
+    <circle cx="20" cy="22" r="4" fill="#2563eb"/>
+    <text x="32" y="25" fill="#1d4ed8" font-size="9" font-weight="800" letter-spacing="1">DATA PATH</text>
+    <text x="18" y="54" fill="#1c1917" font-size="15" font-weight="700">Firestore REST</text>
+    <text x="18" y="74" fill="#6e6b63" font-size="10">caller's own ID token</text>
+  </g>
+
+
+  <!-- COLUMN 4: DATASTORE (X = 1330) -->
+
+  <!-- Card 10: Firestore Datastore -->
+  <g transform="translate(1330, 175)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="280" height="145" rx="10" fill="#ffffff" stroke="#dcd8cd" stroke-width="1.5"/>
+    <circle cx="20" cy="22" r="4" fill="#2563eb"/>
+    <text x="32" y="25" fill="#1d4ed8" font-size="9" font-weight="800" letter-spacing="1">DATASTORE</text>
+    <text x="18" y="54" fill="#1c1917" font-size="16" font-weight="800">Firestore</text>
+    <text x="18" y="76" fill="#6e6b63" font-size="10">per-user isolation</text>
+    <text x="18" y="92" fill="#6e6b63" font-size="10">via security rules</text>
+  </g>
+
+  <!-- External Leaf API Cards (Trakt, AniList, OMDb, Gemini) -->
+  <g transform="translate(1330, 350)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="280" height="92" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <circle cx="20" cy="20" r="4" fill="#8b5cf6"/>
+    <text x="32" y="23" fill="#7c3aed" font-size="9" font-weight="800" letter-spacing="1">EXTERNAL API</text>
+    <text x="18" y="50" fill="#1c1917" font-size="14" font-weight="700">Trakt</text>
+    <text x="18" y="68" fill="#6e6b63" font-size="10">Watchlist &amp; history sync</text>
+  </g>
+
+  <g transform="translate(1330, 462)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="280" height="92" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <circle cx="20" cy="20" r="4" fill="#8b5cf6"/>
+    <text x="32" y="23" fill="#7c3aed" font-size="9" font-weight="800" letter-spacing="1">EXTERNAL API</text>
+    <text x="18" y="50" fill="#1c1917" font-size="14" font-weight="700">AniList</text>
+    <text x="18" y="68" fill="#6e6b63" font-size="10">Anime watchlist sync</text>
+  </g>
+
+  <g transform="translate(1330, 574)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="280" height="92" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <circle cx="20" cy="20" r="4" fill="#8b5cf6"/>
+    <text x="32" y="23" fill="#7c3aed" font-size="9" font-weight="800" letter-spacing="1">EXTERNAL API</text>
+    <text x="18" y="50" fill="#1c1917" font-size="14" font-weight="700">OMDb</text>
+    <text x="18" y="68" fill="#6e6b63" font-size="10">Plot &amp; poster enrichment</text>
+  </g>
+
+  <g transform="translate(1330, 686)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="280" height="92" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <circle cx="20" cy="20" r="4" fill="#8b5cf6"/>
+    <text x="32" y="23" fill="#7c3aed" font-size="9" font-weight="800" letter-spacing="1">EXTERNAL API</text>
+    <text x="18" y="50" fill="#1c1917" font-size="14" font-weight="700">Gemini</text>
+    <text x="18" y="68" fill="#6e6b63" font-size="10">AI assistant &amp; recs</text>
+  </g>
+
+
+  <!-- ================= OUTBOUND DOMAIN EVENT PATH ================= -->
+
+  <g transform="translate(880, 650)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="300" height="125" rx="10" fill="#ffffff" stroke="#dcd8cd" stroke-width="1.5"/>
+    <circle cx="20" cy="22" r="4" fill="#0d9488"/>
+    <text x="32" y="25" fill="#0f766e" font-size="9" font-weight="800" letter-spacing="1">DOMAIN PATH</text>
+    <text x="18" y="54" fill="#1c1917" font-size="15" font-weight="700">Domain Event client</text>
+    <text x="18" y="74" fill="#6e6b63" font-size="10">lib/domain-events/</text>
+  </g>
+
+  <g transform="translate(880, 830)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="300" height="125" rx="10" fill="#ffffff" stroke="#0d9488" stroke-width="2" stroke-dasharray="4 4"/>
+    <circle cx="20" cy="22" r="4" fill="#0d9488"/>
+    <text x="32" y="25" fill="#0f766e" font-size="9" font-weight="800" letter-spacing="1">EXTERNAL</text>
+    <text x="18" y="54" fill="#1c1917" font-size="15" font-weight="700">Monolith · Events</text>
+    <text x="18" y="74" fill="#6e6b63" font-size="10">BigQuery, per-app tables –</text>
+    <text x="18" y="90" fill="#6e6b63" font-size="10">bearer key required</text>
+  </g>
+
+  <!-- Discord: fire-and-forget confirmation ping, not a downstream data store -->
+  <g transform="translate(1330, 830)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="280" height="125" rx="10" fill="#ffffff" stroke="#5865f2" stroke-width="2" stroke-dasharray="4 4"/>
+    <circle cx="20" cy="22" r="4" fill="#5865f2"/>
+    <text x="32" y="25" fill="#4752c4" font-size="9" font-weight="800" letter-spacing="1">OBSERVABILITY</text>
+    <text x="18" y="54" fill="#1c1917" font-size="15" font-weight="700">Discord</text>
+    <text x="18" y="74" fill="#6e6b63" font-size="10">"event received" ping –</text>
+    <text x="18" y="90" fill="#6e6b63" font-size="10">visual confirmation only</text>
+  </g>
+
+
+  <!-- ================= FLOW CONNECTORS & BADGES ================= -->
+
+  <!-- 1. Browser -> Next.js API routes -->
+  <path d="M 310 152.5 L 380 152.5 L 380 220 L 450 220" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow-std)"/>
+  <g transform="translate(315, 137)">
+    <rect x="0" y="0" width="135" height="18" rx="4" fill="#ffffff" stroke="#dcd8cd" stroke-width="1"/>
+    <text x="67.5" y="12" fill="#475569" font-size="8" font-weight="700" text-anchor="middle">Google sign-in → ID token</text>
+  </g>
+
+  <!-- 2. Custom GPT -> Next.js API routes -->
+  <path d="M 310 322.5 L 380 322.5 L 380 275 L 450 275" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow-std)"/>
+  <g transform="translate(335, 307)">
+    <rect x="0" y="0" width="90" height="18" rx="4" fill="#ffffff" stroke="#dcd8cd" stroke-width="1"/>
+    <text x="45" y="12" fill="#475569" font-size="8" font-weight="700" text-anchor="middle">OAuth 2.0</text>
+  </g>
+
+  <!-- 3. GitHub Actions -> Admin SDK -->
+  <path d="M 310 532.5 L 450 532.5" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow-std)"/>
+  <g transform="translate(332, 523.5)">
+    <rect x="0" y="0" width="95" height="18" rx="4" fill="#ffffff" stroke="#dcd8cd" stroke-width="1"/>
+    <text x="47.5" y="12" fill="#475569" font-size="8" font-weight="700" text-anchor="middle">no user session</text>
+  </g>
+
+  <!-- 4. Next.js API routes -> memory + Redis -->
+  <path d="M 750 215 L 815 215 L 815 152.5 L 880 152.5" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow-std)"/>
+  <g transform="translate(758, 185)">
+    <rect x="0" y="0" width="115" height="18" rx="4" fill="#ffffff" stroke="#dcd8cd" stroke-width="1"/>
+    <text x="57.5" y="12" fill="#475569" font-size="8" font-weight="700" text-anchor="middle">read, hit skips DB</text>
+  </g>
+
+  <!-- 5. memory + Redis -> Firestore REST -->
+  <path d="M 1015 215 L 1015 270" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow-std)"/>
+  <g transform="translate(990, 227.5)">
+    <rect x="0" y="0" width="50" height="17" rx="4" fill="#ffffff" stroke="#dcd8cd" stroke-width="1"/>
+    <text x="25" y="11.5" fill="#475569" font-size="8" font-weight="700" text-anchor="middle">miss</text>
+  </g>
+
+  <!-- 6. Firestore REST -> Firestore Datastore -->
+  <path d="M 1150 332.5 L 1250 332.5 L 1250 220 L 1330 220" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <g transform="translate(1160, 323.5)">
+    <rect x="0" y="0" width="75" height="18" rx="4" fill="#ffffff" stroke="#2563eb" stroke-width="1"/>
+    <text x="37.5" y="12" fill="#2563eb" font-size="8" font-weight="700" text-anchor="middle">rules apply</text>
+  </g>
+
+  <!-- 7. Next.js API routes -> Admin SDK (Vertical) -->
+  <path d="M 600 320 L 600 470" fill="none" stroke="#475569" stroke-width="2" marker-end="url(#arrow-std)"/>
+
+  <!-- 8. Admin SDK -> Firestore Datastore (Dashed Yellow Line, own vertical channel) -->
+  <path d="M 750 532.5 L 1285 532.5 L 1285 275 L 1330 275" fill="none" stroke="#d97706" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-yellow)"/>
+  <g transform="translate(870, 523.5)">
+    <rect x="0" y="0" width="180" height="18" rx="4" fill="#ffffff" stroke="#d97706" stroke-width="1"/>
+    <text x="90" y="12" fill="#b45309" font-size="8" font-weight="800" text-anchor="middle">service account, bypasses rules</text>
+  </g>
+
+  <!-- 9. Next.js API routes -> Domain Event client (own channel between Admin SDK and the data-path column, clear of every client box and its own connectors) -->
+  <path d="M 750 280 L 790 280 L 790 610 L 1030 610 L 1030 650" fill="none" stroke="#0d9488" stroke-width="2" marker-end="url(#arrow-teal)"/>
+  <g transform="translate(954, 618)">
+    <rect x="0" y="0" width="152" height="18" rx="4" fill="#ffffff" stroke="#0d9488" stroke-width="1"/>
+    <text x="76" y="12" fill="#0f766e" font-size="8" font-weight="800" text-anchor="middle">domain change event</text>
+  </g>
+
+  <!-- 10. Domain Event client -> Monolith · Events (Dashed Teal, bearer key required) -->
+  <path d="M 1030 775 L 1030 830" fill="none" stroke="#0d9488" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-teal)"/>
+  <g transform="translate(954, 783)">
+    <rect x="0" y="0" width="152" height="18" rx="4" fill="#ffffff" stroke="#0d9488" stroke-width="1"/>
+    <text x="76" y="12" fill="#0f766e" font-size="8" font-weight="800" text-anchor="middle">bearer key required</text>
+  </g>
+
+  <!-- 11. Monolith · Events -> Discord (fire-and-forget confirmation, not part of the data path) -->
+  <path d="M 1180 892.5 L 1330 892.5" fill="none" stroke="#5865f2" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-discord)"/>
+  <g transform="translate(1189, 863)">
+    <rect x="0" y="0" width="132" height="18" rx="4" fill="#ffffff" stroke="#5865f2" stroke-width="1"/>
+    <text x="66" y="12" fill="#4752c4" font-size="8" font-weight="800" text-anchor="middle">fire-and-forget</text>
+  </g>
+
+  <!-- 12. Next.js API routes -> External Leaf APIs (Trakt, AniList, OMDb, Gemini) -->
+  <path d="M 750 247.5 L 770 247.5 L 770 430 L 1210 430" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5 4"/>
+  <path d="M 1210 396 L 1210 732" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5 4"/>
+  <path d="M 1210 396 L 1330 396" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-purple)"/>
+  <path d="M 1210 508 L 1330 508" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-purple)"/>
+  <path d="M 1210 620 L 1330 620" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-purple)"/>
+  <path d="M 1210 732 L 1330 732" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-purple)"/>
+  <g transform="translate(890, 421)">
+    <rect x="0" y="0" width="220" height="18" rx="4" fill="#ffffff" stroke="#8b5cf6" stroke-width="1"/>
+    <text x="110" y="12" fill="#7c3aed" font-size="8" font-weight="800" text-anchor="middle">leaf API calls (sync, enrichment, AI)</text>
+  </g>
+
+</svg>
