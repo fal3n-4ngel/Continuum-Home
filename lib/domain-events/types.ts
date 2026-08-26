@@ -1,7 +1,6 @@
 /**
- * Domain events: "a user record changed" — separate from the session/security facts in
- * `lib/audit-postback/`. Names here must match `DomainEventType` in monolith-api; an
- * unrecognized one is rejected with a 400, not stored.
+ * Domain events: "a user record changed." Names here must match `DomainEventType` in
+ * monolith-api; an unrecognized one is rejected with a 400, not stored.
  */
 export const DOMAIN_EVENTS = {
   EXPENSE_CREATED: "EXPENSE_CREATED",

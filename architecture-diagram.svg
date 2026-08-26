@@ -35,6 +35,10 @@
     <marker id="arrow-teal" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#0d9488"/>
     </marker>
+
+    <marker id="arrow-discord" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#5865f2"/>
+    </marker>
   </defs>
 
   <!-- Background Base -->
@@ -43,7 +47,7 @@
 
   <!-- Top Header Title -->
   <g transform="translate(60, 45)">
-    <text x="0" y="0" fill="#47443c" font-size="12" font-weight="800" letter-spacing="2">CONTINUUM — REQUEST, AUDIT &amp; DOMAIN EVENT PATHS</text>
+    <text x="0" y="0" fill="#47443c" font-size="12" font-weight="800" letter-spacing="2">CONTINUUM — REQUEST &amp; DOMAIN EVENT PATH</text>
   </g>
 
 
@@ -135,27 +139,8 @@
   </g>
 
 
-  <!-- ================= OUTBOUND EVENT PATHS — two separate lanes, not one shared box ================= -->
+  <!-- ================= OUTBOUND DOMAIN EVENT PATH ================= -->
 
-  <!-- Lane A: Audit / security events -->
-  <g transform="translate(450, 650)" filter="url(#card-shadow)">
-    <rect x="0" y="0" width="300" height="125" rx="10" fill="#ffffff" stroke="#dcd8cd" stroke-width="1.5"/>
-    <circle cx="20" cy="22" r="4" fill="#ea580c"/>
-    <text x="32" y="25" fill="#c2410c" font-size="9" font-weight="800" letter-spacing="1">AUDIT PATH</text>
-    <text x="18" y="54" fill="#1c1917" font-size="15" font-weight="700">Audit Postback client</text>
-    <text x="18" y="74" fill="#6e6b63" font-size="10">lib/audit-postback/</text>
-  </g>
-
-  <g transform="translate(450, 830)" filter="url(#card-shadow)">
-    <rect x="0" y="0" width="300" height="125" rx="10" fill="#ffffff" stroke="#ea580c" stroke-width="2" stroke-dasharray="4 4"/>
-    <circle cx="20" cy="22" r="4" fill="#ea580c"/>
-    <text x="32" y="25" fill="#c2410c" font-size="9" font-weight="800" letter-spacing="1">EXTERNAL</text>
-    <text x="18" y="54" fill="#1c1917" font-size="15" font-weight="700">Monolith · Audit</text>
-    <text x="18" y="74" fill="#6e6b63" font-size="10">Firestore + BigQuery –</text>
-    <text x="18" y="90" fill="#6e6b63" font-size="10">nothing past here</text>
-  </g>
-
-  <!-- Lane B: Domain change events -->
   <g transform="translate(880, 650)" filter="url(#card-shadow)">
     <rect x="0" y="0" width="300" height="125" rx="10" fill="#ffffff" stroke="#dcd8cd" stroke-width="1.5"/>
     <circle cx="20" cy="22" r="4" fill="#0d9488"/>
@@ -171,6 +156,16 @@
     <text x="18" y="54" fill="#1c1917" font-size="15" font-weight="700">Monolith · Events</text>
     <text x="18" y="74" fill="#6e6b63" font-size="10">BigQuery, per-app tables –</text>
     <text x="18" y="90" fill="#6e6b63" font-size="10">bearer key required</text>
+  </g>
+
+  <!-- Discord: fire-and-forget confirmation ping, not a downstream data store -->
+  <g transform="translate(1330, 830)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="280" height="125" rx="10" fill="#ffffff" stroke="#5865f2" stroke-width="2" stroke-dasharray="4 4"/>
+    <circle cx="20" cy="22" r="4" fill="#5865f2"/>
+    <text x="32" y="25" fill="#4752c4" font-size="9" font-weight="800" letter-spacing="1">OBSERVABILITY</text>
+    <text x="18" y="54" fill="#1c1917" font-size="15" font-weight="700">Discord</text>
+    <text x="18" y="74" fill="#6e6b63" font-size="10">"event received" ping –</text>
+    <text x="18" y="90" fill="#6e6b63" font-size="10">visual confirmation only</text>
   </g>
 
 
@@ -228,36 +223,25 @@
     <text x="90" y="12" fill="#b45309" font-size="8" font-weight="800" text-anchor="middle">service account, bypasses rules</text>
   </g>
 
-  <!-- 9. Next.js API routes -> fork point (own channel, left of the Admin SDK column so it never touches Admin SDK) -->
-  <path d="M 450 300 L 390 300 L 390 610 L 600 610" fill="none" stroke="#475569" stroke-width="2"/>
-  <circle cx="600" cy="610" r="3.5" fill="#475569"/>
-
-  <!-- 9a. fork -> Audit Postback client -->
-  <path d="M 600 610 L 600 650" fill="none" stroke="#ea580c" stroke-width="2" marker-end="url(#arrow-orange)"/>
-  <g transform="translate(524, 618)">
-    <rect x="0" y="0" width="152" height="18" rx="4" fill="#ffffff" stroke="#ea580c" stroke-width="1"/>
-    <text x="76" y="12" fill="#c2410c" font-size="8" font-weight="800" text-anchor="middle">audit / security event</text>
-  </g>
-
-  <!-- 9b. fork -> Domain Event client -->
-  <path d="M 600 610 L 1030 610 L 1030 650" fill="none" stroke="#0d9488" stroke-width="2" marker-end="url(#arrow-teal)"/>
+  <!-- 9. Next.js API routes -> Domain Event client (own channel between Admin SDK and the data-path column, clear of every client box and its own connectors) -->
+  <path d="M 750 280 L 790 280 L 790 610 L 1030 610 L 1030 650" fill="none" stroke="#0d9488" stroke-width="2" marker-end="url(#arrow-teal)"/>
   <g transform="translate(954, 618)">
     <rect x="0" y="0" width="152" height="18" rx="4" fill="#ffffff" stroke="#0d9488" stroke-width="1"/>
     <text x="76" y="12" fill="#0f766e" font-size="8" font-weight="800" text-anchor="middle">domain change event</text>
   </g>
 
-  <!-- 10a. Audit Postback client -> Monolith · Audit (Dashed Orange, public, fire-and-forget) -->
-  <path d="M 600 775 L 600 830" fill="none" stroke="#ea580c" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-orange)"/>
-  <g transform="translate(524, 783)">
-    <rect x="0" y="0" width="152" height="18" rx="4" fill="#ffffff" stroke="#ea580c" stroke-width="1"/>
-    <text x="76" y="12" fill="#c2410c" font-size="8" font-weight="800" text-anchor="middle">fire-and-forget · public</text>
-  </g>
-
-  <!-- 10b. Domain Event client -> Monolith · Events (Dashed Teal, bearer key required) -->
+  <!-- 10. Domain Event client -> Monolith · Events (Dashed Teal, bearer key required) -->
   <path d="M 1030 775 L 1030 830" fill="none" stroke="#0d9488" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-teal)"/>
   <g transform="translate(954, 783)">
     <rect x="0" y="0" width="152" height="18" rx="4" fill="#ffffff" stroke="#0d9488" stroke-width="1"/>
     <text x="76" y="12" fill="#0f766e" font-size="8" font-weight="800" text-anchor="middle">bearer key required</text>
+  </g>
+
+  <!-- 11. Monolith · Events -> Discord (fire-and-forget confirmation, not part of the data path) -->
+  <path d="M 1180 892.5 L 1330 892.5" fill="none" stroke="#5865f2" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-discord)"/>
+  <g transform="translate(1189, 863)">
+    <rect x="0" y="0" width="132" height="18" rx="4" fill="#ffffff" stroke="#5865f2" stroke-width="1"/>
+    <text x="66" y="12" fill="#4752c4" font-size="8" font-weight="800" text-anchor="middle">fire-and-forget</text>
   </g>
 
 </svg>
