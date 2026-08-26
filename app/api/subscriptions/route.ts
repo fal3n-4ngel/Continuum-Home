@@ -35,7 +35,8 @@ export async function POST(req: NextRequest) {
       eventType: DOMAIN_EVENTS.SUBSCRIPTION_CREATED,
       userId: session.uid,
       entityId: result.id,
-      payload: { cost: entry.cost, billingCycle: entry.billingCycle },
+      userEmail: session.user.email,
+      payload: { name: entry.name, cost: entry.cost, billingCycle: entry.billingCycle },
     });
 
     return NextResponse.json({ success: true, ...result });

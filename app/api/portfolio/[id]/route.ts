@@ -29,6 +29,7 @@ export async function PATCH(
       eventType: DOMAIN_EVENTS.INVESTMENT_UPDATED,
       userId: session.uid,
       entityId: id,
+      userEmail: session.user.email,
       payload: { fields: Object.keys(patch) },
     });
 
@@ -51,6 +52,7 @@ export async function DELETE(
       eventType: DOMAIN_EVENTS.INVESTMENT_DELETED,
       userId: session.uid,
       entityId: id,
+      userEmail: session.user.email,
     });
 
     return NextResponse.json({ success: true, ...result });
