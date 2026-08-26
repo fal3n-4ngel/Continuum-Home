@@ -39,6 +39,10 @@
     <marker id="arrow-discord" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#5865f2"/>
     </marker>
+
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#8b5cf6"/>
+    </marker>
   </defs>
 
   <!-- Background Base -->
@@ -136,6 +140,39 @@
     <text x="18" y="54" fill="#1c1917" font-size="16" font-weight="800">Firestore</text>
     <text x="18" y="76" fill="#6e6b63" font-size="10">per-user isolation</text>
     <text x="18" y="92" fill="#6e6b63" font-size="10">via security rules</text>
+  </g>
+
+  <!-- External Leaf API Cards (Trakt, AniList, OMDb, Gemini) -->
+  <g transform="translate(1330, 350)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="280" height="92" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <circle cx="20" cy="20" r="4" fill="#8b5cf6"/>
+    <text x="32" y="23" fill="#7c3aed" font-size="9" font-weight="800" letter-spacing="1">EXTERNAL API</text>
+    <text x="18" y="50" fill="#1c1917" font-size="14" font-weight="700">Trakt</text>
+    <text x="18" y="68" fill="#6e6b63" font-size="10">Watchlist &amp; history sync</text>
+  </g>
+
+  <g transform="translate(1330, 462)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="280" height="92" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <circle cx="20" cy="20" r="4" fill="#8b5cf6"/>
+    <text x="32" y="23" fill="#7c3aed" font-size="9" font-weight="800" letter-spacing="1">EXTERNAL API</text>
+    <text x="18" y="50" fill="#1c1917" font-size="14" font-weight="700">AniList</text>
+    <text x="18" y="68" fill="#6e6b63" font-size="10">Anime watchlist sync</text>
+  </g>
+
+  <g transform="translate(1330, 574)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="280" height="92" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <circle cx="20" cy="20" r="4" fill="#8b5cf6"/>
+    <text x="32" y="23" fill="#7c3aed" font-size="9" font-weight="800" letter-spacing="1">EXTERNAL API</text>
+    <text x="18" y="50" fill="#1c1917" font-size="14" font-weight="700">OMDb</text>
+    <text x="18" y="68" fill="#6e6b63" font-size="10">Plot &amp; poster enrichment</text>
+  </g>
+
+  <g transform="translate(1330, 686)" filter="url(#card-shadow)">
+    <rect x="0" y="0" width="280" height="92" rx="10" fill="#ffffff" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <circle cx="20" cy="20" r="4" fill="#8b5cf6"/>
+    <text x="32" y="23" fill="#7c3aed" font-size="9" font-weight="800" letter-spacing="1">EXTERNAL API</text>
+    <text x="18" y="50" fill="#1c1917" font-size="14" font-weight="700">Gemini</text>
+    <text x="18" y="68" fill="#6e6b63" font-size="10">AI assistant &amp; recs</text>
   </g>
 
 
@@ -242,6 +279,18 @@
   <g transform="translate(1189, 863)">
     <rect x="0" y="0" width="132" height="18" rx="4" fill="#ffffff" stroke="#5865f2" stroke-width="1"/>
     <text x="66" y="12" fill="#4752c4" font-size="8" font-weight="800" text-anchor="middle">fire-and-forget</text>
+  </g>
+
+  <!-- 12. Next.js API routes -> External Leaf APIs (Trakt, AniList, OMDb, Gemini) -->
+  <path d="M 750 247.5 L 770 247.5 L 770 430 L 1210 430" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5 4"/>
+  <path d="M 1210 396 L 1210 732" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5 4"/>
+  <path d="M 1210 396 L 1330 396" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-purple)"/>
+  <path d="M 1210 508 L 1330 508" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-purple)"/>
+  <path d="M 1210 620 L 1330 620" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-purple)"/>
+  <path d="M 1210 732 L 1330 732" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#arrow-purple)"/>
+  <g transform="translate(890, 421)">
+    <rect x="0" y="0" width="220" height="18" rx="4" fill="#ffffff" stroke="#8b5cf6" stroke-width="1"/>
+    <text x="110" y="12" fill="#7c3aed" font-size="8" font-weight="800" text-anchor="middle">leaf API calls (sync, enrichment, AI)</text>
   </g>
 
 </svg>
