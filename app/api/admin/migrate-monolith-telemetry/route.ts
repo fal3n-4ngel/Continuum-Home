@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 const MONOLITH_ENDPOINT = process.env.MONOLITH_API_URL
   ? `${process.env.MONOLITH_API_URL.replace(/\/$/, "")}/api/v1/events/postback`
-  : "https://api.adithyakrishnan.com/api/v1/events/postback";
+  : "https://monolith-postbacks.adithyakrishnan.com/api/v1/events/postback";
 
 export async function POST(req: NextRequest) {
   try {

@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/fal3n-4ngel/personal-dashboard#readme
+    about: Read the README (features, architecture, OpenAPI schema) before filing a ticket.
+  - name: Security vulnerability
+    url: https://github.com/fal3n-4ngel/personal-dashboard/security/advisories/new
+    about: Report a security issue privately instead of opening a public issue.

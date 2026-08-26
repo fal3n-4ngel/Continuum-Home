@@ -2,7 +2,7 @@ import { after } from "next/server";
 import { env } from "@/lib/utils";
 import { DomainEvent } from "./types";
 
-const DEFAULT_MONOLITH_API_URL = "https://api.adithyakrishnan.com";
+const DEFAULT_MONOLITH_API_URL = "https://monolith-postbacks.adithyakrishnan.com";
 const MAX_BODY_BYTES = 16_000;
 const TIMEOUT_MS = 3_000;
 
