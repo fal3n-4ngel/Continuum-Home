@@ -29,7 +29,8 @@ export async function PATCH(
       eventType: DOMAIN_EVENTS.WATCHLIST_UPDATED,
       userId: session.uid,
       entityId: id,
-      payload: { fields: Object.keys(patch), status: patch.status },
+      userEmail: session.user.email,
+      payload: { fields: Object.keys(patch), ...(patch.title ? { title: patch.title } : {}), status: patch.status },
     });
 
     return NextResponse.json({ success: true, ...result });
@@ -51,6 +52,7 @@ export async function DELETE(
       eventType: DOMAIN_EVENTS.WATCHLIST_REMOVED,
       userId: session.uid,
       entityId: id,
+      userEmail: session.user.email,
     });
 
     return NextResponse.json({ success: true, ...result });

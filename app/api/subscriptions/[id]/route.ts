@@ -17,6 +17,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       eventType: DOMAIN_EVENTS.SUBSCRIPTION_DELETED,
       userId: session.uid,
       entityId: id,
+      userEmail: session.user.email,
     });
 
     return NextResponse.json({ success: true });
@@ -44,7 +45,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       eventType: DOMAIN_EVENTS.SUBSCRIPTION_UPDATED,
       userId: session.uid,
       entityId: id,
-      payload: { fields: Object.keys(patch), cost: patch.cost },
+      userEmail: session.user.email,
+      payload: { fields: Object.keys(patch), ...(patch.name ? { name: patch.name } : {}), cost: patch.cost },
     });
 
     return NextResponse.json({ success: true });

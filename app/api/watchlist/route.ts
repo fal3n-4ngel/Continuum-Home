@@ -134,7 +134,8 @@ export async function POST(req: NextRequest) {
       eventType: DOMAIN_EVENTS.WATCHLIST_ADDED,
       userId: session.uid,
       entityId: result.id,
-      payload: { type: item.type, status: item.status, year: item.year },
+      userEmail: session.user.email,
+      payload: { title: item.title, type: item.type, status: item.status, year: item.year },
     });
 
     return NextResponse.json({ success: true, ...result });

@@ -29,8 +29,14 @@ export async function PATCH(
       eventType: DOMAIN_EVENTS.EXPENSE_UPDATED,
       userId: session.uid,
       entityId: id,
-      // Which fields changed, not their new values.
-      payload: { fields: Object.keys(patch) },
+      userEmail: session.user.email,
+      payload: {
+        fields: Object.keys(patch),
+        ...(patch.title ? { title: patch.title } : {}),
+        ...(patch.amount !== undefined ? { amount: patch.amount } : {}),
+        ...(patch.category ? { category: patch.category } : {}),
+        ...(patch.date ? { date: patch.date } : {}),
+      },
     });
 
     return NextResponse.json({ success: true, ...result });
@@ -52,6 +58,7 @@ export async function DELETE(
       eventType: DOMAIN_EVENTS.EXPENSE_DELETED,
       userId: session.uid,
       entityId: id,
+      userEmail: session.user.email,
     });
 
     return NextResponse.json({ success: true, ...result });

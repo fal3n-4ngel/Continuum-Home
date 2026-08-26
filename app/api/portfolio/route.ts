@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
     recordDomainEvent({
       eventType: DOMAIN_EVENTS.INVESTMENT_UPDATED,
       userId: session.uid,
+      userEmail: session.user.email,
       itemCount: assets.length,
       payload: { wholePortfolio: true },
     });
@@ -68,6 +69,7 @@ export async function PATCH(req: NextRequest) {
       recordDomainEvent({
         eventType: DOMAIN_EVENTS.INVESTMENT_UPDATED,
         userId: session.uid,
+        userEmail: session.user.email,
         entityId: b.id,
         payload: { fields: Object.keys(patch) },
       });
@@ -82,6 +84,7 @@ export async function PATCH(req: NextRequest) {
       recordDomainEvent({
         eventType: DOMAIN_EVENTS.INVESTMENT_UPDATED,
         userId: session.uid,
+        userEmail: session.user.email,
         itemCount: assets.length,
         payload: { wholePortfolio: true },
       });

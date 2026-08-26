@@ -66,7 +66,9 @@ export async function POST(req: NextRequest) {
       eventType: DOMAIN_EVENTS.EXPENSE_CREATED,
       userId: session.uid,
       entityId: result.id,
+      userEmail: session.user.email,
       payload: {
+        title: entry.title,
         amount: entry.amount,
         category: entry.category,
         date: entry.date,
