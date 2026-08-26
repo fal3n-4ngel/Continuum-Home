@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
     await sendAuditPostback({
       eventType: AUDIT_EVENT_TYPES.USER_SESSION_ACTIVE,
       userId: session.uid,
-      metadata: { email: session.user.email, authProvider: "google" },
+      metadata: { email: session.user.email, name: session.user.displayName, authProvider: "google" },
     });
 
     return NextResponse.json({ ok: true });
