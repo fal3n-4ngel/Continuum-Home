@@ -37,6 +37,7 @@ export async function PATCH(req: NextRequest) {
       recordDomainEvent({
         eventType: DOMAIN_EVENTS.SALARY_UPDATED,
         userId: session.uid,
+        userEmail: session.user.email,
         payload: {
           monthlySalary: patch.monthlySalary,
           salaryDay: patch.salaryDay,
@@ -48,6 +49,7 @@ export async function PATCH(req: NextRequest) {
       recordDomainEvent({
         eventType: DOMAIN_EVENTS.SALARY_LOGGED,
         userId: session.uid,
+        userEmail: session.user.email,
         payload: {
           entriesCount: Object.keys(patch.salaryLog || {}).length,
         },

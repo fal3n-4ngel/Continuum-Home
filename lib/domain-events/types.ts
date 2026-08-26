@@ -30,6 +30,9 @@ export interface DomainEvent {
   /** Always `session.uid` — never a client-supplied value. */
   userId: string;
 
+  /** Caller email address for identity mapping. */
+  userEmail?: string | null;
+
   entityId?: string;
 
   /** Identifies the logical event, not the delivery attempt — a retry must reuse this id. */
