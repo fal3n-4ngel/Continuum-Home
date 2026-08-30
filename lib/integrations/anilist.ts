@@ -1,8 +1,13 @@
-// Client-side AniList GraphQL helper. AniList's API is public/CORS-enabled,
-// so unlike Trakt this is called directly from the browser — no proxy route.
 import type { MediaStatus } from "@/types";
 
 const ANILIST_GQL = "https://graphql.anilist.co";
+
+export class AniListError extends Error {
+  constructor(message: string, public readonly status?: number) {
+    super(message);
+    this.name = "AniListError";
+  }
+}
 
 export async function anilistQuery(query: string, variables: Record<string, unknown> = {}, token?: string) {
   const res = await fetch(ANILIST_GQL, {
@@ -13,11 +18,11 @@ export async function anilistQuery(query: string, variables: Record<string, unkn
     },
     body: JSON.stringify({ query, variables }),
   });
-  if (!res.ok) throw new Error(`AniList HTTP error (${res.status}): ${res.statusText}`);
+  if (!res.ok) throw new AniListError(`AniList HTTP error (${res.status}): ${res.statusText}`, res.status);
   const data = await res.json();
   if (data?.errors?.length) {
     const msg = data.errors.map((e: { message?: string }) => e.message || "Unknown error").join("; ");
-    throw new Error(`AniList GraphQL error: ${msg}`);
+    throw new AniListError(`AniList GraphQL error: ${msg}`, res.status);
   }
   return data;
 }

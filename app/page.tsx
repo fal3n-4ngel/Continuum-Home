@@ -34,6 +34,7 @@ import { MediaDetailsModal } from "@/components/dashboard/MediaDetailsModal";
 import { KirokuTab } from "@/components/dashboard/KirokuTab";
 import { ClaimProModal } from "@/components/dashboard/ClaimProModal";
 import { DataCorrectionModal } from "@/components/dashboard/DataCorrectionModal";
+import { DeleteAccountModal } from "@/components/dashboard/DeleteAccountModal";
 
 // Dynamically import heavy dashboard tabs to optimize initial bundle size
 const ExpensesTab = dynamic(() => import("@/components/dashboard/ExpensesTab").then((mod) => mod.ExpensesTab));
@@ -189,8 +190,9 @@ export default function Dashboard() {
   const [letterboxdUsername, setLetterboxdUsername] = useState("");
   const [isImportingLetterboxd, setIsImportingLetterboxd] = useState(false);
 
-  // Data Correction
+  // Data Correction & Account Deletion Modals
   const [isDataCorrectionOpen, setIsDataCorrectionOpen] = useState(false);
+  const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
 
   // Book Library State
   const [bookQuery, setBookQuery] = useState("");
@@ -2530,33 +2532,7 @@ export default function Dashboard() {
             setMonthlySalary={setMonthlySalary}
             additionalIncome={additionalIncome}
             setAdditionalIncome={setAdditionalIncome}
-            onDeleteAccount={() => {
-              triggerConfirm(
-                "Delete & Archive Account",
-                "Are you sure you want to delete and archive your account? This will turn off all email notifications and stop all background tasks from running.",
-                async () => {
-                  try {
-                    const res = await fetch("/api/settings", {
-                      method: "DELETE",
-                      headers: getHeaders(),
-                    });
-                    if (res.ok) {
-                      if (firebaseAuth?.auth) {
-                        await firebaseAuth.signOut(firebaseAuth.auth).catch(() => {});
-                      }
-                      localStorage.clear();
-                      window.location.reload();
-                    } else {
-                      triggerAlert("Error", "Failed to delete account. Please try again.", "danger");
-                    }
-                  } catch (err: any) {
-                    triggerAlert("Error", err.message || "Failed to delete account.", "danger");
-                  }
-                },
-                true,
-                "Delete & Archive Account"
-              );
-            }}
+            onDeleteAccount={() => setIsDeleteAccountModalOpen(true)}
           />
         )}
 
@@ -2634,6 +2610,27 @@ export default function Dashboard() {
         onSuccess={() => {
           setIsDataCorrectionOpen(false);
           fetchWatchlist();
+        }}
+      />
+
+      <DeleteAccountModal
+        isOpen={isDeleteAccountModalOpen}
+        onClose={() => setIsDeleteAccountModalOpen(false)}
+        onConfirmDelete={async () => {
+          const res = await fetch("/api/settings", {
+            method: "DELETE",
+            headers: getHeaders(),
+          });
+          if (res.ok) {
+            if (firebaseAuth?.auth) {
+              await firebaseAuth.signOut(firebaseAuth.auth).catch(() => {});
+            }
+            localStorage.clear();
+            window.location.reload();
+          } else {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.message || "Failed to delete account. Please try again.");
+          }
         }}
       />
     </div>
