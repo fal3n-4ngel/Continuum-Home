@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 
 export interface ConfirmState {
   isOpen: boolean;
@@ -18,7 +19,7 @@ interface ConfirmModalProps {
 }
 
 export const ConfirmModal: React.FC<ConfirmModalProps> = ({ confirmDlg, setConfirmDlg }) => {
-  if (!confirmDlg.isOpen) return null;
+  if (!confirmDlg.isOpen || typeof window === "undefined") return null;
 
   const isAlert = confirmDlg.variant === "alert";
   const tone = confirmDlg.tone || (confirmDlg.isDestructive !== false ? "danger" : "info");
@@ -27,13 +28,13 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({ confirmDlg, setConfi
   const strokeColor = tone === "danger" ? "#b3666b" : tone === "success" ? "#16a34a" : "#2563eb";
   const confirmBtnBg = tone === "danger" ? "#b3666b" : tone === "success" ? "#16a34a" : "var(--text-primary)";
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-[fadeIn_0.15s_ease]"
       onClick={() => setConfirmDlg((prev) => ({ ...prev, isOpen: false }))}
     >
       <div
-        className="m-4 flex w-full max-w-[400px] flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-7 shadow-subtle animate-[fadeInScale_0.15s_ease]"
+        className="m-4 flex w-full max-w-[400px] flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-7 shadow-subtle animate-[fadeInScale_0.2s_cubic-bezier(0.16,1,0.3,1)]"
         onClick={(e) => e.stopPropagation()}
       >
         <style>{`@keyframes fadeInScale { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }`}</style>
@@ -57,14 +58,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({ confirmDlg, setConfi
         <div className="flex justify-end gap-2">
           {!isAlert && (
             <button
-              className="rounded-md border border-border-subtle bg-transparent px-4 py-2 text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary"
+              className="rounded-md border border-border-subtle bg-transparent px-4 py-2 text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary active:scale-95 cursor-pointer"
               onClick={() => setConfirmDlg((prev) => ({ ...prev, isOpen: false }))}
             >
               {confirmDlg.cancelText || "Cancel"}
             </button>
           )}
           <button
-            className="rounded-lg px-[18px] py-2 text-[13px] font-semibold text-white"
+            className="rounded-lg px-[18px] py-2 text-[13px] font-semibold text-white transition-all active:scale-95 cursor-pointer hover:opacity-90"
             style={{ backgroundColor: confirmBtnBg }}
             onClick={confirmDlg.onConfirm}
           >
@@ -72,6 +73,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({ confirmDlg, setConfi
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

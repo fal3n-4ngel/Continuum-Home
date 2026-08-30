@@ -151,7 +151,7 @@ export default function Dashboard() {
   const [salaryLog, setSalaryLogState] = useState<Record<string, { date: string; amount: number }>>({});
   const [emailSubscriptions, setEmailSubscriptionsState] = useState<{ expenses: boolean; portfolio: boolean; subscriptions: boolean }>({
     expenses: true,
-    portfolio: true,
+    portfolio: false,
     subscriptions: true,
   });
   const [isProUser, setIsProUser] = useState(false);
@@ -1130,7 +1130,7 @@ export default function Dashboard() {
         if (data.emailSubscriptions && typeof data.emailSubscriptions === "object") {
           setEmailSubscriptionsState({
             expenses: data.emailSubscriptions.expenses !== false,
-            portfolio: data.emailSubscriptions.portfolio !== false,
+            portfolio: data.emailSubscriptions.portfolio === true,
             subscriptions: data.emailSubscriptions.subscriptions !== false,
           });
         }
@@ -1520,7 +1520,7 @@ export default function Dashboard() {
     }
   };
 
-  const addToWatchlist = async (res: SearchResult) => {
+  const addToWatchlist = async (res: SearchResult): Promise<boolean> => {
     const body: Omit<WatchlistItem, "id" | "updatedAt" | "createdAt"> = {
       title: res.title,
       type: res.type,
@@ -1533,15 +1533,29 @@ export default function Dashboard() {
       anilistId: res.anilistId || null,
       traktId: res.traktId || null,
     };
-    const apiRes = await fetch("/api/watchlist", {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(body),
-    });
-    if (apiRes.ok) {
-      fetchWatchlist();
-      const createdItem = { ...body, id: "" } as WatchlistItem;
-      pushWatchlistUpdate(user?.idToken, createdItem, { status: "plan_to_watch" }).catch((e) => console.error(e));
+    try {
+      const apiRes = await fetch("/api/watchlist", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(body),
+      });
+      if (apiRes.ok) {
+        const createdData = await apiRes.json().catch(() => ({}));
+        const createdItem: WatchlistItem = {
+          ...body,
+          id: createdData.id || `temp-${Date.now()}`,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+        setWatchlist((prev) => [createdItem, ...prev.filter((item) => item.id !== createdItem.id)]);
+        fetchWatchlist();
+        pushWatchlistUpdate(user?.idToken, createdItem, { status: "plan_to_watch" }).catch((e) => console.error(e));
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("[addToWatchlist] Error adding item:", err);
+      return false;
     }
   };
 
@@ -1633,7 +1647,7 @@ export default function Dashboard() {
     }
   };
 
-  const addBook = async (b: SearchResult) => {
+  const addBook = async (b: SearchResult): Promise<boolean> => {
     const body: Omit<WatchlistItem, "id" | "updatedAt" | "createdAt"> = {
       title: b.title,
       type: "book",
@@ -1644,12 +1658,29 @@ export default function Dashboard() {
       coverImage: b.coverImage || null,
       year: b.year || null,
     };
-    const apiRes = await fetch("/api/watchlist", {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(body),
-    });
-    if (apiRes.ok) fetchWatchlist();
+    try {
+      const apiRes = await fetch("/api/watchlist", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify(body),
+      });
+      if (apiRes.ok) {
+        const createdData = await apiRes.json().catch(() => ({}));
+        const createdItem: WatchlistItem = {
+          ...body,
+          id: createdData.id || `temp-${Date.now()}`,
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+        };
+        setWatchlist((prev) => [createdItem, ...prev.filter((item) => item.id !== createdItem.id)]);
+        fetchWatchlist();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error("[addBook] Error adding book:", err);
+      return false;
+    }
   };
 
   /* ─── Investments Actions ─── */
@@ -2499,6 +2530,33 @@ export default function Dashboard() {
             setMonthlySalary={setMonthlySalary}
             additionalIncome={additionalIncome}
             setAdditionalIncome={setAdditionalIncome}
+            onDeleteAccount={() => {
+              triggerConfirm(
+                "Delete & Archive Account",
+                "Are you sure you want to delete and archive your account? This will turn off all email notifications and stop all background tasks from running.",
+                async () => {
+                  try {
+                    const res = await fetch("/api/settings", {
+                      method: "DELETE",
+                      headers: getHeaders(),
+                    });
+                    if (res.ok) {
+                      if (firebaseAuth?.auth) {
+                        await firebaseAuth.signOut(firebaseAuth.auth).catch(() => {});
+                      }
+                      localStorage.clear();
+                      window.location.reload();
+                    } else {
+                      triggerAlert("Error", "Failed to delete account. Please try again.", "danger");
+                    }
+                  } catch (err: any) {
+                    triggerAlert("Error", err.message || "Failed to delete account.", "danger");
+                  }
+                },
+                true,
+                "Delete & Archive Account"
+              );
+            }}
           />
         )}
 

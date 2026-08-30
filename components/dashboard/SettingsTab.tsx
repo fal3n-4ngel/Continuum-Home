@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Mail, Wallet, TrendingUp, RefreshCw, Coins, CalendarClock, Banknote } from "lucide-react";
+import { Mail, Wallet, TrendingUp, RefreshCw, Coins, CalendarClock, Banknote, Trash2 } from "lucide-react";
 
 export interface EmailSubscriptions {
   expenses: boolean;
@@ -20,6 +20,7 @@ interface SettingsTabProps {
   setMonthlySalary: (v: number) => void;
   additionalIncome: number;
   setAdditionalIncome: (v: number) => void;
+  onDeleteAccount?: () => void;
 }
 
 const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card shadow-subtle";
@@ -83,6 +84,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   setMonthlySalary,
   additionalIncome,
   setAdditionalIncome,
+  onDeleteAccount,
 }) => {
   const toggleEmail = (key: keyof EmailSubscriptions) => {
     setEmailSubscriptions({ ...emailSubscriptions, [key]: !emailSubscriptions[key] });
@@ -203,6 +205,31 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         Every automated email also includes a one-click unsubscribe link in its footer, which flips the matching toggle above.
         Changes on this page save automatically.
       </p>
+
+      {/* Danger Zone / Account Deletion */}
+      <div className="rounded-card border border-red-500/20 bg-red-500/5 shadow-subtle mt-4">
+        <div className="flex items-center justify-between border-b border-red-500/15 bg-red-500/10 px-5 py-3.5">
+          <h2 className="flex items-center gap-2 text-[13px] font-bold tracking-tight text-red-700">
+            <Trash2 size={15} /> Danger Zone
+          </h2>
+        </div>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5">
+          <div className="space-y-1">
+            <p className="text-[13px] font-semibold text-text-primary">Delete Account &amp; Data</p>
+            <p className="text-[11.5px] leading-relaxed text-text-muted max-w-md">
+              Permanently delete your account and purge all associated data across expenses, portfolio, subscriptions, and watchlists. This action cannot be undone.
+            </p>
+          </div>
+          {onDeleteAccount && (
+            <button
+              onClick={onDeleteAccount}
+              className="shrink-0 rounded-lg border border-red-200 bg-red-600 px-4 py-2 text-[13px] font-semibold text-white shadow-xs transition-all duration-200 hover:bg-red-700 active:scale-95 cursor-pointer"
+            >
+              Delete Account
+            </button>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

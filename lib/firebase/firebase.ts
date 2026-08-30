@@ -1009,6 +1009,8 @@ export interface DashboardSettings {
     portfolio: boolean;
     subscriptions: boolean;
   };
+  deleted?: boolean;
+  deletedAt?: number;
   updatedAt: number;
 }
 
@@ -1051,7 +1053,7 @@ export async function getSettings(session: Session): Promise<DashboardSettings |
       isPro: data.isPro === true,
       emailSubscriptions: {
         expenses: emailSubsRaw.expenses !== false,
-        portfolio: emailSubsRaw.portfolio !== false,
+        portfolio: emailSubsRaw.portfolio === true,
         subscriptions: emailSubsRaw.subscriptions !== false,
       },
       updatedAt: Number(data.updatedAt || 0),

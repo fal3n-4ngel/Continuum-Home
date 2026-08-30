@@ -1,7 +1,7 @@
 import React from "react";
 import { WatchlistItem, SearchResult } from "@/types";
 import { isSafeImageUrl } from "@/lib/utils";
-import { Search, Trash2, Sparkles } from "lucide-react";
+import { Search, Trash2, Sparkles, Check, Loader2, X } from "lucide-react";
 
 interface BooksTabProps {
   watchlist: WatchlistItem[];
@@ -10,7 +10,7 @@ interface BooksTabProps {
   searchBooks: (e: React.FormEvent) => void;
   isSearchingBooks: boolean;
   bookResults: SearchResult[];
-  addBook: (b: SearchResult) => void;
+  addBook: (b: SearchResult) => Promise<boolean> | void;
   bookFilter: "all" | "reading" | "to_read" | "completed";
   setBookFilter: (f: "all" | "reading" | "to_read" | "completed") => void;
   updateWatchItem: (item: WatchlistItem, updates: Partial<WatchlistItem>) => void;
@@ -67,6 +67,67 @@ export const BooksTab: React.FC<BooksTabProps> = ({
 }) => {
   const [titleSearch, setTitleSearch] = React.useState("");
   const [sortBy, setSortBy] = React.useState<"title" | "year_new" | "year_old">("title");
+
+  // Search & Add enhanced UX states
+  const [addingMap, setAddingMap] = React.useState<Record<string, boolean>>({});
+  const [justAddedMap, setJustAddedMap] = React.useState<Record<string, boolean>>({});
+  const [hasSearched, setHasSearched] = React.useState(false);
+  const [feedbackToast, setFeedbackToast] = React.useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  React.useEffect(() => {
+    if (!feedbackToast) return;
+    const timer = setTimeout(() => setFeedbackToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [feedbackToast]);
+
+  const handleBookSearchSubmit = (e: React.FormEvent) => {
+    setHasSearched(true);
+    setFeedbackToast(null);
+    searchBooks(e);
+  };
+
+  const handleClearBookSearch = () => {
+    setBookQuery("");
+    setHasSearched(false);
+    setFeedbackToast(null);
+  };
+
+  const checkBookInLibrary = (res: SearchResult) => {
+    const key = `book-${res.title.toLowerCase().trim()}`;
+    if (justAddedMap[key]) return true;
+    return watchlist.some((w) => w.type === "book" && w.title.toLowerCase().trim() === res.title.toLowerCase().trim());
+  };
+
+  const handleAddBookClick = async (res: SearchResult) => {
+    const key = `book-${res.title.toLowerCase().trim()}`;
+    if (addingMap[key] || checkBookInLibrary(res)) return;
+
+    setAddingMap((prev) => ({ ...prev, [key]: true }));
+    setFeedbackToast(null);
+
+    try {
+      const success = await addBook(res);
+      if (success !== false) {
+        setJustAddedMap((prev) => ({ ...prev, [key]: true }));
+        setFeedbackToast({
+          text: `Added "${res.title}" to your book library!`,
+          type: "success",
+        });
+      } else {
+        setFeedbackToast({
+          text: `Failed to add "${res.title}". Please try again.`,
+          type: "error",
+        });
+      }
+    } catch (err: any) {
+      setFeedbackToast({
+        text: err?.message || `Failed to add "${res.title}".`,
+        type: "error",
+      });
+    } finally {
+      setAddingMap((prev) => ({ ...prev, [key]: false }));
+    }
+  };
 
   interface AIBookRecommendation {
     title: string;
@@ -239,7 +300,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
           <div className="rounded-card border border-border-subtle bg-bg-card p-4.5 shadow-subtle flex flex-col gap-3">
             <span className={`${LABEL_MONO} mb-1 block`}>Search Google Books</span>
             <p className="mb-3.5 text-[11px] text-text-muted">Google Books API search</p>
-            <form onSubmit={searchBooks} className="flex flex-col gap-2.5">
+            <form onSubmit={handleBookSearchSubmit} className="flex flex-col gap-2.5">
               <div className="relative">
                 <span className="absolute inset-y-0 left-3 flex items-center text-text-muted pointer-events-none">
                   <Search className="h-4 w-4" strokeWidth={2.5} />
@@ -249,37 +310,111 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                   placeholder="Search books..."
                   value={bookQuery}
                   onChange={(e) => setBookQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 rounded-lg border border-border-subtle bg-bg-card text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus"
+                  className={`w-full pl-9 py-2 rounded-lg border border-border-subtle bg-bg-card text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus ${
+                    bookQuery ? "pr-8" : "pr-3"
+                  }`}
                   required
                 />
+                {bookQuery && (
+                  <button
+                    type="button"
+                    onClick={handleClearBookSearch}
+                    className="absolute inset-y-0 right-2.5 flex items-center text-text-muted hover:text-text-primary cursor-pointer"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
               </div>
-              <button type="submit" disabled={isSearchingBooks} className={`${BTN_PRIMARY} w-full py-2.5`}>
-                {isSearchingBooks ? "Searching..." : "Search"}
+              <button
+                type="submit"
+                disabled={isSearchingBooks || !bookQuery.trim()}
+                className={`${BTN_PRIMARY} w-full py-2.5 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60`}
+              >
+                {isSearchingBooks ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Searching...</span>
+                  </>
+                ) : (
+                  "Search"
+                )}
               </button>
             </form>
+
+            {/* Feedback Toast */}
+            {feedbackToast && (
+              <div
+                className={`mt-2 flex items-center justify-between gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all animate-[fadeIn_0.2s_ease] ${
+                  feedbackToast.type === "success"
+                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                    : "bg-red-50 text-red-800 border border-red-200"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="font-bold">{feedbackToast.type === "success" ? "✓" : "⚠️"}</span>
+                  <span className="truncate">{feedbackToast.text}</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setFeedbackToast(null)}
+                  className="text-xs opacity-60 hover:opacity-100 cursor-pointer"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
 
             {/* Search Results */}
             {bookResults.length > 0 && (
               <div className="mt-4 flex max-h-[300px] flex-col gap-2.5 overflow-y-auto pr-1">
-                {bookResults.map((res, i) => (
-                  <div key={i} className="flex items-center gap-2.5 rounded-md bg-bg-secondary p-2">
-                    {isSafeImageUrl(res.coverImage) ? (
-                      <img src={res.coverImage} alt={res.title} className="h-12 w-8.5 rounded object-cover shadow-sm" />
-                    ) : (
-                      <div className="flex h-12 w-8.5 items-center justify-center rounded bg-bg-card text-lg">📚</div>
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-[11px] font-semibold text-text-primary" title={res.title}>{res.title}</p>
-                      <p className="text-[10px] text-text-muted">{res.year || "—"}</p>
-                      <button
-                        onClick={() => addBook(res)}
-                        className="mt-1 cursor-pointer rounded border-none bg-text-primary px-1.5 py-0.5 text-[9.5px] text-white hover:bg-[#2e2d27]"
-                      >
-                        + Add
-                      </button>
+                {bookResults.map((res, i) => {
+                  const key = `book-${res.title.toLowerCase().trim()}`;
+                  const isAdding = !!addingMap[key];
+                  const inLibrary = checkBookInLibrary(res);
+
+                  return (
+                    <div key={i} className="flex items-center gap-2.5 rounded-md bg-bg-secondary p-2 border border-border-subtle/40 hover:border-border-subtle transition-all">
+                      {isSafeImageUrl(res.coverImage) ? (
+                        <img src={res.coverImage} alt={res.title} className="h-12 w-8.5 rounded object-cover shadow-sm shrink-0" />
+                      ) : (
+                        <div className="flex h-12 w-8.5 shrink-0 items-center justify-center rounded bg-bg-card text-lg border border-border-subtle">📚</div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[11px] font-semibold text-text-primary" title={res.title}>{res.title}</p>
+                        <p className="text-[10px] text-text-muted">{res.year || "—"}</p>
+                      </div>
+
+                      {inLibrary ? (
+                        <span className="shrink-0 rounded-md bg-emerald-100/80 border border-emerald-300/60 px-2 py-1 text-[9.5px] font-bold text-emerald-800 flex items-center gap-1">
+                          <Check className="h-3 w-3" strokeWidth={3} /> In Library
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleAddBookClick(res)}
+                          disabled={isAdding}
+                          className="shrink-0 cursor-pointer rounded-md border-none bg-text-primary px-2.5 py-1 text-[9.5px] font-bold text-white hover:bg-[#2e2d27] active:scale-95 disabled:opacity-60 flex items-center gap-1"
+                        >
+                          {isAdding ? (
+                            <>
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Adding...
+                            </>
+                          ) : (
+                            "+ Add"
+                          )}
+                        </button>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Empty State when search returns 0 results */}
+            {hasSearched && !isSearchingBooks && bookResults.length === 0 && (
+              <div className="mt-4 rounded-md border border-dashed border-border-subtle p-3 text-center text-xs text-text-muted">
+                No books found for "{bookQuery}".
               </div>
             )}
           </div>

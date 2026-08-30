@@ -89,7 +89,10 @@ export async function GET(req: NextRequest) {
     }
 
     const total = items.length;
-    const hasPagination = limitParam !== null || offsetParam !== null;
+    const allParam = req.nextUrl.searchParams.get("all");
+    const isExplicitAll = allParam === "true" || limitParam === "all" || limitParam === "-1" || limitParam === "0";
+
+    const hasPagination = (limitParam !== null || offsetParam !== null) && !isExplicitAll;
 
     if (hasPagination) {
       const offset = Math.max(0, parseInt(offsetParam || "0", 10) || 0);
@@ -101,6 +104,16 @@ export async function GET(req: NextRequest) {
         offset,
         limit,
         hasMore: offset + limit < total,
+      });
+    }
+
+    if (isExplicitAll && (limitParam !== null || offsetParam !== null)) {
+      return NextResponse.json({
+        items,
+        total,
+        offset: 0,
+        limit: total,
+        hasMore: false,
       });
     }
 

@@ -676,6 +676,24 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
                     ))}
                   </select>
 
+                  {/* Quick Category Chips */}
+                  <div className="flex flex-wrap gap-1 my-0.5">
+                    {["Food", "Groceries", "Rent", "Utilities", "Shopping", "Transport"].map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setExpenseCategory(c)}
+                        className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold transition-all cursor-pointer ${
+                          expenseCategory === c
+                            ? "border-text-primary bg-text-primary text-white"
+                            : "border-border-subtle bg-bg-secondary/60 text-text-secondary hover:border-border-hover hover:bg-bg-secondary"
+                        }`}
+                      >
+                        + {c}
+                      </button>
+                    ))}
+                  </div>
+
                   <div className="flex gap-1.5">
                     <input
                       type="text"
@@ -787,18 +805,30 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
                     </tr>
                   </thead>
                   <tbody>
-                    {paginatedExpenses.map((exp) => (
-                      <ExpenseRow
-                        key={exp.id}
-                        exp={exp}
-                        currency={currency}
-                        deleteExpense={deleteExpense}
-                      />
-                    ))}
-                    {totalItems === 0 && (
+                    {isFetchingExpenses && expenses.length === 0 ? (
+                      Array.from({ length: 5 }).map((_, idx) => (
+                        <tr key={idx} className="animate-pulse">
+                          <td className={LEDGER_TD}><div className="h-4 w-36 rounded bg-bg-secondary" /></td>
+                          <td className={LEDGER_TD}><div className="h-4 w-20 rounded bg-bg-secondary" /></td>
+                          <td className={LEDGER_TD}><div className="h-4 w-24 rounded bg-bg-secondary" /></td>
+                          <td className={LEDGER_TD}><div className="ml-auto h-4 w-16 rounded bg-bg-secondary" /></td>
+                          <td className={LEDGER_TD}><div className="ml-auto h-4 w-8 rounded bg-bg-secondary" /></td>
+                        </tr>
+                      ))
+                    ) : (
+                      paginatedExpenses.map((exp) => (
+                        <ExpenseRow
+                          key={exp.id}
+                          exp={exp}
+                          currency={currency}
+                          deleteExpense={deleteExpense}
+                        />
+                      ))
+                    )}
+                    {!isFetchingExpenses && totalItems === 0 && (
                       <tr>
                         <td colSpan={5} className="border-b border-border-subtle p-6 text-center text-text-muted">
-                          {isFetchingExpenses ? "Loading expenses..." : "No transactions match your filter."}
+                          No transactions match your filter.
                         </td>
                       </tr>
                     )}
