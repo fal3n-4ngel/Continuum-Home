@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/utils";
 import { getSettings, updateSettings } from "@/lib/firebase";
 import { validateSettingsPatch } from "@/lib/firebase";
+import { adminPurgeUserData } from "@/lib/firebase/firebase-admin";
 import { recordDomainEvent } from "@/lib/domain-events/client";
 import { DOMAIN_EVENTS } from "@/lib/domain-events/types";
 
@@ -59,5 +60,29 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: true });
   } catch (error) {
     return toErrorResponse(error, "PATCH /api/settings");
+  }
+}
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const session = await requireUser(req);
+
+    // 1. Dispatch Monolith USER_DELETED postback event
+    recordDomainEvent({
+      eventType: DOMAIN_EVENTS.USER_DELETED,
+      userId: session.uid,
+      userEmail: session.user.email,
+      payload: {
+        timestamp: Date.now(),
+        action: "account_deleted",
+      },
+    });
+
+    // 2. Permanently purge all user documents from Firestore
+    await adminPurgeUserData(session.uid);
+
+    return NextResponse.json({ success: true, message: "Account data permanently deleted." });
+  } catch (error) {
+    return toErrorResponse(error, "DELETE /api/settings");
   }
 }

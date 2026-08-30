@@ -74,18 +74,35 @@ export interface AdminUser {
 
 // Every registered Auth user with a known email — the fan-out target list
 // for every cron. Paginated since listUsers() caps at 1000 per page.
+// Filters out any user whose settings doc has `deleted === true`.
 export async function listAllUsers(): Promise<AdminUser[]> {
   const auth = getAdminAuth();
-  const users: AdminUser[] = [];
+  const db = getAdminDb();
+  const rawUsers: AdminUser[] = [];
   let pageToken: string | undefined;
   do {
     const page = await auth.listUsers(1000, pageToken);
     for (const u of page.users) {
-      if (u.email) users.push({ uid: u.uid, email: u.email });
+      if (u.email) rawUsers.push({ uid: u.uid, email: u.email });
     }
     pageToken = page.pageToken;
   } while (pageToken);
-  return users;
+
+  if (rawUsers.length === 0) return [];
+
+  const activeUsers: AdminUser[] = [];
+  for (const u of rawUsers) {
+    try {
+      const doc = await db.collection("settings").doc(u.uid).get();
+      if (doc.exists && doc.data()?.deleted === true) {
+        continue; // Skip archived/deleted users
+      }
+      activeUsers.push(u);
+    } catch (e) {
+      activeUsers.push(u);
+    }
+  }
+  return activeUsers;
 }
 
 export async function adminListExpenses(uid: string): Promise<ExpenseRecord[]> {
@@ -204,10 +221,13 @@ export interface EmailSubscriptions {
 export async function adminGetEmailSubscriptions(uid: string): Promise<EmailSubscriptions> {
   const db = getAdminDb();
   const doc = await db.collection("settings").doc(uid).get();
+  if (doc.exists && doc.data()?.deleted === true) {
+    return { expenses: false, portfolio: false, subscriptions: false };
+  }
   const raw = (doc.exists ? doc.data()?.emailSubscriptions : undefined) || {};
   return {
     expenses: raw.expenses !== false,
-    portfolio: raw.portfolio !== false,
+    portfolio: raw.portfolio === true,
     subscriptions: raw.subscriptions !== false,
   };
 }
@@ -234,4 +254,36 @@ export async function adminSaveDailyRecommendation(
     .collection("entries")
     .doc(`${type}_${date}`)
     .set({ ...recommendation, expireAt });
+}
+
+export async function adminPurgeUserData(uid: string): Promise<void> {
+  const db = getAdminDb();
+
+  // 1. Delete expenses
+  const expensesSnap = await db.collection("expenses").where("userId", "==", uid).get();
+  const expensesBatch = db.batch();
+  expensesSnap.docs.forEach((doc) => expensesBatch.delete(doc.ref));
+  if (!expensesSnap.empty) await expensesBatch.commit();
+
+  // 2. Delete subscriptions
+  const subsSnap = await db.collection("subscriptions").where("userId", "==", uid).get();
+  const subsBatch = db.batch();
+  subsSnap.docs.forEach((doc) => subsBatch.delete(doc.ref));
+  if (!subsSnap.empty) await subsBatch.commit();
+
+  // 3. Delete portfolio
+  await db.collection("portfolios").doc(uid).delete().catch(() => {});
+
+  // 4. Delete watchlist
+  await db.collection("watchlists").doc(uid).delete().catch(() => {});
+
+  // 5. Delete recommendations subcollection & doc
+  const recsEntries = await db.collection("recommendations").doc(uid).collection("entries").get();
+  const recsBatch = db.batch();
+  recsEntries.docs.forEach((doc) => recsBatch.delete(doc.ref));
+  if (!recsEntries.empty) await recsBatch.commit();
+  await db.collection("recommendations").doc(uid).delete().catch(() => {});
+
+  // 6. Delete user settings
+  await db.collection("settings").doc(uid).delete().catch(() => {});
 }

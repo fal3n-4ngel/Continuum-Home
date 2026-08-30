@@ -151,7 +151,7 @@ export default function Dashboard() {
   const [salaryLog, setSalaryLogState] = useState<Record<string, { date: string; amount: number }>>({});
   const [emailSubscriptions, setEmailSubscriptionsState] = useState<{ expenses: boolean; portfolio: boolean; subscriptions: boolean }>({
     expenses: true,
-    portfolio: true,
+    portfolio: false,
     subscriptions: true,
   });
   const [isProUser, setIsProUser] = useState(false);
@@ -1130,7 +1130,7 @@ export default function Dashboard() {
         if (data.emailSubscriptions && typeof data.emailSubscriptions === "object") {
           setEmailSubscriptionsState({
             expenses: data.emailSubscriptions.expenses !== false,
-            portfolio: data.emailSubscriptions.portfolio !== false,
+            portfolio: data.emailSubscriptions.portfolio === true,
             subscriptions: data.emailSubscriptions.subscriptions !== false,
           });
         }
@@ -2530,6 +2530,33 @@ export default function Dashboard() {
             setMonthlySalary={setMonthlySalary}
             additionalIncome={additionalIncome}
             setAdditionalIncome={setAdditionalIncome}
+            onDeleteAccount={() => {
+              triggerConfirm(
+                "Delete & Archive Account",
+                "Are you sure you want to delete and archive your account? This will turn off all email notifications and stop all background tasks from running.",
+                async () => {
+                  try {
+                    const res = await fetch("/api/settings", {
+                      method: "DELETE",
+                      headers: getHeaders(),
+                    });
+                    if (res.ok) {
+                      if (firebaseAuth?.auth) {
+                        await firebaseAuth.signOut(firebaseAuth.auth).catch(() => {});
+                      }
+                      localStorage.clear();
+                      window.location.reload();
+                    } else {
+                      triggerAlert("Error", "Failed to delete account. Please try again.", "danger");
+                    }
+                  } catch (err: any) {
+                    triggerAlert("Error", err.message || "Failed to delete account.", "danger");
+                  }
+                },
+                true,
+                "Delete & Archive Account"
+              );
+            }}
           />
         )}
 
