@@ -46,6 +46,7 @@ vi.mock("@/lib/prices", () => ({
 
 // Mock auth module
 vi.mock("@/lib/auth", () => ({
+  buildUnsubscribeUrl: vi.fn((email: string, topic: string) => `http://localhost:3000/api/unsubscribe?token=mocked_${topic}`),
   requireUser: vi.fn().mockImplementation(async (req: any) => {
     const authHeader = req.headers.get("authorization");
     if (!authHeader || authHeader === "Bearer invalid") {
