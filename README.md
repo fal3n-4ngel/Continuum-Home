@@ -60,7 +60,7 @@ lib/
 
 Every caller — a signed-in browser or an external AI client that completed the OAuth flow — ends up with the same kind of bearer token and hits the same API routes; there is no separate "AI" surface. Those routes read through an in-memory + Redis cache in front of Firestore, using the *caller's own* ID token, so per-user isolation is enforced by Firestore security rules rather than app code. Crons are the one exception: they have no user token to act with, so they carry a service account through the Admin SDK instead, which bypasses those same rules.
 
-The other structural decision is that audit telemetry leaves the building entirely: `lib/audit-postback` doesn't write to this app's own Firestore, it posts to **monolith-api**, a separate service this app has no further visibility into. Route handlers also call out to Trakt, AniList, OMDb, and Gemini for sync, enrichment, and the AI assistant — plain leaf API calls shown alongside the core flow in the diagram below.
+The other structural decision is that audit telemetry leaves the building entirely: `lib/domain-events` doesn't write to this app's own Firestore, it posts to **monolith-api**, a separate ingestion service that stores audit telemetry encrypted at rest in BigQuery for security auditing, analytics, and session telemetry. Route handlers also call out to Trakt, AniList, OMDb, and Gemini for sync, enrichment, and the AI assistant — plain leaf API calls shown alongside the core flow in the diagram below.
 
 ![Continuum Architecture Diagram](architecture-diagram.svg)
 

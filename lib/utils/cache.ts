@@ -26,8 +26,10 @@ export async function cacheGet<T>(key: string): Promise<T | undefined> {
         localStore.set(key, { value: data, expiresAt: Date.now() + 30_000 });
         return data;
       }
-    } catch (err) {
-      console.warn("Redis get error:", err);
+    } catch (err: any) {
+      if (err?.digest !== "DYNAMIC_SERVER_USAGE") {
+        console.warn("Redis get error:", err);
+      }
     }
   }
   return undefined;
@@ -41,8 +43,10 @@ export async function cacheSet<T>(key: string, value: T, ttlMs: number): Promise
   if (redis) {
     try {
       await redis.set(key, value, { px: ttlMs });
-    } catch (err) {
-      console.warn("Redis set error:", err);
+    } catch (err: any) {
+      if (err?.digest !== "DYNAMIC_SERVER_USAGE") {
+        console.warn("Redis set error:", err);
+      }
     }
   }
 }
@@ -53,8 +57,10 @@ export async function cacheInvalidate(key: string): Promise<void> {
   if (redis) {
     try {
       await redis.del(key);
-    } catch (err) {
-      console.warn("Redis del error:", err);
+    } catch (err: any) {
+      if (err?.digest !== "DYNAMIC_SERVER_USAGE") {
+        console.warn("Redis del error:", err);
+      }
     }
   }
 }

@@ -7,5 +7,6 @@ export * from "./encryption";
 export * from "./cache";
 export * from "./redis";
 export * from "./errors";
+export * from "./error-notifier";
 export * from "./site";
 export * from "./caller";

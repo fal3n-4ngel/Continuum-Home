@@ -22,8 +22,13 @@ export async function traktRequest(idToken: string | undefined, path: string, op
   });
   if (!res.ok) {
     const errText = await res.text().catch(() => "");
-    throw new Error(`Trakt error (${res.status}): ${errText}`);
+    throw new Error(`Trakt proxy error (${res.status}): ${errText || res.statusText}`);
   }
   const text = await res.text();
-  return text ? JSON.parse(text) : null;
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch (err) {
+    throw new Error(`Trakt response parsing error: ${err instanceof Error ? err.message : String(err)}`);
+  }
 }

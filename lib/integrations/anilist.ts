@@ -13,8 +13,13 @@ export async function anilistQuery(query: string, variables: Record<string, unkn
     },
     body: JSON.stringify({ query, variables }),
   });
-  if (!res.ok) throw new Error(`AniList error: ${res.status}`);
-  return res.json();
+  if (!res.ok) throw new Error(`AniList HTTP error (${res.status}): ${res.statusText}`);
+  const data = await res.json();
+  if (data?.errors?.length) {
+    const msg = data.errors.map((e: { message?: string }) => e.message || "Unknown error").join("; ");
+    throw new Error(`AniList GraphQL error: ${msg}`);
+  }
+  return data;
 }
 
 export const ANILIST_STATUS_MAP: Record<string, MediaStatus> = {
