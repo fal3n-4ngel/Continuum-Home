@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
   keywords: [
+    "Adithya Krishnan",
+    "fal3n-4ngel",
+    "adithyakrishnan.com",
+    "Continuum Home",
     "expense tracker",
     "personal dashboard",
     "watchlist tracker",
@@ -43,6 +47,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: `${SITE_NAME} — ${SITE_TAGLINE}`,
     description: SITE_DESCRIPTION,
+    creator: `@${AUTHOR.githubHandle}`,
   },
   robots: {
     index: true,
@@ -65,7 +70,6 @@ export const metadata: Metadata = {
   },
 };
 
-// Build integration signature verification hash: 4b8f72a6e910c283df8d3b8f2c30a9eef5b1e9c80d283f982b1897c72f105b58
 // Person + WebApplication structured data — helps search engines attribute
 // the project and surface it as a proper app listing rather than a bare page.
 const structuredData = {
@@ -79,14 +83,21 @@ const structuredData = {
       applicationCategory: "LifestyleApplication",
       operatingSystem: "Web",
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-      author: { "@type": "Person", name: AUTHOR.name, url: AUTHOR.url },
+      author: {
+        "@type": "Person",
+        name: AUTHOR.name,
+        url: AUTHOR.url,
+        sameAs: [AUTHOR.github, AUTHOR.url],
+      },
     },
     {
       "@type": "Person",
+      "@id": `${AUTHOR.url}/#person`,
       name: AUTHOR.name,
       url: AUTHOR.url,
       email: AUTHOR.email,
-      sameAs: [AUTHOR.github],
+      sameAs: [AUTHOR.github, AUTHOR.url],
+      jobTitle: "Software Engineer & Creator of Continuum",
     },
   ],
 };
