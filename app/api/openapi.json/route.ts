@@ -149,13 +149,15 @@ export async function GET() {
           summary: "List watchlist items",
           description:
             "Retrieve the user's movies, shows, anime, and books, most recently updated first. " +
-            "Supports filtering by type or status, plus pagination (limit/offset) to prevent large payloads.",
+            "By default (or with all=true or limit=all), retrieves all items at once. " +
+            "Supports filtering by type, status, or search query (q), plus optional pagination via limit/offset.",
           "x-openai-isConsequential": false,
           parameters: [
             { name: "q", in: "query", required: false, description: "Free-text search query to filter watchlist items by title (partial matching)", schema: { type: "string" } },
             { name: "type", in: "query", required: false, description: "Filter by media type: 'movie', 'show', 'anime', or 'book'", schema: { type: "string", enum: ["movie", "show", "anime", "book"] } },
             { name: "status", in: "query", required: false, description: "Filter by status: 'watching', 'paused', 'plan_to_watch', 'completed', or 'dropped'", schema: { type: "string", enum: ["watching", "paused", "plan_to_watch", "completed", "dropped"] } },
-            { name: "limit", in: "query", required: false, description: "Maximum number of items to return (default 50)", schema: { type: "integer", default: 50 } },
+            { name: "all", in: "query", required: false, description: "Set to 'true' to fetch all items without pagination", schema: { type: "boolean" } },
+            { name: "limit", in: "query", required: false, description: "Maximum number of items to return for pagination, or 'all' / '-1' to fetch all items", schema: { oneOf: [{ type: "integer" }, { type: "string" }] } },
             { name: "offset", in: "query", required: false, description: "Offset index for pagination", schema: { type: "integer", default: 0 } },
           ],
           responses: {

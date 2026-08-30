@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, Check, Loader2, X, Search } from "lucide-react";
 import { WatchlistItem, SearchResult } from "@/types";
 import { isSafeImageUrl } from "@/lib/utils";
 
@@ -14,7 +14,7 @@ interface WatchlistTabProps {
   searchMedia: (e: React.FormEvent) => void;
   isSearchingMedia: boolean;
   searchResults: SearchResult[];
-  addToWatchlist: (res: SearchResult) => void;
+  addToWatchlist: (res: SearchResult) => Promise<boolean> | void;
   updateWatchItem: (item: WatchlistItem, updates: Partial<WatchlistItem>) => void;
   deleteWatchItem: (id: string) => void;
   isFetchingWatchlist: boolean;
@@ -134,6 +134,91 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
   const [activeCategoryTab, setActiveCategoryTab] = React.useState<"movie" | "show" | "anime">("movie");
   const [titleSearch, setTitleSearch] = React.useState("");
   const [sortBy, setSortBy] = React.useState<"title" | "rating" | "year">("year");
+
+  // Search & Add enhanced UX states
+  const [addingMap, setAddingMap] = React.useState<Record<string, boolean>>({});
+  const [justAddedMap, setJustAddedMap] = React.useState<Record<string, boolean>>({});
+  const [hasSearched, setHasSearched] = React.useState(false);
+  const [feedbackToast, setFeedbackToast] = React.useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  // Auto-dismiss toast feedback
+  React.useEffect(() => {
+    if (!feedbackToast) return;
+    const timer = setTimeout(() => setFeedbackToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [feedbackToast]);
+
+  // Sync mediaType with activeCategoryTab when changing view tab
+  React.useEffect(() => {
+    if (activeCategoryTab === "movie" && mediaType !== "movie") {
+      setMediaType("movie");
+    } else if (activeCategoryTab === "show" && mediaType !== "show") {
+      setMediaType("show");
+    } else if (activeCategoryTab === "anime" && mediaType !== "anime") {
+      setMediaType("anime");
+    }
+  }, [activeCategoryTab]);
+
+  const handleMediaTypeSelect = (val: "movie" | "show" | "anime" | "book") => {
+    setMediaType(val);
+    if (val === "movie" || val === "show" || val === "anime") {
+      setActiveCategoryTab(val);
+    }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    setHasSearched(true);
+    setFeedbackToast(null);
+    searchMedia(e);
+  };
+
+  const handleClearSearch = () => {
+    setMediaQuery("");
+    setHasSearched(false);
+    setFeedbackToast(null);
+  };
+
+  const checkInLibrary = (res: SearchResult) => {
+    const key = `${res.type}-${res.anilistId || res.traktId || res.title.toLowerCase().trim()}`;
+    if (justAddedMap[key]) return true;
+    return watchlist.some((w) => {
+      if (w.type !== res.type) return false;
+      if (res.anilistId && w.anilistId === res.anilistId) return true;
+      if (res.traktId && w.traktId === res.traktId) return true;
+      return w.title.toLowerCase().trim() === res.title.toLowerCase().trim();
+    });
+  };
+
+  const handleAddClick = async (res: SearchResult) => {
+    const key = `${res.type}-${res.anilistId || res.traktId || res.title.toLowerCase().trim()}`;
+    if (addingMap[key] || checkInLibrary(res)) return;
+
+    setAddingMap((prev) => ({ ...prev, [key]: true }));
+    setFeedbackToast(null);
+
+    try {
+      const success = await addToWatchlist(res);
+      if (success !== false) {
+        setJustAddedMap((prev) => ({ ...prev, [key]: true }));
+        setFeedbackToast({
+          text: `Added "${res.title}" to your watchlist!`,
+          type: "success",
+        });
+      } else {
+        setFeedbackToast({
+          text: `Failed to add "${res.title}". Please try again.`,
+          type: "error",
+        });
+      }
+    } catch (err: any) {
+      setFeedbackToast({
+        text: err?.message || `Failed to add "${res.title}".`,
+        type: "error",
+      });
+    } finally {
+      setAddingMap((prev) => ({ ...prev, [key]: false }));
+    }
+  };
 
   interface AIRecommendation {
     title: string;
@@ -321,54 +406,140 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
         <div className="flex flex-col gap-5">
           {/* SEARCH & ADD CARD */}
           <div className={BENTO_CARD}>
-          <span className={`${LABEL_MONO} mb-1 block`}>SEARCH &amp; ADD</span>
-          <p className="mb-3.5 text-[11px] text-text-muted">AniList &amp; Trakt search</p>
+            <span className={`${LABEL_MONO} mb-1 block`}>SEARCH &amp; ADD</span>
+            <p className="mb-3.5 text-[11px] text-text-muted">AniList &amp; Trakt search</p>
 
-          <form onSubmit={searchMedia} className="flex flex-col gap-2.5">
-            <input
-              type="text"
-              placeholder="Search title"
-              value={mediaQuery}
-              onChange={(e) => setMediaQuery(e.target.value)}
-              required
-              className={INPUT_CLASS}
-            />
+            <form onSubmit={handleSearchSubmit} className="flex flex-col gap-2.5">
+              <div className="relative">
+                <span className="absolute inset-y-0 left-3 flex items-center text-text-muted pointer-events-none">
+                  <Search className="h-3.5 w-3.5" strokeWidth={2.5} />
+                </span>
+                <input
+                  type="text"
+                  placeholder="Search title..."
+                  value={mediaQuery}
+                  onChange={(e) => setMediaQuery(e.target.value)}
+                  required
+                  className={`${INPUT_CLASS} pl-8 ${mediaQuery ? "pr-8" : ""}`}
+                />
+                {mediaQuery && (
+                  <button
+                    type="button"
+                    onClick={handleClearSearch}
+                    className="absolute inset-y-0 right-2.5 flex items-center text-text-muted hover:text-text-primary cursor-pointer"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
 
-            <select value={mediaType} onChange={(e) => setMediaType(e.target.value as any)} className={`${INPUT_CLASS} cursor-pointer text-xs`}>
-              <option value="movie">Movies (Trakt)</option>
-              <option value="show">TV Shows (Trakt)</option>
-              <option value="anime">Anime (AniList)</option>
-            </select>
+              <select
+                value={mediaType}
+                onChange={(e) => handleMediaTypeSelect(e.target.value as any)}
+                className={`${INPUT_CLASS} cursor-pointer text-xs`}
+              >
+                <option value="movie">Movies (Trakt)</option>
+                <option value="show">TV Shows (Trakt)</option>
+                <option value="anime">Anime (AniList)</option>
+              </select>
 
-            <button type="submit" disabled={isSearchingMedia} className={`${BTN_PRIMARY} mt-1 w-full py-2.5`}>
-              {isSearchingMedia ? "Searching..." : "Search"}
-            </button>
-          </form>
+              <button
+                type="submit"
+                disabled={isSearchingMedia || !mediaQuery.trim()}
+                className={`${BTN_PRIMARY} mt-1 w-full py-2.5 flex items-center justify-center gap-2 cursor-pointer`}
+              >
+                {isSearchingMedia ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Searching...</span>
+                  </>
+                ) : (
+                  "Search"
+                )}
+              </button>
+            </form>
 
-          {/* Search Results */}
-          {searchResults.length > 0 && (
-            <div className="mt-4 flex max-h-[300px] flex-col gap-2.5 overflow-y-auto">
-              {searchResults.map((res, i) => (
-                <div key={i} className="flex items-center gap-2.5 rounded-md bg-bg-secondary p-2">
-                  {isSafeImageUrl(res.coverImage) ? (
-                    <img src={res.coverImage} alt={res.title} className="h-[46px] w-8 rounded object-cover" />
-                  ) : (
-                    <div className="flex h-[46px] w-8 items-center justify-center rounded bg-bg-card text-sm">🎬</div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[11px] font-semibold">{res.title}</p>
-                    <p className="text-[10px] text-text-muted">{res.year || "—"}</p>
-                    <button
-                      onClick={() => addToWatchlist(res)}
-                      className="mt-1 cursor-pointer rounded border-none bg-text-primary px-1.5 py-0.5 text-[10px] text-white"
-                    >
-                      + Add
-                    </button>
-                  </div>
+            {/* Feedback Toast */}
+            {feedbackToast && (
+              <div
+                className={`mt-3 flex items-center justify-between gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all animate-[fadeIn_0.2s_ease] ${
+                  feedbackToast.type === "success"
+                    ? "bg-emerald-50 text-emerald-800 border border-emerald-200"
+                    : "bg-red-50 text-red-800 border border-red-200"
+                }`}
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="font-bold">{feedbackToast.type === "success" ? "✓" : "⚠️"}</span>
+                  <span className="truncate">{feedbackToast.text}</span>
                 </div>
-              ))}
-            </div>
-          )}
+                <button
+                  type="button"
+                  onClick={() => setFeedbackToast(null)}
+                  className="text-xs opacity-60 hover:opacity-100 cursor-pointer"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            )}
+
+            {/* Search Results */}
+            {searchResults.length > 0 && (
+              <div className="mt-4 flex max-h-[300px] flex-col gap-2.5 overflow-y-auto pr-1">
+                {searchResults.map((res, i) => {
+                  const key = `${res.type}-${res.anilistId || res.traktId || res.title.toLowerCase().trim()}`;
+                  const isAdding = !!addingMap[key];
+                  const inLibrary = checkInLibrary(res);
+
+                  return (
+                    <div key={i} className="flex items-center gap-2.5 rounded-md bg-bg-secondary p-2 border border-border-subtle/40 hover:border-border-subtle transition-all">
+                      {isSafeImageUrl(res.coverImage) ? (
+                        <img src={res.coverImage} alt={res.title} className="h-[48px] w-8.5 rounded object-cover shrink-0" />
+                      ) : (
+                        <div className="flex h-[48px] w-8.5 shrink-0 items-center justify-center rounded bg-bg-card text-sm border border-border-subtle">
+                          {res.type === "movie" ? "🎬" : res.type === "show" ? "📺" : "🌸"}
+                        </div>
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[11px] font-semibold text-text-primary" title={res.title}>{res.title}</p>
+                        <div className="flex items-center gap-1.5 text-[10px] text-text-muted mt-0.5">
+                          <span>{res.year || "—"}</span>
+                          {res.totalEpisodes ? <span>• {res.totalEpisodes} eps</span> : null}
+                        </div>
+                      </div>
+
+                      {inLibrary ? (
+                        <span className="shrink-0 rounded-md bg-emerald-100/80 border border-emerald-300/60 px-2 py-1 text-[10px] font-bold text-emerald-800 flex items-center gap-1">
+                          <Check className="h-3 w-3" strokeWidth={3} /> In Library
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleAddClick(res)}
+                          disabled={isAdding}
+                          className="shrink-0 cursor-pointer rounded-md border-none bg-text-primary px-2.5 py-1 text-[10px] font-bold text-white transition-all hover:bg-[#2e2d27] active:scale-95 disabled:opacity-60 flex items-center gap-1"
+                        >
+                          {isAdding ? (
+                            <>
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Adding...
+                            </>
+                          ) : (
+                            "+ Add"
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Empty State when search returns 0 results */}
+            {hasSearched && !isSearchingMedia && searchResults.length === 0 && (
+              <div className="mt-4 rounded-md border border-dashed border-border-subtle p-3 text-center text-xs text-text-muted">
+                No {mediaType === "movie" ? "movies" : mediaType === "show" ? "TV shows" : "anime"} found for "{mediaQuery}".
+              </div>
+            )}
           </div>
 
           {/* AI Recommendations Panel */}
@@ -571,115 +742,126 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
 
           {/* Watchlist Grid */}
           <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] max-md:grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-5 overflow-y-auto max-h-[65vh] pr-1 pb-10 custom-scrollbar">
-            {filteredWatchlist.map((item) => (
-              <div key={item.id} className="group flex flex-col rounded-[14px] border border-border-subtle bg-bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-                <div 
-                  onClick={() => onItemClick(item)}
-                  className="relative aspect-[2/3] w-full overflow-hidden rounded-t-[14px] cursor-pointer"
-                >
-                  {isSafeImageUrl(item.coverImage) ? (
-                    <>
-                      <img
-                        src={item.coverImage}
-                        alt={item.title}
-                        className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
-                      />
-                      <div className="absolute inset-y-0 left-0 w-2.5 bg-linear-to-r from-black/25 via-black/10 to-transparent pointer-events-none" />
-                      <div className="absolute inset-0 bg-linear-to-tr from-white/0 via-white/5 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-                    </>
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-bg-secondary text-4xl shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
-                      {item.type === "movie" ? "🎬" : item.type === "show" ? "📺" : "🌸"}
-                    </div>
-                  )}
-                  {/* Delete button absolute overlay */}
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteWatchItem(item.id);
-                    }}
-                    className="absolute top-2 right-2 z-10 flex cursor-pointer items-center justify-center rounded-md border border-border-subtle bg-white/95 p-1.5 text-text-muted shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#fdf2f2] hover:text-[#b3666b] hover:border-[#fde2e2] active:scale-95"
-                    title="Remove item"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />
-                  </button>
-                  {/* Quick episodes overlay if show/anime */}
-                  {(item.type === "show" || item.type === "anime") && (
-                    <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-white backdrop-blur-md opacity-0 group-hover:opacity-100 transition-all duration-200" onClick={(e) => e.stopPropagation()}>
-                      <span className="font-mono text-[9px] font-medium mr-0.5">
-                        Ep {item.progress || 0}
-                      </span>
-                      <button
-                        onClick={() => updateWatchItem(item, { progress: Math.max(0, (item.progress || 0) - 1) })}
-                        className="cursor-pointer hover:text-accent-blue transition-colors px-1 text-[10px]"
-                      >
-                        -
-                      </button>
-                      <button
-                        onClick={() => updateWatchItem(item, { progress: (item.progress || 0) + 1 })}
-                        className="cursor-pointer hover:text-accent-blue transition-colors px-1 text-[10px]"
-                      >
-                        +
-                      </button>
-                    </div>
-                  )}
+            {isFetchingWatchlist && watchlist.length === 0 ? (
+              Array.from({ length: 8 }).map((_, idx) => (
+                <div key={idx} className="flex flex-col gap-3 rounded-[14px] border border-border-subtle bg-bg-card p-3 shadow-sm animate-pulse">
+                  <div className="aspect-[2/3] w-full rounded-[10px] bg-bg-secondary" />
+                  <div className="h-4 w-3/4 rounded bg-bg-secondary" />
+                  <div className="h-3 w-1/2 rounded bg-bg-secondary" />
+                  <div className="mt-auto h-7 w-full rounded-full bg-bg-secondary" />
                 </div>
-                
-                <div className="flex flex-col flex-1 justify-between gap-3 p-3.5">
-                  <div>
-                    <p 
-                      onClick={() => onItemClick(item)}
-                      className="cursor-pointer line-clamp-2 min-h-[36px] font-serif text-[13px] font-bold tracking-tight text-text-primary leading-tight group-hover:text-text-primary/90 transition-colors" 
-                      title={item.title}
+              ))
+            ) : (
+              filteredWatchlist.map((item) => (
+                <div key={item.id} className="group flex flex-col rounded-[14px] border border-border-subtle bg-bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
+                  <div 
+                    onClick={() => onItemClick(item)}
+                    className="relative aspect-[2/3] w-full overflow-hidden rounded-t-[14px] cursor-pointer"
+                  >
+                    {isSafeImageUrl(item.coverImage) ? (
+                      <>
+                        <img
+                          src={item.coverImage}
+                          alt={item.title}
+                          className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                        />
+                        <div className="absolute inset-y-0 left-0 w-2.5 bg-linear-to-r from-black/25 via-black/10 to-transparent pointer-events-none" />
+                        <div className="absolute inset-0 bg-linear-to-tr from-white/0 via-white/5 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                      </>
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center bg-bg-secondary text-4xl shadow-[0_4px_12px_rgba(0,0,0,0.1)]">
+                        {item.type === "movie" ? "🎬" : item.type === "show" ? "📺" : "🌸"}
+                      </div>
+                    )}
+                    {/* Delete button absolute overlay - touch-friendly on mobile */}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteWatchItem(item.id);
+                      }}
+                      className="absolute top-2 right-2 z-10 flex cursor-pointer items-center justify-center rounded-md border border-border-subtle bg-white/95 p-1.5 text-text-muted shadow-sm max-md:opacity-100 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#fdf2f2] hover:text-[#b3666b] hover:border-[#fde2e2] active:scale-95"
+                      title="Remove item"
                     >
-                      {item.title}
-                    </p>
-                    <p className="mt-1 text-[10px] text-text-muted">
-                      {item.type === "movie" ? "Movie" : item.type === "show" ? "Show" : "Anime"} {item.year ? `(${item.year})` : ""}
-                    </p>
+                      <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />
+                    </button>
+                    {/* Quick episodes overlay if show/anime - touch-friendly on mobile */}
+                    {(item.type === "show" || item.type === "anime") && (
+                      <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-white backdrop-blur-md max-md:opacity-100 opacity-0 group-hover:opacity-100 transition-all duration-200" onClick={(e) => e.stopPropagation()}>
+                        <span className="font-mono text-[9px] font-medium mr-0.5">
+                          Ep {item.progress || 0}
+                        </span>
+                        <button
+                          onClick={() => updateWatchItem(item, { progress: Math.max(0, (item.progress || 0) - 1) })}
+                          className="cursor-pointer hover:text-accent-blue transition-colors px-1 text-[10px]"
+                        >
+                          -
+                        </button>
+                        <button
+                          onClick={() => updateWatchItem(item, { progress: (item.progress || 0) + 1 })}
+                          className="cursor-pointer hover:text-accent-blue transition-colors px-1 text-[10px]"
+                        >
+                          +
+                        </button>
+                      </div>
+                    )}
                   </div>
                   
-                  <div className="flex flex-col gap-1.5 mt-auto">
-                    <div className="relative w-full">
-                      <select
-                        value={item.status}
-                        onChange={(e) => updateWatchItem(item, { status: e.target.value as any })}
-                        className="w-full cursor-pointer appearance-none rounded-full border border-border-subtle bg-bg-secondary/40 py-1.5 pl-3 pr-8 text-[11px] font-bold text-text-secondary transition-all duration-200 hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary outline-none"
+                  <div className="flex flex-col flex-1 justify-between gap-3 p-3.5">
+                    <div>
+                      <p 
+                        onClick={() => onItemClick(item)}
+                        className="cursor-pointer line-clamp-2 min-h-[36px] font-serif text-[13px] font-bold tracking-tight text-text-primary leading-tight group-hover:text-text-primary/90 transition-colors" 
+                        title={item.title}
                       >
-                        <option value="watching">Watching</option>
-                        <option value="paused">Paused</option>
-                        <option value="plan_to_watch">Plan</option>
-                        <option value="completed">Completed</option>
-                        <option value="dropped">Dropped</option>
-                      </select>
-                      <span className="absolute inset-y-0 right-2 flex items-center pointer-events-none text-text-muted text-[8px] select-none">
-                        ▼
-                      </span>
+                        {item.title}
+                      </p>
+                      <p className="mt-1 text-[10px] text-text-muted">
+                        {item.type === "movie" ? "Movie" : item.type === "show" ? "Show" : "Anime"} {item.year ? `(${item.year})` : ""}
+                      </p>
                     </div>
+                    
+                    <div className="flex flex-col gap-1.5 mt-auto">
+                      <div className="relative w-full">
+                        <select
+                          value={item.status}
+                          onChange={(e) => updateWatchItem(item, { status: e.target.value as any })}
+                          className="w-full cursor-pointer appearance-none rounded-full border border-border-subtle bg-bg-secondary/40 py-1.5 pl-3 pr-8 text-[11px] font-bold text-text-secondary transition-all duration-200 hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary outline-none"
+                        >
+                          <option value="watching">Watching</option>
+                          <option value="paused">Paused</option>
+                          <option value="plan_to_watch">Plan</option>
+                          <option value="completed">Completed</option>
+                          <option value="dropped">Dropped</option>
+                        </select>
+                        <span className="absolute inset-y-0 right-2 flex items-center pointer-events-none text-text-muted text-[8px] select-none">
+                          ▼
+                        </span>
+                      </div>
 
-                    <div className="relative w-full">
-                      <select
-                        value={item.rating || 0}
-                        onChange={(e) => updateWatchItem(item, { rating: Number(e.target.value) || null })}
-                        className="w-full cursor-pointer appearance-none rounded-full border border-border-subtle bg-bg-secondary/40 py-1.5 pl-3 pr-8 text-[11px] font-bold text-text-secondary transition-all duration-200 hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary outline-none"
-                      >
-                        <option value="0">Score v</option>
-                        {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((n) => (
-                          <option key={n} value={n}>★ {n}</option>
-                        ))}
-                      </select>
-                      <span className="absolute inset-y-0 right-2 flex items-center pointer-events-none text-text-muted text-[8px] select-none">
-                        ▼
-                      </span>
+                      <div className="relative w-full">
+                        <select
+                          value={item.rating || 0}
+                          onChange={(e) => updateWatchItem(item, { rating: Number(e.target.value) || null })}
+                          className="w-full cursor-pointer appearance-none rounded-full border border-border-subtle bg-bg-secondary/40 py-1.5 pl-3 pr-8 text-[11px] font-bold text-text-secondary transition-all duration-200 hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary outline-none"
+                        >
+                          <option value="0">Score v</option>
+                          {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((n) => (
+                            <option key={n} value={n}>★ {n}</option>
+                          ))}
+                        </select>
+                        <span className="absolute inset-y-0 right-2 flex items-center pointer-events-none text-text-muted text-[8px] select-none">
+                          ▼
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            )}
 
-            {filteredWatchlist.length === 0 && (
+            {!isFetchingWatchlist && filteredWatchlist.length === 0 && (
               <p className="col-span-full p-8 text-center text-[13px] text-text-muted">
-                {isFetchingWatchlist ? "Loading library..." : "No items found in this view."}
+                No items found in this view.
               </p>
             )}
           </div>
