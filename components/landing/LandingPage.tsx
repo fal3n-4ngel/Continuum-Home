@@ -1392,7 +1392,16 @@ export default function LandingPage({
               <span>MIT LICENSED</span>
               <span className="text-[#d1cfc7]">·</span>
               <a
-                href="https://github.com/fal3n-4ngel"
+                href={AUTHOR.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#9c9a92] no-underline hover:text-[#1c1b18]"
+              >
+                Adithya Krishnan
+              </a>
+              <span className="text-[#d1cfc7]">·</span>
+              <a
+                href={AUTHOR.github}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[#9c9a92] no-underline hover:text-[#1c1b18]"
