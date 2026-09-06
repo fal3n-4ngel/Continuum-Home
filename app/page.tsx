@@ -2501,6 +2501,7 @@ export default function Dashboard() {
         {activeTab === "financial" && isProUser && (
           <FinancialHealthTab
             currency={currency}
+            expenses={expenses}
             investments={investments}
             showInvestmentsTab={showInvestmentsTab}
             salaryDay={salaryDay}
