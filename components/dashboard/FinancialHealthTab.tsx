@@ -1,7 +1,30 @@
 import React, { useEffect, useState } from "react";
-import { Calendar, CalendarCheck, ScanSearch, IndianRupee, Shield, BarChart3, TrendingUp, TrendingDown, Minus, AlertTriangle } from "lucide-react";
+import {
+  Calendar,
+  CalendarCheck,
+  ScanSearch,
+  IndianRupee,
+  Shield,
+  BarChart3,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  AlertTriangle,
+  Sparkles,
+  Wallet,
+  PiggyBank,
+  Coins,
+  Clock,
+  ShieldCheck,
+  CheckCircle2,
+  HelpCircle,
+  Settings2,
+  RotateCw,
+  Lightbulb,
+} from "lucide-react";
 import { InvestmentAsset } from "@/types";
 import { getEffectiveAmount } from "@/lib/finance";
+import { HealthAnalyticsReport } from "@/lib/firebase";
 
 interface PayCycle {
   startStr: string;
@@ -12,14 +35,8 @@ interface PayCycle {
   spentSoFar: number;
   subMonthlyCost: number;
   projectedTotalSpend: number;
-  // Recurring commitment (rent + subscriptions) — shown as context, since
-  // those payments already land in the expense ledger and are therefore
-  // inside projectedTotalSpend rather than added on top of it.
   committedSpend: number;
-  // Still expected to be spent between today and the end of the cycle.
   projectedRemaining: number;
-  // 0 (start of cycle) → 1 (a week in): how much the projection trusts this
-  // cycle's own live pace vs. blending in last cycle's actual total.
   paceConfidence: number;
   totalIncome: number;
   isSalaryLogged: boolean;
@@ -27,8 +44,6 @@ interface PayCycle {
   expectedSavings: number;
   savingsRate: number;
   prevCycleSpend: number;
-  // What was spent by this same relative day last cycle — the direct
-  // "by this day last month" comparison.
   prevCycleSpendToSameDay: number;
   paceDeltaPct: number | null;
   cycleCatBreakdown: Record<string, number>;
@@ -62,67 +77,341 @@ interface FinancialHealthTabProps {
   additionalIncome: number;
   setAdditionalIncome: (val: number) => void;
   payCycle: PayCycle;
-  // The actual amount the user confirmed having, saved against this cycle's
-  // start date — undefined if they haven't reconciled this cycle yet.
   savedReconciliation?: number;
   setReconciliation: (cycleStartDate: string, actualAmount: number) => void;
-  // Logged paydays keyed by the payday date — lets pay-cycle boundaries
-  // snap to an actual variable payday instead of a fixed day-of-month.
   salaryLog: Record<string, { date: string; amount: number }>;
   setSalaryLogEntry: (date: string, amount: number) => void;
-  // Past complete cycles' income/spend/savings, newest first — empty until
-  // enough logged history exists.
   cycleHistory: CycleHistoryEntry[];
   cycleAverages: CycleAverages | null;
-  // Every cycle's confirmed "actual amount left" reconciliation, keyed by
-  // cycle start date — used to build a track record of how closely logged
-  // spending has matched reality over past cycles.
   reconciliations: Record<string, number>;
-  // Logs the current cycle's reconciliation shortfall as a real expense
-  // (dated today, category "Other") so unlogged spending actually lands in
-  // the ledger instead of just being flagged as a discrepancy message.
   logUnaccountedGap: (amount: number) => void;
+  getHeaders?: () => Record<string, string>;
 }
 
-const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
+const STAT_CARD =
+  "flex flex-col justify-between gap-2 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
 const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
 const STAT_VALUE = "text-[24px] font-bold tracking-[-0.5px] text-text-primary";
-const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
-const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
-const BTN_PRIMARY = "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27]";
-const BTN_SECONDARY = "cursor-pointer rounded-md border border-border-subtle bg-transparent px-4 py-2 text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary";
+const STAT_SUBTEXT = "text-[11px] text-text-muted";
+const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col justify-between";
+const BTN_PRIMARY =
+  "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27]";
+const BTN_SECONDARY =
+  "cursor-pointer rounded-md border border-border-subtle bg-transparent px-4 py-2 text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary";
 
 const fmtDate = (s: string) => {
   const d = new Date(`${s}T00:00:00`);
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 };
 
-// Liquidity/volatility haircut applied to each asset class when sizing the
-// emergency reserve. Rationale: layoffs cluster with market downturns, so in
-// a real job-loss scenario you may be forced to liquidate volatile holdings
-// at a loss — they're worth less than sticker value as an emergency backstop.
 const LIQUIDITY_WEIGHTS: Record<string, number> = {
-  cash: 1.0,          // immediately spendable
-  gold: 0.95,         // quick to sell, holds value in downturns
-  mutual_fund: 0.9,   // days to redeem
+  cash: 1.0,
+  gold: 0.95,
+  mutual_fund: 0.9,
   sip: 0.9,
-  fixed_deposit: 0.75, // premature withdrawal usually possible, but at a penalty
+  fixed_deposit: 0.75,
   other: 0.85,
-  equity: 0.8,        // liquid but volatile — discounted for forced-sale risk
-  crypto: 0.65,       // highly volatile
+  equity: 0.8,
+  crypto: 0.65,
 };
 const DEFAULT_LIQUIDITY_WEIGHT = 0.85;
-// Shown in the methodology box, ordered most→least liquid.
-const RESERVE_CLASSES: { key: string; label: string }[] = [
-  { key: "cash", label: "Cash" },
-  { key: "fixed_deposit", label: "Fixed Deposit" },
-  { key: "gold", label: "Gold" },
-  { key: "mutual_fund", label: "Mutual funds" },
-  { key: "sip", label: "SIP" },
-  { key: "equity", label: "Equity" },
-  { key: "crypto", label: "Crypto" },
-  { key: "other", label: "Other" },
-];
+
+interface GeminiHealthAnalyticsProps {
+  currency: string;
+  payCycle: PayCycle;
+  targetSavingsGoal: number;
+  portfolioValue: number;
+  getHeaders?: () => Record<string, string>;
+}
+
+const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
+  currency,
+  payCycle,
+  targetSavingsGoal,
+  portfolioValue,
+  getHeaders,
+}) => {
+  const [report, setReport] = useState<HealthAnalyticsReport | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [isCached, setIsCached] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAnalytics = async (force: boolean = false) => {
+    if (force) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
+
+    try {
+      const payload = {
+        startStr: payCycle.startStr,
+        spentSoFar: payCycle.spentSoFar,
+        projectedTotalSpend: payCycle.projectedTotalSpend,
+        prevCycleSpend: payCycle.prevCycleSpend,
+        prevCycleSpendToSameDay: payCycle.prevCycleSpendToSameDay,
+        paceDeltaPct: payCycle.paceDeltaPct,
+        cycleCatBreakdown: payCycle.cycleCatBreakdown,
+        totalIncome: payCycle.totalIncome,
+        targetSavings: targetSavingsGoal,
+        currency,
+      };
+
+      const search = new URLSearchParams({
+        startStr: payCycle.startStr,
+        spentSoFar: String(payCycle.spentSoFar),
+        projectedTotalSpend: String(payCycle.projectedTotalSpend),
+        prevCycleSpend: String(payCycle.prevCycleSpend),
+        prevCycleSpendToSameDay: String(payCycle.prevCycleSpendToSameDay),
+        totalIncome: String(payCycle.totalIncome),
+        targetSavings: String(targetSavingsGoal),
+        currency,
+      });
+      if (payCycle.paceDeltaPct != null) {
+        search.set("paceDeltaPct", String(payCycle.paceDeltaPct));
+      }
+      if (payCycle.cycleCatBreakdown) {
+        search.set("cycleCatBreakdown", JSON.stringify(payCycle.cycleCatBreakdown));
+      }
+      if (force) search.set("force", "true");
+
+      const authHeaders = getHeaders ? getHeaders() : {};
+      const res = await fetch(`/api/assistant/health-analytics?${search.toString()}`, {
+        method: force ? "POST" : "GET",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: force ? JSON.stringify(payload) : undefined,
+      });
+
+      if (!res.ok) throw new Error("Failed to load AI analytics");
+
+      const data = await res.json();
+      if (data.report) {
+        setReport(data.report);
+        setIsCached(!!data.cached);
+      } else if (data.budgetExceeded) {
+        setError("Daily Gemini request limit reached. Showing latest saved snapshot.");
+      }
+    } catch (err) {
+      console.error("Gemini spend analytics fetch error:", err);
+      setError("AI spend analytics unavailable at the moment");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnalytics(false);
+  }, [
+    payCycle.startStr,
+    payCycle.spentSoFar,
+    payCycle.projectedTotalSpend,
+    payCycle.prevCycleSpend,
+    targetSavingsGoal,
+  ]);
+
+  const severityColor = (severity?: string) => {
+    if (severity === "good") return "text-emerald-700 bg-emerald-500/10 border-emerald-500/30";
+    if (severity === "warning") return "text-rose-700 bg-rose-500/10 border-rose-500/30";
+    return "text-amber-700 bg-amber-500/10 border-amber-500/30";
+  };
+
+  const cleanText = (str: string): string => {
+    if (!str) return "";
+    return str.replace(/\*\*/g, "").replace(/#/g, "").trim();
+  };
+
+  const renderFormattedBullet = (str: string) => {
+    const clean = cleanText(str);
+    const colonIdx = clean.indexOf(":");
+    if (colonIdx > 0 && colonIdx < 35) {
+      const title = clean.slice(0, colonIdx);
+      const body = clean.slice(colonIdx + 1);
+      return (
+        <span>
+          <strong className="font-semibold text-text-primary">{title}:</strong>
+          {body}
+        </span>
+      );
+    }
+    return <span>{clean}</span>;
+  };
+
+  const formattedDate = report?.updatedAt
+    ? new Date(report.updatedAt).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+
+  return (
+    <div className="rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col gap-4 relative overflow-hidden transition-all duration-200">
+      {/* Top Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle bg-bg-primary text-text-secondary">
+            <BarChart3 size={16} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-serif text-xl font-semibold tracking-tight text-text-primary">
+                Monthly Spend &amp; Trend Analytics
+              </h3>
+              {report && (
+                <span className={`px-2 py-0.5 rounded font-mono text-[10px] font-semibold border ${severityColor(report.trendSeverity)}`}>
+                  {cleanText(report.trendStatus)}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-text-muted">
+              Category burn breakdown, pace trajectory, and budget optimization strategies.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {report?.updatedAt && (
+            <span className="font-mono text-[10px] font-medium text-text-muted bg-bg-primary px-2.5 py-1 rounded-md border border-border-subtle">
+              {isCached ? `Cached (${formattedDate})` : "Updated"}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => fetchAnalytics(true)}
+            disabled={loading || refreshing}
+            className="cursor-pointer rounded-md border border-border-subtle bg-bg-primary px-3 py-1.5 text-[11.5px] font-medium text-text-primary transition-all hover:bg-border-subtle/50 disabled:opacity-50 flex items-center gap-1.5"
+          >
+            <RotateCw size={12} className={refreshing ? "animate-spin" : ""} />
+            <span>{refreshing ? "Updating..." : "Refresh Analytics"}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Loading Skeleton */}
+      {loading && !report && (
+        <div className="py-6 flex items-center justify-center gap-2 text-xs font-medium text-text-secondary">
+          <RotateCw size={16} className="animate-spin text-text-muted" />
+          <span>Analyzing monthly category spend patterns...</span>
+        </div>
+      )}
+
+      {/* Error state */}
+      {error && !report && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800">
+          <AlertTriangle size={15} className="shrink-0 text-amber-600" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Report Content */}
+      {report && (
+        <div className="flex flex-col gap-4 text-xs">
+          {/* Executive Summary */}
+          <div className="rounded-lg border border-border-subtle bg-bg-primary p-3.5 leading-relaxed text-text-secondary">
+            <p className="font-medium text-text-primary">{cleanText(report.executiveSummary)}</p>
+          </div>
+
+          {/* Top Categories Progress Breakdown */}
+          {report.topCategories && report.topCategories.length > 0 && (
+            <div className="rounded-lg border border-border-subtle bg-bg-primary p-3.5">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary block mb-2.5">
+                TOP CATEGORY BURN BREAKDOWN
+              </span>
+              <div className="space-y-2.5">
+                {report.topCategories.map((cat, idx) => (
+                  <div key={idx} className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between text-[11.5px] font-medium">
+                      <span className="text-text-primary capitalize">{cleanText(cat.category)}</span>
+                      <span className="font-mono text-text-muted">
+                        {currency}{cat.amount.toLocaleString("en-IN")} ({cat.percentage}%)
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-border-subtle/40 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-text-primary transition-all duration-300"
+                        style={{ width: `${Math.min(100, cat.percentage)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Safe Spend Advice Box */}
+          {report.safeSpendAdvice && (
+            <div className="flex items-start gap-2.5 rounded-lg border border-border-subtle bg-bg-primary p-3.5 text-text-primary">
+              <ShieldCheck size={16} className="shrink-0 text-text-secondary mt-0.5" />
+              <div className="leading-snug">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary block mb-1">
+                  MONTHLY SPEND PACE GUIDANCE
+                </span>
+                <p className="text-[11.5px] font-medium leading-relaxed">{cleanText(report.safeSpendAdvice)}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Spend Trends & Anomalies Grid */}
+          <div className="grid grid-cols-2 gap-4 max-md:grid-cols-1">
+            {/* Monthly Spend Trends */}
+            {report.spendTrends && report.spendTrends.length > 0 && (
+              <div className="rounded-lg border border-border-subtle bg-bg-primary p-3.5">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary flex items-center gap-1.5 mb-2">
+                  <TrendingUp size={13} className="text-emerald-700" /> MONTHLY SPEND TRENDS
+                </span>
+                <ul className="space-y-2 text-[11.5px] text-text-secondary">
+                  {report.spendTrends.map((s, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-emerald-600 font-bold shrink-0">•</span>
+                      <div className="leading-relaxed">{renderFormattedBullet(s)}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Anomalies */}
+            {report.anomalies && report.anomalies.length > 0 && (
+              <div className="rounded-lg border border-border-subtle bg-bg-primary p-3.5">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary flex items-center gap-1.5 mb-2">
+                  <AlertTriangle size={13} className="text-amber-700" /> CATEGORY ANOMALIES &amp; SPIKES
+                </span>
+                <ul className="space-y-2 text-[11.5px] text-text-secondary">
+                  {report.anomalies.map((r, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-amber-600 font-bold shrink-0">•</span>
+                      <div className="leading-relaxed">{renderFormattedBullet(r)}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Saving Opportunities */}
+          {report.savingOpportunities && report.savingOpportunities.length > 0 && (
+            <div className="rounded-lg border border-border-subtle bg-bg-primary p-3.5">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary flex items-center gap-1.5 mb-2">
+                <Lightbulb size={13} className="text-text-primary" /> ACTIONABLE MONTHLY SAVINGS STRATEGY
+              </span>
+              <ul className="space-y-2 text-[11.5px] text-text-secondary">
+                {report.savingOpportunities.map((rec, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="font-mono text-[10px] font-bold text-text-primary bg-border-subtle/50 rounded px-1.5 py-0.5 shrink-0 mt-0.5">
+                      #{idx + 1}
+                    </span>
+                    <div className="leading-relaxed">{renderFormattedBullet(rec)}</div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   currency,
@@ -141,26 +430,25 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   cycleAverages,
   reconciliations,
   logUnaccountedGap,
+  getHeaders,
 }) => {
   const [reconcileAnswer, setReconcileAnswer] = useState<"yes" | "no" | null>(null);
   const [actualAmount, setActualAmount] = useState("");
   const [isEditingReconciliation, setIsEditingReconciliation] = useState(false);
-  // Which cycle's discrepancy has already been logged as an expense, so the
-  // "Log as unaccounted" button doesn't offer to double-log the same gap.
   const [gapLoggedFor, setGapLoggedFor] = useState<string | null>(null);
+  const [rightTab, setRightTab] = useState<"reconcile" | "income">("reconcile");
+  const [showMethodology, setShowMethodology] = useState(false);
 
   const loggedPayday = salaryLog[payCycle.startStr];
   const [isEditingPayday, setIsEditingPayday] = useState(false);
   const [paydayDate, setPaydayDate] = useState(payCycle.startStr);
   const [paydayAmount, setPaydayAmount] = useState(String(loggedPayday?.amount || monthlySalary || ""));
 
-  // Re-seed the payday form whenever the cycle rolls over.
   useEffect(() => {
     setPaydayDate(payCycle.startStr);
     setPaydayAmount(String(salaryLog[payCycle.startStr]?.amount || monthlySalary || ""));
     setIsEditingPayday(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payCycle.startStr]);
+  }, [payCycle.startStr, salaryLog, monthlySalary]);
 
   const savePayday = () => {
     const parsed = parseFloat(paydayAmount);
@@ -169,56 +457,31 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
     setIsEditingPayday(false);
   };
 
-  // A small gap is just rounding/timing noise, not a real discrepancy —
-  // only flag it once it's big enough to plausibly be an unlogged expense.
   const DISCREPANCY_THRESHOLD = Math.max(50, payCycle.totalIncome * 0.01);
 
-  // Re-seed the reconciliation view whenever the saved answer or the cycle
-  // itself changes (a new pay cycle always starts unreconciled).
   useEffect(() => {
     if (savedReconciliation !== undefined) {
       setActualAmount(String(savedReconciliation));
-      setReconcileAnswer(Math.abs(savedReconciliation - payCycle.expectedCashOnHand) <= DISCREPANCY_THRESHOLD ? "yes" : "no");
+      setReconcileAnswer(
+        Math.abs(savedReconciliation - payCycle.expectedCashOnHand) <= DISCREPANCY_THRESHOLD ? "yes" : "no"
+      );
     } else {
       setActualAmount("");
       setReconcileAnswer(null);
     }
     setIsEditingReconciliation(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payCycle.startStr, savedReconciliation]);
+  }, [payCycle.startStr, savedReconciliation, payCycle.expectedCashOnHand, DISCREPANCY_THRESHOLD]);
 
   const safeInvestments = Array.isArray(investments) ? investments : [];
   const portfolioValue = safeInvestments.reduce((acc, a) => acc + getEffectiveAmount(a), 0);
 
-  // Emergency runway — models a TOTAL income loss (job/paycheck stops). This
-  // deliberately ignores current income: it answers "if my paycheck stopped
-  // tomorrow, how many months would my accessible savings cover spending?"
-  // A surplus/deficit "net burn" view is the wrong question — even someone
-  // comfortably saving would burn down reserves at their spending rate the
-  // moment income disappears.
   const accessibleReserve = safeInvestments.reduce(
     (acc, a) => acc + getEffectiveAmount(a) * (LIQUIDITY_WEIGHTS[a.category] ?? DEFAULT_LIQUIDITY_WEIGHT),
     0
   );
-  const reserveHaircutPct = portfolioValue > 0 ? (1 - accessibleReserve / portfolioValue) * 100 : 0;
-  // Normalize this cycle's projected spend to a 30-day month so runway reads
-  // in familiar monthly terms regardless of cycle length. projectedTotalSpend
-  // already folds in subscriptions (which keep charging with or without a
-  // job), and it's stable early in the cycle since it leans on the historical
-  // baseline — a better "typical monthly burn" than raw spend-so-far.
+
   const monthlyBurn = payCycle.totalDays > 0 ? payCycle.projectedTotalSpend * (30 / payCycle.totalDays) : 0;
   const emergencyRunwayMonths = monthlyBurn > 0 && accessibleReserve > 0 ? accessibleReserve / monthlyBurn : null;
-  // Zone colour keyed to the standard 3–6 month emergency-fund guideline.
-  const runwayColor =
-    emergencyRunwayMonths === null
-      ? "#7c7a72"
-      : emergencyRunwayMonths >= 6
-      ? "#16a34a"
-      : emergencyRunwayMonths >= 3
-      ? "#16a34a"
-      : emergencyRunwayMonths >= 1
-      ? "#d97706"
-      : "#b3666b";
 
   const catEntries = Object.entries(payCycle.cycleCatBreakdown);
   const maxCatAmount = catEntries.length > 0 ? catEntries[0][1] : 0;
@@ -243,10 +506,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
 
   const showRecordedSummary = savedReconciliation !== undefined && !isEditingReconciliation;
 
-  // How closely confirmed "actual amount left" has matched what the ledger
-  // predicted, across past COMPLETE cycles only — the current, still-running
-  // cycle isn't a fair data point yet (its own live reconciliation is shown
-  // immediately above in the Q&A itself instead).
   const reconciliationTrack = cycleHistory
     .filter((c) => reconciliations[c.startStr] !== undefined)
     .slice(0, 4)
@@ -264,157 +523,338 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
     setGapLoggedFor(payCycle.startStr);
   };
 
+  const [targetSavingsGoal, setTargetSavingsGoal] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("continuum_target_savings_goal");
+      if (saved) return parseFloat(saved) || 0;
+    }
+    return Math.max(0, Math.round(payCycle.totalIncome * 0.20));
+  });
+
+  const handleTargetSavingsChange = (val: number) => {
+    const nextVal = Math.max(0, val);
+    setTargetSavingsGoal(nextVal);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("continuum_target_savings_goal", String(nextVal));
+    }
+  };
+
+  // Safe-to-Spend Allowance calculations based on Target Savings Goal
+  const remainingDays = Math.max(1, payCycle.remainingDays);
+  const daysThisWeek = Math.min(7, remainingDays);
+
+  // Unspent cash remaining in account right now
+  const unspentCash = Math.max(0, payCycle.totalIncome - payCycle.spentSoFar);
+
+  // Spendable budget remaining to reach target savings goal
+  const spendablePoolForTarget = unspentCash - targetSavingsGoal;
+
+  // Is user behind target savings goal?
+  const isBehindTarget = spendablePoolForTarget < 0;
+
+  // Safe daily and weekly allowances to hit target
+  const safeToday = isBehindTarget ? 0 : spendablePoolForTarget / remainingDays;
+  const safeWeek = safeToday * daysThisWeek;
+
+  const deficitToTarget = isBehindTarget ? Math.abs(spendablePoolForTarget) : 0;
+
   return (
-    <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+    <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full">
       {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border-subtle pb-4">
         <div>
           <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">Financial Health</h1>
           <p className="mt-1 text-sm text-text-muted">
-            Real pay-cycle pace, savings reconciliation, and long-term runway.
+            Target-driven daily spending limits, pay-cycle pace, cash reconciliation, and liquidity runway.
           </p>
         </div>
-        <span className={LABEL_MONO}>Cycle {fmtDate(payCycle.startStr)} – {fmtDate(payCycle.endStr)}</span>
+        <span className={LABEL_MONO}>
+          Cycle {fmtDate(payCycle.startStr)} – {fmtDate(payCycle.endStr)}
+        </span>
       </div>
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4">
+      {/* Target Savings Goal Control Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-card border border-border-subtle bg-bg-card p-4 shadow-subtle">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle bg-bg-primary text-emerald-700">
+            <PiggyBank size={16} />
+          </div>
+          <div>
+            <span className="text-xs font-bold text-text-primary">Target Savings Goal This Cycle</span>
+            <p className="text-[11px] text-text-muted">Set how much you want to save — daily limits will update to guide you there.</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-1">
+            <button
+              type="button"
+              onClick={() => handleTargetSavingsChange(0)}
+              className={`px-2.5 py-1 text-[11px] font-semibold rounded-md border transition-all cursor-pointer ${
+                targetSavingsGoal === 0
+                  ? "bg-text-primary text-white border-text-primary"
+                  : "bg-bg-primary border-border-subtle text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              0% (₹0)
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTargetSavingsChange(Math.round(payCycle.totalIncome * 0.10))}
+              className={`px-2.5 py-1 text-[11px] font-semibold rounded-md border transition-all cursor-pointer ${
+                targetSavingsGoal === Math.round(payCycle.totalIncome * 0.10)
+                  ? "bg-text-primary text-white border-text-primary"
+                  : "bg-bg-primary border-border-subtle text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              10%
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTargetSavingsChange(Math.round(payCycle.totalIncome * 0.20))}
+              className={`px-2.5 py-1 text-[11px] font-semibold rounded-md border transition-all cursor-pointer ${
+                targetSavingsGoal === Math.round(payCycle.totalIncome * 0.20)
+                  ? "bg-text-primary text-white border-text-primary"
+                  : "bg-bg-primary border-border-subtle text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              20%
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTargetSavingsChange(Math.round(payCycle.totalIncome * 0.30))}
+              className={`px-2.5 py-1 text-[11px] font-semibold rounded-md border transition-all cursor-pointer ${
+                targetSavingsGoal === Math.round(payCycle.totalIncome * 0.30)
+                  ? "bg-text-primary text-white border-text-primary"
+                  : "bg-bg-primary border-border-subtle text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              30%
+            </button>
+          </div>
+
+          <div className="relative w-32">
+            <span className="absolute inset-y-0 left-2.5 flex items-center text-xs font-semibold text-text-muted">{currency}</span>
+            <input
+              type="number"
+              min="0"
+              value={targetSavingsGoal || ""}
+              onChange={(e) => handleTargetSavingsChange(parseFloat(e.target.value) || 0)}
+              placeholder="Target Goal"
+              className="w-full rounded-md border border-border-subtle bg-bg-primary py-1 pr-2.5 pl-6 text-xs font-bold text-text-primary outline-none transition-all focus:border-border-hover focus:shadow-focus"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Gemini AI Financial Health Analytics Widget */}
+      <GeminiHealthAnalytics
+        currency={currency}
+        payCycle={payCycle}
+        targetSavingsGoal={targetSavingsGoal}
+        portfolioValue={portfolioValue}
+        getHeaders={getHeaders}
+      />
+
+      {/* Top 5 KPI Executive Stat Cards */}
+      <div className="grid grid-cols-5 gap-4 max-2xl:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
         <div className={STAT_CARD}>
-          <span className={LABEL_MONO}>TOTAL INCOME</span>
-          <span className={STAT_VALUE}>{currency}{payCycle.totalIncome.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+          <div>
+            <span className={LABEL_MONO}>TOTAL INCOME</span>
+            <div className={STAT_VALUE}>
+              {currency}
+              {payCycle.totalIncome.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+            </div>
+          </div>
           <span className={STAT_SUBTEXT}>Salary + additional this cycle</span>
         </div>
+
         <div className={STAT_CARD}>
-          <span className={LABEL_MONO}>SPENT SO FAR</span>
-          <span className={`${STAT_VALUE} text-accent-blue`}>{currency}{payCycle.spentSoFar.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
-          <span className={STAT_SUBTEXT}>Day {payCycle.elapsedDays} of {payCycle.totalDays}</span>
-        </div>
-        <div className={STAT_CARD}>
-          <span className={LABEL_MONO}>PROJECTED CYCLE SPEND</span>
-          <span className={STAT_VALUE}>{currency}{payCycle.projectedTotalSpend.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
-          <span className={STAT_SUBTEXT}>Committed + projected variable</span>
-        </div>
-        <div className={STAT_CARD}>
-          <span className={LABEL_MONO}>EXPECTED SAVINGS</span>
-          <span className={STAT_VALUE} style={{ color: payCycle.expectedSavings >= 0 ? "#16a34a" : "#b3666b" }}>
-            {payCycle.expectedSavings >= 0 ? "+" : ""}{currency}{payCycle.expectedSavings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+          <div>
+            <span className={LABEL_MONO}>SPENT SO FAR</span>
+            <div className={`${STAT_VALUE} text-accent-blue`}>
+              {currency}
+              {payCycle.spentSoFar.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+            </div>
+          </div>
+          <span className={STAT_SUBTEXT}>
+            Day {payCycle.elapsedDays} of {payCycle.totalDays} ({payCycle.remainingDays}d left)
           </span>
+        </div>
+
+        <div className={STAT_CARD}>
+          <div>
+            <div className="flex items-center justify-between">
+              <span className={LABEL_MONO}>SAFE TODAY</span>
+              <span
+                className={`font-mono text-[9.5px] font-medium px-1.5 py-0.5 rounded ${
+                  isBehindTarget ? "text-rose-700 bg-rose-500/10" : "text-emerald-700 bg-emerald-500/10"
+                }`}
+              >
+                {isBehindTarget ? "BEHIND TARGET" : "TO HIT TARGET"}
+              </span>
+            </div>
+            <div className={`${STAT_VALUE} ${isBehindTarget ? "text-rose-600" : "text-emerald-600"}`}>
+              {currency}
+              {Math.floor(safeToday).toLocaleString("en-IN")}
+            </div>
+          </div>
+          <span className={STAT_SUBTEXT}>
+            {isBehindTarget
+              ? `Behind goal by ${currency}${deficitToTarget.toLocaleString("en-IN")}`
+              : `Spend max ${currency}${Math.floor(safeToday)}/day to save ${currency}${targetSavingsGoal.toLocaleString("en-IN")}`}
+          </span>
+        </div>
+
+        <div className={STAT_CARD}>
+          <div>
+            <div className="flex items-center justify-between">
+              <span className={LABEL_MONO}>SAFE THIS WEEK</span>
+              <span
+                className={`font-mono text-[9.5px] font-medium px-1.5 py-0.5 rounded ${
+                  isBehindTarget ? "text-rose-700 bg-rose-500/10" : "text-emerald-700 bg-emerald-500/10"
+                }`}
+              >
+                {isBehindTarget ? "0 ALLOWED" : "7-DAY LIMIT"}
+              </span>
+            </div>
+            <div className={`${STAT_VALUE} ${isBehindTarget ? "text-rose-600" : "text-emerald-600"}`}>
+              {currency}
+              {Math.floor(safeWeek).toLocaleString("en-IN")}
+            </div>
+          </div>
+          <span className={STAT_SUBTEXT}>
+            {isBehindTarget ? "No margin left to hit target goal" : `Next ${daysThisWeek} days allowance to reach goal`}
+          </span>
+        </div>
+
+        <div className={STAT_CARD}>
+          <div>
+            <span className={LABEL_MONO}>EXPECTED SAVINGS</span>
+            <div className={STAT_VALUE} style={{ color: payCycle.expectedSavings >= 0 ? "#16a34a" : "#b3666b" }}>
+              {payCycle.expectedSavings >= 0 ? "+" : ""}
+              {currency}
+              {payCycle.expectedSavings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+            </div>
+          </div>
           <span className={STAT_SUBTEXT}>{payCycle.savingsRate.toFixed(1)}% of income</span>
         </div>
       </div>
 
-      <div className="grid grid-cols-[1.1fr_1fr] gap-5 max-md:grid-cols-1">
-        {/* Pay Cycle Progress */}
+      {/* Main Section 1: Cycle Control Center & Smart Reconciliation */}
+      <div className="grid grid-cols-2 gap-5 max-lg:grid-cols-1">
+        {/* Left Card: Pay Cycle Progress & Spending Pace */}
         <div className={BENTO_CARD}>
-          <h2 className="mb-4 flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
-            <Calendar className="h-5 w-5 text-text-secondary" strokeWidth={2} /> Current Pay Cycle
-          </h2>
-          <p className="text-[11px] text-text-muted">{fmtDate(payCycle.startStr)} – {fmtDate(payCycle.endStr)}</p>
-
-          <div className="mt-3">
-            <div className="h-2 w-full overflow-hidden rounded-full bg-bg-secondary">
-              <div
-                className="h-full rounded-full bg-text-primary transition-all duration-500"
-                style={{ width: `${Math.min(100, (payCycle.elapsedDays / payCycle.totalDays) * 100)}%` }}
-              />
+          <div>
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3">
+              <h2 className="flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
+                <Calendar className="h-5 w-5 text-text-secondary" strokeWidth={2} /> Current Pay Cycle Pace
+              </h2>
+              <span className="text-[11px] font-medium text-text-muted">
+                {fmtDate(payCycle.startStr)} – {fmtDate(payCycle.endStr)}
+              </span>
             </div>
-            <div className="mt-1.5 flex justify-between text-[10px] text-text-muted">
-              <span>Day {payCycle.elapsedDays} of {payCycle.totalDays}</span>
-              <span>{payCycle.remainingDays} days left</span>
-            </div>
-          </div>
 
-          <div className="mt-4 border-t border-border-subtle pt-3">
-            {payCycle.paceDeltaPct === null ? (
-              <p className="text-[11px] text-text-muted">No prior cycle data to compare pace against yet.</p>
-            ) : (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between text-[11px]">
-                  <span className="text-text-secondary">By this day last cycle</span>
-                  <span className="font-semibold text-text-primary">
-                    {currency}{payCycle.spentSoFar.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                    <span className="mx-1 font-normal text-text-muted">vs</span>
-                    {currency}{payCycle.prevCycleSpendToSameDay.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                  </span>
-                </div>
-
+            {/* Cycle Timeline Progress */}
+            <div className="mt-4">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-bg-secondary">
                 <div
-                  className={`flex items-center gap-2 rounded-lg border p-2.5 text-[11px] leading-relaxed ${
-                    payCycle.paceDeltaPct > 5
-                      ? "border-rose-200/50 bg-rose-50/50 text-rose-800"
-                      : payCycle.paceDeltaPct < -5
-                      ? "border-emerald-200/50 bg-emerald-50/50 text-emerald-800"
-                      : "border-border-subtle bg-bg-primary text-text-secondary"
-                  }`}
-                >
-                  {payCycle.paceDeltaPct > 5 ? (
-                    <TrendingUp className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
-                  ) : payCycle.paceDeltaPct < -5 ? (
-                    <TrendingDown className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
-                  ) : (
-                    <Minus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
-                  )}
-                  <span>
-                    On pace to spend <strong>{payCycle.paceDeltaPct >= 0 ? "+" : ""}{payCycle.paceDeltaPct.toFixed(1)}%</strong> vs. last cycle
-                    (<strong>{currency}{payCycle.prevCycleSpend.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</strong> then).
-                  </span>
+                  className="h-full rounded-full bg-text-primary transition-all duration-500"
+                  style={{ width: `${Math.min(100, (payCycle.elapsedDays / payCycle.totalDays) * 100)}%` }}
+                />
+              </div>
+              <div className="mt-1.5 flex justify-between text-[10.5px] text-text-muted">
+                <span>Day {payCycle.elapsedDays} of {payCycle.totalDays}</span>
+                <span>{payCycle.remainingDays} days left</span>
+              </div>
+            </div>
+
+            {/* Pace Delta vs Last Cycle */}
+            <div className="mt-4">
+              {payCycle.paceDeltaPct === null ? (
+                <p className="text-[11px] text-text-muted">No prior cycle data to compare pace against yet.</p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between text-[11px]">
+                    <span className="text-text-secondary">Same day last cycle</span>
+                    <span className="font-semibold text-text-primary">
+                      {currency}
+                      {payCycle.spentSoFar.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                      <span className="mx-1 font-normal text-text-muted">vs</span>
+                      {currency}
+                      {payCycle.prevCycleSpendToSameDay.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                    </span>
+                  </div>
+
+                  <div
+                    className={`flex items-center gap-2 rounded-lg border p-2.5 text-[11px] leading-relaxed ${
+                      payCycle.paceDeltaPct > 5
+                        ? "border-rose-200/50 bg-rose-50/50 text-rose-800"
+                        : payCycle.paceDeltaPct < -5
+                        ? "border-emerald-200/50 bg-emerald-50/50 text-emerald-800"
+                        : "border-border-subtle bg-bg-primary text-text-secondary"
+                    }`}
+                  >
+                    {payCycle.paceDeltaPct > 5 ? (
+                      <TrendingUp className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
+                    ) : payCycle.paceDeltaPct < -5 ? (
+                      <TrendingDown className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
+                    ) : (
+                      <Minus className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
+                    )}
+                    <span>
+                      On pace to spend <strong>{payCycle.paceDeltaPct >= 0 ? "+" : ""}{payCycle.paceDeltaPct.toFixed(1)}%</strong> vs. last cycle (<strong>{currency}{payCycle.prevCycleSpend.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</strong> total).
+                    </span>
+                  </div>
                 </div>
+              )}
+            </div>
 
-                {payCycle.paceConfidence < 1 && (
-                  <p className="text-[10px] leading-relaxed text-text-muted">
-                    {payCycle.paceConfidence === 0
-                      ? "Too early to trust today's pace (a single big payment would skew it) — this projection is based entirely on last cycle's trend for now."
-                      : `Early in the cycle — this projection still leans on last cycle's trend (${Math.round(payCycle.paceConfidence * 100)}% weight on this cycle's own pace so far), and will shift fully to your live spending by day 9.`}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Projected spend formula — makes the two halves explicit so it's
-              clear committed costs (rent/subscriptions) are fully counted,
-              and only the variable half is an estimate. */}
-          <div className="mt-4 border-t border-border-subtle pt-3">
-            <span className="font-mono text-[9px] font-bold tracking-[0.5px] text-text-secondary uppercase">Projected Spend</span>
-            <div className="mt-2.5 flex flex-col gap-1.5 text-[11px]">
+            {/* Projected Spend Formula */}
+            <div className="mt-4 border-t border-border-subtle pt-3 space-y-1.5 text-[11px]">
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary">Spent so far <span className="text-text-muted">· logged</span></span>
-                <span className="font-mono font-semibold text-text-primary">{currency}{payCycle.spentSoFar.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                <span className="text-text-secondary">Spent so far (logged)</span>
+                <span className="font-mono font-semibold text-text-primary">
+                  {currency}
+                  {payCycle.spentSoFar.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-text-secondary">Rest of cycle <span className="text-text-muted">· projected</span></span>
-                <span className="font-mono font-semibold text-text-primary">{currency}{payCycle.projectedRemaining.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                <span className="text-text-secondary">Rest of cycle (projected)</span>
+                <span className="font-mono font-semibold text-text-primary">
+                  {currency}
+                  {payCycle.projectedRemaining.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                </span>
               </div>
-              <div className="mt-0.5 flex items-center justify-between border-t border-border-subtle pt-1.5">
-                <span className="font-semibold text-text-primary">Projected cycle spend</span>
-                <span className="font-mono font-bold text-text-primary">{currency}{payCycle.projectedTotalSpend.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-text-secondary">Income − projected = <span className="font-semibold">savings</span></span>
-                <span className="font-mono font-bold" style={{ color: payCycle.expectedSavings >= 0 ? "#16a34a" : "#b3666b" }}>
-                  {payCycle.expectedSavings >= 0 ? "+" : ""}{currency}{payCycle.expectedSavings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+              <div className="flex items-center justify-between border-t border-border-subtle pt-1.5 font-semibold">
+                <span className="text-text-primary">Projected Total Spend</span>
+                <span className="font-mono font-bold text-text-primary">
+                  {currency}
+                  {payCycle.projectedTotalSpend.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
                 </span>
               </div>
             </div>
-            {payCycle.committedSpend > 0 && (
-              <p className="mt-2.5 text-[10px] leading-relaxed text-text-muted">
-                Includes <strong className="text-text-secondary">{currency}{payCycle.committedSpend.toLocaleString("en-IN", { maximumFractionDigits: 0 })}/mo</strong> of recurring commitment (rent + subscriptions) — counted through the ledger when each bill is paid, not added on top.
-              </p>
-            )}
           </div>
 
+          {/* Top Category Spending Progress Bars */}
           {catEntries.length > 0 && (
             <div className="mt-4 border-t border-border-subtle pt-3">
-              <span className="font-mono text-[9px] font-bold tracking-[0.5px] text-text-secondary uppercase">This Cycle's Spending</span>
-              <div className="mt-2.5 flex flex-col gap-2">
-                {catEntries.slice(0, 5).map(([cat, amt]) => (
+              <span className={`${LABEL_MONO} mb-2 block`}>Top Categories This Cycle</span>
+              <div className="space-y-2">
+                {catEntries.slice(0, 4).map(([cat, amt]) => (
                   <div key={cat}>
                     <div className="mb-0.5 flex justify-between text-[11px]">
                       <span className="text-text-secondary">{cat}</span>
-                      <span className="font-semibold text-text-primary">{currency}{amt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
+                      <span className="font-semibold text-text-primary">
+                        {currency}
+                        {amt.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                      </span>
                     </div>
                     <div className="h-1.5 w-full overflow-hidden rounded-full bg-bg-secondary">
-                      <div className="h-full rounded-full bg-accent-blue" style={{ width: `${maxCatAmount > 0 ? (amt / maxCatAmount) * 100 : 0}%` }} />
+                      <div
+                        className="h-full rounded-full bg-text-primary"
+                        style={{ width: `${maxCatAmount > 0 ? (amt / maxCatAmount) * 100 : 0}%` }}
+                      />
                     </div>
                   </div>
                 ))}
@@ -423,513 +863,338 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           )}
         </div>
 
-        {/* Reconciliation */}
+        {/* Right Card: Smart Reconciliation & Payday Settings */}
         <div className={BENTO_CARD}>
-          <h2 className="mb-4 flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
-            <ScanSearch className="h-5 w-5 text-text-secondary" strokeWidth={2} /> Does This Match Reality?
-          </h2>
-
-          {showRecordedSummary ? (
-            <div className="flex flex-col gap-2.5">
-              <p className="text-[12px] leading-relaxed text-text-secondary">You confirmed having</p>
-              <p className="my-1 text-[26px] font-bold text-text-primary">
-                {currency}{(savedReconciliation as number).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-              </p>
-              <p className="mb-1 text-[11px] text-text-muted">
-                on this cycle ({fmtDate(payCycle.startStr)} – {fmtDate(payCycle.endStr)}), vs. an expected {currency}
-                {payCycle.expectedCashOnHand.toLocaleString("en-IN", { maximumFractionDigits: 0 })}.
-              </p>
-
-              {discrepancy !== null && discrepancy > DISCREPANCY_THRESHOLD && (
-                <div className="flex flex-col gap-2 rounded-lg border border-rose-200/50 bg-rose-50/50 p-2.5 text-[11px] leading-relaxed text-rose-800">
-                  <div className="flex items-center gap-2">
-                    <span>⚠</span>
-                    <span>
-                      <strong>{currency}{discrepancy.toLocaleString("en-IN", { maximumFractionDigits: 0 })} unaccounted for.</strong> You likely
-                      have unlogged expenses this cycle — cash spending, a forgotten subscription, or a purchase you haven't logged yet.
-                    </span>
-                  </div>
-                  {gapLoggedFor === payCycle.startStr ? (
-                    <span className="self-start text-[10px] font-semibold text-emerald-700">✓ Logged as an expense</span>
-                  ) : (
-                    <button
-                      onClick={() => handleLogGap(discrepancy)}
-                      className="cursor-pointer self-start rounded-md border border-rose-300/60 bg-white/60 px-2 py-1 text-[10px] font-semibold text-rose-800 transition-colors hover:bg-white"
-                    >
-                      Log {currency}{discrepancy.toLocaleString("en-IN", { maximumFractionDigits: 0 })} as unaccounted expense
-                    </button>
-                  )}
-                </div>
-              )}
-              {discrepancy !== null && discrepancy < -DISCREPANCY_THRESHOLD && (
-                <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary p-2.5 text-[11px] leading-relaxed text-text-secondary">
-                  <span>ℹ</span>
-                  <span>You have more than expected — check for untracked income, or an expense logged twice.</span>
-                </div>
-              )}
-              {discrepancy !== null && Math.abs(discrepancy) <= DISCREPANCY_THRESHOLD && (
-                <div className="flex items-center gap-2 rounded-lg border border-emerald-200/50 bg-emerald-50/50 p-2.5 text-[11px] text-emerald-800">
-                  <span>✓</span>
-                  <span>Good — your logged expenses are tracking accurately this cycle.</span>
-                </div>
-              )}
-
-              <button onClick={() => setIsEditingReconciliation(true)} className="cursor-pointer self-start bg-transparent text-[10px] font-medium text-text-muted underline">
-                Update
-              </button>
-            </div>
-          ) : (
-            <>
-              <p className="text-[12px] leading-relaxed text-text-secondary">
-                Based on {currency}{payCycle.totalIncome.toLocaleString("en-IN", { maximumFractionDigits: 0 })} income and{" "}
-                {currency}{payCycle.spentSoFar.toLocaleString("en-IN", { maximumFractionDigits: 0 })} logged spending, you should have
-              </p>
-              <p className="my-2 text-[26px] font-bold text-text-primary">
-                {currency}{payCycle.expectedCashOnHand.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-              </p>
-              <p className="mb-3.5 text-[11px] text-text-muted">left right now, across cash and accounts.</p>
-
-              {reconcileAnswer !== "no" && (
-                <div className="flex gap-2">
-                  <button onClick={confirmMatches} className={`${BTN_PRIMARY} flex-1 text-xs`}>✓ That's right</button>
-                  <button onClick={() => setReconcileAnswer("no")} className={`${BTN_SECONDARY} flex-1 text-xs`}>I have less</button>
-                </div>
-              )}
-
-              {reconcileAnswer === "no" && (
-                <div className="flex flex-col gap-2.5">
-                  <label className="text-[10px] text-text-muted">What do you actually have left?</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-2.5 flex items-center text-[11px] text-text-muted">{currency}</span>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={actualAmount}
-                      onChange={(e) => setActualAmount(e.target.value)}
-                      className="w-full rounded-md border border-border-subtle bg-bg-card py-1.5 pr-2 pl-7 text-xs text-text-primary outline-none transition-all focus:border-border-hover focus:shadow-focus"
-                    />
-                  </div>
-
-                  {discrepancy !== null && discrepancy > DISCREPANCY_THRESHOLD && (
-                    <div className="flex flex-col gap-2 rounded-lg border border-rose-200/50 bg-rose-50/50 p-2.5 text-[11px] leading-relaxed text-rose-800">
-                      <div className="flex items-center gap-2">
-                        <span>⚠</span>
-                        <span>
-                          <strong>{currency}{discrepancy.toLocaleString("en-IN", { maximumFractionDigits: 0 })} unaccounted for.</strong> You likely
-                          have unlogged expenses this cycle — cash spending, a forgotten subscription, or a purchase you haven't logged yet.
-                        </span>
-                      </div>
-                      {gapLoggedFor === payCycle.startStr ? (
-                        <span className="self-start text-[10px] font-semibold text-emerald-700">✓ Logged as an expense</span>
-                      ) : (
-                        <button
-                          onClick={() => handleLogGap(discrepancy)}
-                          className="cursor-pointer self-start rounded-md border border-rose-300/60 bg-white/60 px-2 py-1 text-[10px] font-semibold text-rose-800 transition-colors hover:bg-white"
-                        >
-                          Log {currency}{discrepancy.toLocaleString("en-IN", { maximumFractionDigits: 0 })} as unaccounted expense
-                        </button>
-                      )}
-                    </div>
-                  )}
-                  {discrepancy !== null && discrepancy < -DISCREPANCY_THRESHOLD && (
-                    <div className="flex items-center gap-2 rounded-lg border border-border-subtle bg-bg-primary p-2.5 text-[11px] leading-relaxed text-text-secondary">
-                      <span>ℹ</span>
-                      <span>You have more than expected — check for untracked income, or an expense logged twice.</span>
-                    </div>
-                  )}
-                  {discrepancy !== null && Math.abs(discrepancy) <= DISCREPANCY_THRESHOLD && (
-                    <div className="flex items-center gap-2 rounded-lg border border-emerald-200/50 bg-emerald-50/50 p-2.5 text-[11px] text-emerald-800">
-                      <span>✓</span>
-                      <span>Close enough — that's within normal rounding.</span>
-                    </div>
-                  )}
-
-                  <div className="flex gap-2">
-                    <button onClick={saveActualAmount} disabled={isNaN(parsedActual)} className={`${BTN_PRIMARY} flex-1 text-xs disabled:cursor-not-allowed disabled:opacity-50`}>
-                      Save
-                    </button>
-                    <button onClick={() => { setReconcileAnswer(null); setActualAmount(""); }} className="cursor-pointer self-start bg-transparent text-[10px] font-medium text-text-muted underline">
-                      Cancel
-                    </button>
-                  </div>
-                </div>
-              )}
-            </>
-          )}
-
-          {/* Reconciliation Track Record — fills the space below the current
-              cycle's Q&A with how accurate past confirmed reconciliations
-              have been, so the card isn't just a single empty question. */}
-          <div className="mt-5 border-t border-border-subtle pt-3.5">
-            <span className="font-mono text-[9px] font-bold tracking-[0.5px] text-text-secondary uppercase">Reconciliation Track Record</span>
-            {reconciliationTrack.length === 0 ? (
-              <p className="mt-2 text-[10.5px] leading-relaxed text-text-muted">
-                Once you reconcile a few past cycles, how closely your logged spending matched reality will show up here.
-              </p>
-            ) : (
-              <>
-                <div className="mt-2.5 flex flex-col gap-2">
-                  {reconciliationTrack.map((c) => (
-                    <div key={c.startStr} className="flex items-center justify-between text-[11px]">
-                      <span className="text-text-secondary">{fmtDate(c.startStr)} – {fmtDate(c.endStr)}</span>
-                      {c.accurate ? (
-                        <span className="font-semibold text-emerald-700">✓ Accurate</span>
-                      ) : (
-                        <span className={`font-semibold ${c.diff > 0 ? "text-rose-700" : "text-text-secondary"}`}>
-                          {c.diff > 0 ? "−" : "+"}{currency}{Math.abs(c.diff).toLocaleString("en-IN", { maximumFractionDigits: 0 })} {c.diff > 0 ? "short" : "extra"}
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-2.5 text-[10px] leading-relaxed text-text-muted">
-                  {accurateTrackCount}/{reconciliationTrack.length} recent cycles reconciled accurately —{" "}
-                  {accurateTrackCount / reconciliationTrack.length >= 0.75
-                    ? "your ledger is tracking real spending well."
-                    : "logging habits may be slipping; check for unlogged cash spends."}
-                </p>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-[1fr_1fr] gap-5 max-md:grid-cols-1">
-        {/* This Cycle's Payday — variable paydays (e.g. "last working day
-            before the 25th") shift month to month, so salaryDay is only a
-            starting estimate; logging the actual date + amount each cycle
-            is what makes the pay-cycle math exact. */}
-        <div className={BENTO_CARD}>
-          <h2 className="mb-4 flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
-            <CalendarCheck className="h-5 w-5 text-text-secondary" strokeWidth={2} /> This Cycle&apos;s Payday
-          </h2>
-          {loggedPayday && !isEditingPayday ? (
-            <div className="flex flex-col gap-2.5">
-              <div className="flex items-center gap-2 rounded-lg border border-emerald-200/50 bg-emerald-50/50 p-2.5 text-[11px] text-emerald-800">
-                <span>✓</span>
-                <span>
-                  Logged <strong>{currency}{loggedPayday.amount.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</strong> on {fmtDate(loggedPayday.date)}
-                </span>
-              </div>
-              <button onClick={() => setIsEditingPayday(true)} className="cursor-pointer self-start bg-transparent text-[10px] font-medium text-text-muted underline">
-                Edit
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2.5">
-              <p className="text-[11px] leading-relaxed text-text-muted">
-                Estimated from your usual payday below — confirm or adjust the exact date and amount for this cycle.
-              </p>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-[10px] text-text-muted">Date</label>
-                  <input
-                    type="date"
-                    value={paydayDate}
-                    onChange={(e) => setPaydayDate(e.target.value)}
-                    className="w-full rounded-md border border-border-subtle bg-bg-card px-2 py-1.5 text-xs text-text-primary outline-none transition-all focus:border-border-hover focus:shadow-focus"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1 block text-[10px] text-text-muted">Amount</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-2.5 flex items-center text-[11px] text-text-muted">{currency}</span>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={paydayAmount}
-                      onChange={(e) => setPaydayAmount(e.target.value)}
-                      className="w-full rounded-md border border-border-subtle bg-bg-card py-1.5 pr-2 pl-7 text-xs text-text-primary outline-none transition-all focus:border-border-hover focus:shadow-focus"
-                    />
-                  </div>
-                </div>
-              </div>
+          <div>
+            {/* Inner Header with Switcher Tabs */}
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3">
               <div className="flex gap-2">
-                <button onClick={savePayday} disabled={isNaN(parseFloat(paydayAmount)) || !paydayDate} className={`${BTN_PRIMARY} flex-1 text-xs disabled:cursor-not-allowed disabled:opacity-50`}>
-                  Save
+                <button
+                  type="button"
+                  onClick={() => setRightTab("reconcile")}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                    rightTab === "reconcile"
+                      ? "bg-text-primary text-white shadow-xs"
+                      : "bg-bg-primary text-text-muted hover:text-text-primary"
+                  }`}
+                >
+                  <ScanSearch size={14} /> Reconcile Cash
                 </button>
-                {loggedPayday && (
-                  <button onClick={() => setIsEditingPayday(false)} className="cursor-pointer self-start bg-transparent text-[10px] font-medium text-text-muted underline">
-                    Cancel
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setRightTab("income")}
+                  className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                    rightTab === "income"
+                      ? "bg-text-primary text-white shadow-xs"
+                      : "bg-bg-primary text-text-muted hover:text-text-primary"
+                  }`}
+                >
+                  <Settings2 size={14} /> Payday &amp; Income
+                </button>
               </div>
             </div>
-          )}
-        </div>
 
-        {/* Income Settings */}
-        <div className={BENTO_CARD}>
-          <h2 className="mb-4 flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
-            <IndianRupee className="h-5 w-5 text-text-secondary" strokeWidth={2} /> Usual Income
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-[10px] text-text-muted">Usual Salary</label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-2.5 flex items-center text-[11px] text-text-muted">{currency}</span>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={monthlySalary || ""}
-                  onChange={(e) => setMonthlySalary(Math.max(0, parseFloat(e.target.value) || 0))}
-                  className="w-full rounded-md border border-border-subtle bg-bg-card py-1.5 pr-2 pl-7 text-xs text-text-primary outline-none transition-all focus:border-border-hover focus:shadow-focus"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="mb-1 block text-[10px] text-text-muted">Add. Income</label>
-              <div className="relative">
-                <span className="absolute inset-y-0 left-2.5 flex items-center text-[11px] text-text-muted">{currency}</span>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder="0"
-                  value={additionalIncome || ""}
-                  onChange={(e) => setAdditionalIncome(Math.max(0, parseFloat(e.target.value) || 0))}
-                  className="w-full rounded-md border border-border-subtle bg-bg-card py-1.5 pr-2 pl-7 text-xs text-text-primary outline-none transition-all focus:border-border-hover focus:shadow-focus"
-                />
-              </div>
-            </div>
-          </div>
-          <p className="mt-3 text-[10px] leading-relaxed text-text-muted">
-            Fallback default and the pre-filled amount when logging a new payday — {payCycle.isSalaryLogged ? "this cycle uses its logged amount instead." : "this cycle is using it as-is since no payday's been logged yet."}
-          </p>
-        </div>
-      </div>
+            {rightTab === "reconcile" ? (
+              <div className="mt-4 space-y-4">
+                {showRecordedSummary ? (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-[12px] leading-relaxed text-text-secondary">Confirmed cash left:</p>
+                    <p className="text-[26px] font-bold text-text-primary">
+                      {currency}
+                      {(savedReconciliation as number).toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                    </p>
+                    <p className="text-[11px] text-text-muted">
+                      Expected {currency}
+                      {payCycle.expectedCashOnHand.toLocaleString("en-IN", { maximumFractionDigits: 0 })} based on logged transactions.
+                    </p>
 
-      {/* Emergency Runway (income-loss scenario) */}
-      {showInvestmentsTab && (
-        <div className={BENTO_CARD}>
-          <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
-            <h2 className="flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
-              <Shield className="h-5 w-5 text-text-secondary" strokeWidth={2} /> Emergency Runway
-            </h2>
-            <span className="rounded bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] font-semibold tracking-[0.4px] text-text-muted uppercase">
-              If income stops
-            </span>
-          </div>
-          <p className="mb-4 text-[11px] text-text-muted">
-            How long your accessible savings would cover spending if your paycheck stopped tomorrow — income is excluded entirely.
-          </p>
-
-          {portfolioValue === 0 || monthlyBurn === 0 ? (
-            <div className="rounded-lg border border-[#e5e3db] bg-[#f4f3ec] p-3 text-[11px] leading-relaxed text-text-secondary">
-              {portfolioValue === 0
-                ? "Add holdings in Investments to size your emergency reserve."
-                : "Log expenses or subscriptions to estimate your monthly burn."}
-            </div>
-          ) : (
-            <div className="grid grid-cols-[1.5fr_1fr] gap-5 max-md:grid-cols-1">
-              {/* Left: headline metric + buffer gauge + status */}
-              <div className="flex flex-col">
-                <div className="flex items-baseline gap-4">
-                  <div>
-                    <span className={LABEL_MONO}>Runway</span>
-                    <div className="mt-0.5 text-[32px] font-bold leading-none tracking-[-0.5px]" style={{ color: runwayColor }}>
-                      {emergencyRunwayMonths !== null ? emergencyRunwayMonths.toFixed(1) : "—"}
-                      <span className="ml-1.5 text-[13px] font-semibold text-text-secondary">months</span>
-                    </div>
+                    {discrepancy !== null && discrepancy > DISCREPANCY_THRESHOLD && (
+                      <div className="flex flex-col gap-2 rounded-lg border border-rose-200/50 bg-rose-50/50 p-2.5 text-[11px] leading-relaxed text-rose-800">
+                        <span>
+                          <strong>{currency}{discrepancy.toLocaleString("en-IN", { maximumFractionDigits: 0 })} unaccounted for.</strong> Cash spending or an unlogged expense is likely missing.
+                        </span>
+                        {gapLoggedFor === payCycle.startStr ? (
+                          <span className="text-[10px] font-semibold text-emerald-700">✓ Logged as an expense</span>
+                        ) : (
+                          <button
+                            onClick={() => handleLogGap(discrepancy)}
+                            className="cursor-pointer self-start rounded-md border border-rose-300/60 bg-white/60 px-2 py-1 text-[10px] font-semibold text-rose-800 transition-colors hover:bg-white"
+                          >
+                            Log {currency}{discrepancy.toLocaleString("en-IN", { maximumFractionDigits: 0 })} as unaccounted expense
+                          </button>
+                        )}
+                      </div>
+                    )}
+                    {discrepancy !== null && Math.abs(discrepancy) <= DISCREPANCY_THRESHOLD && (
+                      <div className="flex items-center gap-2 rounded-lg border border-emerald-200/50 bg-emerald-50/50 p-2.5 text-[11px] text-emerald-800">
+                        <span>✓</span>
+                        <span>Log is tracking accurately.</span>
+                      </div>
+                    )}
+                    <button
+                      onClick={() => setIsEditingReconciliation(true)}
+                      className="cursor-pointer self-start text-[10px] font-medium text-text-muted underline"
+                    >
+                      Update
+                    </button>
                   </div>
+                ) : (
+                  <div className="space-y-3">
+                    <p className="text-[12px] text-text-secondary">
+                      Based on {currency}{payCycle.totalIncome.toLocaleString("en-IN", { maximumFractionDigits: 0 })} income and {currency}{payCycle.spentSoFar.toLocaleString("en-IN", { maximumFractionDigits: 0 })} spent, expected balance is:
+                    </p>
+                    <div className="text-[26px] font-bold text-text-primary">
+                      {currency}{payCycle.expectedCashOnHand.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                    </div>
+
+                    {reconcileAnswer !== "no" && (
+                      <div className="flex gap-2 pt-1">
+                        <button onClick={confirmMatches} className={`${BTN_PRIMARY} flex-1 text-xs`}>
+                          ✓ That's Right
+                        </button>
+                        <button onClick={() => setReconcileAnswer("no")} className={`${BTN_SECONDARY} flex-1 text-xs`}>
+                          I Have Less
+                        </button>
+                      </div>
+                    )}
+
+                    {reconcileAnswer === "no" && (
+                      <div className="flex flex-col gap-2.5">
+                        <label className="text-[10px] text-text-muted">What do you actually have left?</label>
+                        <div className="relative">
+                          <span className="absolute inset-y-0 left-2.5 flex items-center text-[11px] text-text-muted">
+                            {currency}
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="0"
+                            value={actualAmount}
+                            onChange={(e) => setActualAmount(e.target.value)}
+                            className="w-full rounded-md border border-border-subtle bg-bg-card py-1.5 pr-2 pl-7 text-xs text-text-primary outline-none transition-all focus:border-border-hover focus:shadow-focus"
+                          />
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={saveActualAmount}
+                            disabled={isNaN(parsedActual)}
+                            className={`${BTN_PRIMARY} flex-1 text-xs disabled:opacity-50`}
+                          >
+                            Save
+                          </button>
+                          <button
+                            onClick={() => {
+                              setReconcileAnswer(null);
+                              setActualAmount("");
+                            }}
+                            className="cursor-pointer self-start text-[10px] text-text-muted underline"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Track Record */}
+                <div className="border-t border-border-subtle pt-3">
+                  <span className={LABEL_MONO}>Reconciliation Track Record</span>
+                  {reconciliationTrack.length === 0 ? (
+                    <p className="mt-1 text-[10.5px] text-text-muted">Past cycle accuracy will appear here once reconciled.</p>
+                  ) : (
+                    <div className="mt-2 space-y-1.5 text-[11px]">
+                      {reconciliationTrack.map((c) => (
+                        <div key={c.startStr} className="flex justify-between">
+                          <span className="text-text-secondary">
+                            {fmtDate(c.startStr)} – {fmtDate(c.endStr)}
+                          </span>
+                          {c.accurate ? (
+                            <span className="font-semibold text-emerald-700">✓ Accurate</span>
+                          ) : (
+                            <span className="font-semibold text-rose-700">
+                              −{currency}{Math.abs(c.diff).toLocaleString("en-IN", { maximumFractionDigits: 0 })} short
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* Income Settings Tab */
+              <div className="mt-4 space-y-4">
+                <div className="space-y-2">
+                  <span className={LABEL_MONO}>This Cycle's Payday Date &amp; Amount</span>
+                  {loggedPayday && !isEditingPayday ? (
+                    <div className="flex items-center justify-between rounded-lg border border-emerald-200/50 bg-emerald-50/50 p-2.5 text-[11px] text-emerald-800">
+                      <span>
+                        Logged <strong>{currency}{loggedPayday.amount.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</strong> on {fmtDate(loggedPayday.date)}
+                      </span>
+                      <button onClick={() => setIsEditingPayday(true)} className="cursor-pointer text-[10px] underline">
+                        Edit
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="date"
+                          value={paydayDate}
+                          onChange={(e) => setPaydayDate(e.target.value)}
+                          className="rounded-md border border-border-subtle bg-bg-card p-2 text-xs text-text-primary outline-none"
+                        />
+                        <input
+                          type="number"
+                          value={paydayAmount}
+                          onChange={(e) => setPaydayAmount(e.target.value)}
+                          placeholder="Amount"
+                          className="rounded-md border border-border-subtle bg-bg-card p-2 text-xs text-text-primary outline-none"
+                        />
+                      </div>
+                      <button onClick={savePayday} className={`${BTN_PRIMARY} w-full py-1.5 text-xs`}>
+                        Save Payday Record
+                      </button>
+                    </div>
+                  )}
                 </div>
 
-                {/* Buffer gauge: 0–12 months, ticks at the 3 & 6-month guideline */}
-                <div className="mt-4">
-                  <div className="relative">
-                    <div className="h-2.5 w-full overflow-hidden rounded-full bg-bg-secondary">
-                      <div
-                        className="h-full rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min(100, ((emergencyRunwayMonths ?? 0) / 12) * 100)}%`, backgroundColor: runwayColor }}
+                <div className="border-t border-border-subtle pt-3 space-y-3">
+                  <span className={LABEL_MONO}>Base Recurring Monthly Income</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-[10.5px] text-text-muted">Usual Salary ({currency})</label>
+                      <input
+                        type="number"
+                        value={monthlySalary || ""}
+                        onChange={(e) => setMonthlySalary(parseFloat(e.target.value) || 0)}
+                        placeholder="0"
+                        className="mt-1 w-full rounded-md border border-border-subtle bg-bg-card p-2 text-xs text-text-primary outline-none"
                       />
                     </div>
-                    <div className="pointer-events-none absolute inset-y-0 w-px bg-white/70" style={{ left: "25%" }} />
-                    <div className="pointer-events-none absolute inset-y-0 w-px bg-white/70" style={{ left: "50%" }} />
-                  </div>
-                  <div className="relative mt-1 h-3 text-[9px] text-text-muted">
-                    <span className="absolute left-0">0</span>
-                    <span className="absolute -translate-x-1/2" style={{ left: "25%" }}>3 mo</span>
-                    <span className="absolute -translate-x-1/2" style={{ left: "50%" }}>6 mo</span>
-                    <span className="absolute right-0">12+</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-4 border-t border-border-subtle pt-3">
-                  <div>
-                    <span className={LABEL_MONO}>Accessible Reserve</span>
-                    <div className="mt-1 text-[17px] font-bold text-text-primary">
-                      {currency}{accessibleReserve.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
+                    <div>
+                      <label className="text-[10.5px] text-text-muted">Add. Income ({currency})</label>
+                      <input
+                        type="number"
+                        value={additionalIncome || ""}
+                        onChange={(e) => setAdditionalIncome(parseFloat(e.target.value) || 0)}
+                        placeholder="0"
+                        className="mt-1 w-full rounded-md border border-border-subtle bg-bg-card p-2 text-xs text-text-primary outline-none"
+                      />
                     </div>
-                    <span className="text-[10px] text-text-muted">After −{reserveHaircutPct.toFixed(0)}% liquidity haircut</span>
-                  </div>
-                  <div>
-                    <span className={LABEL_MONO}>Monthly Burn</span>
-                    <div className="mt-1 text-[17px] font-bold text-text-primary">
-                      {currency}{monthlyBurn.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                    </div>
-                    <span className="text-[10px] text-text-muted">Projected spend, normalized to 30 days</span>
-                  </div>
-                </div>
-
-                <div className="mt-3.5">
-                  {emergencyRunwayMonths !== null && emergencyRunwayMonths >= 6 ? (
-                    <div className="flex items-center gap-2 rounded-lg border border-emerald-200/50 bg-emerald-50/50 p-2 text-[10px] leading-relaxed text-emerald-800">
-                      <span>✓</span>
-                      <span><strong>Strong:</strong> Over 6 months of buffer — comfortably above the recommended emergency fund.</span>
-                    </div>
-                  ) : emergencyRunwayMonths !== null && emergencyRunwayMonths >= 3 ? (
-                    <div className="flex items-center gap-2 rounded-lg border border-emerald-200/50 bg-emerald-50/50 p-2 text-[10px] leading-relaxed text-emerald-800">
-                      <span>✓</span>
-                      <span><strong>Adequate:</strong> Within the recommended 3–6 month emergency-fund range.</span>
-                    </div>
-                  ) : emergencyRunwayMonths !== null && emergencyRunwayMonths >= 1 ? (
-                    <div className="flex items-center gap-2 rounded-lg border border-amber-200/50 bg-amber-50/50 p-2 text-[10px] leading-relaxed text-amber-800">
-                      <span>⚠</span>
-                      <span><strong>Thin:</strong> Below the 3-month guideline. Build up liquid savings when you can.</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 rounded-lg border border-rose-200/50 bg-rose-50/50 p-2 text-[10px] leading-relaxed text-rose-800">
-                      <AlertTriangle className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
-                      <span><strong>Critical:</strong> Under a month of runway. A single income gap would strain your finances.</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Right: methodology explainer */}
-              <div className="rounded-lg border border-border-subtle bg-bg-primary/40 p-4">
-                <span className="mb-2 block font-mono text-[9px] font-bold tracking-[0.5px] text-text-secondary uppercase">Methodology</span>
-                <p className="text-[10.5px] leading-relaxed text-text-secondary">
-                  <strong className="text-text-primary">Runway = Accessible Reserve ÷ Monthly Burn.</strong> It assumes income stops entirely, so savings alone must cover spending.
-                </p>
-                <div className="mt-2.5 flex flex-col gap-1 border-t border-border-subtle pt-2.5 text-[10.5px]">
-                  <div className="flex justify-between">
-                    <span className="text-text-secondary">Portfolio value</span>
-                    <span className="font-mono text-text-primary">{currency}{portfolioValue.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-text-secondary">Liquidity haircut</span>
-                    <span className="font-mono text-[#b3666b]">−{reserveHaircutPct.toFixed(0)}%</span>
-                  </div>
-                  <div className="flex justify-between font-semibold">
-                    <span className="text-text-secondary">Accessible reserve</span>
-                    <span className="font-mono text-text-primary">{currency}{accessibleReserve.toLocaleString("en-IN", { maximumFractionDigits: 0 })}</span>
-                  </div>
-                </div>
-                <p className="mt-2.5 text-[10px] leading-relaxed text-text-muted">
-                  Volatile assets are discounted — layoffs cluster with downturns, so you may be forced to sell low:
-                </p>
-                <div className="mt-1.5 grid grid-cols-2 gap-x-3 gap-y-0.5 font-mono text-[9.5px] text-text-secondary">
-                  {RESERVE_CLASSES.map((c) => (
-                    <div key={c.key} className="flex justify-between">
-                      <span>{c.label}</span>
-                      <span className="text-text-primary">{(LIQUIDITY_WEIGHTS[c.key] * 100).toFixed(0)}%</span>
-                    </div>
-                  ))}
-                </div>
-                <p className="mt-2.5 text-[9.5px] leading-relaxed text-text-muted">
-                  Conservative by design — real runway stretches further if you cut discretionary spending during a gap.
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Cycle History */}
-      <div className={BENTO_CARD}>
-        <h2 className="mb-4 flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
-          <BarChart3 className="h-4 w-4 text-text-secondary" strokeWidth={2.25} /> Cycle History
-        </h2>
-
-        {cycleHistory.length === 0 ? (
-          <p className="py-4 text-center text-[11px] text-text-muted">
-            History will show up here once a past cycle has logged expenses or a saved payday.
-          </p>
-        ) : (
-          <>
-            {cycleAverages && (
-              <div className="mb-4 grid grid-cols-3 gap-3 border-b border-border-subtle pb-4">
-                <div>
-                  <span className={LABEL_MONO}>Avg Income</span>
-                  <div className="mt-1 text-[15px] font-bold text-text-primary">
-                    {currency}{cycleAverages.avgIncome.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                  </div>
-                </div>
-                <div>
-                  <span className={LABEL_MONO}>Avg Spend</span>
-                  <div className="mt-1 text-[15px] font-bold text-text-primary">
-                    {currency}{cycleAverages.avgSpend.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                  </div>
-                </div>
-                <div>
-                  <span className={LABEL_MONO}>Avg Savings</span>
-                  <div className="mt-1 text-[15px] font-bold" style={{ color: cycleAverages.avgSavings >= 0 ? "#16a34a" : "#b3666b" }}>
-                    {cycleAverages.avgSavings >= 0 ? "+" : ""}{currency}{cycleAverages.avgSavings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
-                    <span className="ml-1 text-[10px] font-semibold text-text-muted">({cycleAverages.avgSavingsRate.toFixed(1)}%)</span>
                   </div>
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      </div>
 
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left">
-                <thead>
-                  <tr>
-                    <th className="border-b border-border-subtle px-2 py-1.5 font-mono text-[10px] font-semibold tracking-[0.4px] text-text-muted uppercase">Cycle</th>
-                    <th className="border-b border-border-subtle px-2 py-1.5 text-right font-mono text-[10px] font-semibold tracking-[0.4px] text-text-muted uppercase">Income</th>
-                    <th className="border-b border-border-subtle px-2 py-1.5 text-right font-mono text-[10px] font-semibold tracking-[0.4px] text-text-muted uppercase">Spend</th>
-                    <th className="border-b border-border-subtle px-2 py-1.5 text-right font-mono text-[10px] font-semibold tracking-[0.4px] text-text-muted uppercase">Savings</th>
-                    <th className="border-b border-border-subtle px-2 py-1.5 text-right font-mono text-[10px] font-semibold tracking-[0.4px] text-text-muted uppercase">Rate</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {cycleHistory.map((c) => {
-                    const savingsRatePct = c.income > 0 ? (c.savings / c.income) * 100 : 0;
-                    return (
+      {/* Main Section 2: Emergency Runway & Cycle History */}
+      <div className="grid grid-cols-2 gap-5 max-lg:grid-cols-1">
+        {/* Emergency Runway Card */}
+        <div className={BENTO_CARD}>
+          <div>
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3">
+              <h2 className="flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
+                <Shield className="h-5 w-5 text-text-secondary" strokeWidth={2} /> Emergency Runway
+              </h2>
+              <span className="font-mono text-[10px] font-semibold text-text-muted uppercase">IF INCOME STOPS</span>
+            </div>
+
+            <div className="mt-4 flex items-baseline gap-2">
+              <span className="text-[32px] font-bold tracking-tight text-text-primary">
+                {emergencyRunwayMonths !== null ? emergencyRunwayMonths.toFixed(1) : "0.0"}
+              </span>
+              <span className="text-sm font-medium text-text-muted">months of runway</span>
+            </div>
+
+            <p className="mt-1 text-[11px] leading-relaxed text-text-muted">
+              Accessible liquid reserves ({currency}{accessibleReserve.toLocaleString("en-IN", { maximumFractionDigits: 0 })}) divided by monthly burn ({currency}{monthlyBurn.toLocaleString("en-IN", { maximumFractionDigits: 0 })}/mo).
+            </p>
+
+            {emergencyRunwayMonths !== null && emergencyRunwayMonths < 3 && (
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-rose-200/50 bg-rose-50/50 p-2.5 text-[11px] text-rose-800">
+                <AlertTriangle size={15} className="shrink-0" />
+                <span>Under 3 months runway. Consider expanding cash reserves for job loss security.</span>
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 border-t border-border-subtle pt-3">
+            <button
+              onClick={() => setShowMethodology(!showMethodology)}
+              className="cursor-pointer text-[10.5px] font-semibold text-text-secondary hover:text-text-primary flex items-center gap-1"
+            >
+              <span>{showMethodology ? "Hide" : "Show"} Liquidity Haircut Methodology</span>
+            </button>
+            {showMethodology && (
+              <div className="mt-2.5 space-y-1 text-[10px] text-text-muted bg-bg-primary p-3 rounded-lg border border-border-subtle">
+                <p className="font-semibold text-text-primary mb-1">Liquidity Haircuts Applied:</p>
+                <div className="grid grid-cols-2 gap-1">
+                  <span>Cash: 100%</span>
+                  <span>Gold: 95%</span>
+                  <span>Mutual Funds / SIP: 90%</span>
+                  <span>Fixed Deposit: 75%</span>
+                  <span>Equities: 80%</span>
+                  <span>Crypto: 65%</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Cycle History Card */}
+        <div className={BENTO_CARD}>
+          <div>
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3">
+              <h2 className="flex items-center gap-2 font-serif text-xl font-semibold tracking-tight text-text-primary">
+                <BarChart3 className="h-5 w-5 text-text-secondary" strokeWidth={2} /> Cycle History &amp; Averages
+              </h2>
+              {cycleAverages && (
+                <span className="font-mono text-[10px] font-semibold text-emerald-700 bg-emerald-500/10 px-2 py-0.5 rounded">
+                  Avg Savings: {currency}{cycleAverages.avgSavings.toLocaleString("en-IN", { maximumFractionDigits: 0 })} ({cycleAverages.avgSavingsRate.toFixed(1)}%)
+                </span>
+              )}
+            </div>
+
+            {cycleHistory.length === 0 ? (
+              <p className="mt-4 text-xs text-text-muted">No completed cycle history available yet.</p>
+            ) : (
+              <div className="mt-3 overflow-x-auto">
+                <table className="w-full text-left text-[11px]">
+                  <thead>
+                    <tr className="border-b border-border-subtle text-[10px] font-semibold text-text-muted uppercase font-mono">
+                      <th className="py-2">Cycle</th>
+                      <th className="py-2 text-right">Income</th>
+                      <th className="py-2 text-right">Spend</th>
+                      <th className="py-2 text-right">Savings</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border-subtle">
+                    {cycleHistory.slice(0, 5).map((c) => (
                       <tr key={c.startStr}>
-                        <td className="border-b border-border-subtle px-2 py-2 text-[12px] whitespace-nowrap text-text-primary">
+                        <td className="py-2 font-medium text-text-primary">
                           {fmtDate(c.startStr)} – {fmtDate(c.endStr)}
-                          {!c.isSalaryLogged && <span className="ml-1.5 text-[9px] text-text-muted">(est.)</span>}
                         </td>
-                        <td className="border-b border-border-subtle px-2 py-2 text-right font-mono text-[12px] text-text-primary">
+                        <td className="py-2 text-right font-mono text-text-secondary">
                           {currency}{c.income.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
                         </td>
-                        <td className="border-b border-border-subtle px-2 py-2 text-right font-mono text-[12px] text-text-primary">
+                        <td className="py-2 text-right font-mono text-text-secondary">
                           {currency}{c.spend.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
                         </td>
-                        <td
-                          className="border-b border-border-subtle px-2 py-2 text-right font-mono text-[12px] font-semibold"
-                          style={{ color: c.savings >= 0 ? "#16a34a" : "#b3666b" }}
-                        >
+                        <td className="py-2 text-right font-mono font-semibold" style={{ color: c.savings >= 0 ? "#16a34a" : "#b3666b" }}>
                           {c.savings >= 0 ? "+" : ""}{currency}{c.savings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
                         </td>
-                        <td className="border-b border-border-subtle px-2 py-2 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <div className="h-1.5 w-12 overflow-hidden rounded-full bg-bg-secondary">
-                              <div
-                                className="h-full rounded-full"
-                                style={{
-                                  width: `${Math.min(100, Math.max(0, Math.abs(savingsRatePct)))}%`,
-                                  backgroundColor: savingsRatePct >= 0 ? "#16a34a" : "#b3666b",
-                                }}
-                              />
-                            </div>
-                            <span className="font-mono text-[11px] font-semibold" style={{ color: savingsRatePct >= 0 ? "#16a34a" : "#b3666b" }}>
-                              {savingsRatePct.toFixed(0)}%
-                            </span>
-                          </div>
-                        </td>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

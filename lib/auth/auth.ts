@@ -11,9 +11,7 @@ export interface AuthedUser {
   displayName: string | null;
 }
 
-// Everything a data-layer call needs: which Firebase project to talk to, and
-// the caller's verified identity plus their raw ID token. The token is passed
-// through to Firestore so security rules are enforced as this user.
+/** Verified session context for Firebase and user identity. */
 export interface Session {
   creds: Credentials;
   config: FirebaseWebConfig;
@@ -22,10 +20,7 @@ export interface Session {
   user: AuthedUser;
 }
 
-const TOKEN_CACHE_TTL = 5 * 60 * 1000; // well under Firebase's 1h token lifetime
-
-// Fixed-window limiter for failed token verifications, keyed by client IP.
-// In-memory, so per-instance on serverless — still blunts brute-force attempts.
+const TOKEN_CACHE_TTL = 5 * 60 * 1000;
 const AUTH_FAILURE_LIMIT = 20;
 const AUTH_FAILURE_WINDOW = 10 * 60 * 1000;
 const authFailures = new Map<string, { count: number; windowStart: number }>();
@@ -54,7 +49,6 @@ function recordAuthFailure(ip: string) {
   } else {
     entry.count++;
   }
-  // Opportunistic cleanup so the map can't grow unbounded.
   if (authFailures.size > 10_000) {
     for (const [key, value] of authFailures) {
       if (now - value.windowStart > AUTH_FAILURE_WINDOW) authFailures.delete(key);
@@ -62,9 +56,7 @@ function recordAuthFailure(ip: string) {
   }
 }
 
-// Verifies a Firebase ID token against the Identity Toolkit API and returns the
-// account it belongs to. Results are cached briefly (keyed by project + token
-// hash) so every API call doesn't cost an extra Google round-trip.
+/** Verifies Firebase ID token with Identity Toolkit and caches user session. */
 export async function verifyIdToken(config: FirebaseWebConfig, idToken: string): Promise<AuthedUser> {
   const tokenHash = createHash("sha256").update(idToken).digest("hex");
   const cacheKey = `auth:${config.projectId}:${tokenHash}`;
@@ -99,8 +91,7 @@ export async function verifyIdToken(config: FirebaseWebConfig, idToken: string):
   return user;
 }
 
-// Exchanges a permanent Firebase Refresh Token for a fresh ID token on-demand.
-// Allows long-lived API tokens for LLM integrations, custom GPTs, and automated scripts.
+/** Exchanges a refresh token for a fresh ID token. */
 export async function refreshIdToken(
   config: FirebaseWebConfig,
   refreshToken: string
@@ -146,8 +137,7 @@ export async function refreshIdToken(
   return result;
 }
 
-// Authenticates an API request: resolves credentials, extracts the bearer
-// token, and verifies it. Supports both short-lived ID tokens and permanent API keys/refresh tokens. Throws ApiError (401/429/400) on failure.
+/** Authenticates request bearer token and returns session context. */
 export async function requireUser(req: NextRequest): Promise<Session> {
   const ip = clientIp(req);
   checkAuthFailures(ip);

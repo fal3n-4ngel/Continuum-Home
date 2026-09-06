@@ -1303,6 +1303,23 @@ export default function Dashboard() {
     });
   };
 
+  const updateExpense = async (id: string, updates: Partial<Expense>) => {
+    const previousList = [...expenses];
+    setExpenses((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
+    try {
+      const res = await fetch(`/api/expenses/${id}`, {
+        method: "PATCH",
+        headers: getHeaders(),
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) throw new Error("Failed to update expense");
+    } catch (err) {
+      console.error(err);
+      setExpenses(previousList);
+      throw err;
+    }
+  };
+
   /* ─── Subscription Actions ─── */
   const addSubscription = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -2221,7 +2238,7 @@ export default function Dashboard() {
         setExpensesLoaded={setExpensesLoaded}
       />
 
-      <main className="ml-[250px] flex max-w-[1300px] flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(68px+env(safe-area-inset-bottom))]">
+      <main className="ml-[250px] flex w-full max-w-[1680px] flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(68px+env(safe-area-inset-bottom))]">
 
 
         {activeTab === "expenses" && (
@@ -2263,6 +2280,7 @@ export default function Dashboard() {
               setExpenseNotes={setExpenseNotes}
               isAddingExpense={isAddingExpense}
               deleteExpense={deleteExpense}
+              updateExpense={updateExpense}
               expenseSearch={expenseSearch}
               setExpenseSearch={setExpenseSearch}
               ledgerCategoryFilter={ledgerCategoryFilter}
@@ -2499,6 +2517,7 @@ export default function Dashboard() {
             cycleAverages={cycleAverages}
             reconciliations={reconciliations}
             logUnaccountedGap={logUnaccountedGap}
+            getHeaders={getHeaders}
           />
         )}
 
