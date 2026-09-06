@@ -23,7 +23,7 @@
 <img width="2073" height="1269" alt="image" src="https://github.com/user-attachments/assets/d1968d0b-ee2d-4375-8f60-a03bdd9c3521" />
 
 ## What is Continuum?
-Continuum is a self-hosted, privacy-first dashboard that replaces a pile of single-purpose tracking apps — budget spreadsheet, Letterboxd, Goodreads, subscription reminders — with one place to manage expenses, investment portfolios, media watchlists, book libraries, and recurring subscriptions.<br/>It started as a personal API I fed into a Custom GPT so I could log expenses over chat instead of paying for another app. A friend wanted it too, so instead of handing over my personal API collection I built an actual dashboard around it. It's designed to natively integrate with AI assistants through a standardized OpenAPI schema.
+Continuum is a self-hosted personal data platform for tracking your finances, investments, media, books, and subscriptions — with an API designed to be used by both applications and AI clients..<br/>It started as a personal API I fed into a Custom GPT so I could log expenses over chat instead of paying for another app. A friend wanted it too, so instead of handing over my personal API collection I built an actual dashboard around it. It's designed to natively integrate with AI assistants through a standardized OpenAPI schema.
 
 
 ## Technical Details
@@ -34,6 +34,14 @@ Styling: Tailwind CSS
 Database & Auth: Firebase (Google Sign-In + Firestore REST API)
 Architecture: Modular Domain-Driven Subdirectories (lib/audit-postback, lib/auth, lib/cron, lib/finance, lib/firebase, lib/integrations, lib/utils)
 ```
+
+## Architecture
+
+Every caller — a signed-in browser or an external AI client that completed the OAuth flow — ends up with the same kind of bearer token and hits the same API routes; there is no separate "AI" surface. Those routes read through an in-memory + Redis cache in front of Firestore, using the *caller's own* ID token, so per-user isolation is enforced by Firestore security rules rather than app code. Crons are the one exception: they have no user token to act with, so they carry a service account through the Admin SDK instead, which bypasses those same rules.
+
+The other structural decision is that audit telemetry leaves the building entirely: `lib/domain-events` doesn't write to this app's own Firestore, it posts to **monolith-api**, a separate ingestion service that stores audit telemetry encrypted at rest in BigQuery for security auditing, analytics, and session telemetry. Route handlers also call out to Trakt, AniList, OMDb, and Gemini for sync, enrichment, and the AI assistant — plain leaf API calls shown alongside the core flow in the diagram below.
+
+![Continuum Architecture Diagram](architecture-diagram.svg)
 
 ## Features
 
@@ -179,14 +187,6 @@ lib/
 ├── integrations/      # AniList, Trakt, Discord Webhooks, Gemini AI Budget
 └── utils/             # Dates, formatters, encryption, cache, redis, errors, route-handlers, site config
 ```
-
-## Architecture
-
-Every caller — a signed-in browser or an external AI client that completed the OAuth flow — ends up with the same kind of bearer token and hits the same API routes; there is no separate "AI" surface. Those routes read through an in-memory + Redis cache in front of Firestore, using the *caller's own* ID token, so per-user isolation is enforced by Firestore security rules rather than app code. Crons are the one exception: they have no user token to act with, so they carry a service account through the Admin SDK instead, which bypasses those same rules.
-
-The other structural decision is that audit telemetry leaves the building entirely: `lib/domain-events` doesn't write to this app's own Firestore, it posts to **monolith-api**, a separate ingestion service that stores audit telemetry encrypted at rest in BigQuery for security auditing, analytics, and session telemetry. Route handlers also call out to Trakt, AniList, OMDb, and Gemini for sync, enrichment, and the AI assistant — plain leaf API calls shown alongside the core flow in the diagram below.
-
-![Continuum Architecture Diagram](architecture-diagram.svg)
 
 ## Run Using Node.js
 
