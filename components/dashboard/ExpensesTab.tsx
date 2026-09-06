@@ -4,6 +4,7 @@ import { Expense, Subscription } from "@/types";
 import { downloadCsv } from "@/lib/utils";
 import { ExpenseRow } from "./expenses/ExpenseRow";
 import { ExpenseLedgerControls } from "./expenses/ExpenseLedgerControls";
+import { EditExpenseModal } from "./expenses/EditExpenseModal";
 
 interface ExpensesTabProps {
   currency: string;
@@ -42,6 +43,7 @@ interface ExpensesTabProps {
   setExpenseNotes: (s: string) => void;
   isAddingExpense: boolean;
   deleteExpense: (id: string) => void;
+  updateExpense?: (id: string, updates: Partial<Expense>) => Promise<void>;
   expenseSearch: string;
   setExpenseSearch: (s: string) => void;
   ledgerCategoryFilter: string;
@@ -231,6 +233,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
   setExpenseNotes,
   isAddingExpense,
   deleteExpense,
+  updateExpense,
   expenseSearch,
   setExpenseSearch,
   ledgerCategoryFilter,
@@ -253,6 +256,8 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = React.useState(1);
   const pageSize = 15;
+
+  const [editingExpense, setEditingExpense] = React.useState<Expense | null>(null);
 
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
@@ -822,6 +827,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
                           exp={exp}
                           currency={currency}
                           deleteExpense={deleteExpense}
+                          onEditExpense={(expItem) => setEditingExpense(expItem)}
                         />
                       ))
                     )}
@@ -942,6 +948,22 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
           </div>
         </div>,
         document.body
+      )}
+
+      {mounted && editingExpense && (
+        <EditExpenseModal
+          isOpen={!!editingExpense}
+          expense={editingExpense}
+          currency={currency}
+          allCategories={allCategories}
+          onClose={() => setEditingExpense(null)}
+          onSave={async (id, updates) => {
+            if (updateExpense) {
+              await updateExpense(id, updates);
+            }
+            setEditingExpense(null);
+          }}
+        />
       )}
     </>
   );
