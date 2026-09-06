@@ -33,16 +33,137 @@ Architecture: Modular Domain-Driven Subdirectories (lib/audit-postback, lib/auth
 ```
 
 ## Features
-- Expense ledger with categorized transactions, location-specific currencies, and custom financial-period filtering.
-- Investment portfolio tracking across equities, crypto, mutual funds/SIPs, gold, cash, and fixed deposits — manual entry or live valuation.
-- Unified media watchlist with bidirectional AniList and Trakt sync, Letterboxd CSV imports, and metadata enrichment via OMDb and TVMaze.
-- Book library backed by the OpenLibrary API with reading-progress tracking.
-- Subscription tracker that normalizes monthly and annual costs into a true effective monthly spend.
-- Auto-saving scratchpad for quick, persistent notes.
-- Built-in OpenAPI 3.1 schema (`/api/openapi.json`) for Custom GPT Actions — add expenses, log media, or update your portfolio in plain English. Any other assistant with an equivalent OpenAPI-action builder works the same way; as of now that's Custom GPTs — Gemini Gems and Claude Projects don't expose one in their consumer UI.
-- Real-time audit postback module (`lib/audit-postback/`) for login session auditing and Custom GPT action tracking.
-- AES-256-GCM encryption on sensitive fields, with no admin service account — every request is authenticated with the caller's own Firebase ID token.
 
+### 💰 Expense Ledger
+
+Track spending across customizable financial periods.
+
+* Categorized transactions
+* Custom financial/payday periods
+* Multiple currencies
+* Spending analytics
+* Transaction filtering
+* Import/export
+* Expense management through AI
+
+Example:
+
+> "I spent ₹225 on petrol today."
+
+Your AI client can translate that into an authenticated API request and add the transaction.
+
+---
+
+### 📈 Investment Portfolio
+
+Track multiple types of assets from a single portfolio.
+
+Supported categories:
+
+* Equities
+* Cryptocurrency
+* Mutual funds
+* SIPs
+* Gold
+* Cash
+* Fixed deposits
+* Other assets
+
+Supports both manual and live valuation depending on the asset.
+
+---
+
+### 🎬 Media Watchlist
+
+Keep your movies, shows and anime in one place.
+
+Integrations include:
+
+* AniList
+* Trakt
+* Letterboxd CSV imports
+* OMDb
+* TVMaze
+
+The watchlist supports progress tracking and multiple statuses including:
+
+* Plan to watch
+* Watching
+* Completed
+* Dropped
+* Paused
+
+---
+
+### 📚 Book Library
+
+A lightweight personal book tracker backed by the OpenLibrary API.
+
+Track:
+
+* Books
+* Reading progress
+* Reading status
+
+---
+
+### 💳 Subscription Tracker
+
+Keep recurring subscriptions in one place.
+
+Continuum normalizes billing cycles so monthly and annual subscriptions can be compared using their effective monthly cost.
+
+---
+
+## AI Integration
+
+Continuum exposes an OpenAPI 3.1 schema at:
+
+```text
+/api/openapi.json
+```
+
+This allows compatible AI clients to interact with your personal data through normal API operations.
+
+For example:
+
+```text
+You:
+"I spent ₹500 on dinner."
+
+AI:
+→ Creates an expense
+→ Category: Food
+→ Amount: ₹500
+→ Date: Today
+
+Continuum:
+→ Expense appears in the ledger
+```
+
+The AI does not receive direct access to Firestore.
+
+It receives access to **specific API capabilities**.
+
+### Current integration
+
+Continuum includes a public Custom GPT:
+
+**Continuum Assistant**
+
+Authorization is handled through OAuth 2.0.
+
+You can also connect your own self-hosted instance to a Custom GPT by importing:
+
+```text
+https://your-domain.com/api/openapi.json
+```
+
+and configuring OAuth against your instance.
+
+See [`CUSTOM_GPT_INSTRUCTIONS.md`](CUSTOM_GPT_INSTRUCTIONS.md) for the complete configuration.
+
+---
 ## Project Structure
 
 ```
@@ -206,8 +327,6 @@ If you are setting up your own OpenAI Custom GPT or external assistant connected
 ```text
 Role and Purpose
 You are the Continuum Assistant, an AI agent designed to help the user manage their finances, investments, subscriptions, and media watchlist. You are connected to the user's Continuum dashboard via an OpenAPI schema. Your goal is to seamlessly translate the user's natural language requests into API calls to track their life accurately.
-
-Note: scratchpad notes are not reachable through this integration — there is no notes endpoint in the imported schema. If asked to read or save a note, say that's only available inside the dashboard's own AI assistant, not here.
 
 Core Capabilities & API Mapping
 You have access to several REST API endpoints. Use the following logic to determine which endpoint to call — but always defer to the actual operationId/schema in your imported Actions if anything here seems out of date.
