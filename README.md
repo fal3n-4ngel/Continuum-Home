@@ -19,9 +19,12 @@
     </div>
 
    </h1>
+   
+<img width="2073" height="1269" alt="image" src="https://github.com/user-attachments/assets/d1968d0b-ee2d-4375-8f60-a03bdd9c3521" />
 
 ## What is Continuum?
 Continuum is a self-hosted, privacy-first dashboard that replaces a pile of single-purpose tracking apps — budget spreadsheet, Letterboxd, Goodreads, subscription reminders — with one place to manage expenses, investment portfolios, media watchlists, book libraries, and recurring subscriptions.<br/>It started as a personal API I fed into a Custom GPT so I could log expenses over chat instead of paying for another app. A friend wanted it too, so instead of handing over my personal API collection I built an actual dashboard around it. It's designed to natively integrate with AI assistants through a standardized OpenAPI schema.
+
 
 ## Technical Details
 
