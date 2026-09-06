@@ -2517,6 +2517,7 @@ export default function Dashboard() {
             cycleAverages={cycleAverages}
             reconciliations={reconciliations}
             logUnaccountedGap={logUnaccountedGap}
+            getHeaders={getHeaders}
           />
         )}
 

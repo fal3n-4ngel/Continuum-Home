@@ -74,6 +74,12 @@ service cloud.firestore {
       }
     }
 
+    // Single health_analytics doc per user, keyed by uid.
+    match /health_analytics/{userId} {
+      allow read, write: if request.auth != null
+                         && request.auth.uid == userId;
+    }
+
     // Everything else is denied.
     match /{document=**} {
       allow read, write: if false;

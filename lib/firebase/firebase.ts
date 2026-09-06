@@ -1150,3 +1150,62 @@ export async function saveDailyRecommendation(
 
   await cacheSet(cacheKey, docData as unknown as DailyRecommendation, RECOMMENDATIONS_CACHE_TTL);
 }
+
+/* ─── Financial Health AI Analytics Cache ─── */
+export interface HealthAnalyticsReport {
+  trendStatus: string;
+  trendSeverity: "good" | "neutral" | "warning";
+  executiveSummary: string;
+  topCategories: { category: string; amount: number; percentage: number }[];
+  spendTrends: string[];
+  anomalies: string[];
+  savingOpportunities: string[];
+  safeSpendAdvice: string;
+  fingerprint: string;
+  updatedAt: number;
+}
+
+const HEALTH_ANALYTICS_CACHE_TTL = 3_600_000; // 1 hour in ms
+
+function healthAnalyticsCacheKey(session: Session): string {
+  return `health_analytics:${session.config.projectId}:${session.uid}`;
+}
+
+export async function getHealthAnalytics(session: Session): Promise<HealthAnalyticsReport | null> {
+  const cacheKey = healthAnalyticsCacheKey(session);
+  const cached = await cacheGet<HealthAnalyticsReport>(cacheKey);
+  if (cached !== undefined && cached !== null) return cached;
+
+  try {
+    const docPath = `${docsRoot(session)}/recommendations/${session.uid}/entries/health_analytics`;
+    const snap = await fsFetch<FirestoreDocument>(session, docPath);
+    const data = fromFields(snap.fields || {}) as unknown as HealthAnalyticsReport;
+    await cacheSet(cacheKey, data, HEALTH_ANALYTICS_CACHE_TTL);
+    return data;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      await cacheSet(cacheKey, null, HEALTH_ANALYTICS_CACHE_TTL);
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function saveHealthAnalytics(
+  session: Session,
+  report: HealthAnalyticsReport
+): Promise<void> {
+  const cacheKey = healthAnalyticsCacheKey(session);
+  const docPath = `${docsRoot(session)}/recommendations/${session.uid}/entries/health_analytics`;
+  const body = {
+    fields: toFields(report as any),
+  };
+
+  await fsFetch(session, docPath, {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  });
+
+  await cacheSet(cacheKey, report, HEALTH_ANALYTICS_CACHE_TTL);
+}
+

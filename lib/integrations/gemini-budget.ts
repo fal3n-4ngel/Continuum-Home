@@ -8,9 +8,11 @@ import { redis } from "@/lib/utils";
 // reserve against the same counter, or the fallback path can blow through
 // whatever the cron already spent — which is exactly what caused the 429s.
 //
-// Capped below Google's real 20 to leave a safety margin for clock/quota
-// boundary drift, not because we know the true remaining count precisely.
-const DAILY_LIMIT = 16;
+// Google AI Studio free tier permits up to 1,500 requests/day (RPD) for Gemini Flash.
+// Can be customized via process.env.GEMINI_DAILY_LIMIT.
+const DAILY_LIMIT = process.env.GEMINI_DAILY_LIMIT
+  ? Number(process.env.GEMINI_DAILY_LIMIT)
+  : 1500;
 
 // Plain UTC calendar date — deliberately NOT the IST-based date the two
 // routes each use for their own recommendation-storage bucketing (which

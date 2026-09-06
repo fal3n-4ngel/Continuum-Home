@@ -19,9 +19,12 @@ import {
   CheckCircle2,
   HelpCircle,
   Settings2,
+  RotateCw,
+  Lightbulb,
 } from "lucide-react";
 import { InvestmentAsset } from "@/types";
 import { getEffectiveAmount } from "@/lib/finance";
+import { HealthAnalyticsReport } from "@/lib/firebase";
 
 interface PayCycle {
   startStr: string;
@@ -82,6 +85,7 @@ interface FinancialHealthTabProps {
   cycleAverages: CycleAverages | null;
   reconciliations: Record<string, number>;
   logUnaccountedGap: (amount: number) => void;
+  getHeaders?: () => Record<string, string>;
 }
 
 const STAT_CARD =
@@ -112,6 +116,303 @@ const LIQUIDITY_WEIGHTS: Record<string, number> = {
 };
 const DEFAULT_LIQUIDITY_WEIGHT = 0.85;
 
+interface GeminiHealthAnalyticsProps {
+  currency: string;
+  payCycle: PayCycle;
+  targetSavingsGoal: number;
+  portfolioValue: number;
+  getHeaders?: () => Record<string, string>;
+}
+
+const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
+  currency,
+  payCycle,
+  targetSavingsGoal,
+  portfolioValue,
+  getHeaders,
+}) => {
+  const [report, setReport] = useState<HealthAnalyticsReport | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [isCached, setIsCached] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchAnalytics = async (force: boolean = false) => {
+    if (force) setRefreshing(true);
+    else setLoading(true);
+    setError(null);
+
+    try {
+      const payload = {
+        startStr: payCycle.startStr,
+        spentSoFar: payCycle.spentSoFar,
+        projectedTotalSpend: payCycle.projectedTotalSpend,
+        prevCycleSpend: payCycle.prevCycleSpend,
+        prevCycleSpendToSameDay: payCycle.prevCycleSpendToSameDay,
+        paceDeltaPct: payCycle.paceDeltaPct,
+        cycleCatBreakdown: payCycle.cycleCatBreakdown,
+        totalIncome: payCycle.totalIncome,
+        targetSavings: targetSavingsGoal,
+        currency,
+      };
+
+      const search = new URLSearchParams({
+        startStr: payCycle.startStr,
+        spentSoFar: String(payCycle.spentSoFar),
+        projectedTotalSpend: String(payCycle.projectedTotalSpend),
+        prevCycleSpend: String(payCycle.prevCycleSpend),
+        prevCycleSpendToSameDay: String(payCycle.prevCycleSpendToSameDay),
+        totalIncome: String(payCycle.totalIncome),
+        targetSavings: String(targetSavingsGoal),
+        currency,
+      });
+      if (payCycle.paceDeltaPct != null) {
+        search.set("paceDeltaPct", String(payCycle.paceDeltaPct));
+      }
+      if (payCycle.cycleCatBreakdown) {
+        search.set("cycleCatBreakdown", JSON.stringify(payCycle.cycleCatBreakdown));
+      }
+      if (force) search.set("force", "true");
+
+      const authHeaders = getHeaders ? getHeaders() : {};
+      const res = await fetch(`/api/assistant/health-analytics?${search.toString()}`, {
+        method: force ? "POST" : "GET",
+        headers: { "Content-Type": "application/json", ...authHeaders },
+        body: force ? JSON.stringify(payload) : undefined,
+      });
+
+      if (!res.ok) throw new Error("Failed to load AI analytics");
+
+      const data = await res.json();
+      if (data.report) {
+        setReport(data.report);
+        setIsCached(!!data.cached);
+      } else if (data.budgetExceeded) {
+        setError("Daily Gemini request limit reached. Showing latest saved snapshot.");
+      }
+    } catch (err) {
+      console.error("Gemini spend analytics fetch error:", err);
+      setError("AI spend analytics unavailable at the moment");
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnalytics(false);
+  }, [
+    payCycle.startStr,
+    payCycle.spentSoFar,
+    payCycle.projectedTotalSpend,
+    payCycle.prevCycleSpend,
+    targetSavingsGoal,
+  ]);
+
+  const severityColor = (severity?: string) => {
+    if (severity === "good") return "text-emerald-700 bg-emerald-500/10 border-emerald-500/30";
+    if (severity === "warning") return "text-rose-700 bg-rose-500/10 border-rose-500/30";
+    return "text-amber-700 bg-amber-500/10 border-amber-500/30";
+  };
+
+  const cleanText = (str: string): string => {
+    if (!str) return "";
+    return str.replace(/\*\*/g, "").replace(/#/g, "").trim();
+  };
+
+  const renderFormattedBullet = (str: string) => {
+    const clean = cleanText(str);
+    const colonIdx = clean.indexOf(":");
+    if (colonIdx > 0 && colonIdx < 35) {
+      const title = clean.slice(0, colonIdx);
+      const body = clean.slice(colonIdx + 1);
+      return (
+        <span>
+          <strong className="font-semibold text-text-primary">{title}:</strong>
+          {body}
+        </span>
+      );
+    }
+    return <span>{clean}</span>;
+  };
+
+  const formattedDate = report?.updatedAt
+    ? new Date(report.updatedAt).toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+
+  return (
+    <div className="rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col gap-4 relative overflow-hidden transition-all duration-200">
+      {/* Top Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle pb-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle bg-bg-primary text-text-secondary">
+            <BarChart3 size={16} />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-serif text-xl font-semibold tracking-tight text-text-primary">
+                Monthly Spend &amp; Trend Analytics
+              </h3>
+              {report && (
+                <span className={`px-2 py-0.5 rounded font-mono text-[10px] font-semibold border ${severityColor(report.trendSeverity)}`}>
+                  {cleanText(report.trendStatus)}
+                </span>
+              )}
+            </div>
+            <p className="text-[11px] text-text-muted">
+              Category burn breakdown, pace trajectory, and budget optimization strategies.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {report?.updatedAt && (
+            <span className="font-mono text-[10px] font-medium text-text-muted bg-bg-primary px-2.5 py-1 rounded-md border border-border-subtle">
+              {isCached ? `Cached (${formattedDate})` : "Updated"}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={() => fetchAnalytics(true)}
+            disabled={loading || refreshing}
+            className="cursor-pointer rounded-md border border-border-subtle bg-bg-primary px-3 py-1.5 text-[11.5px] font-medium text-text-primary transition-all hover:bg-border-subtle/50 disabled:opacity-50 flex items-center gap-1.5"
+          >
+            <RotateCw size={12} className={refreshing ? "animate-spin" : ""} />
+            <span>{refreshing ? "Updating..." : "Refresh Analytics"}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Loading Skeleton */}
+      {loading && !report && (
+        <div className="py-6 flex items-center justify-center gap-2 text-xs font-medium text-text-secondary">
+          <RotateCw size={16} className="animate-spin text-text-muted" />
+          <span>Analyzing monthly category spend patterns...</span>
+        </div>
+      )}
+
+      {/* Error state */}
+      {error && !report && (
+        <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800">
+          <AlertTriangle size={15} className="shrink-0 text-amber-600" />
+          <span>{error}</span>
+        </div>
+      )}
+
+      {/* Report Content */}
+      {report && (
+        <div className="flex flex-col gap-4 text-xs">
+          {/* Executive Summary */}
+          <div className="rounded-lg border border-border-subtle bg-bg-primary p-3.5 leading-relaxed text-text-secondary">
+            <p className="font-medium text-text-primary">{cleanText(report.executiveSummary)}</p>
+          </div>
+
+          {/* Top Categories Progress Breakdown */}
+          {report.topCategories && report.topCategories.length > 0 && (
+            <div className="rounded-lg border border-border-subtle bg-bg-primary p-3.5">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary block mb-2.5">
+                TOP CATEGORY BURN BREAKDOWN
+              </span>
+              <div className="space-y-2.5">
+                {report.topCategories.map((cat, idx) => (
+                  <div key={idx} className="flex flex-col gap-1">
+                    <div className="flex items-center justify-between text-[11.5px] font-medium">
+                      <span className="text-text-primary capitalize">{cleanText(cat.category)}</span>
+                      <span className="font-mono text-text-muted">
+                        {currency}{cat.amount.toLocaleString("en-IN")} ({cat.percentage}%)
+                      </span>
+                    </div>
+                    <div className="h-1.5 w-full rounded-full bg-border-subtle/40 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-text-primary transition-all duration-300"
+                        style={{ width: `${Math.min(100, cat.percentage)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Safe Spend Advice Box */}
+          {report.safeSpendAdvice && (
+            <div className="flex items-start gap-2.5 rounded-lg border border-border-subtle bg-bg-primary p-3.5 text-text-primary">
+              <ShieldCheck size={16} className="shrink-0 text-text-secondary mt-0.5" />
+              <div className="leading-snug">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary block mb-1">
+                  MONTHLY SPEND PACE GUIDANCE
+                </span>
+                <p className="text-[11.5px] font-medium leading-relaxed">{cleanText(report.safeSpendAdvice)}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Spend Trends & Anomalies Grid */}
+          <div className="grid grid-cols-2 gap-4 max-md:grid-cols-1">
+            {/* Monthly Spend Trends */}
+            {report.spendTrends && report.spendTrends.length > 0 && (
+              <div className="rounded-lg border border-border-subtle bg-bg-primary p-3.5">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary flex items-center gap-1.5 mb-2">
+                  <TrendingUp size={13} className="text-emerald-700" /> MONTHLY SPEND TRENDS
+                </span>
+                <ul className="space-y-2 text-[11.5px] text-text-secondary">
+                  {report.spendTrends.map((s, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-emerald-600 font-bold shrink-0">•</span>
+                      <div className="leading-relaxed">{renderFormattedBullet(s)}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Anomalies */}
+            {report.anomalies && report.anomalies.length > 0 && (
+              <div className="rounded-lg border border-border-subtle bg-bg-primary p-3.5">
+                <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary flex items-center gap-1.5 mb-2">
+                  <AlertTriangle size={13} className="text-amber-700" /> CATEGORY ANOMALIES &amp; SPIKES
+                </span>
+                <ul className="space-y-2 text-[11.5px] text-text-secondary">
+                  {report.anomalies.map((r, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-amber-600 font-bold shrink-0">•</span>
+                      <div className="leading-relaxed">{renderFormattedBullet(r)}</div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+
+          {/* Saving Opportunities */}
+          {report.savingOpportunities && report.savingOpportunities.length > 0 && (
+            <div className="rounded-lg border border-border-subtle bg-bg-primary p-3.5">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary flex items-center gap-1.5 mb-2">
+                <Lightbulb size={13} className="text-text-primary" /> ACTIONABLE MONTHLY SAVINGS STRATEGY
+              </span>
+              <ul className="space-y-2 text-[11.5px] text-text-secondary">
+                {report.savingOpportunities.map((rec, idx) => (
+                  <li key={idx} className="flex items-start gap-2">
+                    <span className="font-mono text-[10px] font-bold text-text-primary bg-border-subtle/50 rounded px-1.5 py-0.5 shrink-0 mt-0.5">
+                      #{idx + 1}
+                    </span>
+                    <div className="leading-relaxed">{renderFormattedBullet(rec)}</div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   currency,
   investments,
@@ -129,6 +430,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   cycleAverages,
   reconciliations,
   logUnaccountedGap,
+  getHeaders,
 }) => {
   const [reconcileAnswer, setReconcileAnswer] = useState<"yes" | "no" | null>(null);
   const [actualAmount, setActualAmount] = useState("");
@@ -344,6 +646,15 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Gemini AI Financial Health Analytics Widget */}
+      <GeminiHealthAnalytics
+        currency={currency}
+        payCycle={payCycle}
+        targetSavingsGoal={targetSavingsGoal}
+        portfolioValue={portfolioValue}
+        getHeaders={getHeaders}
+      />
 
       {/* Top 5 KPI Executive Stat Cards */}
       <div className="grid grid-cols-5 gap-4 max-2xl:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
