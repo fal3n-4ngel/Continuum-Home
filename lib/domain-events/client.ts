@@ -5,7 +5,7 @@ import { DomainEvent } from "./types";
 
 const DEFAULT_MONOLITH_API_URL = "https://monolith-postbacks.adithyakrishnan.com";
 const MAX_BODY_BYTES = 16_000;
-const TIMEOUT_MS = 3_000;
+const TIMEOUT_MS = 10_000;
 const MAX_QUEUED_EVENTS = 50;
 const ALERT_THROTTLE_MS = 15 * 60 * 1000; // 15 minutes
 
