@@ -151,6 +151,24 @@ const functionDeclarations: FunctionDeclaration[] = [
   }
 ];
 
+function recordAgentEvent(
+  session: any,
+  eventType: any,
+  entityId?: string,
+  payload?: Record<string, unknown>
+) {
+  recordDomainEvent({
+    eventType,
+    userId: session.uid,
+    userEmail: session.user.email,
+    entityId,
+    payload: {
+      channel: "kirko_agent",
+      ...payload,
+    },
+  });
+}
+
 async function executeTool(session: any, name: string, args: any) {
   try {
     switch (name) {
@@ -158,67 +176,37 @@ async function executeTool(session: any, name: string, args: any) {
         return await listExpenses(session, args);
       case "createExpense": {
         const result = await createExpense(session, args);
-        if (result && result.id) {
-          recordDomainEvent({
-            eventType: DOMAIN_EVENTS.EXPENSE_CREATED,
-            userId: session.uid,
-            entityId: result.id,
-            userEmail: session.user.email,
-            payload: {
-              title: args.title,
-              amount: args.amount,
-              category: args.category,
-              date: args.date,
-              channel: "kirko_agent",
-            },
+        if (result?.id) {
+          recordAgentEvent(session, DOMAIN_EVENTS.EXPENSE_CREATED, result.id, {
+            title: args.title,
+            amount: args.amount,
+            category: args.category,
+            date: args.date,
           });
         }
         return result;
       }
       case "deleteExpense": {
         const result = await archiveExpense(session, args.id);
-        recordDomainEvent({
-          eventType: DOMAIN_EVENTS.EXPENSE_DELETED,
-          userId: session.uid,
-          entityId: args.id,
-          userEmail: session.user.email,
-          payload: {
-            channel: "kirko_agent",
-          },
-        });
+        recordAgentEvent(session, DOMAIN_EVENTS.EXPENSE_DELETED, args.id);
         return result;
       }
       case "listWatchlistItems":
         return await listWatchlist(session);
       case "addWatchlistItem": {
         const result = await addWatchlistItem(session, args);
-        if (result && result.id) {
-          recordDomainEvent({
-            eventType: DOMAIN_EVENTS.WATCHLIST_ADDED,
-            userId: session.uid,
-            entityId: result.id,
-            userEmail: session.user.email,
-            payload: {
-              title: args.title,
-              type: args.type,
-              status: args.status,
-              channel: "kirko_agent",
-            },
+        if (result?.id) {
+          recordAgentEvent(session, DOMAIN_EVENTS.WATCHLIST_ADDED, result.id, {
+            title: args.title,
+            type: args.type,
+            status: args.status,
           });
         }
         return result;
       }
       case "updateWatchlistItem": {
         const result = await updateWatchlistItem(session, args.id, args);
-        recordDomainEvent({
-          eventType: DOMAIN_EVENTS.WATCHLIST_UPDATED,
-          userId: session.uid,
-          entityId: args.id,
-          userEmail: session.user.email,
-          payload: {
-            channel: "kirko_agent",
-          },
-        });
+        recordAgentEvent(session, DOMAIN_EVENTS.WATCHLIST_UPDATED, args.id);
         return result;
       }
       case "listSubscriptions":
