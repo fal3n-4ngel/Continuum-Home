@@ -22,9 +22,45 @@
    
 <img width="2073" height="1269" alt="image" src="https://github.com/user-attachments/assets/d1968d0b-ee2d-4375-8f60-a03bdd9c3521" />
 
+<p align="center">
+  <a href="https://continuum-home.vercel.app/">
+    <strong>🚀 Try Continuum </strong>
+  </a>
+</p>
+
 ## What is Continuum?
 Continuum is a self-hosted personal data platform for tracking your finances, investments, media, books, and subscriptions — with an API designed to be used by both applications and AI clients..<br/>It started as a personal API I fed into a Custom GPT so I could log expenses over chat instead of paying for another app. A friend wanted it too, so instead of handing over my personal API collection I built an actual dashboard around it. It's designed to natively integrate with AI assistants through a standardized OpenAPI schema.
 
+## Why Continuum?
+
+Most personal tracking apps are isolated tools,
+Continuum treats your personal data as one system.
+
+```text
+
+
+                    Continuum
+                        │
+             ┌──────────┼──────────┐
+             │          │          │
+          Finance     Media       Life
+             │          │          │
+         Expenses     Movies     Notes
+         Portfolio    Anime      ...
+         Subs         Books
+             │          │
+             └──────────┼──────────┘
+                        │
+                    Continuum API
+                        │
+              ┌─────────┼─────────┐
+              │         │         │
+           Web App   ChatGPT    Other
+                                 Clients
+```
+The API is the source of truth.
+
+AI is simply another client.
 
 ## Technical Details
 
