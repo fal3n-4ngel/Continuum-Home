@@ -25,6 +25,7 @@ import {
 import { InvestmentAsset } from "@/types";
 import { getEffectiveAmount } from "@/lib/finance";
 import { HealthAnalyticsReport } from "@/lib/firebase";
+import { toLocalDateStr } from "@/lib/utils/dates";
 
 interface PayCycle {
   startStr: string;
@@ -69,6 +70,7 @@ interface CycleAverages {
 
 interface FinancialHealthTabProps {
   currency: string;
+  expenses?: Array<{ amount: number | null; date: string | null }>;
   investments: InvestmentAsset[];
   showInvestmentsTab: boolean;
   salaryDay: number;
@@ -415,6 +417,7 @@ const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
 
 export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   currency,
+  expenses = [],
   investments,
   showInvestmentsTab,
   monthlySalary,
@@ -552,9 +555,29 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   // Is user behind target savings goal?
   const isBehindTarget = spendablePoolForTarget < 0;
 
-  // Safe daily and weekly allowances to hit target
-  const safeToday = isBehindTarget ? 0 : spendablePoolForTarget / remainingDays;
-  const safeWeek = safeToday * daysThisWeek;
+  // Gross daily and weekly limits to hit target
+  const grossDailyLimit = isBehindTarget ? 0 : spendablePoolForTarget / remainingDays;
+  const grossWeekLimit = grossDailyLimit * daysThisWeek;
+
+  // Calculate Sunday of the current calendar week (Sunday to Saturday)
+  const todayStr = toLocalDateStr(new Date());
+  const todayObj = new Date();
+  const dayOfWeek = todayObj.getDay(); // 0 is Sunday, 1 is Monday, ..., 6 is Saturday
+  const sundayObj = new Date(todayObj);
+  sundayObj.setDate(todayObj.getDate() - dayOfWeek);
+  const weekStartStr = toLocalDateStr(sundayObj);
+
+  const todaySpent = expenses
+    .filter((e) => e.date === todayStr && typeof e.amount === "number")
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+  const thisWeekSpent = expenses
+    .filter((e) => e.date && e.date >= weekStartStr && e.date <= todayStr && typeof e.amount === "number")
+    .reduce((sum, e) => sum + (e.amount || 0), 0);
+
+  // Net remaining safe spend for today and this week after subtracting already spent amounts
+  const safeToday = Math.max(0, grossDailyLimit - todaySpent);
+  const safeWeek = Math.max(0, grossWeekLimit - thisWeekSpent);
 
   const deficitToTarget = isBehindTarget ? Math.abs(spendablePoolForTarget) : 0;
 
@@ -688,13 +711,25 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
               <span className={LABEL_MONO}>SAFE TODAY</span>
               <span
                 className={`font-mono text-[9.5px] font-medium px-1.5 py-0.5 rounded ${
-                  isBehindTarget ? "text-rose-700 bg-rose-500/10" : "text-emerald-700 bg-emerald-500/10"
+                  isBehindTarget
+                    ? "text-rose-700 bg-rose-500/10"
+                    : todaySpent > grossDailyLimit
+                    ? "text-rose-700 bg-rose-500/10"
+                    : "text-emerald-700 bg-emerald-500/10"
                 }`}
               >
-                {isBehindTarget ? "BEHIND TARGET" : "TO HIT TARGET"}
+                {isBehindTarget
+                  ? "BEHIND TARGET"
+                  : todaySpent > grossDailyLimit
+                  ? "OVER TODAY LIMIT"
+                  : "TO HIT TARGET"}
               </span>
             </div>
-            <div className={`${STAT_VALUE} ${isBehindTarget ? "text-rose-600" : "text-emerald-600"}`}>
+            <div
+              className={`${STAT_VALUE} ${
+                isBehindTarget || todaySpent > grossDailyLimit ? "text-rose-600" : "text-emerald-600"
+              }`}
+            >
               {currency}
               {Math.floor(safeToday).toLocaleString("en-IN")}
             </div>
@@ -702,7 +737,9 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           <span className={STAT_SUBTEXT}>
             {isBehindTarget
               ? `Behind goal by ${currency}${deficitToTarget.toLocaleString("en-IN")}`
-              : `Spend max ${currency}${Math.floor(safeToday)}/day to save ${currency}${targetSavingsGoal.toLocaleString("en-IN")}`}
+              : todaySpent > 0
+              ? `Spent ${currency}${Math.round(todaySpent).toLocaleString("en-IN")} today of ${currency}${Math.floor(grossDailyLimit).toLocaleString("en-IN")} limit`
+              : `Spend max ${currency}${Math.floor(grossDailyLimit)}/day to save ${currency}${targetSavingsGoal.toLocaleString("en-IN")}`}
           </span>
         </div>
 
@@ -712,19 +749,35 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
               <span className={LABEL_MONO}>SAFE THIS WEEK</span>
               <span
                 className={`font-mono text-[9.5px] font-medium px-1.5 py-0.5 rounded ${
-                  isBehindTarget ? "text-rose-700 bg-rose-500/10" : "text-emerald-700 bg-emerald-500/10"
+                  isBehindTarget
+                    ? "text-rose-700 bg-rose-500/10"
+                    : thisWeekSpent > grossWeekLimit
+                    ? "text-rose-700 bg-rose-500/10"
+                    : "text-emerald-700 bg-emerald-500/10"
                 }`}
               >
-                {isBehindTarget ? "0 ALLOWED" : "7-DAY LIMIT"}
+                {isBehindTarget
+                  ? "0 ALLOWED"
+                  : thisWeekSpent > grossWeekLimit
+                  ? "OVER WEEK LIMIT"
+                  : "7-DAY LIMIT"}
               </span>
             </div>
-            <div className={`${STAT_VALUE} ${isBehindTarget ? "text-rose-600" : "text-emerald-600"}`}>
+            <div
+              className={`${STAT_VALUE} ${
+                isBehindTarget || thisWeekSpent > grossWeekLimit ? "text-rose-600" : "text-emerald-600"
+              }`}
+            >
               {currency}
               {Math.floor(safeWeek).toLocaleString("en-IN")}
             </div>
           </div>
           <span className={STAT_SUBTEXT}>
-            {isBehindTarget ? "No margin left to hit target goal" : `Next ${daysThisWeek} days allowance to reach goal`}
+            {isBehindTarget
+              ? "No margin left to hit target goal"
+              : thisWeekSpent > 0
+              ? `Spent ${currency}${Math.round(thisWeekSpent).toLocaleString("en-IN")} of ${currency}${Math.floor(grossWeekLimit).toLocaleString("en-IN")} 7-day budget`
+              : `Next ${daysThisWeek} days allowance to reach goal`}
           </span>
         </div>
 
