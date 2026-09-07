@@ -10,9 +10,7 @@ interface LandingPageProps {
   firebaseAuthReady: boolean;
 }
 
-/* ─── Live multi-timezone clock, footer flourish ───
- * One ticking `now` drives every city so they stay in lockstep; each city
- * just reformats the same Date via Intl instead of running its own timer. */
+/* ─── Live multi-timezone clock ─── */
 const CLOCK_ZONES: { label: string; region: string; zone: string }[] = [
   {
     label: "Local",
@@ -28,10 +26,6 @@ function useTicker() {
   useEffect(() => {
     const update = () => setNow(new Date());
     const id = setInterval(update, 1000);
-    // Ticks once almost immediately (rather than waiting a full second for
-    // setInterval's first callback) — deferred via setTimeout(0) rather than
-    // called synchronously here, so this is still "setState in a callback",
-    // not "setState synchronously within an effect".
     const kick = setTimeout(update, 0);
     return () => {
       clearInterval(id);
@@ -59,6 +53,11 @@ const GPT_EXAMPLES: { user: string; replyMain: string; replyDetail: string }[] =
       replyMain: "₹3,240 spent this week",
       replyDetail: "Mostly Food (₹1,850) & Transport (₹640)",
     },
+    {
+      user: "what is my current portfolio value?",
+      replyMain: "₹18,42,500 total assets",
+      replyDetail: "Equities + Mutual Funds + FDs",
+    },
   ];
 
 function ChatDemo() {
@@ -83,13 +82,13 @@ function ChatDemo() {
   return (
     <div className="flex h-full w-full flex-col justify-end gap-2.5">
       <div
-        className="max-w-[82%] animate-[bubbleIn_0.28s_cubic-bezier(0.16,1,0.3,1)_both] self-end rounded-[15px] rounded-br-[4px] bg-[#1c1b18] px-[15px] py-[11px] text-[12.5px] leading-[1.5] text-white"
+        className="max-w-[85%] animate-[bubbleIn_0.28s_cubic-bezier(0.16,1,0.3,1)_both] self-end rounded-[15px] rounded-br-[4px] bg-[#1c1b18] px-[15px] py-[11px] text-[12.5px] leading-[1.5] text-white shadow-sm"
         key={`u-${exampleIndex}`}
       >
         {example.user}
       </div>
       {phase === "typing" && (
-        <div className="flex animate-[bubbleIn_0.28s_cubic-bezier(0.16,1,0.3,1)_both] items-center gap-1 self-start rounded-[15px] rounded-bl-[4px] border border-[#e5e3db] bg-white px-[15px] py-[13px]">
+        <div className="flex animate-[bubbleIn_0.28s_cubic-bezier(0.16,1,0.3,1)_both] items-center gap-1 self-start rounded-[15px] rounded-bl-[4px] border border-[#e5e3db] bg-white px-[15px] py-[13px] shadow-sm">
           <span className="h-[5px] w-[5px] animate-[chatDotBounce_1s_infinite_ease-in-out_both] rounded-full bg-[#9c9a92]" />
           <span className="h-[5px] w-[5px] animate-[chatDotBounce_1s_infinite_ease-in-out_both] rounded-full bg-[#9c9a92] [animation-delay:0.15s]" />
           <span className="h-[5px] w-[5px] animate-[chatDotBounce_1s_infinite_ease-in-out_both] rounded-full bg-[#9c9a92] [animation-delay:0.3s]" />
@@ -97,10 +96,10 @@ function ChatDemo() {
       )}
       {phase === "reply" && (
         <div
-          className="max-w-[82%] animate-[bubbleIn_0.28s_cubic-bezier(0.16,1,0.3,1)_both] self-start rounded-[15px] rounded-bl-[4px] border border-[#bbf7d0] bg-[#f0fdf4] px-[15px] py-[11px] text-[12.5px] leading-[1.5] text-[#14532d]"
+          className="max-w-[85%] animate-[bubbleIn_0.28s_cubic-bezier(0.16,1,0.3,1)_both] self-start rounded-[15px] rounded-bl-[4px] border border-[#bbf7d0] bg-[#f0fdf4] px-[15px] py-[11px] text-[12.5px] leading-[1.5] text-[#14532d] shadow-sm"
           key={`a-${exampleIndex}`}
         >
-          <div className="font-bold">{example.replyMain}</div>
+          <div className="font-bold flex items-center gap-1.5">{example.replyMain}</div>
           <div className="mt-[3px] text-[11px] text-[#15803d] opacity-85">
             {example.replyDetail}
           </div>
@@ -148,78 +147,71 @@ interface DiagramPoint {
 }
 
 interface DiagramCoords {
-  c1_1: DiagramPoint;
-  c1_2: DiagramPoint;
-  c2_1: DiagramPoint;
-  c2_2: DiagramPoint;
-  c2_3: DiagramPoint;
+  c1_1_r: DiagramPoint;
+  c1_2_r: DiagramPoint;
+  c2_1_l: DiagramPoint;
+  c2_2_l: DiagramPoint;
+  c2_3_l: DiagramPoint;
   c2_1_r: DiagramPoint;
   c2_2_r: DiagramPoint;
   c2_3_r: DiagramPoint;
   hub_l: DiagramPoint;
   hub_r: DiagramPoint;
-  c4_1: DiagramPoint;
-  c4_2: DiagramPoint;
-  midX: number;
-  midY: number;
+  c4_1_l: DiagramPoint;
+  c4_2_l: DiagramPoint;
 }
 
 const HERO_REVEAL = "animate-[heroFadeUp_0.7s_cubic-bezier(0.16,1,0.3,1)_both]";
 const HERO_BADGE =
-  "mb-7 inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-secondary px-3.5 py-1.5 font-mono text-[10px] font-semibold tracking-[1.5px] text-text-secondary uppercase";
+  "mb-6 inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-secondary px-3.5 py-1.5 font-mono text-[10px] font-semibold tracking-[1.5px] text-text-secondary uppercase shadow-xs";
 const HERO_TITLE =
-  "mb-4 text-[58px] leading-[1.04] font-bold tracking-[-2.5px] text-text-primary max-[900px]:text-[40px] max-[900px]:tracking-[-1.8px] max-[480px]:text-[32px] max-[480px]:tracking-[-1.5px]";
+  "mb-5 text-[56px] leading-[1.05] font-bold tracking-[-2.4px] text-text-primary max-[900px]:text-[38px] max-[900px]:tracking-[-1.6px] max-[480px]:text-[30px] max-[480px]:tracking-[-1.2px]";
 const SERIF_ITALIC_STYLE: React.CSSProperties = {
   fontFamily: "'Playfair Display', Georgia, serif",
 };
 const HERO_CTA_PRIMARY =
   "flex cursor-pointer items-center gap-2 rounded-full border-none bg-text-primary px-7 py-[13px] text-sm font-semibold text-white no-underline transition-all duration-200 hover:-translate-y-px hover:bg-[#2e2d27] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50";
 const STEP_DESC = "text-[13px] leading-[1.55] text-text-secondary";
+
+// Enhanced Architecture Node styling
 const DIAGRAM_NODE =
-  "flex w-full items-center gap-2.5 rounded-card border border-border-subtle bg-bg-card px-3.5 py-2.5 shadow-subtle transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-border-hover hover:shadow-[0_6px_18px_-4px_rgba(110,108,100,0.12)]";
+  "flex items-center gap-3 rounded-xl border border-[#e2e0d8] bg-white px-3.5 py-3 shadow-[0_2px_8px_rgba(28,27,24,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#1c1b18] hover:shadow-[0_6px_18px_-4px_rgba(28,27,24,0.1)]";
 const NODE_ICON =
-  "flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[13px]";
-const NODE_TITLE =
-  "mb-px overflow-hidden text-ellipsis whitespace-nowrap text-[11.5px] font-bold text-text-primary";
-const NODE_DESC =
-  "overflow-hidden text-ellipsis whitespace-nowrap text-[9.5px] text-text-secondary";
+  "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[14px] shadow-xs";
 const FEATURE_NUM =
-  "mb-2 block font-mono text-[10px] font-semibold tracking-[0.5px] text-text-muted";
-const BROWSER_DOT = "h-2 w-2 rounded-full";
+  "block font-mono text-[10.5px] font-bold tracking-[1px] text-[#8a8880] uppercase";
+const BROWSER_DOT = "h-2.5 w-2.5 rounded-full";
 const FOOTER_LINK_ITEM =
   "inline-flex cursor-pointer items-center gap-1 text-[13px] text-text-secondary no-underline transition-colors duration-150 hover:text-text-primary";
 const FOOTER_COL_LABEL =
   "mb-4 block font-mono text-[10px] font-semibold tracking-wider text-text-muted uppercase";
 const FI_YES = "shrink-0 text-[13px] text-[#22c55e]";
 
-/* ─── FAQ content: single-sourced for both the rendered section and its
- * FAQPage JSON-LD, so search-engine rich snippets never drift from the copy
- * users actually see. ─── */
 const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
     question: "Is Continuum free?",
     answer:
-      "Yes. The self-hosted version is free forever — deploy your own copy on Vercel + Firebase's free tiers with no feature gates. The cloud-hosted version is also free right now; a small fee or ads may be added later only if hosting costs grow.",
+      "Yes. The self-hosted version is free forever — deploy your own copy on Vercel + Firebase's free tiers with zero feature gates. The cloud-hosted standard version is also free to use.",
   },
   {
     question: "Where is my data stored?",
     answer:
-      "In your own private Firebase project (if self hosted), never a shared database. Expense and portfolio fields are additionally encrypted at rest with AES-256-GCM, so even direct database access doesn't expose your raw amounts or notes.",
+      "In your private Firebase Firestore database (if self hosted), never a shared database. Sensitive fields like expense amounts and portfolio notes are encrypted at rest with AES-256-GCM.",
   },
   {
-    question: "Do I need to know how to code to self-host it?",
+    question: "How does the AI agent & ChatGPT integration work?",
     answer:
-      "Basic comfort with forking a GitHub repo and clicking through the Vercel deploy flow is enough. Setup is fork → deploy to Vercel → create a Firebase project → paste in a few config values — no manual database schema or server management.",
+      "Every route in Continuum exposes a standard OpenAPI 3.1 schema (/api/openapi.json). You can plug this schema directly into ChatGPT Custom GPT Actions, Claude, Gemini function calling, or MCP tool servers to log expenses, check balances, or update watchlists in plain English.",
   },
   {
-    question: "How does the ChatGPT / AI agent integration work?",
+    question: "Do I need coding experience to self-host?",
     answer:
-      "Every API route is documented with a standard OpenAPI schema (at /api/openapi.json), so you can plug it directly into a Custom GPT Action, or into any other OpenAPI-schema-powered action or MCP setup, to log expenses or manage your watchlist in plain English.",
+      "No coding is required. Fork the GitHub repo, click 'Deploy to Vercel', create a free Firebase project, and paste your API keys. Setup takes approximately 5 minutes.",
   },
   {
-    question: "Can I import my existing expense or watchlist data?",
+    question: "Can I import my existing data?",
     answer:
-      "Yes — the expense ledger supports CSV import/export, and the media watchlist can sync from AniList, Trakt, or a Letterboxd export.",
+      "Yes! CSV import/export is supported for expenses and subscriptions, and full watchlist sync is available for AniList, Trakt, and Letterboxd RSS/CSV exports.",
   },
 ];
 
@@ -231,6 +223,7 @@ export default function LandingPage({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [coords, setCoords] = useState<DiagramCoords | null>(null);
   const [userCount, setUserCount] = useState<number | null>(null);
+  const [activeDashTab, setActiveDashTab] = useState<"finance" | "media" | "investments" | "books">("finance");
 
   useEffect(() => {
     fetch("/api/stats")
@@ -269,11 +262,11 @@ export default function LandingPage({
         };
       };
 
-      const c1_1 = getR("dg-c1-n1");
-      const c1_2 = getR("dg-c1-n2");
-      const c2_1 = getL("dg-c2-n1");
-      const c2_2 = getL("dg-c2-n2");
-      const c2_3 = getL("dg-c2-n3");
+      const c1_1_r = getR("dg-c1-n1");
+      const c1_2_r = getR("dg-c1-n2");
+      const c2_1_l = getL("dg-c2-n1");
+      const c2_2_l = getL("dg-c2-n2");
+      const c2_3_l = getL("dg-c2-n3");
 
       const c2_1_r = getR("dg-c2-n1");
       const c2_2_r = getR("dg-c2-n2");
@@ -281,39 +274,48 @@ export default function LandingPage({
       const hub_l = getL("dg-hub");
       const hub_r = getR("dg-hub");
 
-      const c4_1 = getL("dg-c4-n1");
-      const c4_2 = getL("dg-c4-n2");
-
-      const midX = (c1_1.x + c2_1.x) / 2;
-      const midY = (c1_1.y + c1_2.y) / 2;
+      const c4_1_l = getL("dg-c4-n1");
+      const c4_2_l = getL("dg-c4-n2");
 
       setCoords({
-        c1_1,
-        c1_2,
-        c2_1,
-        c2_2,
-        c2_3,
+        c1_1_r,
+        c1_2_r,
+        c2_1_l,
+        c2_2_l,
+        c2_3_l,
         c2_1_r,
         c2_2_r,
         c2_3_r,
         hub_l,
         hub_r,
-        c4_1,
-        c4_2,
-        midX,
-        midY,
+        c4_1_l,
+        c4_2_l,
       });
     };
 
-    // Small delay to let fonts/layouts settle
     const timer = setTimeout(updateCoords, 250);
     window.addEventListener("resize", updateCoords);
+
+    // Use ResizeObserver for responsive recalculation
+    const container = document.getElementById("dg-container");
+    let observer: ResizeObserver | null = null;
+    if (container && typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(updateCoords);
+      observer.observe(container);
+    }
 
     return () => {
       clearTimeout(timer);
       window.removeEventListener("resize", updateCoords);
+      if (observer) observer.disconnect();
     };
   }, []);
+
+  // Smooth bezier curve generator helper
+  const drawCurve = (p1: DiagramPoint, p2: DiagramPoint) => {
+    const midX = (p1.x + p2.x) / 2;
+    return `M ${p1.x} ${p1.y} C ${midX} ${p1.y}, ${midX} ${p2.y}, ${p2.x} ${p2.y}`;
+  };
 
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-bg-primary font-body text-text-primary">
@@ -325,9 +327,9 @@ export default function LandingPage({
         @keyframes chatDotBounce { 0%, 60%, 100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-3px); opacity: 1; } }
         @keyframes flowDash { to { stroke-dashoffset: -20; } }
       `}</style>
- 
-      {/* ─── Header ─── */}
-      <header className="sticky top-0 z-[1000] mx-auto flex max-w-[1300px] items-center justify-between border-b border-border-subtle/60 bg-bg-primary/92 px-20 py-5 backdrop-blur-[10px] max-[900px]:px-6 max-[900px]:py-4">
+
+      {/* ─── Navigation Header ─── */}
+      <header className="sticky top-0 z-[1000] mx-auto flex max-w-[1300px] items-center justify-between border-b border-border-subtle/60 bg-bg-primary/92 px-20 py-4.5 backdrop-blur-[10px] max-[900px]:px-6 max-[900px]:py-3.5">
         <a
           href="#"
           className="flex items-center gap-[9px] text-[18px] font-medium tracking-tight text-text-primary no-underline"
@@ -335,18 +337,24 @@ export default function LandingPage({
           <BentoLogo size={22} color="var(--text-primary)" />
           <span>{SITE_NAME}</span>
         </a>
-        <nav className="flex items-center gap-8 max-[900px]:hidden">
+        <nav className="flex items-center gap-7 max-[900px]:hidden">
           <a
             href="#how-it-works"
             className="text-[13px] font-medium text-[#6e6c64] no-underline transition-colors duration-200 hover:text-[#1c1b18]"
           >
-            How It Works
+            Architecture
           </a>
           <a
-            href="#chatgpt"
+            href="#ai"
             className="text-[13px] font-medium text-[#6e6c64] no-underline transition-colors duration-200 hover:text-[#1c1b18]"
           >
-            ChatGPT
+            AI Agent
+          </a>
+          <a
+            href="#dashboard"
+            className="text-[13px] font-medium text-[#6e6c64] no-underline transition-colors duration-200 hover:text-[#1c1b18]"
+          >
+            Dashboard
           </a>
           <a
             href="#setup"
@@ -364,18 +372,18 @@ export default function LandingPage({
             href="https://github.com/fal3n-4ngel/Continuum-Home"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[13px] font-medium text-[#6e6c64] no-underline transition-colors duration-200 hover:text-[#1c1b18]"
+            className="flex items-center gap-1.5 rounded-full border border-[#d6d3c9] bg-[#f4f1ea] px-3.5 py-1 text-xs font-semibold text-[#1c1b18] no-underline transition-all duration-200 hover:border-[#1c1b18] hover:bg-white"
           >
-            GitHub ↗
+            <span>⭐️ Star on GitHub</span>
           </a>
         </nav>
         <div className="flex items-center gap-2.5">
           <button
-            className="md:flex hidden cursor-pointer items-center gap-2 rounded-full border-none bg-[#1c1b18] px-[22px] py-2.5 text-[13px] font-semibold text-white transition-[transform,background-color] duration-200 hover:-translate-y-px hover:bg-[#31302b] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-55"
+            className="hidden md:flex cursor-pointer items-center gap-2 rounded-full border-none bg-[#1c1b18] px-[22px] py-2.5 text-[13px] font-semibold text-white transition-[transform,background-color] duration-200 hover:-translate-y-px hover:bg-[#31302b] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-55"
             onClick={onLogin}
             disabled={!firebaseAuthReady}
           >
-            <span>Get started</span>
+            <span>Try Continuum</span>
             <span>→</span>
           </button>
           <button
@@ -415,14 +423,21 @@ export default function LandingPage({
             className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] no-underline hover:bg-[#f4f3ec]"
             onClick={() => setMobileNavOpen(false)}
           >
-            How It Works
+            Architecture
           </a>
           <a
-            href="#chatgpt"
+            href="#ai"
             className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] no-underline hover:bg-[#f4f3ec]"
             onClick={() => setMobileNavOpen(false)}
           >
-            ChatGPT
+            AI Agent Integration
+          </a>
+          <a
+            href="#dashboard"
+            className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] no-underline hover:bg-[#f4f3ec]"
+            onClick={() => setMobileNavOpen(false)}
+          >
+            Dashboard UI
           </a>
           <a
             href="#setup"
@@ -445,52 +460,49 @@ export default function LandingPage({
             className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] no-underline hover:bg-[#f4f3ec]"
             onClick={() => setMobileNavOpen(false)}
           >
-            GitHub ↗
+            ⭐️ Star on GitHub ↗
           </a>
         </nav>
       </header>
 
-      {/* ─── Hero ─── */}
-      <section className="mx-auto max-w-[1100px] px-6 pt-[90px] pb-[60px] text-center max-[480px]:px-4 max-[480px]:pt-[60px] max-[480px]:pb-10">
+      {/* ─── SECTION 1: HERO ─── */}
+      <section className="mx-auto max-w-[1100px] px-6 pt-[70px] pb-[30px] text-center max-[480px]:px-4 max-[480px]:pt-[50px] max-[480px]:pb-6">
         <span
           className={`${HERO_BADGE} ${HERO_REVEAL} [animation-delay:0.02s]`}
         >
           <BentoLogo size={12} color="#6e6c64" />
-          Self-hostable · Open source · Private
+          SELF-HOSTED · OPEN SOURCE · AI-READY
         </span>
 
         <h1 className={`${HERO_TITLE} ${HERO_REVEAL} [animation-delay:0.08s]`}>
-          One dashboard.
+          One place. Everything you track.
           <br />
-          <span className="font-normal italic" style={SERIF_ITALIC_STYLE}>
-            Everything you track.
+          <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
+            A dashboard for you. An API for your AI.
           </span>
         </h1>
         <p
-          className={`mx-auto mb-10 max-w-[580px] text-base leading-[1.6] text-[#6e6c64] ${HERO_REVEAL} [animation-delay:0.14s]`}
+          className={`mx-auto mb-8 max-w-[620px] text-base leading-[1.65] text-[#6e6c64] ${HERO_REVEAL} [animation-delay:0.14s]`}
         >
-          Consolidate your media watchlists, track daily expenses with custom
-          salary cycles, maintain a book library, and keep a scratchpad — all
-          stored privately in your own database.
+          A self-hosted system for your daily expenses, investments, media watchlists, and book library — with an API designed for both humans and AI agents.
         </p>
         <div
-          className={`flex flex-wrap justify-center gap-3 ${HERO_REVEAL} [animation-delay:0.2s]`}
+          className={`flex flex-wrap justify-center gap-3.5 ${HERO_REVEAL} [animation-delay:0.2s]`}
         >
           <button
             className={HERO_CTA_PRIMARY}
             onClick={onLogin}
             disabled={!firebaseAuthReady}
           >
-            Start for free
-            <span>→</span>
+            Try Continuum →
           </button>
           <a
             href="https://github.com/fal3n-4ngel/Continuum-Home"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-full border-[1.5px] border-[#d1cfc7] bg-transparent px-7 py-[13px] text-sm font-semibold text-[#1c1b18] no-underline transition-all duration-200 hover:border-[#1c1b18] hover:bg-[rgba(28,27,24,0.04)]"
+            className="flex items-center gap-2 rounded-full border-[1.5px] border-[#d1cfc7] bg-white px-7 py-[13px] text-sm font-semibold text-[#1c1b18] no-underline transition-all duration-200 hover:border-[#1c1b18] hover:shadow-xs"
           >
-            ⭐ Star on GitHub
+            <span>⭐️ Star on GitHub</span>
           </a>
         </div>
         {userCount !== null && (
@@ -498,145 +510,135 @@ export default function LandingPage({
             className={`mt-4 text-[12.5px] text-[#9c9a92] ${HERO_REVEAL} [animation-delay:0.23s]`}
           >
             <strong className="font-semibold text-[#6e6c64]">{userCount}</strong>{" "}
-            {userCount === 1 ? "person is" : "people are"} already using Continuum
+            {userCount === 1 ? "person is" : "people are"} actively using Continuum
           </p>
         )}
+
+        {/* Focused Hero Category Badges */}
         <div
-          className={`mt-7 flex flex-wrap justify-center gap-2 ${HERO_REVEAL} [animation-delay:0.26s]`}
+          className={`mt-7 flex flex-wrap justify-center gap-2.5 ${HERO_REVEAL} [animation-delay:0.26s]`}
         >
-          <span className="inline-flex items-center gap-[5px] rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-3 py-[5px] text-[11.5px] font-semibold text-[#1d4ed8]">
-            🤖 Custom LLM Sync (ChatGPT &amp; AI Agents)
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-4 py-1.5 text-[12px] font-semibold text-[#1d4ed8]">
+            🤖 AI Endpoints (ChatGPT &amp; Claude)
           </span>
-          <span className="inline-flex items-center gap-[5px] rounded-full border border-[#e5e3db] bg-white px-3 py-[5px] text-[11.5px] font-medium text-[#6e6c64]">
-            💸 Expense Ledger
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e5e3db] bg-white px-4 py-1.5 text-[12px] font-medium text-[#1c1b18]">
+            💸 Expense &amp; Subscription Ledger
           </span>
-          <span className="inline-flex items-center gap-[5px] rounded-full border border-[#e5e3db] bg-white px-3 py-[5px] text-[11.5px] font-medium text-[#6e6c64]">
-            🎬 Media Watchlist
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e5e3db] bg-white px-4 py-1.5 text-[12px] font-medium text-[#1c1b18]">
+            📈 Investments &amp; Live Quotes
           </span>
-          <span className="inline-flex items-center gap-[5px] rounded-full border border-[#e5e3db] bg-white px-3 py-[5px] text-[11.5px] font-medium text-[#6e6c64]">
-            📚 Book Library
-          </span>
-          <span className="inline-flex items-center gap-[5px] rounded-full border border-[#e5e3db] bg-white px-3 py-[5px] text-[11.5px] font-medium text-[#6e6c64]">
-            ✏️ Quick Notes
-          </span>
-          <span className="inline-flex items-center gap-[5px] rounded-full border border-[#e5e3db] bg-white px-3 py-[5px] text-[11.5px] font-medium text-[#6e6c64]">
-            🌸 AniList sync
-          </span>
-          <span className="inline-flex items-center gap-[5px] rounded-full border border-[#e5e3db] bg-white px-3 py-[5px] text-[11.5px] font-medium text-[#6e6c64]">
-            🎯 Trakt sync
-          </span>
-          <span className="inline-flex items-center gap-[5px] rounded-full border border-[#e5e3db] bg-white px-3 py-[5px] text-[11.5px] font-medium text-[#6e6c64]">
-            🎞️ Letterboxd import
-          </span>
-          <span className="inline-flex items-center gap-[5px] rounded-full border border-[#e5e3db] bg-white px-3 py-[5px] text-[11.5px] font-medium text-[#6e6c64]">
-            🔒 AES-256 DB Encryption
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e5e3db] bg-white px-4 py-1.5 text-[12px] font-medium text-[#1c1b18]">
+            🎬 Media &amp; Book Library
           </span>
         </div>
       </section>
 
-      {/* ─── How it works ─── */}
+      {/* ─── SECTION 2: ARCHITECTURE DIAGRAM (Directly under Hero) ─── */}
       <section
         id="how-it-works"
-        className="mx-auto max-w-[1100px] px-6 pt-0 pb-[60px] text-center max-[480px]:px-4 max-[480px]:pb-10"
+        className="mx-auto max-w-[1150px] px-6 pt-2 pb-[60px] text-center max-[480px]:px-4 max-[480px]:pb-10"
       >
         <div
-          className="max-[768px]:px-4 max-[768px]:py-[30px] max-[480px]:px-5 max-[480px]:py-7"
+          className="max-[768px]:px-2 max-[768px]:py-[10px]"
           id="dg-container"
         >
-          <div className="relative rounded-xl border border-[#e5e3db] bg-white p-10 shadow-[0_4px_16px_rgba(110,108,100,0.03)]">
-            {/* ── DESKTOP VIEW ── */}
+          {/* Main Diagram Container Box */}
+          <div className="relative overflow-hidden rounded-2xl border border-[#e2e0d8] bg-white p-8 shadow-[0_8px_30px_rgba(28,27,24,0.05)] [background-image:radial-gradient(#e5e3db_1px,transparent_1px)] [background-size:24px_24px]">
+            
+            {/* Top Bar Header */}
+            <div className="mb-6 flex items-center justify-between border-b border-[#e8e6de] pb-4 max-[480px]:flex-col max-[480px]:items-start max-[480px]:gap-2">
+              <div className="flex items-center gap-2 text-left">
+                <span className="flex h-2 w-2 rounded-full bg-[#22c55e] animate-pulse" />
+                <span className="font-mono text-[11px] font-bold tracking-wider text-[#6e6c64] uppercase">
+                  SYSTEM ARCHITECTURE FLOW
+                </span>
+              </div>
+              <div className="flex items-center gap-2 text-xs font-mono text-[#9c9a92]">
+                <span>REST / OpenAPI 3.1</span>
+                <span>·</span>
+                <span className="rounded bg-[#f4f3ec] px-2 py-0.5 font-bold text-[#1c1b18]">AES-256 ENCRYPTED</span>
+              </div>
+            </div>
+
+            {/* Desktop View */}
             <div className="block max-[768px]:hidden">
+              {/* Perfectly Aligned Top Header Grid */}
+              <div className="mb-4 grid grid-cols-[230px_240px_140px_240px] justify-between text-left border-b border-[#f4f3ec] pb-2">
+                <span className={FEATURE_NUM}>1. INCOMING DATA</span>
+                <span className={FEATURE_NUM}>2. CONTINUUM ENGINE</span>
+                <span className={`${FEATURE_NUM} text-center`}>3. API HUB</span>
+                <span className={FEATURE_NUM}>4. CLIENT INTERFACES</span>
+              </div>
+
               {coords && (
                 <svg className="pointer-events-none absolute inset-0 z-[1] h-full w-full max-[900px]:hidden">
-                  {/* Column 1 → Merge Point */}
+                  {/* Row 1 Connections: External Sync -> Expense Analytics */}
                   <path
-                    d={`M ${coords.c1_1.x} ${coords.c1_1.y} C ${(coords.c1_1.x + coords.midX) / 2} ${coords.c1_1.y}, ${(coords.c1_1.x + coords.midX) / 2} ${coords.midY}, ${coords.midX} ${coords.midY}`}
+                    d={drawCurve(coords.c1_1_r, coords.c2_1_l)}
                     stroke="#3b82f6"
-                    strokeWidth="1.5"
+                    strokeWidth="1.75"
                     strokeDasharray="5 5"
                     fill="none"
                     className="animate-[flowDash_1.2s_linear_infinite]"
                   />
+                  {/* External Sync -> Media Sync Engine */}
                   <path
-                    d={`M ${coords.c1_2.x} ${coords.c1_2.y} C ${(coords.c1_2.x + coords.midX) / 2} ${coords.c1_2.y}, ${(coords.c1_2.x + coords.midX) / 2} ${coords.midY}, ${coords.midX} ${coords.midY}`}
+                    d={drawCurve(coords.c1_1_r, coords.c2_2_l)}
                     stroke="#3b82f6"
-                    strokeWidth="1.5"
+                    strokeWidth="1.75"
                     strokeDasharray="5 5"
                     fill="none"
                     className="animate-[flowDash_1.2s_linear_infinite]"
                   />
-                  <circle
-                    cx={coords.midX}
-                    cy={coords.midY}
-                    r="3"
-                    fill="#c4c2ba"
-                  />
-
-                  {/* Merge Point → Column 2 Lefts */}
+                  {/* Local Entries -> Reading Library */}
                   <path
-                    d={`M ${coords.midX} ${coords.midY} C ${(coords.midX + coords.c2_1.x) / 2} ${coords.midY}, ${(coords.midX + coords.c2_1.x) / 2} ${coords.c2_1.y}, ${coords.c2_1.x} ${coords.c2_1.y}`}
+                    d={drawCurve(coords.c1_2_r, coords.c2_3_l)}
                     stroke="#3b82f6"
-                    strokeWidth="1.5"
-                    strokeDasharray="5 5"
-                    fill="none"
-                    className="animate-[flowDash_1.2s_linear_infinite]"
-                  />
-                  <path
-                    d={`M ${coords.midX} ${coords.midY} C ${(coords.midX + coords.c2_2.x) / 2} ${coords.midY}, ${(coords.midX + coords.c2_2.x) / 2} ${coords.c2_2.y}, ${coords.c2_2.x} ${coords.c2_2.y}`}
-                    stroke="#3b82f6"
-                    strokeWidth="1.5"
-                    strokeDasharray="5 5"
-                    fill="none"
-                    className="animate-[flowDash_1.2s_linear_infinite]"
-                  />
-                  <path
-                    d={`M ${coords.midX} ${coords.midY} C ${(coords.midX + coords.c2_3.x) / 2} ${coords.midY}, ${(coords.midX + coords.c2_3.x) / 2} ${coords.c2_3.y}, ${coords.c2_3.x} ${coords.c2_3.y}`}
-                    stroke="#3b82f6"
-                    strokeWidth="1.5"
+                    strokeWidth="1.75"
                     strokeDasharray="5 5"
                     fill="none"
                     className="animate-[flowDash_1.2s_linear_infinite]"
                   />
 
-                  {/* Column 2 Rights → Hub Left */}
+                  {/* Engine Nodes -> API Hub */}
                   <path
-                    d={`M ${coords.c2_1_r.x} ${coords.c2_1_r.y} C ${(coords.c2_1_r.x + coords.hub_l.x) / 2} ${coords.c2_1_r.y}, ${(coords.c2_1_r.x + coords.hub_l.x) / 2} ${coords.hub_l.y}, ${coords.hub_l.x} ${coords.hub_l.y}`}
+                    d={drawCurve(coords.c2_1_r, coords.hub_l)}
                     stroke="#3b82f6"
-                    strokeWidth="1.5"
+                    strokeWidth="1.75"
                     strokeDasharray="5 5"
                     fill="none"
                     className="animate-[flowDash_1.2s_linear_infinite]"
                   />
                   <path
-                    d={`M ${coords.c2_2_r.x} ${coords.c2_2_r.y} C ${(coords.c2_2_r.x + coords.hub_l.x) / 2} ${coords.c2_2_r.y}, ${(coords.c2_2_r.x + coords.hub_l.x) / 2} ${coords.hub_l.y}, ${coords.hub_l.x} ${coords.hub_l.y}`}
+                    d={drawCurve(coords.c2_2_r, coords.hub_l)}
                     stroke="#3b82f6"
-                    strokeWidth="1.5"
+                    strokeWidth="1.75"
                     strokeDasharray="5 5"
                     fill="none"
                     className="animate-[flowDash_1.2s_linear_infinite]"
                   />
                   <path
-                    d={`M ${coords.c2_3_r.x} ${coords.c2_3_r.y} C ${(coords.c2_3_r.x + coords.hub_l.x) / 2} ${coords.c2_3_r.y}, ${(coords.c2_3_r.x + coords.hub_l.x) / 2} ${coords.hub_l.y}, ${coords.hub_l.x} ${coords.hub_l.y}`}
+                    d={drawCurve(coords.c2_3_r, coords.hub_l)}
                     stroke="#3b82f6"
-                    strokeWidth="1.5"
+                    strokeWidth="1.75"
                     strokeDasharray="5 5"
                     fill="none"
                     className="animate-[flowDash_1.2s_linear_infinite]"
                   />
 
-                  {/* Hub Right → Column 4 Lefts */}
+                  {/* API Hub -> Client Interfaces */}
                   <path
-                    d={`M ${coords.hub_r.x} ${coords.hub_r.y} C ${(coords.hub_r.x + coords.c4_1.x) / 2} ${coords.hub_r.y}, ${(coords.hub_r.x + coords.c4_1.x) / 2} ${coords.c4_1.y}, ${coords.c4_1.x} ${coords.c4_1.y}`}
+                    d={drawCurve(coords.hub_r, coords.c4_1_l)}
                     stroke="#3b82f6"
-                    strokeWidth="1.5"
+                    strokeWidth="1.75"
                     strokeDasharray="5 5"
                     fill="none"
                     className="animate-[flowDash_1.2s_linear_infinite]"
                   />
                   <path
-                    d={`M ${coords.hub_r.x} ${coords.hub_r.y} C ${(coords.hub_r.x + coords.c4_2.x) / 2} ${coords.hub_r.y}, ${(coords.hub_r.x + coords.c4_2.x) / 2} ${coords.c4_2.y}, ${coords.c4_2.x} ${coords.c4_2.y}`}
+                    d={drawCurve(coords.hub_r, coords.c4_2_l)}
                     stroke="#3b82f6"
-                    strokeWidth="1.5"
+                    strokeWidth="1.75"
                     strokeDasharray="5 5"
                     fill="none"
                     className="animate-[flowDash_1.2s_linear_infinite]"
@@ -644,209 +646,177 @@ export default function LandingPage({
                 </svg>
               )}
 
-              <div className="relative z-[2] flex h-[400px] items-center justify-between max-[900px]:h-auto max-[900px]:flex-col max-[900px]:gap-10">
+              {/* 4 Column Layout with Fixed Structured Heights */}
+              <div className="relative z-[2] grid grid-cols-[230px_240px_140px_240px] justify-between items-center h-[290px] text-left">
                 {/* Column 1: Incoming */}
-                <div className="z-[2] flex w-[210px] min-w-0 flex-col justify-center gap-9 max-[900px]:w-full">
-                  <span className={FEATURE_NUM}>INCOMING</span>
-
+                <div className="flex flex-col justify-around h-full py-2">
                   <div className={DIAGRAM_NODE} id="dg-c1-n1">
                     <div className={`${NODE_ICON} bg-[#ede9fe]`}>☁️</div>
-                    <div className="min-w-0 text-left">
-                      <div className={NODE_TITLE}>External Sync</div>
-                      <div className={NODE_DESC}>Trakt & AniList APIs</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-[12px] font-bold text-text-primary whitespace-nowrap">External Sync</span>
+                        <span className="shrink-0 rounded bg-[#f3e8ff] px-1.5 py-0.5 font-mono text-[8.5px] font-bold text-[#6b21a8]">API</span>
+                      </div>
+                      <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] text-[#6e6c64]">Trakt &amp; AniList APIs</div>
                     </div>
                   </div>
 
                   <div className={DIAGRAM_NODE} id="dg-c1-n2">
                     <div className={`${NODE_ICON} bg-[#fef9c3]`}>✍️</div>
-                    <div className="min-w-0 text-left">
-                      <div className={NODE_TITLE}>Local Entries</div>
-                      <div className={NODE_DESC}>Expenses, logs & notes</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-[12px] font-bold text-text-primary whitespace-nowrap">Local Entries</span>
+                        <span className="shrink-0 rounded bg-[#fef08a] px-1.5 py-0.5 font-mono text-[8.5px] font-bold text-[#854d0e]">USER</span>
+                      </div>
+                      <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] text-[#6e6c64]">Expenses, logs &amp; notes</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Column 2: What Continuum Handles */}
-                <div className="z-[2] flex w-[230px] min-w-0 flex-col justify-center gap-[22px] max-[900px]:w-full">
-                  <span className={FEATURE_NUM}>WHAT Continuum HANDLES</span>
-
+                {/* Column 2: Engine */}
+                <div className="flex flex-col justify-between h-full py-1">
                   <div className={DIAGRAM_NODE} id="dg-c2-n1">
-                    <div className={`${NODE_ICON} bg-[#e39282]`}>📊</div>
-                    <div className="min-w-0 text-left">
-                      <div className={NODE_TITLE}>Expense Analytics</div>
-                      <div className={NODE_DESC}>
-                        Salary cycles & categories
+                    <div className={`${NODE_ICON} bg-[#e39282]/20`}>📊</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-[12px] font-bold text-text-primary whitespace-nowrap">Expense Analytics</span>
+                        <span className="shrink-0 rounded bg-[#fee2e2] px-1.5 py-0.5 font-mono text-[8.5px] font-bold text-[#991b1b]">AES-256</span>
                       </div>
+                      <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] text-[#6e6c64]">Salary cycles &amp; Encryption</div>
                     </div>
                   </div>
 
                   <div className={DIAGRAM_NODE} id="dg-c2-n2">
                     <div className={`${NODE_ICON} bg-[#dbeafe]`}>🎬</div>
-                    <div className="min-w-0 text-left">
-                      <div className={NODE_TITLE}>Media Sync engine</div>
-                      <div className={NODE_DESC}>Trakt OAuth updates</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-[12px] font-bold text-text-primary whitespace-nowrap">Media Sync Engine</span>
+                        <span className="shrink-0 rounded bg-[#dbeafe] px-1.5 py-0.5 font-mono text-[8.5px] font-bold text-[#1e40af]">OAUTH</span>
+                      </div>
+                      <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] text-[#6e6c64]">Trakt &amp; AniList updates</div>
                     </div>
                   </div>
 
                   <div className={DIAGRAM_NODE} id="dg-c2-n3">
                     <div className={`${NODE_ICON} bg-[#f0fdf4]`}>📚</div>
-                    <div className="min-w-0 text-left">
-                      <div className={NODE_TITLE}>Reading library</div>
-                      <div className={NODE_DESC}>OpenLibrary cataloging</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-[12px] font-bold text-text-primary whitespace-nowrap">Reading Library</span>
+                        <span className="shrink-0 rounded bg-[#dcfce7] px-1.5 py-0.5 font-mono text-[8.5px] font-bold text-[#15803d]">CATALOG</span>
+                      </div>
+                      <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] text-[#6e6c64]">OpenLibrary cataloging</div>
                     </div>
                   </div>
                 </div>
 
-                {/* Column 3: Continuum Logo Hub */}
-                <div className="z-[2] flex w-[120px] min-w-0 flex-col items-center justify-center gap-9 max-[900px]:w-full">
-                  <span className={FEATURE_NUM}>Continuum ENGINE</span>
+                {/* Column 3: Hub Center */}
+                <div className="flex items-center justify-center h-full">
                   <div
-                    className="relative flex h-[84px] w-[84px] flex-col items-center justify-center gap-[3px] rounded-[20px] bg-[#1c1b18] text-white shadow-[0_8px_24px_rgba(28,27,24,0.16)]"
+                    className="relative flex h-[86px] w-[86px] flex-col items-center justify-center gap-[3px] rounded-[22px] bg-[#1c1b18] text-white shadow-[0_10px_30px_rgba(28,27,24,0.22)]"
                     id="dg-hub"
                   >
-                    <div className="absolute -inset-1.5 animate-[spin-clockwise_25s_linear_infinite] rounded-3xl border-[1.5px] border-dashed border-[rgba(28,27,24,0.2)]" />
+                    <div className="absolute -inset-2 animate-[spin-clockwise_25s_linear_infinite] rounded-[26px] border-[1.5px] border-dashed border-[rgba(28,27,24,0.25)]" />
                     <BentoLogo size={24} color="#ffffff" />
-                    <span className="font-mono text-[9px] font-bold tracking-[0.8px] uppercase">
-                      Hub
+                    <span className="font-mono text-[8.5px] font-bold tracking-[1px] text-white uppercase">
+                      HUB CORE
                     </span>
                   </div>
                 </div>
 
-                {/* Column 4: Canvas / Result */}
-                <div className="z-[2] flex w-[210px] min-w-0 flex-col justify-center gap-9 max-[900px]:w-full">
-                  <span className={FEATURE_NUM}>RESULT</span>
-
+                {/* Column 4: Client Interfaces */}
+                <div className="flex flex-col justify-around h-full py-2">
                   <div className={DIAGRAM_NODE} id="dg-c4-n1">
-                    <div className={`${NODE_ICON} bg-[#d1b89a]`}>📱</div>
-                    <div className="min-w-0 text-left">
-                      <div className={NODE_TITLE}>Dashboard Canvas</div>
-                      <div className={NODE_DESC}>Interactive dashboard UI</div>
+                    <div className={`${NODE_ICON} bg-[#d1b89a]/30`}>📱</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-[12px] font-bold text-text-primary whitespace-nowrap">Dashboard Canvas</span>
+                        <span className="shrink-0 rounded bg-[#f4f3ec] px-1.5 py-0.5 font-mono text-[8.5px] font-bold text-[#6e6c64]">WEB UI</span>
+                      </div>
+                      <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] text-[#6e6c64]">For Human Users</div>
                     </div>
                   </div>
 
                   <div
-                    className={`${DIAGRAM_NODE} border-[1.5px] border-[#3b82f6] shadow-[0_4px_12px_rgba(59,130,246,0.08)]`}
+                    className={`${DIAGRAM_NODE} border-[1.5px] border-[#3b82f6] shadow-[0_4px_14px_rgba(59,130,246,0.12)]`}
                     id="dg-c4-n2"
                   >
-                    <div className={`${NODE_ICON} bg-[#3b82f6] text-white`}>
-                      💬
+                    <div className={`${NODE_ICON} bg-[#3b82f6] text-white shadow-xs`}>
+                      🤖
                     </div>
-                    <div className="min-w-0 text-left">
-                      <div className={NODE_TITLE}>LLM Sync client</div>
-                      <div className={NODE_DESC}>ChatGPT &amp; AI Agents</div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-1">
+                        <span className="text-[12px] font-bold text-text-primary whitespace-nowrap">OpenAPI Endpoints</span>
+                        <span className="shrink-0 rounded bg-[#eff6ff] px-1.5 py-0.5 font-mono text-[8.5px] font-bold text-[#1d4ed8]">AI READY</span>
+                      </div>
+                      <div className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] text-[#6e6c64]">For ChatGPT &amp; AI Agents</div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* ── MOBILE VIEW (Clean stacked workflow) ── */}
-            <div className="relative z-[2] hidden max-[768px]:flex max-[768px]:flex-col max-[768px]:items-center max-[768px]:gap-5">
-              {/* Step 1: Incoming */}
-              <div className="flex w-full flex-col items-center gap-2.5">
-                <span className={FEATURE_NUM}>INCOMING</span>
-                <div className="flex w-full gap-2.5 [&>*]:min-w-0 [&>*]:flex-1">
+            {/* Mobile View */}
+            <div className="relative z-[2] hidden max-[768px]:flex max-[768px]:flex-col max-[768px]:items-center max-[768px]:gap-4">
+              <div className="flex w-full flex-col items-center gap-2">
+                <span className={FEATURE_NUM}>1. INCOMING DATA</span>
+                <div className="flex w-full gap-2 [&>*]:min-w-0 [&>*]:flex-1">
                   <div className={DIAGRAM_NODE}>
-                    <div className="flex gap-1.5 text-[11px] font-bold text-[#1c1b18]">
-                      ☁️ <span>APIs</span>
-                    </div>
+                    <span className="text-[11px] font-bold text-[#1c1b18]">☁️ APIs</span>
                   </div>
                   <div className={DIAGRAM_NODE}>
-                    <div className="flex gap-1.5 text-[11px] font-bold text-[#1c1b18]">
-                      ✍️ <span>Local</span>
-                    </div>
+                    <span className="text-[11px] font-bold text-[#1c1b18]">✍️ Local</span>
                   </div>
                 </div>
               </div>
-
-              <div className="h-6 w-0.5 [background:repeating-linear-gradient(to_bottom,#c4c2ba,#c4c2ba_3px,transparent_3px,transparent_6px)]" />
-
-              {/* Step 2: Processing */}
-              <div className="flex w-full flex-col items-center gap-2.5">
-                <span className={FEATURE_NUM}>WHAT Continuum HANDLES</span>
-                <div className={DIAGRAM_NODE}>
-                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#e39282] text-[11px]">
-                    📊
-                  </div>
-                  <span className="text-[11px] font-bold text-[#1c1b18]">
-                    Expense Analytics
-                  </span>
-                </div>
-                <div className={DIAGRAM_NODE}>
-                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#dbeafe] text-[11px]">
-                    🎬
-                  </div>
-                  <span className="text-[11px] font-bold text-[#1c1b18]">
-                    Media Sync engine
-                  </span>
-                </div>
-                <div className={DIAGRAM_NODE}>
-                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-[#f0fdf4] text-[11px]">
-                    📚
-                  </div>
-                  <span className="text-[11px] font-bold text-[#1c1b18]">
-                    Reading library
-                  </span>
-                </div>
-              </div>
-
-              <div className="h-6 w-0.5 [background:repeating-linear-gradient(to_bottom,#c4c2ba,#c4c2ba_3px,transparent_3px,transparent_6px)]" />
-
-              {/* Step 3: Logo */}
-              <div className="flex w-full flex-col items-center gap-2.5">
-                <span className={FEATURE_NUM}>Continuum ENGINE</span>
-                <div className="relative flex h-[84px] w-[84px] flex-col items-center justify-center gap-[3px] rounded-[20px] bg-[#1c1b18] text-white shadow-[0_8px_24px_rgba(28,27,24,0.16)]">
+              <div className="h-5 w-0.5 [background:repeating-linear-gradient(to_bottom,#c4c2ba,#c4c2ba_3px,transparent_3px,transparent_6px)]" />
+              <div className="flex w-full flex-col items-center gap-2">
+                <span className={FEATURE_NUM}>2. CONTINUUM ENGINE</span>
+                <div className="relative flex h-[76px] w-[76px] flex-col items-center justify-center rounded-[20px] bg-[#1c1b18] text-white shadow-md">
                   <BentoLogo size={22} color="#ffffff" />
-                  <span className="font-mono text-[8px] font-bold tracking-[0.8px] uppercase">
-                    Hub
-                  </span>
+                  <span className="font-mono text-[8px] font-bold uppercase tracking-wider">HUB CORE</span>
                 </div>
               </div>
-
-              <div className="h-6 w-0.5 [background:repeating-linear-gradient(to_bottom,#c4c2ba,#c4c2ba_3px,transparent_3px,transparent_6px)]" />
-
-              {/* Step 4: Result */}
-              <div className="flex w-full flex-col items-center gap-2.5">
-                <span className={FEATURE_NUM}>RESULT</span>
-                <div className="flex w-full gap-2.5 [&>*]:min-w-0 [&>*]:flex-1">
+              <div className="h-5 w-0.5 [background:repeating-linear-gradient(to_bottom,#c4c2ba,#c4c2ba_3px,transparent_3px,transparent_6px)]" />
+              <div className="flex w-full flex-col items-center gap-2">
+                <span className={FEATURE_NUM}>4. CLIENT INTERFACES</span>
+                <div className="flex w-full gap-2 [&>*]:min-w-0 [&>*]:flex-1">
                   <div className={DIAGRAM_NODE}>
-                    <span className="text-[11px] font-bold text-[#1c1b18]">
-                      📱 Dashboard UI
-                    </span>
+                    <span className="text-[11px] font-bold text-[#1c1b18]">📱 Web UI</span>
                   </div>
                   <div className={`${DIAGRAM_NODE} border border-[#3b82f6]`}>
-                    <span className="text-[11px] font-bold text-[#1d4ed8]">
-                      💬 Gemini / GPT
-                    </span>
+                    <span className="text-[11px] font-bold text-[#1d4ed8]">🤖 AI Endpoints</span>
                   </div>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </section>
 
-      {/* ─── ChatGPT & LLM integration section ─── */}
+      {/* ─── SECTION 3: AI HOOK & DEMONSTRATION ─── */}
       <section
-        id="chatgpt"
-        className="border-t border-b border-[#e5e3db] bg-[#eae8e0] px-6 py-[100px]"
+        id="ai"
+        className="border-t border-b border-[#e5e3db] bg-[#eae8e0] px-6 py-[80px]"
       >
-        <div className="mx-auto grid max-w-[1100px] grid-cols-[1.1fr_1fr] items-center gap-[60px] max-[900px]:grid-cols-1 max-[900px]:gap-10">
+        <div className="mx-auto grid max-w-[1100px] grid-cols-[1.1fr_1fr] items-center gap-[50px] max-[900px]:grid-cols-1 max-[900px]:gap-10">
           <div>
-            <span className={`${HERO_BADGE} mb-7 bg-[#f4f3ec]`}>
-              🤖 OpenAPI compliant
+            <span className={`${HERO_BADGE} mb-5 bg-[#f4f3ec]`}>
+              🤖 OpenAPI 3.1 &amp; AI Agents
             </span>
-            <h2 className={`${HERO_TITLE} mb-5 text-left text-[40px]`}>
-              Connect ChatGPT or LLM APIs.
-              <br />
-              <span className="font-normal italic" style={SERIF_ITALIC_STYLE}>
+            <h2 className={`${HERO_TITLE} mb-4 text-left text-[38px] max-[480px]:text-[28px]`}>
+             
+              <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
                 Your data, your AI agent.
               </span>
             </h2>
-            <p className={`${STEP_DESC} mb-8 max-w-[440px] text-sm`}>
-              Every route in this API exposes a clean, standard OpenAPI spec. Plug the schema directly into custom ChatGPT Actions out-of-the-box, or into any other OpenAPI-schema-powered actions or MCP setup, to perform actions in plain English.
+            <p className={`${STEP_DESC} mb-6 max-w-[460px] text-sm`}>
+              Every API route in Continuum exposes a clean, standard OpenAPI 3.1 specification. Plug the schema directly into custom ChatGPT Actions, Claude, Gemini function calling, or MCP tool servers to interact with your data in plain English.
             </p>
-            <ul className="mb-8 flex list-none flex-col gap-3.5 p-0">
+
+            {/* Architecture guarantee highlight box */}
+       
+            <ul className="mb-7 flex list-none flex-col gap-3 p-0">
               <li className="flex items-start gap-3 text-sm leading-[1.5] text-[#1c1b18]">
                 <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#10b981] text-[11px] text-white">
                   ✓
@@ -857,388 +827,1069 @@ export default function LandingPage({
                 <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#10b981] text-[11px] text-white">
                   ✓
                 </span>
-                Ready for developer tools &amp; agent frameworks (Coze, Dify, Flowise)
+                Log expenses, add movies to watchlists, or ask for portfolio totals via natural language
               </li>
               <li className="flex items-start gap-3 text-sm leading-[1.5] text-[#1c1b18]">
                 <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#10b981] text-[11px] text-white">
                   ✓
                 </span>
-                Universal schema blueprint for Gemini &amp; Claude function calling
+                Ready for agent frameworks (Dify, Flowise, LangChain, MCP sidecars)
               </li>
             </ul>
             <a href="/assistant" className={`${HERO_CTA_PRIMARY} inline-flex`}>
-              See the setup guide
+              View Assistant Setup Guide
               <span>→</span>
             </a>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-[#e5e3db] bg-white shadow-[0_20px_40px_-15px_rgba(110,108,100,0.14)]">
-            <div className="flex h-9 items-center gap-1.5 border-b border-[#e5e3db] bg-[#f4f3ec] px-4">
-              <div className={`${BROWSER_DOT} bg-[#ff5f56]`} />
-              <div className={`${BROWSER_DOT} bg-[#ffbd2e]`} />
-              <div className={`${BROWSER_DOT} bg-[#27c93f]`} />
-              <span className="flex-1 text-center font-mono text-[10.5px] font-semibold tracking-wider text-[#9c9a92] uppercase">
-                ChatGPT · Continuum
+          {/* ChatGPT Interactive Live Demo Component */}
+          <div className="overflow-hidden rounded-2xl border border-[#e5e3db] bg-white shadow-[0_20px_40px_-15px_rgba(110,108,100,0.14)]">
+            <div className="flex h-9 items-center justify-between border-b border-[#e5e3db] bg-[#f4f3ec] px-4">
+              <div className="flex items-center gap-1.5">
+                <div className={`${BROWSER_DOT} bg-[#ff5f56]`} />
+                <div className={`${BROWSER_DOT} bg-[#ffbd2e]`} />
+                <div className={`${BROWSER_DOT} bg-[#27c93f]`} />
+              </div>
+              <span className="font-mono text-[10.5px] font-semibold tracking-wider text-[#9c9a92] uppercase">
+                ChatGPT · Continuum Action API
+              </span>
+              <span className="rounded bg-[#e5e3db] px-1.5 py-0.5 font-mono text-[9px] text-[#6e6c64]">
+                v1.2
               </span>
             </div>
-            <div className="flex h-[280px] items-end gap-3 bg-[#f4f3ec] p-5">
+            <div className="flex h-[310px] items-end gap-3 bg-[#f4f3ec] p-5">
               <ChatDemo />
             </div>
           </div>
         </div>
       </section>
 
-      {/* ─── Setup section ─── */}
+      {/* ─── SECTION 4: UNIFIED DASHBOARD SHOWCASE ─── */}
       <section
-        id="setup"
-        className="border-t border-b border-[#e5e3db] bg-[#eae8e0] px-6 py-[100px]"
+        id="dashboard"
+        className="mx-auto max-w-[1100px] px-6 py-[80px] text-center"
       >
-        <div className="mx-auto grid max-w-[1100px] grid-cols-[1.1fr_1fr] items-center gap-[60px] max-[900px]:grid-cols-1 max-[900px]:gap-10">
-          <div className="overflow-hidden rounded-xl border border-[#e5e3db] bg-white shadow-[0_20px_40px_-15px_rgba(110,108,100,0.14)]">
-            <div className="flex h-9 items-center gap-1.5 border-b border-[#e5e3db] bg-[#f4f3ec] px-4">
+        <span className={HERO_BADGE}>Unified Workspace</span>
+        <h2 className={`${HERO_TITLE} mb-3 text-[42px] max-[480px]:text-[30px]`}>
+          One dashboard.
+          <br />
+          <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
+            Everything connected.
+          </span>
+        </h2>
+        <p className="mx-auto mb-10 max-w-[580px] text-base leading-[1.6] text-[#6e6c64]">
+          A clean editorial interface designed for daily use. Track custom salary cycles, anime &amp; movie watchlists, book reading progress, and stock quotes without app fatigue.
+        </p>
+
+        {/* Tab Switcher for UI Showcase */}
+        <div className="mb-8 flex flex-wrap justify-center gap-2">
+          <button
+            onClick={() => setActiveDashTab("finance")}
+            className={`rounded-full px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
+              activeDashTab === "finance"
+                ? "bg-[#1c1b18] text-white shadow-xs"
+                : "border border-[#e5e3db] bg-white text-[#6e6c64] hover:border-[#1c1b18]"
+            }`}
+          >
+            💸 Finance &amp; Salary Cycles
+          </button>
+          <button
+            onClick={() => setActiveDashTab("media")}
+            className={`rounded-full px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
+              activeDashTab === "media"
+                ? "bg-[#1c1b18] text-white shadow-xs"
+                : "border border-[#e5e3db] bg-white text-[#6e6c64] hover:border-[#1c1b18]"
+            }`}
+          >
+            🎬 Media Watchlist &amp; Sync
+          </button>
+          <button
+            onClick={() => setActiveDashTab("investments")}
+            className={`rounded-full px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
+              activeDashTab === "investments"
+                ? "bg-[#1c1b18] text-white shadow-xs"
+                : "border border-[#e5e3db] bg-white text-[#6e6c64] hover:border-[#1c1b18]"
+            }`}
+          >
+            📈 Portfolio &amp; Assets
+          </button>
+          <button
+            onClick={() => setActiveDashTab("books")}
+            className={`rounded-full px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
+              activeDashTab === "books"
+                ? "bg-[#1c1b18] text-white shadow-xs"
+                : "border border-[#e5e3db] bg-white text-[#6e6c64] hover:border-[#1c1b18]"
+            }`}
+          >
+            📚 Book Library &amp; Notes
+          </button>
+        </div>
+
+        {/* Interactive Dashboard UI Preview Card */}
+        <div className="overflow-hidden rounded-2xl border border-[#e5e3db] bg-white shadow-[0_16px_36px_-10px_rgba(28,27,24,0.08)]">
+          {/* Top Browser Chrome Bar */}
+          <div className="flex h-10 items-center justify-between border-b border-[#e5e3db] bg-[#f4f3ec] px-4">
+            <div className="flex items-center gap-2">
               <div className={`${BROWSER_DOT} bg-[#ff5f56]`} />
               <div className={`${BROWSER_DOT} bg-[#ffbd2e]`} />
               <div className={`${BROWSER_DOT} bg-[#27c93f]`} />
+              <span className="ml-2 font-mono text-[11px] text-[#6e6c64]">continuum.home / dashboard</span>
             </div>
-            <div className="flex h-[280px] gap-3 bg-[#f4f3ec] p-5">
-              <div className="flex w-[60px] flex-col gap-2 rounded-lg border border-[#e5e3db] bg-white p-2.5">
-                <div className="h-3.5 rounded bg-[#1c1b18]" />
-                <div className="mt-2.5 h-2 w-[80%] rounded bg-[#eae8e0]" />
-                <div className="h-2 w-[65%] rounded bg-[#eae8e0]" />
-                <div className="h-2 w-[70%] rounded bg-[#eae8e0]" />
-              </div>
-              <div className="flex flex-1 flex-col gap-3">
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="h-[70px] rounded-lg border border-[#e5e3db] bg-white p-3">
-                    <div className="mb-1.5 h-1.5 w-10 rounded-[3px] bg-[#eae8e0]" />
-                    <div className="h-3.5 w-[70px] rounded-[3px] bg-[#1c1b18]" />
-                  </div>
-                  <div className="h-[70px] rounded-lg border border-[#e5e3db] bg-white p-3">
-                    <div className="mb-1.5 h-1.5 w-[30px] rounded-[3px] bg-[#eae8e0]" />
-                    <div className="h-3.5 w-[50px] rounded-[3px] bg-[#b3666b]" />
-                  </div>
-                  <div className="h-[70px] rounded-lg border border-[#e5e3db] bg-white p-3">
-                    <div className="mb-1.5 h-1.5 w-10 rounded-[3px] bg-[#eae8e0]" />
-                    <div className="h-3.5 w-[60px] rounded-[3px] bg-[#e39282]" />
-                  </div>
-                </div>
-                <div className="flex flex-1 flex-col justify-end gap-1.5 rounded-lg border border-[#e5e3db] bg-white p-3">
-                  <div className="mb-2 h-2 w-20 self-start rounded-[3px] bg-[#eae8e0]" />
-                  <div className="flex h-20 items-end justify-around">
-                    <div
-                      className="w-3.5 rounded-t-sm bg-[#e39282]"
-                      style={{ height: "40px" }}
-                    />
-                    <div
-                      className="w-3.5 rounded-t-sm bg-[#1c1b18]"
-                      style={{ height: "70px" }}
-                    />
-                    <div
-                      className="w-3.5 rounded-t-sm bg-[#d1b89a]"
-                      style={{ height: "55px" }}
-                    />
-                    <div
-                      className="w-3.5 rounded-t-sm bg-[#e39282]"
-                      style={{ height: "20px" }}
-                    />
-                    <div
-                      className="w-3.5 rounded-t-sm bg-[#1c1b18]"
-                      style={{ height: "85px" }}
-                    />
-                    <div
-                      className="w-3.5 rounded-t-sm bg-[#e39282]"
-                      style={{ height: "60px" }}
-                    />
-                  </div>
-                </div>
-              </div>
+            <div className="flex items-center gap-3 text-xs font-medium text-[#6e6c64]">
+              <span className="rounded bg-[#e5e3db] px-2 py-0.5 font-mono text-[10px] text-[#1c1b18]">
+                {activeDashTab.toUpperCase()} TAB ACTIVE
+              </span>
             </div>
           </div>
-          <div>
-            <span className={`${HERO_BADGE} mb-7 bg-[#f4f3ec]`}>
-              Minimal Setup
+
+          {/* Main Dashboard Frame with Left Sidebar (1:1 with Real App Layout) */}
+          <div className="grid grid-cols-[190px_1fr] max-[768px]:grid-cols-1 text-left bg-[#f7f4ee]">
+            
+            {/* Left Navigation Sidebar */}
+            <div className="flex flex-col justify-between border-r border-[#e7e3da] bg-[#f4f0ea] p-3.5 text-[11.5px] max-[768px]:hidden">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 px-2 py-1.5 font-semibold text-[#1c1b18] mb-3 border-b border-[#e7e3da]/70 pb-2.5">
+                  <BentoLogo size={15} color="#1c1b18" />
+                  <span className="font-bold text-[13px] tracking-tight">Continuum</span>
+                </div>
+                
+                <button
+                  onClick={() => setActiveDashTab("finance")}
+                  className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left font-medium transition-colors cursor-pointer ${
+                    activeDashTab === "finance"
+                      ? "bg-[#eee8dd] font-bold text-[#1c1b18] shadow-xs"
+                      : "text-[#6e6c64] hover:bg-[#e9e4d9]"
+                  }`}
+                >
+                  <span>💸</span> <span>Expenses &amp; Subs</span>
+                </button>
+                <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium text-[#6e6c64] hover:bg-[#e9e4d9]">
+                  <span>🩺</span> <span>Financial Health</span>
+                </div>
+                <button
+                  onClick={() => setActiveDashTab("investments")}
+                  className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left font-medium transition-colors cursor-pointer ${
+                    activeDashTab === "investments"
+                      ? "bg-[#eee8dd] font-bold text-[#1c1b18] shadow-xs"
+                      : "text-[#6e6c64] hover:bg-[#e9e4d9]"
+                  }`}
+                >
+                  <span>📈</span> <span>Investments</span>
+                </button>
+                <button
+                  onClick={() => setActiveDashTab("media")}
+                  className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left font-medium transition-colors cursor-pointer ${
+                    activeDashTab === "media" || activeDashTab === "books"
+                      ? "bg-[#eee8dd] font-bold text-[#1c1b18] shadow-xs"
+                      : "text-[#6e6c64] hover:bg-[#e9e4d9]"
+                  }`}
+                >
+                  <span>📚</span> <span>Library</span>
+                </button>
+                <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium text-[#6e6c64]">
+                  <span>📊</span> <span>Reports</span>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium text-[#6e6c64]">
+                  <span>🤖</span> <span>AI Agent</span>
+                </div>
+                <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium text-[#6e6c64]">
+                  <span>⚙️</span> <span>Settings</span>
+                </div>
+              </div>
+
+              {/* Sidebar Integrations & User Footer */}
+              <div className="flex flex-col gap-2 pt-3 border-t border-[#e7e3da] text-[10px] text-[#6e6c64]">
+                <span className="font-mono text-[9px] font-bold uppercase text-[#9c9a92] px-2">Integrations</span>
+                <div className="flex items-center gap-1.5 px-2 text-[10.5px]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#3b82f6]" />
+                  <span>Trakt &amp; AniList</span>
+                </div>
+                <div className="flex items-center justify-between px-2 pt-2 border-t border-[#e7e3da]/70">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <div className="h-5 w-5 shrink-0 rounded-full bg-[#1c1b18] text-white flex items-center justify-center font-bold text-[9px]">A</div>
+                    <span className="font-semibold text-[#1c1b18] truncate">User</span>
+                  </div>
+                  <span className="shrink-0 rounded bg-[#fef08a] px-1 py-0.2 font-mono text-[7.5px] font-bold text-[#854d0e]">PRO</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Main Active Tab Body Area with Uniform Fixed Height */}
+            <div className="p-5 max-[480px]:p-3 bg-[#f7f4ee] h-[510px] overflow-y-auto">
+              {activeDashTab === "finance" && (
+                <div className="flex flex-col gap-4 font-body">
+                  {/* Top Bar with Ledger / Subscriptions & Currency */}
+                  <div className="flex items-center justify-between border-b border-[#e5e1d8] pb-2.5 max-[600px]:flex-col max-[600px]:items-start max-[600px]:gap-2">
+                    <div className="flex items-center gap-4">
+                      <h3 className="text-lg font-bold tracking-tight text-[#1c1b18] italic font-serif" style={SERIF_ITALIC_STYLE}>
+                        Expenses Ledger
+                      </h3>
+                      <div className="flex items-center gap-1 text-[11px]">
+                        <span className="rounded-lg bg-[#eee8dd] px-2.5 py-0.5 font-semibold text-[#1c1b18]">Ledger</span>
+                        <span className="px-2.5 py-0.5 text-[#6e6c64]">Subscriptions</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 text-[11px]">
+                      <span className="font-mono text-[10.5px] text-[#6e6c64]">PAYDAY: <strong className="text-[#1c1b18]">25th of month</strong></span>
+                      <span className="rounded-lg border border-[#e5e1d8] bg-white px-2.5 py-0.5 font-semibold text-[#1c1b18] shadow-xs">Current Pay Period ▾</span>
+                    </div>
+                  </div>
+
+                  {/* 4 Stat Metric Cards */}
+                  <div className="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
+                    <div className="rounded-xl border border-[#7ca4c7] bg-[#90b4d4] p-3 text-[#1c1b18]">
+                      <span className="text-[9px] font-bold tracking-wider uppercase opacity-85">Total Spent</span>
+                      <p className="mt-0.5 text-xl font-extrabold text-[#1c1b18]">₹22,349.2</p>
+                      <span className="mt-0.5 block text-[9.5px] font-medium text-[#2c4760]">Last salary cycle</span>
+                    </div>
+                    <div className="rounded-xl border border-[#d6a83a] bg-[#e5b84c] p-3 text-[#1c1b18]">
+                      <span className="text-[9px] font-bold tracking-wider uppercase opacity-85">Charges Logged</span>
+                      <p className="mt-0.5 text-xl font-extrabold text-[#1c1b18]">44</p>
+                      <span className="mt-0.5 block text-[9.5px] font-medium text-[#5e4713]">Transactions</span>
+                    </div>
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3">
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#6e6c64]">Largest Charge</span>
+                      <p className="mt-0.5 text-xl font-extrabold text-[#d96b5a]">₹5,000</p>
+                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64]">Rent</span>
+                    </div>
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3">
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#6e6c64]">Top Category</span>
+                      <p className="mt-0.5 text-xl font-extrabold text-[#1c1b18]">Food</p>
+                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64]">Highest share</span>
+                    </div>
+                  </div>
+
+                  {/* Middle Row: Analytics Bar Chart Left + Upcoming Bills Right */}
+                  <div className="grid grid-cols-[1.3fr_1fr] gap-3 max-[900px]:grid-cols-1">
+                    {/* Analytics Bar Chart Section (Fixed Bar Rendering) */}
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3 shadow-xs flex flex-col justify-between">
+                      <div className="flex items-center justify-between border-b border-[#f4f0ea] pb-2 mb-2">
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#1c1b18]">Analytics</h4>
+                        <div className="flex rounded-lg border border-[#e5e1d8] bg-[#faf8f4] p-0.5 text-[9.5px] font-semibold">
+                          <span className="rounded-md bg-[#262522] px-2 py-0.5 text-white">Category Distribution</span>
+                          <span className="px-2 py-0.5 text-[#6e6c64]">Daily Trend</span>
+                        </div>
+                      </div>
+
+                      {/* Bar Track Container with Explicit Min-Height Flex Bars */}
+                      <div className="flex h-24 items-end justify-between gap-1 pt-1">
+                        {[
+                          { cat: "FOOD", height: "88%", amt: "₹5.8k", color: "bg-[#b85c5c]" },
+                          { cat: "TRANSPORT", height: "78%", amt: "₹5.3k", color: "bg-[#e09181]" },
+                          { cat: "RENT", height: "70%", amt: "₹5.0k", color: "bg-[#1c1b18]" },
+                          { cat: "MEDICAL", height: "40%", amt: "₹2.7k", color: "bg-[#706c62]" },
+                          { cat: "ENT.", height: "22%", amt: "₹1.3k", color: "bg-[#c2bdae]" },
+                          { cat: "CARE", height: "18%", amt: "₹1.1k", color: "bg-[#c2bdae]" },
+                          { cat: "DRINKS", height: "12%", amt: "₹0.8k", color: "bg-[#706c62]" },
+                          { cat: "GIFTS", height: "8%", amt: "₹0.5k", color: "bg-[#c2bdae]" },
+                        ].map((bar) => (
+                          <div className="flex flex-1 flex-col items-center justify-end h-full gap-0.5" key={bar.cat}>
+                            <span className="font-mono text-[8px] font-bold text-[#6e6c64]">{bar.amt}</span>
+                            <div className="w-full h-14 flex items-end justify-center">
+                              <div
+                                className={`w-full max-w-[20px] rounded-t-xs ${bar.color}`}
+                                style={{ height: bar.height }}
+                              />
+                            </div>
+                            <span className="font-mono text-[7px] font-bold text-[#9c9a92] truncate max-w-full">{bar.cat}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Upcoming Bills Row */}
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3 shadow-xs flex flex-col justify-between">
+                      <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#1c1b18] mb-2 border-b border-[#f4f0ea] pb-2">
+                        📅 Upcoming Bills
+                      </h4>
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center justify-between rounded-lg border border-[#e5e1d8] bg-white p-2 text-xs shadow-2xs">
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded bg-[#e0f2fe] text-xs">📺</span>
+                            <div>
+                              <p className="font-bold text-[#1c1b18] text-[11px]">Youtube <span className="font-mono text-[#1c1b18]">₹148</span></p>
+                              <span className="inline-block rounded bg-[#fef2f2] px-1 py-0.2 text-[8.5px] font-bold text-[#dc2626]">Due 7 Sept · Monthly</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            <span className="flex h-5 w-5 items-center justify-center rounded bg-[#dcfce7] text-[#15803d] font-bold text-[10px]">✓</span>
+                            <span className="flex h-5 w-5 items-center justify-center rounded bg-[#fee2e2] text-[#dc2626] font-bold text-[10px]">✕</span>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between rounded-lg border border-[#e5e1d8] bg-white p-2 text-xs shadow-2xs">
+                          <div className="flex items-center gap-2">
+                            <span className="flex h-7 w-7 items-center justify-center rounded bg-[#f3e8ff] text-xs">🎵</span>
+                            <div>
+                              <p className="font-bold text-[#1c1b18] text-[11px]">Spotify <span className="font-mono text-[#1c1b18]">₹300</span></p>
+                              <span className="text-[8.5px] text-[#6e6c64]">Due 13 Sept · Monthly</span>
+                            </div>
+                          </div>
+                          <div className="flex gap-1">
+                            <span className="flex h-5 w-5 items-center justify-center rounded bg-[#dcfce7] text-[#15803d] font-bold text-[10px]">✓</span>
+                            <span className="flex h-5 w-5 items-center justify-center rounded bg-[#fee2e2] text-[#dc2626] font-bold text-[10px]">✕</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom Row: Log Transaction Left + Ledger Sheet Table Right */}
+                  <div className="grid grid-cols-[200px_1fr] gap-3 max-[900px]:grid-cols-1">
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3 text-xs flex flex-col gap-2 shadow-xs">
+                      <span className="font-mono text-[9px] font-bold uppercase text-[#9c9a92]">Log Transaction</span>
+                      <input className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-2.5 py-1 text-[11px] text-[#1c1b18]" placeholder="Description" defaultValue="Lunch biryani" />
+                      <input className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-2.5 py-1 text-[11px] text-[#1c1b18]" placeholder="Amount (₹)" defaultValue="275" />
+                      <select className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-2.5 py-1 text-[11px] text-[#1c1b18]">
+                        <option>Food</option>
+                        <option>Groceries</option>
+                        <option>Rent</option>
+                      </select>
+                      <button className="mt-0.5 rounded-lg bg-[#1c1b18] py-1.5 text-[11px] font-bold text-white cursor-pointer">+ Add Transaction</button>
+                    </div>
+
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3 text-xs shadow-xs">
+                      <div className="flex items-center justify-between border-b border-[#f4f0ea] pb-2 mb-2">
+                        <span className="font-mono text-[9px] font-bold uppercase text-[#9c9a92]">Ledger Sheet</span>
+                        <div className="flex gap-1">
+                          <span className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-2 py-0.5 text-[9.5px] font-semibold text-[#1c1b18]">📥 Import</span>
+                          <span className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-2 py-0.5 text-[9.5px] font-semibold text-[#1c1b18]">📤 Export</span>
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_36px] items-center border-b border-[#f4f0ea] pb-1 font-mono text-[9px] text-[#9c9a92] uppercase">
+                          <span>Description</span>
+                          <span>Category</span>
+                          <span>Date</span>
+                          <span className="text-right">Amount</span>
+                          <span className="text-center">Actions</span>
+                        </div>
+                        {[
+                          { desc: "Lunch biryani", cat: "FOOD", date: "2026-09-07", amt: "₹275" },
+                          { desc: "Pepsi", cat: "DRINKS", date: "2026-09-07", amt: "₹40" },
+                          { desc: "Lunch", cat: "FOOD", date: "2026-09-06", amt: "₹208" },
+                          { desc: "Dinner", cat: "FOOD", date: "2026-09-05", amt: "₹312" },
+                        ].map((row, i) => (
+                          <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_36px] items-center border-b border-[#f7f4ed] py-0.5 text-[11px]" key={i}>
+                            <span className="font-bold text-[#1c1b18] truncate">{row.desc}</span>
+                            <div>
+                              <span className="rounded bg-[#eae6dd] border border-[#e2ddd0] px-1 py-0.2 font-mono text-[8px] font-bold text-[#55534c]">{row.cat}</span>
+                            </div>
+                            <span className="font-mono text-[10px] text-[#9c9a92]">{row.date}</span>
+                            <span className="font-bold text-right text-[#1c1b18]">{row.amt}</span>
+                            <div className="flex justify-center gap-0.5 text-[10px] text-[#9c9a92]">
+                              <span>✏️</span>
+                              <span>🗑️</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeDashTab === "media" && (
+                <div className="flex flex-col gap-5 font-body">
+                  {/* Header Title */}
+                  <div className="flex items-center justify-between border-b border-[#e5e1d8] pb-3">
+                    <h3 className="text-xl font-bold tracking-tight text-[#1c1b18] italic font-serif" style={SERIF_ITALIC_STYLE}>
+                      Media library
+                    </h3>
+                  </div>
+
+                  {/* 4 Stat Metric Cards */}
+                  <div className="grid grid-cols-4 gap-3.5 max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64]">Watching Now</span>
+                      <p className="mt-1 text-2xl font-extrabold text-[#1c1b18]">8</p>
+                      <span className="mt-1 block font-mono text-[10px] text-[#9c9a92]">ANIME 8 · TV/S 0</span>
+                    </div>
+                    <div className="rounded-xl border border-[#fecaca] bg-[#fff5f5] p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#dc2626]">Plan to Watch</span>
+                      <p className="mt-1 text-2xl font-extrabold text-[#dc2626]">28</p>
+                      <span className="mt-1 block font-mono text-[10px] text-[#ef4444]">ANIME 28 · TV/S 0</span>
+                    </div>
+                    <div className="rounded-xl border border-[#bbf7d0] bg-[#f0fdf4] p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#15803d]">Completed</span>
+                      <p className="mt-1 text-2xl font-extrabold text-[#15803d]">475</p>
+                      <span className="mt-1 block font-mono text-[10px] text-[#16a34a]">ANIME 220 · TV/S 255</span>
+                    </div>
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64]">Total Library</span>
+                      <p className="mt-1 text-xl font-extrabold text-[#1c1b18]">269 <span className="text-xs font-normal text-[#6e6c64]">anime</span></p>
+                      <span className="mt-1 block font-mono text-[10px] text-[#6e6c64]">24 shows · 249 movies</span>
+                    </div>
+                  </div>
+
+                  {/* Split Bottom: Search & AI Recommendation Left + Media Grid with Real Thumbnails Right */}
+                  <div className="grid grid-cols-[220px_1fr] gap-4 max-[900px]:grid-cols-1">
+                    <div className="flex flex-col gap-3">
+                      <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 text-xs flex flex-col gap-2 shadow-xs">
+                        <span className="font-mono text-[9.5px] font-bold uppercase text-[#9c9a92]">Search &amp; Add</span>
+                        <input className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-3 py-1.5 text-xs" placeholder="Search title..." />
+                        <select className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-3 py-1.5 text-xs">
+                          <option>Movies (Trakt)</option>
+                          <option>TV Shows</option>
+                          <option>Anime (AniList)</option>
+                        </select>
+                        <button className="rounded-lg bg-[#6e6c64] py-1.5 text-xs font-bold text-white cursor-pointer">Search</button>
+                      </div>
+
+                      {/* AI Recommendation Card with Real Thumbnail Image */}
+                      <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 text-xs shadow-xs">
+                        <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#9c9a92]">🤖 AI Recommendation</span>
+                        <div className="mt-2.5 flex gap-2.5 items-center">
+                          <img
+                            src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&q=80"
+                            alt="Minority Report poster"
+                            className="h-16 w-12 rounded object-cover shadow-xs border border-[#e5e1d8]"
+                          />
+                          <div>
+                            <p className="font-bold text-[#1c1b18]">Minority Report</p>
+                            <span className="text-[10.5px] font-bold text-[#d97706]">⭐️ 7.8</span>
+                            <span className="mt-0.5 block text-[9.5px] text-[#6e6c64]">Sci-Fi / Action</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4 shadow-xs">
+                      <div className="flex items-center justify-between border-b border-[#f4f0ea] pb-3 mb-3 max-[600px]:flex-col max-[600px]:gap-2">
+                        <div className="flex gap-1.5">
+                          <span className="rounded-lg bg-[#1c1b18] px-3 py-1 text-xs font-bold text-white">Movies</span>
+                          <span className="rounded-lg border border-[#e5e1d8] px-3 py-1 text-xs font-medium text-[#6e6c64]">TV Shows</span>
+                          <span className="rounded-lg border border-[#e5e1d8] px-3 py-1 text-xs font-medium text-[#6e6c64]">Anime</span>
+                        </div>
+                        <div className="flex gap-1 text-[10.5px] font-semibold text-[#6e6c64]">
+                          <span className="rounded bg-[#f7f4ed] px-2 py-0.5">All</span>
+                          <span className="rounded bg-[#f7f4ed] px-2 py-0.5">Watching</span>
+                          <span className="rounded bg-[#f7f4ed] px-2 py-0.5">Plan</span>
+                          <span className="rounded bg-[#dcfce7] px-2 py-0.5 text-[#15803d]">Done</span>
+                        </div>
+                      </div>
+
+                      {/* Poster Grid with Real Visual Poster Images */}
+                      <div className="grid grid-cols-4 gap-3 max-[600px]:grid-cols-2">
+                        {[
+                          {
+                            title: "Dune: Part Two",
+                            status: "Completed",
+                            statusBg: "bg-[#dcfce7] text-[#15803d]",
+                            img: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400&q=80",
+                            year: "2024",
+                            rating: "★ 8.6",
+                          },
+                          {
+                            title: "Severance S2",
+                            status: "Plan to Watch",
+                            statusBg: "bg-[#fef2f2] text-[#dc2626]",
+                            img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80",
+                            year: "2025",
+                            rating: "★ 8.7",
+                          },
+                          {
+                            title: "Frieren",
+                            status: "Watching",
+                            statusBg: "bg-[#e0e7ff] text-[#3730a3]",
+                            img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80",
+                            year: "2023",
+                            rating: "★ 9.1",
+                          },
+                          {
+                            title: "Thunderbolts*",
+                            status: "Completed",
+                            statusBg: "bg-[#dcfce7] text-[#15803d]",
+                            img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80",
+                            year: "2025",
+                            rating: "★ 7.9",
+                          },
+                        ].map((item, idx) => (
+                          <div className="rounded-lg border border-[#e5e1d8] bg-[#faf8f4] p-2 flex flex-col items-center shadow-2xs group hover:border-[#1c1b18] transition-colors" key={idx}>
+                            <div className="relative h-28 w-full overflow-hidden rounded-md bg-[#eee8dd] mb-2">
+                              <img
+                                src={item.img}
+                                alt={item.title}
+                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              />
+                              <span className="absolute top-1 right-1 rounded bg-[#1c1b18]/80 px-1.5 py-0.5 font-mono text-[8.5px] font-bold text-white backdrop-blur-xs">
+                                {item.rating}
+                              </span>
+                            </div>
+                            <p className="text-[11px] font-bold text-[#1c1b18] truncate w-full text-center">{item.title}</p>
+                            <span className="text-[9px] text-[#6e6c64]">{item.year}</span>
+                            <span className={`mt-1 rounded px-1.5 py-0.2 text-[8.5px] font-bold ${item.statusBg}`}>{item.status}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeDashTab === "investments" && (
+                <div className="flex flex-col gap-5 font-body">
+                  {/* Header Title & Sync Button */}
+                  <div className="flex items-center justify-between border-b border-[#e5e1d8] pb-3">
+                    <div>
+                      <h3 className="text-xl font-bold tracking-tight text-[#1c1b18] italic font-serif" style={SERIF_ITALIC_STYLE}>
+                        Wealth &amp; Portfolio Management
+                      </h3>
+                      <p className="text-xs text-[#6e6c64]">Manage holdings, learn investment principles, and optimize asset allocation</p>
+                    </div>
+                    <button className="rounded-lg bg-[#1c1b18] px-3 py-1.5 text-xs font-semibold text-white cursor-pointer shadow-xs">🔄 Sync Live Prices</button>
+                  </div>
+
+                  {/* 5 Stat Metric Cards */}
+                  <div className="grid grid-cols-5 gap-3 max-[900px]:grid-cols-3 max-[480px]:grid-cols-1">
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3">
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#6e6c64]">Portfolio Value</span>
+                      <p className="mt-1 text-lg font-extrabold text-[#1c1b18]">₹6,736.80</p>
+                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64]">Current market valuation</span>
+                    </div>
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3">
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#6e6c64]">Total Invested</span>
+                      <p className="mt-1 text-lg font-extrabold text-[#1c1b18]">₹6,689.55</p>
+                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64]">Total net capital inputs</span>
+                    </div>
+                    <div className="rounded-xl border border-[#bbf7d0] bg-[#f0fdf4] p-3">
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#166534]">Unrealized P&amp;L</span>
+                      <p className="mt-1 text-lg font-extrabold text-[#15803d]">+₹47.25</p>
+                      <span className="mt-0.5 block text-[9.5px] font-bold text-[#16a34a]">+0.71% Return</span>
+                    </div>
+                    <div className="rounded-xl border border-[#bbf7d0] bg-[#f0fdf4] p-3">
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#166534]">Realized Profit</span>
+                      <p className="mt-1 text-lg font-extrabold text-[#15803d]">+₹1,268.30</p>
+                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64]">From 3 closed assets</span>
+                    </div>
+                    <div className="rounded-xl border border-[#fecaca] bg-[#fff5f5] p-3">
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#991b1b]">Today&apos;s Movement</span>
+                      <p className="mt-1 text-lg font-extrabold text-[#dc2626]">-₹40.95</p>
+                      <span className="mt-0.5 block text-[9.5px] font-bold text-[#ef4444]">-0.60% Today</span>
+                    </div>
+                  </div>
+
+                  {/* Middle Asset Allocation Split */}
+                  <div className="grid grid-cols-2 gap-4 max-[800px]:grid-cols-1 text-xs">
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4 shadow-xs">
+                      <span className="font-bold text-[#1c1b18]">Current Asset Allocation</span>
+                      <div className="mt-3 flex items-center gap-4">
+                        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#1d4ed8] text-white font-extrabold text-[10px] text-center shadow-xs">NET WORTH ₹7K</div>
+                        <div>
+                          <p className="font-bold text-[#1c1b18]">Stocks / Equity <span className="font-mono text-[#6e6c64]">₹6,737 (100%)</span></p>
+                          <span className="mt-2 inline-block rounded bg-[#dcfce7] px-2 py-0.5 font-bold text-[#15803d] text-[10px]">BEST RETURN: ETERNAL.NS (+0.71%)</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4 shadow-xs">
+                      <div className="flex justify-between border-b border-[#f4f0ea] pb-2 mb-2 font-bold text-[#1c1b18]">
+                        <span>Target Risk Allocation</span>
+                        <span className="text-[10.5px] text-[#6e6c64]">Balanced Profile</span>
+                      </div>
+                      <div className="flex flex-col gap-1.5 text-[10.5px]">
+                        <div className="flex justify-between"><span>Cash &amp; FDs</span><span className="font-mono text-[#9c9a92]">0% / 25% target</span></div>
+                        <div className="flex justify-between"><span>Gold</span><span className="font-mono text-[#9c9a92]">0% / 10% target</span></div>
+                        <div className="flex justify-between"><span>Mutual Funds / SIP</span><span className="font-mono text-[#9c9a92]">0% / 45% target</span></div>
+                        <div className="flex justify-between font-bold text-[#1d4ed8]"><span>Stocks / Equity</span><span className="font-mono">100% / 20% target</span></div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom Form Left + Holdings Table Right */}
+                  <div className="grid grid-cols-[220px_1fr] gap-4 max-[900px]:grid-cols-1 text-xs">
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 flex flex-col gap-2 shadow-xs">
+                      <span className="font-mono text-[9.5px] font-bold uppercase text-[#9c9a92]">Add Investment</span>
+                      <input className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-3 py-1.5 text-xs" placeholder="Asset Ticker" defaultValue="ETERNAL.NS" />
+                      <select className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-3 py-1.5 text-xs">
+                        <option>Equity (Stocks)</option>
+                        <option>Mutual Fund</option>
+                        <option>Crypto</option>
+                      </select>
+                      <input className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-3 py-1.5 text-xs" placeholder="Total Capital" defaultValue="6689.55" />
+                      <button className="rounded-lg bg-[#1c1b18] py-1.5 text-xs font-bold text-white cursor-pointer">+ Save Asset</button>
+                    </div>
+
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 shadow-xs">
+                      <span className="font-mono text-[9.5px] font-bold uppercase text-[#9c9a92] mb-2.5 block">Active Holdings Ledger</span>
+                      <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_1fr] border-b border-[#f4f0ea] pb-2 font-mono text-[9.5px] text-[#9c9a92] uppercase">
+                        <span>Asset</span>
+                        <span>Category</span>
+                        <span>Market Value</span>
+                        <span>Returns</span>
+                        <span className="text-right">Day Chg</span>
+                      </div>
+                      <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_1fr] items-center border-b border-[#f7f4ed] py-2 text-xs">
+                        <span className="font-bold text-[#1c1b18]">ETERNAL.NS</span>
+                        <div><span className="rounded bg-[#dbeafe] px-2 py-0.5 font-mono text-[8.5px] font-bold text-[#1d4ed8]">EQUITY</span></div>
+                        <span className="font-bold text-[#1c1b18]">₹6,736.80</span>
+                        <span className="font-bold text-[#15803d]">+₹47.25 (+0.71%)</span>
+                        <span className="font-bold text-right text-[#dc2626]">-₹40.95</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {activeDashTab === "books" && (
+                <div className="flex flex-col gap-5 font-body">
+                  {/* Header Title */}
+                  <div className="flex items-center justify-between border-b border-[#e5e1d8] pb-3">
+                    <h3 className="text-xl font-bold tracking-tight text-[#1c1b18] italic font-serif" style={SERIF_ITALIC_STYLE}>
+                      Book Library
+                    </h3>
+                  </div>
+
+                  {/* 4 Stat Metric Cards */}
+                  <div className="grid grid-cols-4 gap-3.5 max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64]">Reading Now</span>
+                      <p className="mt-1 text-2xl font-extrabold text-[#1c1b18]">1</p>
+                      <span className="mt-1 block text-[10px] text-[#6e6c64]">In progress</span>
+                    </div>
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64]">To Read</span>
+                      <p className="mt-1 text-2xl font-extrabold text-[#1c1b18]">0</p>
+                      <span className="mt-1 block text-[10px] text-[#6e6c64]">On the shelf</span>
+                    </div>
+                    <div className="rounded-xl border border-[#bbf7d0] bg-[#f0fdf4] p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#15803d]">Finished</span>
+                      <p className="mt-1 text-2xl font-extrabold text-[#15803d]">27</p>
+                      <span className="mt-1 block text-[10px] text-[#16a34a]">Books read</span>
+                    </div>
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64]">Total in Library</span>
+                      <p className="mt-1 text-2xl font-extrabold text-[#1c1b18]">28</p>
+                      <span className="mt-1 block text-[10px] text-[#6e6c64]">All cataloged books</span>
+                    </div>
+                  </div>
+
+                  {/* Split Bottom: Search Left + Book Cover Thumbnails Right */}
+                  <div className="grid grid-cols-[220px_1fr] gap-4 max-[900px]:grid-cols-1">
+                    <div className="flex flex-col gap-3">
+                      <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 text-xs flex flex-col gap-2 shadow-xs">
+                        <span className="font-mono text-[9.5px] font-bold uppercase text-[#9c9a92]">Search Google Books</span>
+                        <input className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-3 py-1.5 text-xs" placeholder="Search books..." />
+                        <button className="rounded-lg bg-[#6e6c64] py-1.5 text-xs font-bold text-white cursor-pointer">Search</button>
+                      </div>
+
+                      {/* AI Book Recommendation Card with OpenLibrary Cover Image */}
+                      <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 text-xs shadow-xs">
+                        <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#9c9a92]">🤖 AI Book Recommendation</span>
+                        <div className="mt-2.5 flex gap-2.5 items-center">
+                          <img
+                            src="https://covers.openlibrary.org/b/isbn/9780156001311-L.jpg"
+                            alt="The Name of the Rose cover"
+                            className="h-16 w-11 rounded object-cover shadow-xs border border-[#e5e1d8]"
+                          />
+                          <div>
+                            <p className="font-bold text-[#1c1b18] leading-tight">The Name of the Rose</p>
+                            <span className="mt-0.5 block text-[9.5px] text-[#6e6c64]">Umberto Eco</span>
+                            <span className="mt-1 inline-block rounded bg-[#fef08a] px-1.5 py-0.2 text-[8.5px] font-bold text-[#854d0e]">Mystery / History</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4 shadow-xs">
+                      <div className="flex items-center justify-between border-b border-[#f4f0ea] pb-3 mb-3">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-[#1c1b18]">Your Library</h4>
+                        <div className="flex gap-1 text-[10.5px] font-semibold text-[#6e6c64]">
+                          <span className="rounded bg-[#f7f4ed] px-2 py-0.5">All</span>
+                          <span className="rounded bg-[#f7f4ed] px-2 py-0.5">Reading</span>
+                          <span className="rounded bg-[#dcfce7] px-2 py-0.5 text-[#15803d]">Done</span>
+                        </div>
+                      </div>
+
+                      {/* Book Cover Shelf Grid with Real OpenLibrary Book Cover Images */}
+                      <div className="grid grid-cols-4 gap-3 max-[600px]:grid-cols-2">
+                        {[
+                          {
+                            title: "2 States",
+                            author: "Chetan Bhagat",
+                            cover: "https://covers.openlibrary.org/b/isbn/9788129115300-L.jpg",
+                          },
+                          {
+                            title: "Angels & Demons",
+                            author: "Dan Brown",
+                            cover: "https://covers.openlibrary.org/b/isbn/9780671027360-L.jpg",
+                          },
+                          {
+                            title: "Circe",
+                            author: "Madeline Miller",
+                            cover: "https://covers.openlibrary.org/b/isbn/9780316556347-L.jpg",
+                          },
+                          {
+                            title: "Harry Potter",
+                            author: "J.K. Rowling",
+                            cover: "https://covers.openlibrary.org/b/isbn/9780439554930-L.jpg",
+                          },
+                        ].map((book, idx) => (
+                          <div className="rounded-lg border border-[#e5e1d8] bg-[#faf8f4] p-2 flex flex-col items-center text-center shadow-2xs group hover:border-[#1c1b18] transition-colors" key={idx}>
+                            <div className="relative h-28 w-full overflow-hidden rounded-md bg-[#eee8dd] mb-2 flex items-center justify-center">
+                              <img
+                                src={book.cover}
+                                alt={book.title}
+                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                              />
+                            </div>
+                            <p className="text-[11px] font-bold text-[#1c1b18] truncate w-full">{book.title}</p>
+                            <span className="text-[9px] text-[#6e6c64] truncate w-full">{book.author}</span>
+                            <span className="mt-1 rounded bg-[#dcfce7] px-1.5 py-0.2 text-[8.5px] font-bold text-[#15803d]">Done ✓</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SECTION 5: BUILT FOR EVERYONE ─── */}
+      <section className="border-t border-b border-[#e5e1d8] bg-[#f4f1ea] px-6 py-[80px]">
+        <div className="mx-auto max-w-[1100px] text-center">
+          <span className={`${HERO_BADGE} bg-[#eae6dc] border-[#d4cebf] text-[#55534c]`}>Universal Access</span>
+          <h2 className={`${HERO_TITLE} mb-10 text-[38px] max-[480px]:text-[28px]`}>
+            Built for everyone.
+            <br />
+            <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
+              Simple for daily use. Powerful when you need it.
             </span>
-            <h2 className={`${HERO_TITLE} mb-10 text-left text-[40px]`}>
+          </h2>
+
+          <div className="grid grid-cols-4 gap-5 text-left max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
+            <div className="flex h-full flex-col items-start rounded-2xl border border-[#e5e1d8] bg-white p-6 shadow-[0_4px_16px_rgba(28,27,24,0.03)] transition-all duration-200 hover:-translate-y-0.5">
+              <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-xl bg-[#f7f4ee] text-xl">✨</div>
+              <h4 className="mb-1.5 text-base font-bold text-[#1c1b18]">For Everyday Users</h4>
+              <p className={STEP_DESC}>
+                Instant zero-setup access. Track daily expenses, watchlists, and books with zero technical hassle.
+              </p>
+            </div>
+            <div className="flex h-full flex-col items-start rounded-2xl border border-[#e5e1d8] bg-white p-6 shadow-[0_4px_16px_rgba(28,27,24,0.03)] transition-all duration-200 hover:-translate-y-0.5">
+              <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-xl bg-[#f7f4ee] text-xl">👩‍💻</div>
+              <h4 className="mb-1.5 text-base font-bold text-[#1c1b18]">For Developers</h4>
+              <p className={STEP_DESC}>
+                Fork the repo, deploy to Vercel in ~5 minutes. Full environment control with zero server maintenance.
+              </p>
+            </div>
+            <div className="flex h-full flex-col items-start rounded-2xl border border-[#e5e1d8] bg-white p-6 shadow-[0_4px_16px_rgba(28,27,24,0.03)] transition-all duration-200 hover:-translate-y-0.5">
+              <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-xl bg-[#f7f4ee] text-xl">🔒</div>
+              <h4 className="mb-1.5 text-base font-bold text-[#1c1b18]">For Privacy Conscious</h4>
+              <p className={STEP_DESC}>
+                Own your Firebase database. Sensitive financial data encrypted at rest with AES-256 GCM.
+              </p>
+            </div>
+            <div className="flex h-full flex-col items-start rounded-2xl border border-[#e5e1d8] bg-white p-6 shadow-[0_4px_16px_rgba(28,27,24,0.03)] transition-all duration-200 hover:-translate-y-0.5">
+              <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-xl bg-[#f7f4ee] text-xl">🤖</div>
+              <h4 className="mb-1.5 text-base font-bold text-[#1c1b18]">For AI Users</h4>
+              <p className={STEP_DESC}>
+                Give ChatGPT Custom Actions or local LLMs a structured, OpenAPI-authenticated interface to your data.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── SECTION 6: SELF-HOSTING ─── */}
+      <section
+        id="setup"
+        className="bg-[#faf8f5] px-6 py-[80px]"
+      >
+        <div className="mx-auto grid max-w-[1100px] grid-cols-[1fr_1.05fr] items-start gap-[50px] max-[900px]:grid-cols-1 max-[900px]:gap-10">
+          <div>
+            <div className="mb-6 flex items-center gap-2">
+              <span className="inline-flex items-center rounded-full border border-[#dcd6c8] bg-[#eee8dd] px-3.5 py-1 font-mono text-[10px] font-bold tracking-[1.5px] text-[#55534c] uppercase">
+                Developer First
+              </span>
+              <span className="inline-flex items-center rounded-full border border-[#10b981]/30 bg-[#10b981]/15 px-3.5 py-1 font-mono text-[10px] font-bold tracking-[1px] text-[#047857]">
+                ~5 min deployment
+              </span>
+            </div>
+            <h2 className={`${HERO_TITLE} mb-8 text-left text-[38px] max-[480px]:text-[28px]`}>
               If you can clone a repo,
               <br />
-              <span className="font-normal italic" style={SERIF_ITALIC_STYLE}>
+              <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
                 you can self-host this.
               </span>
             </h2>
-            <div className="mb-9 flex gap-5">
+            <div className="mb-6 flex items-start gap-4">
               <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1c1b18] text-[11px] font-bold text-white">
                 1
               </span>
               <div>
-                <h4 className="mb-1.5 text-[15px] font-bold">
-                  Fork & deploy to Vercel
+                <h4 className="mb-1 text-[15px] font-bold text-[#1c1b18]">
+                  Fork &amp; Deploy to Vercel
                 </h4>
                 <p className={STEP_DESC}>
-                  Click the deploy button in the GitHub README. Vercel sets up
-                  CI/CD automatically in under 2 minutes.
+                  Click Deploy in the README. Vercel automatically builds and provisions CI/CD in under 2 minutes.
                 </p>
               </div>
             </div>
-            <div className="mb-9 flex gap-5">
+            <div className="mb-6 flex items-start gap-4">
               <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1c1b18] text-[11px] font-bold text-white">
                 2
               </span>
               <div>
-                <h4 className="mb-1.5 text-[15px] font-bold">
-                  Create a Firebase project
+                <h4 className="mb-1 text-[15px] font-bold text-[#1c1b18]">
+                  Connect Firebase Project
                 </h4>
                 <p className={STEP_DESC}>
-                  Add your Firebase config as Vercel env vars. Firestore and
-                  Auth initialize on first login — no manual schema setup.
+                  Paste your Firebase config into Vercel environment variables. Firestore &amp; Auth initialize on first login.
                 </p>
               </div>
             </div>
-            <div className="mb-9 flex gap-5">
+            <div className="flex items-start gap-4">
               <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1c1b18] text-[11px] font-bold text-white">
                 3
               </span>
               <div>
-                <h4 className="mb-1.5 text-[15px] font-bold">
-                  Connect your API keys
+                <h4 className="mb-1 text-[15px] font-bold text-[#1c1b18]">
+                  Connect Optional API Keys
                 </h4>
                 <p className={STEP_DESC}>
-                  Optionally add AniList, Trakt, and TMDb keys to unlock full
-                  sync. Everything else works without them.
+                  Optionally add AniList, Trakt, and TMDb keys for automated watchlist enrichment. Everything else works out-of-the-box.
                 </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-[#e5e1d8] bg-white p-7 shadow-[0_12px_32px_-8px_rgba(28,27,24,0.06)]">
+            <div className="flex items-center justify-between border-b border-[#f4f0ea] pb-3 mb-4">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#9c9a92]">Deployment Workflow</span>
+              <span className="rounded bg-[#f7f4ee] px-2 py-0.5 font-mono text-[9px] text-[#6e6c64]">VERCEL + FIREBASE</span>
+            </div>
+            <div className="flex flex-col gap-3 font-mono text-xs">
+              <div className="flex items-center gap-3 rounded-lg border border-[#e5e1d8] bg-[#f7f4ee] p-3">
+                <span className="font-bold text-[#1c1b18]">git clone</span>
+                <span className="text-[#6e6c64] text-[11px] truncate">https://github.com/fal3n-4ngel/Continuum-Home</span>
+              </div>
+              <div className="flex items-center justify-center text-[#9c9a92] text-[11px]">↓</div>
+              <div className="flex items-center justify-between rounded-lg border border-[#e5e1d8] bg-[#f7f4ee] p-3">
+                <span className="font-bold text-[#1c1b18]">Vercel Deploy</span>
+                <span className="rounded bg-[#dcfce7] px-2 py-0.5 text-[10px] font-bold text-[#15803d]">BUILD SUCCESSFUL</span>
+              </div>
+              <div className="flex items-center justify-center text-[#9c9a92] text-[11px]">↓</div>
+              <div className="flex items-center justify-between rounded-lg border border-[#e5e1d8] bg-[#f7f4ee] p-3">
+                <span className="font-bold text-[#1c1b18]">Firebase Rules</span>
+                <span className="rounded bg-[#dbeafe] px-2 py-0.5 text-[10px] font-bold text-[#1d4ed8]">ISOLATION VERIFIED</span>
+              </div>
+              <div className="flex items-center justify-center text-[#9c9a92] text-[11px]">↓</div>
+              <div className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] p-3 text-center font-semibold text-[#14532d]">
+                🎉 Ready at your-custom-domain.vercel.app
               </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ─── Three-way pricing ─── */}
+      {/* ─── SECTION 7: PRICING (Cloud / Self-Hosted / Supporter) ─── */}
       <section
         id="pricing"
-        className="mx-auto max-w-[1100px] px-6 py-[100px] text-center"
+        className="border-t border-b border-[#e5e1d8] bg-[#f4f1ea] px-6 py-[80px] text-center"
       >
-        <span className={HERO_BADGE}>Three ways in</span>
-        <h2 className={`${HERO_TITLE} mb-3 text-[44px]`}>
-          Pick your setup.
-          <br />
-          <span className="font-normal italic" style={SERIF_ITALIC_STYLE}>
-            All are welcome.
-          </span>
-        </h2>
-        <p className="mx-auto mb-0 max-w-[580px] text-base leading-[1.6] text-[#6e6c64]">
-          No feature gates. No paywalls on your own data. Use the hosted
-          version, self-deploy for full privacy, or fork and make it yours.
-        </p>
-
-        <div className="mt-12 grid grid-cols-3 gap-5 text-left max-[900px]:mx-auto max-[900px]:max-w-[480px] max-[900px]:grid-cols-1">
-          {/* ── Card 1: Cloud hosted standard ── */}
-          <div className="relative flex flex-col rounded-card border border-border-subtle bg-bg-card p-8 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-subtle max-[480px]:p-6">
-            <span className="mb-5 inline-block self-start rounded-full bg-bg-secondary px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-text-secondary uppercase">
-              Free · Cloud
+        <div className="mx-auto max-w-[1100px]">
+          <span className={`${HERO_BADGE} bg-[#eae6dc] border-[#d4cebf] text-[#55534c]`}>Transparent Positioning</span>
+          <h2 className={`${HERO_TITLE} mb-3 text-[42px] max-[480px]:text-[30px]`}>
+            Pick your setup.
+            <br />
+            <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
+              All are welcome.
             </span>
-            <p className="mb-1.5 text-xl font-bold tracking-[-0.5px] text-text-primary">
-              Cloud Standard
-            </p>
-            <p className="mb-1 text-[38px] leading-none font-extrabold tracking-[-2px] text-text-primary max-[480px]:text-[30px]">
-              ₹0{" "}
-              <span className="text-[13px] font-normal tracking-normal text-text-muted">
-                / forever
-              </span>
-            </p>
-            <p className="mt-4 flex-1 text-[13px] leading-[1.65] text-text-secondary">
-              Sign in instantly and use my shared cloud instance. Access all core dashboard tracking modules with zero server setup or maintenance.
-            </p>
-            <div className="my-6 h-px bg-border-subtle" />
-            <ul className="mb-7 flex list-none flex-col gap-2.5 p-0">
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Instant access, zero setup
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Expense ledger & subscriptions
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Full Reports & Analytics
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> AniList, Trakt & Letterboxd sync
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> AES-256 GCM DB Encryption
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Custom GPT &amp; AI Agent integration
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-muted opacity-45">
-                <span className="shrink-0 text-[13px]">✕</span> <span>Pro Tabs & AI Chat Assistant</span>
-              </li>
-            </ul>
-            {authError && (
-              <div className="mb-3 rounded-lg border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-xs text-[#dc2626]">
-                {authError}
-              </div>
-            )}
-            <button
-              className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-text-primary bg-transparent px-5 py-3 text-[13px] font-semibold text-text-primary no-underline transition-all duration-200 enabled:hover:bg-text-primary enabled:hover:text-bg-card disabled:cursor-not-allowed disabled:opacity-50"
-              onClick={onLogin}
-              disabled={!firebaseAuthReady}
-            >
-              Sign in with Google →
-            </button>
-          </div>
+          </h2>
+          <p className="mx-auto mb-0 max-w-[580px] text-base leading-[1.6] text-[#6e6c64]">
+            Zero feature gates on self-hosting. Use the hosted instance for free, self-deploy for full privacy, or support ongoing open-source development.
+          </p>
 
-          {/* ── Card 2: Cloud Pro (featured) ── */}
-          <div className="relative flex flex-col rounded-card border border-text-primary bg-bg-card p-8 shadow-[0_6px_24px_-4px_rgba(28,27,24,0.1)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-subtle max-[900px]:order-[-1] max-[480px]:p-6">
-            <div className="mb-5 flex flex-wrap gap-1.5">
-              <span className="inline-block rounded-full bg-text-primary px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-bg-card uppercase">
-                Sponsor Tier
+          <div className="mt-10 grid grid-cols-3 gap-5 text-left max-[900px]:mx-auto max-[900px]:max-w-[480px] max-[900px]:grid-cols-1">
+            {/* Card 1: Cloud Standard */}
+            <div className="relative flex flex-col rounded-2xl border border-[#e5e1d8] bg-white p-7 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-subtle">
+              <span className="mb-4 inline-block self-start rounded-full bg-[#f7f4ee] border border-[#e5e1d8] px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-[#6e6c64] uppercase">
+                Free Cloud Hosted
               </span>
-              <span
-                className="inline-flex items-center rounded-full border px-2 py-0.5 text-[9px] font-bold tracking-wide"
-                style={{ borderColor: "rgba(139,92,246,0.6)", color: "#7c3aed" }}
-              >PRO</span>
+              <p className="mb-1 text-xl font-bold tracking-tight text-[#1c1b18]">
+                Free Cloud
+              </p>
+              <p className="mb-1 text-[36px] leading-none font-extrabold tracking-tight text-[#1c1b18]">
+                $0{" "}
+                <span className="text-[13px] font-normal tracking-normal text-[#9c9a92]">
+                  / forever
+                </span>
+              </p>
+              <p className="mt-3 flex-1 text-[13px] leading-[1.6] text-[#6e6c64]">
+                Sign in instantly to use the shared hosted instance. Access core tracking modules with zero server setup.
+              </p>
+              <div className="my-5 h-px bg-[#e5e1d8]" />
+              <ul className="mb-6 flex list-none flex-col gap-2.5 p-0">
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> Instant access, zero setup
+                </li>
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> Expense ledger &amp; subscriptions
+                </li>
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> Watchlists &amp; Book library
+                </li>
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> AES-256 DB Encryption
+                </li>
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> Custom GPT &amp; AI Agent API
+                </li>
+              </ul>
+              {authError && (
+                <div className="mb-3 rounded-lg border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-xs text-[#dc2626]">
+                  {authError}
+                </div>
+              )}
+              <button
+                className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-[#1c1b18] bg-transparent px-5 py-2.5 text-[13px] font-semibold text-[#1c1b18] no-underline transition-all duration-200 enabled:hover:bg-[#1c1b18] enabled:hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={onLogin}
+                disabled={!firebaseAuthReady}
+              >
+                Sign in with Google →
+              </button>
             </div>
-            <p className="mb-1.5 text-xl font-bold tracking-[-0.5px] text-text-primary">
-              Pro Upgrade
-            </p>
-            <p className="mb-1 text-[38px] leading-none font-extrabold tracking-[-2px] text-text-primary max-[480px]:text-[30px]">
-              $3{" "}
-              <span className="text-[13px] font-normal tracking-normal text-text-muted">
-                / month
-              </span>
-            </p>
-            <p className="text-[12.5px] text-text-secondary mt-1.5 mb-2">
-              or a $25 one-time lifetime payment
-            </p>
-            <p className="mt-4 flex-1 text-[13px] leading-[1.65] text-text-secondary">
-              Support the developer and unlock premium extras — Financial Health insights, early feature access, and a sponsor badge on your profile.
-            </p>
-            <div className="my-6 h-px bg-border-subtle" />
-            <ul className="mb-7 flex list-none flex-col gap-2.5 p-0">
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Everything in Free
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> <strong>Financial Health Tab</strong> (Pay-cycles)
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> <strong>Kiroku AI Chat Assistant</strong>
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Sponsor badge &amp; profile highlight
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Early feature access &amp; changelogs
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Priority bug reports &amp; feedback
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Support open-source development
-              </li>
-            </ul>
-            <button
-              className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-text-primary bg-text-primary px-5 py-3 text-[13px] font-semibold text-bg-card no-underline transition-all duration-200 enabled:hover:bg-[#2e2d27]"
-              onClick={onLogin}
-              disabled={!firebaseAuthReady}
-            >
-              Unlock Pro via Login →
-            </button>
-          </div>
 
-          {/* ── Card 3: Self-hosted ── */}
-          <div className="relative flex flex-col rounded-card border border-border-subtle bg-bg-card p-8 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-subtle max-[480px]:p-6">
-            <span className="mb-5 inline-block self-start rounded-full bg-bg-secondary px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-text-secondary uppercase">
-              Developer · Free Forever
-            </span>
-            <p className="mb-1.5 text-xl font-bold tracking-[-0.5px] text-text-primary">
-              Self-Hosted
-            </p>
-            <p className="mb-1 text-[38px] leading-none font-extrabold tracking-[-2px] text-text-primary max-[480px]:text-[30px]">
-              ₹0{" "}
-              <span className="text-[13px] font-normal tracking-normal text-text-muted">
-                forever
+            {/* Card 2: Self-Hosted (Highlighted) */}
+            <div className="relative flex flex-col rounded-2xl border-2 border-[#1c1b18] bg-white p-7 shadow-[0_8px_24px_-4px_rgba(28,27,24,0.12)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5">
+              <span className="mb-4 inline-block self-start rounded-full bg-[#1c1b18] px-2.5 py-1 font-mono text-[9.5px] font-bold tracking-wider text-white uppercase">
+                Recommended · Developer
               </span>
-            </p>
-            <p className="mt-4 flex-1 text-[13px] leading-[1.65] text-text-secondary">
-              Deploy your own copy on Vercel + Firebase in ~5 minutes. 100% free with all Pro features unlocked natively in your private database.
-            </p>
-            <div className="my-6 h-px bg-border-subtle" />
-            <ul className="mb-7 flex list-none flex-col gap-2.5 p-0">
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> <strong>100% unlocked features</strong>
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Private Firebase project
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Full environment control
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Free tier operational costs
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> MIT licensed open source
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> Custom domain &amp; infra ownership
-              </li>
-              <li className="flex items-start gap-2 text-[12.5px] leading-[1.4] text-text-primary">
-                <span className={FI_YES}>✓</span> No rate limits or shared resources
-              </li>
-            </ul>
-            <a
-              href="https://github.com/fal3n-4ngel/Continuum-Home#readme"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-text-primary bg-transparent px-5 py-3 text-[13px] font-semibold text-text-primary no-underline transition-all duration-200 enabled:hover:bg-text-primary enabled:hover:text-bg-card"
-            >
-              View Setup Guide →
-            </a>
+              <p className="mb-1 text-xl font-bold tracking-tight text-[#1c1b18]">
+                Self-Hosted
+              </p>
+              <p className="mb-1 text-[36px] leading-none font-extrabold tracking-tight text-[#1c1b18]">
+                $0{" "}
+                <span className="text-[13px] font-normal tracking-normal text-[#9c9a92]">
+                  forever
+                </span>
+              </p>
+              <p className="mt-3 flex-1 text-[13px] leading-[1.6] text-[#6e6c64]">
+                Deploy to Vercel + Firebase in ~5 minutes. 100% free with all features fully unlocked in your private database.
+              </p>
+              <div className="my-5 h-px bg-[#e5e1d8]" />
+              <ul className="mb-6 flex list-none flex-col gap-2.5 p-0">
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> <strong>100% features unlocked</strong>
+                </li>
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> Private Firebase &amp; full data ownership
+                </li>
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> Financial Health Pay-Cycles &amp; AI Chat
+                </li>
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> MIT Licensed open source
+                </li>
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> Zero rate limits or resource sharing
+                </li>
+              </ul>
+              <a
+                href="https://github.com/fal3n-4ngel/Continuum-Home#readme"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-[#1c1b18] bg-[#1c1b18] px-5 py-2.5 text-[13px] font-semibold text-white no-underline transition-all duration-200 enabled:hover:bg-[#2e2d27]"
+              >
+                View Self-Host Guide →
+              </a>
+            </div>
+
+            {/* Card 3: Supporter Tier */}
+            <div className="relative flex flex-col rounded-2xl border border-[#e5e1d8] bg-white p-7 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-subtle">
+              <span className="mb-4 inline-block self-start rounded-full bg-[#f7f4ee] border border-[#e5e1d8] px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-[#6e6c64] uppercase">
+                Open Source Supporter
+              </span>
+              <p className="mb-1 text-xl font-bold tracking-tight text-[#1c1b18]">
+                Supporter Tier
+              </p>
+              <p className="mb-1 text-[36px] leading-none font-extrabold tracking-tight text-[#1c1b18]">
+                $3{" "}
+                <span className="text-[13px] font-normal tracking-normal text-[#9c9a92]">
+                  / month
+                </span>
+              </p>
+              <p className="text-[12px] text-[#6e6c64] mt-1 mb-1">
+                or $25 lifetime support payment
+              </p>
+              <p className="mt-3 flex-1 text-[13px] leading-[1.6] text-[#6e6c64]">
+                Support development of Continuum while unlocking hosted Financial Health tools and early feature previews.
+              </p>
+              <div className="my-5 h-px bg-[#e5e1d8]" />
+              <ul className="mb-6 flex list-none flex-col gap-2.5 p-0">
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> Everything in Free Cloud
+                </li>
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> <strong>Financial Health Tab</strong> (Pay-cycles)
+                </li>
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> <strong>Kiroku AI Assistant</strong>
+                </li>
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> Supporter profile badge &amp; highlight
+                </li>
+                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                  <span className={FI_YES}>✓</span> Direct feedback &amp; feature priority
+                </li>
+              </ul>
+              <button
+                className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-[#1c1b18] bg-transparent px-5 py-2.5 text-[13px] font-semibold text-[#1c1b18] no-underline transition-all duration-200 enabled:hover:bg-[#1c1b18] enabled:hover:text-white"
+                onClick={onLogin}
+                disabled={!firebaseAuthReady}
+              >
+                Become a Supporter →
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
       {/* ─── FAQ ─── */}
-      <section className="border-t border-b border-[#e5e3db] bg-[#eae8e0] px-6 py-[100px] max-[480px]:py-[60px]">
-        <div className="mx-auto grid max-w-[1100px] grid-cols-[1.1fr_1fr] gap-[60px] max-[900px]:grid-cols-1 max-[900px]:gap-9">
+      <section className="bg-[#faf8f5] px-6 py-[80px] max-[480px]:py-[50px]">
+        <div className="mx-auto grid max-w-[1100px] grid-cols-[1.1fr_1fr] gap-[50px] max-[900px]:grid-cols-1 max-[900px]:gap-8">
           <div>
-            <span className={`${HERO_BADGE} bg-[#f4f3ec]`}>Frequently asked</span>
-            <h2 className={`${HERO_TITLE} mb-5 text-left text-[40px]`}>
+            <span className={`${HERO_BADGE} bg-[#eee8dd] border-[#dcd6c8] text-[#55534c]`}>Frequently asked</span>
+            <h2 className={`${HERO_TITLE} mb-4 text-left text-[38px] max-[480px]:text-[28px]`}>
               Questions,
               <br />
-              <span className="font-normal italic" style={SERIF_ITALIC_STYLE}>
+              <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
                 answered.
               </span>
             </h2>
-            <p className={`${STEP_DESC} mb-8 max-w-[380px] text-sm`}>
-              The short version of everything above — for when you just want
-              the answer. Can&apos;t find yours?
+            <p className={`${STEP_DESC} mb-6 max-w-[380px] text-sm`}>
+              Clear answers to common questions about self-hosting, privacy, encryption, and AI agents.
             </p>
             <a
-              href="https://github.com/fal3n-4ngel/Continuum-Home/issues"
+              href="https://github.com/fal3n-4ngel/Continuum-Home/discussions"
               target="_blank"
               rel="noopener noreferrer"
               className={`${HERO_CTA_PRIMARY} inline-flex`}
             >
-              Ask on GitHub
+              Ask a question on GitHub
               <span>→</span>
             </a>
           </div>
 
-          <div className="overflow-hidden rounded-xl border border-[#e5e3db] bg-white shadow-[0_20px_40px_-15px_rgba(110,108,100,0.14)]">
+          <div className="overflow-hidden rounded-2xl border border-[#e5e1d8] bg-white shadow-[0_12px_32px_-8px_rgba(28,27,24,0.06)]">
             {FAQ_ITEMS.map((item, idx) => (
               <details
                 key={item.question}
-                className={`group px-6 py-5 max-[480px]:px-5 ${
-                  idx !== FAQ_ITEMS.length - 1 ? "border-b border-[#e5e3db]" : ""
+                className={`group px-6 py-4.5 max-[480px]:px-4 ${
+                  idx !== FAQ_ITEMS.length - 1 ? "border-b border-[#e5e1d8]" : ""
                 }`}
               >
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[14px] font-semibold text-[#1c1b18] marker:content-none [&::-webkit-details-marker]:hidden">
                   {item.question}
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#e5e3db] text-[13px] text-[#6e6c64] transition-transform duration-200 group-open:rotate-45">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#e5e1d8] text-[13px] text-[#6e6c64] transition-transform duration-200 group-open:rotate-45">
                     +
                   </span>
                 </summary>
-                <p className="mt-3 max-w-[440px] text-[13px] leading-[1.65] text-[#6e6c64]">
+                <p className="mt-2.5 max-w-[440px] text-[13px] leading-[1.65] text-[#6e6c64]">
                   {item.answer}
                 </p>
               </details>
@@ -1246,6 +1897,7 @@ export default function LandingPage({
           </div>
         </div>
       </section>
+
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -1263,20 +1915,18 @@ export default function LandingPage({
 
       {/* ─── Footer ─── */}
       <footer className="border-t border-border-subtle bg-bg-card">
-        <div className="mx-auto max-w-[1100px] px-20 pt-14 max-[900px]:px-6 max-[900px]:pt-12">
-          <div className="grid grid-cols-[1.6fr_1fr_1fr] gap-[60px] border-b border-border-subtle pb-11 max-[900px]:grid-cols-1 max-[900px]:gap-9 max-[900px]:pb-9">
-            <div className="flex flex-col gap-3.5">
+        <div className="mx-auto max-w-[1100px] px-20 pt-12 max-[900px]:px-6 max-[900px]:pt-10">
+          <div className="grid grid-cols-[1.6fr_1fr_1fr] gap-[50px] border-b border-border-subtle pb-10 max-[900px]:grid-cols-1 max-[900px]:gap-8 max-[900px]:pb-8">
+            <div className="flex flex-col gap-3">
               <a
                 href="#"
-                className="flex items-center gap-[9px] text-base font-bold tracking-[-0.4px] text-text-primary no-underline"
+                className="flex items-center gap-[9px] text-base font-bold tracking-tight text-text-primary no-underline"
               >
                 <BentoLogo size={18} color="var(--text-primary)" />
                 {SITE_NAME}
               </a>
-              <p className="max-w-[290px] text-[13px] leading-[1.65] text-[#6e6c64]">
-                A private tracking dashboard for media watchlists, daily
-                expenses, book reading, and notes. Built for self-hosters and
-                privacy-first users.
+              <p className="max-w-[300px] text-[13px] leading-[1.65] text-[#6e6c64]">
+                A self-hosted personal dashboard and OpenAPI layer for daily expenses, media watchlists, book reading, and investments.
               </p>
               <p className="text-xs text-[#9c9a92]">
                 Built by{" "}
@@ -1302,7 +1952,7 @@ export default function LandingPage({
 
             <div>
               <span className={FOOTER_COL_LABEL}>Product</span>
-              <ul className="flex list-none flex-col gap-[11px] p-0">
+              <ul className="flex list-none flex-col gap-[10px] p-0">
                 <li>
                   <span className={FOOTER_LINK_ITEM} onClick={onLogin}>
                     Expense Ledger
@@ -1320,12 +1970,12 @@ export default function LandingPage({
                 </li>
                 <li>
                   <span className={FOOTER_LINK_ITEM} onClick={onLogin}>
-                    Quick Notes
+                    Investment Portfolio
                   </span>
                 </li>
                 <li>
                   <a href="/assistant" className={FOOTER_LINK_ITEM}>
-                    ChatGPT &amp; AI Agents
+                    ChatGPT &amp; AI Integration
                   </a>
                 </li>
               </ul>
@@ -1333,7 +1983,7 @@ export default function LandingPage({
 
             <div>
               <span className={FOOTER_COL_LABEL}>Resources</span>
-              <ul className="flex list-none flex-col gap-[11px] p-0">
+              <ul className="flex list-none flex-col gap-[10px] p-0">
                 <li>
                   <a
                     href="https://github.com/fal3n-4ngel/Continuum-Home"
@@ -1341,7 +1991,7 @@ export default function LandingPage({
                     rel="noopener noreferrer"
                     className={FOOTER_LINK_ITEM}
                   >
-                    GitHub Repo ↗
+                    GitHub Repository ↗
                   </a>
                 </li>
                 <li>
@@ -1378,15 +2028,15 @@ export default function LandingPage({
             </div>
           </div>
 
-          <div className="border-b border-[#e5e3db] py-[26px] pt-7">
+          <div className="border-b border-[#e5e3db] py-5">
             <span className={`${FOOTER_COL_LABEL} mb-0`}>
               Wherever you&apos;re tracking from
             </span>
             <LiveClockStrip />
           </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-2.5 py-[22px] max-[900px]:flex-col max-[900px]:items-start">
-            <div className="flex flex-wrap items-center gap-2.5 font-mono text-[10.5px] tracking-[0.6px] text-[#9c9a92] uppercase">
+          <div className="flex flex-wrap items-center justify-between gap-2 py-5 max-[900px]:flex-col max-[900px]:items-start">
+            <div className="flex flex-wrap items-center gap-2 font-mono text-[10.5px] tracking-[0.6px] text-[#9c9a92] uppercase">
               <span>© {new Date().getFullYear()} Continuum</span>
               <span className="text-[#d1cfc7]">·</span>
               <span>MIT LICENSED</span>
@@ -1408,24 +2058,6 @@ export default function LandingPage({
               >
                 @fal3n-4ngel
               </a>
-              <span className="text-[#d1cfc7]">·</span>
-              <a
-                href={AUTHOR.sponsorUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#9c9a92] no-underline hover:text-[#1c1b18]"
-              >
-                Sponsor ♥
-              </a>
-              <span className="text-[#d1cfc7]">·</span>
-              <a
-                href={AUTHOR.coffeeUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#9c9a92] no-underline hover:text-[#1c1b18]"
-              >
-                Buy me a coffee ☕
-              </a>
             </div>
             <div className="flex items-center gap-1.5 font-mono text-[10.5px] tracking-[0.6px] text-[#9c9a92] uppercase">
               <div className="h-1.5 w-1.5 rounded-full bg-[#22c55e] shadow-[0_0_0_3px_rgba(34,197,94,0.15)]" />
@@ -1434,9 +2066,8 @@ export default function LandingPage({
           </div>
         </div>
 
-        {/* ─── Decorative bottom band ─── */}
         <div
-          className="relative h-[150px] overflow-hidden border-t border-[#e5e3db] bg-[#fafaf8] max-[900px]:h-[100px] [background-image:radial-gradient(#e5e3db_1.5px,transparent_1.5px)] [background-size:18px_18px] [mask-image:linear-gradient(to_bottom,transparent,black_40px)] [-webkit-mask-image:linear-gradient(to_bottom,transparent,black_40px)]"
+          className="relative h-[120px] overflow-hidden border-t border-[#e5e3db] bg-[#fafaf8] max-[900px]:h-[90px] [background-image:radial-gradient(#e5e3db_1.5px,transparent_1.5px)] [background-size:18px_18px] [mask-image:linear-gradient(to_bottom,transparent,black_40px)] [-webkit-mask-image:linear-gradient(to_bottom,transparent,black_40px)]"
           aria-hidden="true"
         >
           <div
@@ -1467,6 +2098,18 @@ export default function LandingPage({
           </div>
         </div>
       </footer>
+
+      {/* Floating GitHub Star Prompt Widget */}
+      <a
+        href="https://github.com/fal3n-4ngel/Continuum-Home"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-6 right-6 z-[990] flex items-center gap-2.5 rounded-full border border-[#d6d3c9] bg-white px-4 py-2 text-xs font-bold text-[#1c1b18] shadow-[0_8px_24px_rgba(28,27,24,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#1c1b18] hover:shadow-[0_12px_28px_rgba(28,27,24,0.18)] max-[600px]:hidden"
+      >
+        <span className="text-yellow-500 text-sm">⭐️</span>
+        <span>Star on GitHub</span>
+        <span className="rounded bg-[#f4f1ea] px-1.5 py-0.2 font-mono text-[10px] text-[#6e6c64]">↗</span>
+      </a>
     </div>
   );
 }

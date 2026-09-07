@@ -62,11 +62,11 @@ const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle 
 const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
 const STAT_VALUE = "text-[28px] font-bold tracking-[-0.5px] text-text-primary";
 const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
-const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
-const BTN_PRIMARY = "rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27] active:scale-[0.98]";
-const BTN_SECONDARY = "rounded-md border border-border-subtle bg-transparent text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary disabled:cursor-not-allowed disabled:opacity-50";
-const INPUT_CLASS = "w-full rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
-const LEDGER_TH = "border-b border-border-subtle bg-bg-card px-3.5 py-3.5 font-mono text-[11px] font-bold tracking-[0.5px] text-text-secondary uppercase";
+const BENTO_CARD = "rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-subtle";
+const BTN_PRIMARY = "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all duration-200 hover:bg-[#2e2d27] disabled:opacity-60";
+const BTN_SECONDARY = "cursor-pointer rounded-full border border-border-subtle bg-white px-4 py-2 text-xs font-semibold text-text-primary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:border-border-hover disabled:opacity-50";
+const INPUT_CLASS = "w-full rounded-full border border-border-subtle bg-white px-3.5 py-2 text-xs font-medium text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus shadow-2xs";
+const LEDGER_TH = "border-b border-border-subtle bg-bg-card px-3.5 py-3.5 font-mono text-[10px] font-bold tracking-[0.8px] text-text-secondary uppercase";
 const LEDGER_TD = "border-b border-border-subtle px-3.5 py-4 align-middle text-[13px] text-text-primary";
 
 interface DynamicFieldConfig {
@@ -293,14 +293,14 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
   const [sellError, setSellError] = React.useState<string | null>(null);
 
   const categoryColors: Record<InvestmentCategory, string> = {
-    equity: "#2563eb",       // Deep Professional Blue
-    crypto: "#7c3aed",       // Crypto Purple
-    mutual_fund: "#0284c7",  // Sky Blue
-    sip: "#0d9488",          // Teal
-    gold: "#d97706",         // Gold/Amber
-    cash: "#059669",         // Emerald Bank Green
-    fixed_deposit: "#166534", // Deep Forest Green
-    other: "#4b5563",        // Muted Slate
+    equity: "#A0C4E2",       // Soft Aesthetic Sky Blue
+    crypto: "#C4A0E2",       // Soft Lavender Purple
+    mutual_fund: "#7DB6D5",  // Soft Pastel Ocean
+    sip: "#78B9B0",          // Soft Sage Teal
+    gold: "#E5B85C",         // Soft Aesthetic Mustard Gold
+    cash: "#8CC69A",         // Soft Mint Green
+    fixed_deposit: "#9AB885", // Soft Warm Olive Green
+    other: "#9E9C94",        // Soft Warm Muted Grey
   };
 
   const categoryLabels: Record<InvestmentCategory, string> = {
@@ -497,15 +497,16 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
       {/* Wealth Analytics & Allocation Section */}
       <div className="grid grid-cols-[1.3fr_1fr] gap-5 max-md:grid-cols-1">
         {/* Allocation Donut Chart */}
-        <div className={BENTO_CARD}>
+        <div className={`${BENTO_CARD} border-t-2 border-t-accent-blue/80`}>
           <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-4">
             <h2 className="text-[14px] font-bold tracking-tight text-text-primary flex items-center gap-1.5">
               <Compass className="h-4.5 w-4.5 text-text-secondary" /> Current Asset Allocation
             </h2>
-            <span className="rounded bg-bg-secondary px-2 py-0.5 text-[10px] font-semibold text-text-secondary">
+            <span className="rounded-full bg-[#EAE5DC]/60 border border-border-subtle/50 px-2.5 py-0.5 text-[10px] font-semibold text-text-secondary">
               {holdingsCount} Active Asset{holdingsCount !== 1 ? "s" : ""}
             </span>
           </div>
+
           {activeInvestments.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <span className="text-3xl mb-2">📊</span>
@@ -571,23 +572,23 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
           {/* Performance Highlights */}
           {activeInvestments.length > 0 && (
             <div className="mt-5 grid grid-cols-2 gap-3 pt-4 border-t border-border-subtle">
-              <div className="rounded-lg bg-emerald-50/40 border border-emerald-200/50 p-3 flex flex-col gap-0.5">
-                <span className="text-[9px] font-mono font-bold tracking-[0.5px] text-emerald-800 uppercase">Best Return</span>
+              <div className="rounded-xl bg-[#E6F4EA]/60 border border-[#2e7d32]/20 p-3 flex flex-col gap-0.5">
+                <span className="text-[9px] font-mono font-bold tracking-[0.5px] text-[#2e7d32] uppercase">Best Return</span>
                 <span className="truncate text-[13px] font-bold text-text-primary leading-tight">{bestPerformer.name}</span>
-                <span className="text-[12px] font-bold text-emerald-700 mt-1 font-mono">
+                <span className="text-[12px] font-bold text-[#2e7d32] mt-1 font-mono">
                   {bestPerformer.pct >= 0 ? "+" : ""}{bestPerformer.pct.toFixed(2)}%
                 </span>
               </div>
               {worstPerformer && (
-                <div className={`rounded-lg p-3 flex flex-col gap-0.5 border ${
-                  worstPerformer.pct < 0 ? "bg-rose-50/40 border-rose-200/50" : "bg-bg-secondary border-border-subtle"
+                <div className={`rounded-xl p-3 flex flex-col gap-0.5 border ${
+                  worstPerformer.pct < 0 ? "bg-[#FDF6F0] border-[#e39282]/40" : "bg-bg-primary border-border-subtle"
                 }`}>
                   <span className={`text-[9px] font-mono font-bold tracking-[0.5px] uppercase ${
-                    worstPerformer.pct < 0 ? "text-rose-800" : "text-text-secondary"
+                    worstPerformer.pct < 0 ? "text-[#b3666b]" : "text-text-secondary"
                   }`}>Worst Return</span>
                   <span className="truncate text-[13px] font-bold text-text-primary leading-tight">{worstPerformer.name}</span>
                   <span className={`text-[12px] font-bold mt-1 font-mono ${
-                    worstPerformer.pct < 0 ? "text-rose-700" : "text-text-primary"
+                    worstPerformer.pct < 0 ? "text-[#b3666b]" : "text-text-primary"
                   }`}>
                     {worstPerformer.pct >= 0 ? "+" : ""}{worstPerformer.pct.toFixed(2)}%
                   </span>
@@ -598,32 +599,34 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
         </div>
 
         {/* Financial Strategy Coach & Education Hub */}
-        <div className={BENTO_CARD}>
-          <div className="flex items-center gap-1 border-b border-border-subtle pb-3 mb-4">
-            <button
-              onClick={() => setActiveGuideTab("allocations")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md border-none cursor-pointer transition-all ${
-                activeGuideTab === "allocations" ? "bg-text-primary text-white shadow-sm" : "bg-transparent text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              Target Allocation
-            </button>
-            <button
-              onClick={() => setActiveGuideTab("classes")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md border-none cursor-pointer transition-all ${
-                activeGuideTab === "classes" ? "bg-text-primary text-white shadow-sm" : "bg-transparent text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              Asset Classes
-            </button>
-            <button
-              onClick={() => setActiveGuideTab("advice")}
-              className={`px-3 py-1 text-xs font-semibold rounded-md border-none cursor-pointer transition-all ${
-                activeGuideTab === "advice" ? "bg-text-primary text-white shadow-sm" : "bg-transparent text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              Advisor Coach
-            </button>
+        <div className={`${BENTO_CARD} border-t-2 border-t-[#2e7d32]/70`}>
+          <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-4">
+            <div className="flex items-center gap-1 rounded-full bg-[#EAE5DC]/60 p-1 border border-border-subtle/40 shadow-2xs">
+              <button
+                onClick={() => setActiveGuideTab("allocations")}
+                className={`px-3.5 py-1 text-xs font-semibold rounded-full border-none cursor-pointer transition-all duration-200 ${
+                  activeGuideTab === "allocations" ? "bg-white text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold" : "bg-transparent text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                Target Allocation
+              </button>
+              <button
+                onClick={() => setActiveGuideTab("classes")}
+                className={`px-3.5 py-1 text-xs font-semibold rounded-full border-none cursor-pointer transition-all duration-200 ${
+                  activeGuideTab === "classes" ? "bg-white text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold" : "bg-transparent text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                Asset Classes
+              </button>
+              <button
+                onClick={() => setActiveGuideTab("advice")}
+                className={`px-3.5 py-1 text-xs font-semibold rounded-full border-none cursor-pointer transition-all duration-200 ${
+                  activeGuideTab === "advice" ? "bg-white text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold" : "bg-transparent text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                Advisor Coach
+              </button>
+            </div>
           </div>
 
           {/* Guide Content: Target Allocation */}
@@ -631,13 +634,13 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-bold text-text-primary">Compare Risk Profile:</span>
-                <div className="flex gap-1 rounded bg-bg-secondary p-0.5">
+                <div className="flex items-center gap-1 rounded-full bg-[#EAE5DC]/60 p-0.5 border border-border-subtle/40 shadow-2xs">
                   {(["conservative", "balanced", "aggressive"] as const).map((profile) => (
                     <button
                       key={profile}
                       onClick={() => setSelectedRiskProfile(profile)}
-                      className={`cursor-pointer rounded px-2 py-0.5 text-[9.5px] font-bold border-none capitalize transition-all ${
-                        selectedRiskProfile === profile ? "bg-white text-text-primary shadow-sm" : "bg-transparent text-text-muted hover:text-text-primary"
+                      className={`cursor-pointer rounded-full px-2.5 py-0.5 text-[9.5px] font-bold border-none capitalize transition-all ${
+                        selectedRiskProfile === profile ? "bg-white text-text-primary shadow-2xs" : "bg-transparent text-text-muted hover:text-text-primary"
                       }`}
                     >
                       {profile}
@@ -672,10 +675,10 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                         />
                         {/* Actual progress */}
                         <div 
-                          className="h-full rounded transition-all duration-300"
+                          className="h-full rounded-full transition-all duration-300"
                           style={{ 
                             width: `${actualPct}%`,
-                            backgroundColor: Math.abs(actualPct - targetPct) < 8 ? "#10b981" : "#3b82f6" 
+                            backgroundColor: Math.abs(actualPct - targetPct) < 8 ? "#2e7d32" : "#A0C4E2" 
                           }}
                         />
                       </div>
@@ -684,7 +687,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                 })}
               </div>
 
-              <div className="mt-2 rounded-lg bg-bg-secondary/40 border border-border-subtle p-3 text-[11px] leading-relaxed text-text-secondary flex items-start gap-2">
+              <div className="mt-2 rounded-xl bg-bg-primary/40 border border-border-subtle p-3 text-[11px] leading-relaxed text-text-secondary flex items-start gap-2">
                 <Info className="h-4.5 w-4.5 shrink-0 text-text-muted mt-0.5" />
                 <span>
                   {selectedRiskProfile === "conservative" && "Conservative models favor high stability. Recommended for preserving capital, avoiding heavy stock market drawdowns, or when cash is needed in <2 years."}
@@ -698,25 +701,25 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
           {/* Guide Content: Asset Classes Explanation */}
           {activeGuideTab === "classes" && (
             <div className="flex flex-col gap-3 max-h-[220px] overflow-y-auto pr-1">
-              <div className="border-l-2 border-l-[#2563eb] pl-2 py-0.5">
-                <span className="font-bold text-[12px] text-text-primary block">Equities & Stocks (Equity)</span>
+              <div className="border-l-2 border-l-[#A0C4E2] pl-2 py-0.5">
+                <span className="font-bold text-[12px] text-text-primary block">Equities &amp; Stocks (Equity)</span>
                 <p className="text-[10.5px] leading-relaxed text-text-secondary mt-0.5">
                   Buying pieces of individual companies. Offers high long-term gains, but values go up and down daily. Track using unit quantities and buy prices.
                 </p>
               </div>
-              <div className="border-l-2 border-l-[#0284c7] pl-2 py-0.5">
-                <span className="font-bold text-[12px] text-text-primary block">Mutual Funds & SIPs</span>
+              <div className="border-l-2 border-l-[#7DB6D5] pl-2 py-0.5">
+                <span className="font-bold text-[12px] text-text-primary block">Mutual Funds &amp; SIPs</span>
                 <p className="text-[10.5px] leading-relaxed text-text-secondary mt-0.5">
                   Pooled funds managed by institutional experts. **SIP** is a systematic plan where you invest a fixed amount regularly (e.g. monthly) to build wealth continuously.
                 </p>
               </div>
-              <div className="border-l-2 border-l-[#059669] pl-2 py-0.5">
-                <span className="font-bold text-[12px] text-text-primary block">Fixed Deposits (FD) & Cash</span>
+              <div className="border-l-2 border-l-[#2e7d32] pl-2 py-0.5">
+                <span className="font-bold text-[12px] text-text-primary block">Fixed Deposits (FD) &amp; Cash</span>
                 <p className="text-[10.5px] leading-relaxed text-text-secondary mt-0.5">
                   Risk-free assets. FDs lock your money in a bank at a guaranteed interest rate (e.g. 6-7%). Use these to maintain a steady emergency cash reserve.
                 </p>
               </div>
-              <div className="border-l-2 border-l-[#7c3aed] pl-2 py-0.5">
+              <div className="border-l-2 border-l-[#C4A0E2] pl-2 py-0.5">
                 <span className="font-bold text-[12px] text-text-primary block">Cryptocurrency</span>
                 <p className="text-[10.5px] leading-relaxed text-text-secondary mt-0.5">
                   Digital decentralized assets like Bitcoin or Ethereum. Highly speculative with huge price swings. Best limited to small, fun allocations.
@@ -756,7 +759,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
       {/* Bottom 2-Column Section */}
       <div className="grid grid-cols-[290px_1fr] items-start gap-5 max-md:grid-cols-1">
         {/* Left Column Card: ADD ASSET */}
-        <div className={`${BENTO_CARD} relative`}>
+        <div className={`${BENTO_CARD} relative border-t-2 border-t-text-primary/60`}>
           <div className="flex items-center gap-1.5 border-b border-border-subtle pb-3 mb-4">
             <Plus className="h-4.5 w-4.5 text-text-secondary" />
             <span className={LABEL_MONO}>Add Investment</span>
@@ -997,7 +1000,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
         {/* Right Column Card: HOLDINGS PORTFOLIO Table */}
         <div className="flex flex-col gap-5 overflow-hidden">
           {/* Active Holdings Table */}
-          <div className={`${BENTO_CARD} p-5`}>
+          <div className={`${BENTO_CARD} p-5 border-t-2 border-t-[#e39282]/80`}>
             <div className="flex items-center justify-between border-b border-border-subtle pb-3.5 mb-4">
               <span className={LABEL_MONO}>Active Holdings Ledger</span>
               <span className="text-[10.5px] text-text-muted italic">Values in {currency}</span>
@@ -1046,10 +1049,10 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
 
           {/* Sold / Realized History Table */}
           {soldInvestments.length > 0 && (
-            <div className={`${BENTO_CARD} p-5 border-t-2 border-t-emerald-600`}>
+            <div className={`${BENTO_CARD} p-5 border-t-2 border-t-[#2e7d32]/70`}>
               <div className="flex items-center justify-between border-b border-border-subtle pb-3.5 mb-4">
                 <div className="flex items-center gap-2">
-                  <span className="rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 uppercase">Realized History</span>
+                  <span className="rounded-full bg-[#E6F4EA] border border-[#2e7d32]/20 px-2.5 py-0.5 font-mono text-[10px] font-semibold text-[#2e7d32] uppercase">Realized History</span>
                   <span className={LABEL_MONO}>Closed Positions Ledger</span>
                 </div>
                 <span className="text-[11px] font-bold text-emerald-700 font-mono">

@@ -52,7 +52,7 @@ export const AssetRow: React.FC<AssetRowProps> = ({
       </td>
       <td className={LEDGER_TD}>
         <span 
-          className="rounded px-2 py-0.5 font-mono text-[9px] font-bold text-white uppercase"
+          className="rounded-full px-2.5 py-0.5 font-mono text-[9px] font-bold text-white uppercase shadow-2xs"
           style={{ backgroundColor: categoryColors[asset.category] || "#6b7280" }}
         >
           {asset.category === "sip" ? "SIP" : asset.category === "mutual_fund" ? "MF" : asset.category}
@@ -79,19 +79,19 @@ export const AssetRow: React.FC<AssetRowProps> = ({
           <div className="text-[10px] text-text-muted mt-0.5">@{currency}{asset.currentPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}</div>
         )}
       </td>
-      <td className={`${LEDGER_TD} text-right font-semibold font-mono`} style={{ color: assetProfit >= 0 ? "#16a34a" : "#b3666b" }}>
+      <td className={`${LEDGER_TD} text-right font-semibold font-mono`} style={{ color: assetProfit >= 0 ? "#2e7d32" : "#b3666b" }}>
         <div>{assetProfit >= 0 ? "+" : ""}{currency}{assetProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
         <div className="text-[10px] font-bold">{assetProfitPct >= 0 ? "+" : ""}{assetProfitPct.toFixed(2)}%</div>
       </td>
       <td
         className={`${LEDGER_TD} text-right font-mono ${dayChange !== null ? "font-semibold" : ""}`}
-        style={dayChange !== null ? { color: dayChange >= 0 ? "#16a34a" : "#b3666b" } : undefined}
+        style={dayChange !== null ? { color: dayChange >= 0 ? "#2e7d32" : "#b3666b" } : undefined}
       >
         {asset.category === "fixed_deposit" && asset.maturityDate ? (
           (() => {
             const daysLeft = daysUntil(asset.maturityDate!);
             return daysLeft <= 0 ? (
-              <span className="text-[10px] font-semibold text-emerald-700">Matured</span>
+              <span className="text-[10px] font-semibold text-[#2e7d32]">Matured</span>
             ) : (
               <span className="text-[10px] font-semibold text-text-secondary">Matures in {daysLeft}d</span>
             );
@@ -111,14 +111,14 @@ export const AssetRow: React.FC<AssetRowProps> = ({
         <div className="flex items-center gap-1 justify-end">
           <button
             onClick={() => handleSellClick(asset.id, currentVal, asset.name)}
-            className="border-none bg-transparent hover:bg-emerald-50 p-1.5 rounded-md cursor-pointer text-text-secondary hover:text-[#16a34a] transition-all"
+            className="border-none bg-transparent hover:bg-[#E6F4EA] p-1.5 rounded-full cursor-pointer text-text-secondary hover:text-[#2e7d32] transition-all"
             title="Mark as Sold Today"
           >
             <Tag className="h-4 w-4" />
           </button>
           <button
             onClick={() => deleteInvestment(asset.id)}
-            className="border-none bg-transparent hover:bg-rose-50 p-1.5 rounded-md cursor-pointer text-text-muted hover:text-[#b3666b] transition-all"
+            className="border-none bg-transparent hover:bg-[#FDF6F0] p-1.5 rounded-full cursor-pointer text-text-muted hover:text-[#b3666b] transition-all"
             title="Delete holding"
           >
             <Trash2 className="h-4 w-4" strokeWidth={2} />

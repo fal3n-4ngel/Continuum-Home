@@ -23,11 +23,11 @@ interface SettingsTabProps {
   onDeleteAccount?: () => void;
 }
 
-const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card shadow-subtle";
-const CARD_HEADER = "flex items-center gap-2 border-b border-border-subtle bg-bg-primary/30 px-5 py-3.5";
+const BENTO_CARD = "rounded-2xl border border-border-subtle bg-bg-card shadow-subtle overflow-hidden";
+const CARD_HEADER = "flex items-center justify-between border-b border-border-subtle bg-bg-primary/30 px-5 py-3.5";
 const CARD_BODY = "flex flex-col gap-4 p-5 max-sm:p-4";
-const FIELD_LABEL = "mb-1.5 block text-[11px] font-medium text-text-muted";
-const SELECT_CLASS = "w-full rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
+const FIELD_LABEL = "mb-1.5 block text-[11px] font-semibold text-text-secondary uppercase font-mono tracking-[0.5px]";
+const SELECT_CLASS = "w-full rounded-full border border-border-subtle bg-white px-3.5 py-2 text-xs font-semibold text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus shadow-2xs cursor-pointer";
 
 const CURRENCIES = [
   { symbol: "₹", label: "INR (₹)" },
@@ -37,37 +37,33 @@ const CURRENCIES = [
   { symbol: "¥", label: "JPY (¥)" },
 ];
 
-// A hidden native checkbox + two plain (non-form, non-ARIA-switch) spans for
-// the track/thumb. `role="switch"` on a styled <button> looks right in
-// isolation, but Windows' forced-colors mode recognizes that ARIA role and
-// repaints it with native OS switch chrome, stomping the custom colors —
-// the checkbox stays functionally real for a11y but is visually hidden via
-// sr-only, so it's too small for forced-colors to paint anything visible,
-// while the decorative spans (plain divs) are never touched by it.
 const Toggle: React.FC<{ checked: boolean; onChange: () => void; label: string }> = ({ checked, onChange, label }) => (
   <label className="relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center">
     <input type="checkbox" checked={checked} onChange={onChange} aria-label={label} className="peer sr-only" />
-    <span className="pointer-events-none absolute inset-0 rounded-full bg-border-subtle transition-colors duration-200 peer-checked:bg-text-primary" />
-    <span className="pointer-events-none absolute left-1 h-4 w-4 rounded-full bg-white shadow transition-transform duration-200 peer-checked:translate-x-5" />
+    <span className="pointer-events-none absolute inset-0 rounded-full bg-[#EAE5DC] transition-colors duration-200 peer-checked:bg-text-primary" />
+    <span className="pointer-events-none absolute left-1 h-4 w-4 rounded-full bg-white shadow-xs transition-transform duration-200 peer-checked:translate-x-5" />
   </label>
 );
 
-const EMAIL_ROWS: { key: keyof EmailSubscriptions; icon: React.ReactNode; title: string; description: string }[] = [
+const EMAIL_ROWS: { key: keyof EmailSubscriptions; icon: React.ReactNode; badgeClass: string; title: string; description: string }[] = [
   {
     key: "expenses",
-    icon: <Wallet size={15} />,
+    icon: <Wallet size={14} />,
+    badgeClass: "bg-[#EBF5FF] text-[#4A7C9D]",
     title: "Expense Summaries",
     description: "Weekly and monthly spend breakdowns by category, sent to your inbox.",
   },
   {
     key: "portfolio",
-    icon: <TrendingUp size={15} />,
+    icon: <TrendingUp size={14} />,
+    badgeClass: "bg-[#E6F4EA] text-[#2e7d32]",
     title: "Portfolio Updates",
     description: "A daily close-of-day valuation and P&L snapshot for your investments.",
   },
   {
     key: "subscriptions",
-    icon: <RefreshCw size={15} />,
+    icon: <RefreshCw size={14} />,
+    badgeClass: "bg-[#FDF6F0] text-[#e39282]",
     title: "Subscription Renewal Alerts",
     description: "A heads-up 2–3 days before a tracked subscription renews.",
   },
@@ -91,17 +87,20 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl">
+    <div className="flex flex-col gap-6 max-w-2xl animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]">
       <div>
         <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-1">Settings</h1>
         <p className="text-[13px] text-text-muted">Manage your preferences and how Continuum Home reaches you.</p>
       </div>
 
       {/* Currency */}
-      <div className={BENTO_CARD}>
+      <div className={`${BENTO_CARD} border-t-2 border-t-accent-blue/80`}>
         <div className={CARD_HEADER}>
-          <h2 className="flex items-center gap-2 text-[13px] font-bold tracking-tight text-text-primary">
-            <Coins size={15} /> Currency
+          <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#EBF5FF] text-[#4A7C9D] border border-[#A0C4E2]/30 shadow-2xs">
+              <Coins size={14} />
+            </div>
+            Currency
           </h2>
         </div>
         <div className={CARD_BODY}>
@@ -122,10 +121,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       </div>
 
       {/* Income & Pay Cycle */}
-      <div className={BENTO_CARD}>
+      <div className={`${BENTO_CARD} border-t-2 border-t-[#2e7d32]/70`}>
         <div className={CARD_HEADER}>
-          <h2 className="flex items-center gap-2 text-[13px] font-bold tracking-tight text-text-primary">
-            <CalendarClock size={15} /> Income &amp; Pay Cycle
+          <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#E6F4EA] text-[#2e7d32] border border-[#2e7d32]/20 shadow-2xs">
+              <CalendarClock size={14} />
+            </div>
+            Income &amp; Pay Cycle
           </h2>
         </div>
         <div className={CARD_BODY}>
@@ -145,7 +147,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             <div>
               <label className={FIELD_LABEL}>Usual Salary</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-3 flex items-center text-[12px] text-text-muted">{currency}</span>
+                <span className="absolute inset-y-0 left-3.5 flex items-center text-xs font-bold text-text-muted">{currency}</span>
                 <input
                   type="number"
                   min="0"
@@ -159,7 +161,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             <div>
               <label className={FIELD_LABEL}>Additional Income</label>
               <div className="relative">
-                <span className="absolute inset-y-0 left-3 flex items-center text-[12px] text-text-muted">{currency}</span>
+                <span className="absolute inset-y-0 left-3.5 flex items-center text-xs font-bold text-text-muted">{currency}</span>
                 <input
                   type="number"
                   min="0"
@@ -179,17 +181,22 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       </div>
 
       {/* Email Notifications */}
-      <div className={BENTO_CARD}>
+      <div className={`${BENTO_CARD} border-t-2 border-t-[#e39282]/80`}>
         <div className={CARD_HEADER}>
-          <h2 className="flex items-center gap-2 text-[13px] font-bold tracking-tight text-text-primary">
-            <Mail size={15} /> Email Notifications
+          <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#FDF6F0] text-[#e39282] border border-[#e39282]/30 shadow-2xs">
+              <Mail size={14} />
+            </div>
+            Email Notifications
           </h2>
         </div>
         <div className="flex flex-col divide-y divide-border-subtle">
           {EMAIL_ROWS.map((row) => (
-            <div key={row.key} className="flex items-start justify-between gap-4 px-5 py-4 max-sm:px-4 max-sm:py-3.5">
-              <div className="flex min-w-0 items-start gap-3">
-                <span className="mt-0.5 shrink-0 text-text-secondary">{row.icon}</span>
+            <div key={row.key} className="flex items-center justify-between gap-4 px-5 py-4 max-sm:px-4 max-sm:py-3.5">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className={`flex h-8 w-8 items-center justify-center rounded-full shrink-0 shadow-2xs ${row.badgeClass}`}>
+                  {row.icon}
+                </div>
                 <div className="min-w-0">
                   <p className="text-[13px] font-semibold text-text-primary">{row.title}</p>
                   <p className="mt-0.5 text-[11.5px] leading-relaxed text-text-muted">{row.description}</p>
@@ -207,10 +214,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       </p>
 
       {/* Danger Zone / Account Deletion */}
-      <div className="rounded-card border border-red-500/20 bg-red-500/5 shadow-subtle mt-4">
-        <div className="flex items-center justify-between border-b border-red-500/15 bg-red-500/10 px-5 py-3.5">
-          <h2 className="flex items-center gap-2 text-[13px] font-bold tracking-tight text-red-700">
-            <Trash2 size={15} /> Danger Zone
+      <div className={`${BENTO_CARD} border-t-2 border-t-[#b3666b]/80 mt-2`}>
+        <div className={CARD_HEADER}>
+          <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-[#b3666b]">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#FDF6F0] text-[#b3666b] border border-[#b3666b]/30 shadow-2xs">
+              <Trash2 size={14} />
+            </div>
+            Danger Zone
           </h2>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5">
@@ -223,7 +233,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           {onDeleteAccount && (
             <button
               onClick={onDeleteAccount}
-              className="shrink-0 rounded-lg border border-red-200 bg-red-600 px-4 py-2 text-[13px] font-semibold text-white shadow-xs transition-all duration-200 hover:bg-red-700 active:scale-95 cursor-pointer"
+              className="shrink-0 rounded-full border border-[#b3666b] bg-[#b3666b] px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all duration-200 hover:bg-[#991b1b] active:scale-95 cursor-pointer"
             >
               Delete Account
             </button>
