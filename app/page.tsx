@@ -72,10 +72,10 @@ export default function Dashboard() {
     expensesLoaded, setExpensesLoaded,
     setIsFetchingExpenses,
     expenseSearch, ledgerMinAmount, ledgerMaxAmount,
-    payCycle, cycleHistoryRaw, catBreakdown
+    catBreakdown
   } = useExpensesStore();
   const { expenseTab, confirmDlg, setConfirmDlg, triggerConfirm } = useUiStore();
-  const { user, setUser, authLoading, setAuthLoading } = useAuthStore();
+  const { user, setUser, authLoading, setAuthLoading, isProUser, setIsProUser } = useAuthStore();
 
   /* ─── State ─── */
   const [activeTab, setActiveTab] = useState<string>("expenses");
@@ -165,7 +165,6 @@ export default function Dashboard() {
     portfolio: false,
     subscriptions: true,
   });
-  const [isProUser, setIsProUser] = useState(false);
   const [showClaimPro, setShowClaimPro] = useState(false);
   
   
@@ -956,13 +955,17 @@ export default function Dashboard() {
       unsubscribe = auth.onAuthStateChanged(async (fbUser: any) => {
         if (fbUser) {
           const idToken = await fbUser.getIdToken();
-          setUser({
+          const u = {
             uid: fbUser.uid,
             email: fbUser.email,
             displayName: fbUser.displayName,
             photoURL: fbUser.photoURL,
             idToken,
-          });
+          };
+          setUser(u);
+          if (u.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com") || u.email === "adiadithyakrishnan@gmail.com") {
+            setIsProUser(true);
+          }
         } else if (typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("embedded") === "true" || localStorage.getItem("phub_embedded_token"))) {
           const token = localStorage.getItem("phub_embedded_token") || "embedded_token";
           setUser({
@@ -972,8 +975,10 @@ export default function Dashboard() {
             photoURL: null,
             idToken: token,
           });
+          setIsProUser(true);
         } else {
           setUser(null);
+          setIsProUser(false);
         }
         setAuthLoading(false);
       });
@@ -1112,7 +1117,7 @@ export default function Dashboard() {
             subscriptions: data.emailSubscriptions.subscriptions !== false,
           });
         }
-        setIsProUser(data.isPro === true);
+        setIsProUser(data.isPro === true || user?.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com") || user?.email === "adiadithyakrishnan@gmail.com");
       }
     } catch (err) {
       console.error(err);
@@ -1789,8 +1794,102 @@ export default function Dashboard() {
     return list;
   }, [expenses, timeFilter, salaryDay, salaryLog, expenseSearch, ledgerMinAmount, ledgerMaxAmount]);
 
-  
-  
+  const CYCLE_HISTORY_DEPTH = 7;
+  const cycleHistoryRaw = useMemo(
+    () => buildCycleHistory(salaryDay, salaryLog, CYCLE_HISTORY_DEPTH),
+    [salaryDay, salaryLog]
+  );
+
+  const payCycle = useMemo(() => {
+    const { startStr, endStr, loggedAmount, prevStartStr, prevEndStr } = resolvePayCycle(salaryDay, salaryLog);
+    const todayStr = toLocalDateStr(new Date());
+    const start = new Date(`${startStr}T00:00:00`);
+    const end = new Date(`${endStr}T00:00:00`);
+    const today = new Date(`${todayStr}T00:00:00`);
+
+    const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
+    const elapsedDays = Math.min(totalDays, Math.max(1, Math.round((today.getTime() - start.getTime()) / 86400000) + 1));
+    const remainingDays = Math.max(0, totalDays - elapsedDays);
+
+    const cycleExpensesSoFar = expenses.filter((e) => e.date && e.date >= startStr && e.date <= todayStr);
+    const spentSoFar = cycleExpensesSoFar.reduce((acc, e) => acc + (e.amount || 0), 0);
+
+    const subMonthlyCost = subscriptions.reduce((acc, sub) => {
+      let cost = sub.cost || 0;
+      if (sub.billingCycle === "yearly") cost = cost / 12;
+      return acc + cost;
+    }, 0);
+
+    const prevCycleExpenses = expenses.filter((e) => e.date && e.date >= prevStartStr && e.date <= prevEndStr);
+    const prevSameDayEnd = new Date(`${prevStartStr}T00:00:00`);
+    prevSameDayEnd.setDate(prevSameDayEnd.getDate() + elapsedDays - 1);
+    const prevSameDayEndStr = toLocalDateStr(prevSameDayEnd);
+    const prevCycleSpendToSameDay = prevCycleExpenses
+      .filter((e) => e.date! <= prevSameDayEndStr)
+      .reduce((acc, e) => acc + (e.amount || 0), 0);
+    const prevCycleTransactional = prevCycleExpenses.reduce((acc, e) => acc + (e.amount || 0), 0);
+    const prevCycleSpend = prevCycleTransactional + subMonthlyCost;
+
+    const BLACKOUT_DAYS = 2;
+    const WARMUP_DAYS = 7;
+    const paceConfidence = Math.max(0, Math.min(1, (elapsedDays - BLACKOUT_DAYS) / WARMUP_DAYS));
+    const dailyPace = elapsedDays > 0 ? spentSoFar / elapsedDays : 0;
+    const paceProjectedTransactional = dailyPace * totalDays;
+
+    const HISTORY_CYCLES_FOR_BASELINE = 3;
+    const pastCyclesSpend = cycleHistoryRaw
+      .slice(1, 1 + HISTORY_CYCLES_FOR_BASELINE)
+      .map((c) => expenses.filter((e) => e.date && e.date >= c.startStr && e.date <= c.endStr).reduce((acc, e) => acc + (e.amount || 0), 0))
+      .filter((v) => v > 0);
+    const historicalBaselineTransactional =
+      pastCyclesSpend.length > 0 ? pastCyclesSpend.reduce((a, b) => a + b, 0) / pastCyclesSpend.length : prevCycleTransactional;
+
+    const projectedTransactional =
+      historicalBaselineTransactional > 0
+        ? paceConfidence * paceProjectedTransactional + (1 - paceConfidence) * historicalBaselineTransactional
+        : paceProjectedTransactional;
+
+    const hasLedgerHistory = historicalBaselineTransactional > 0 || spentSoFar > 0;
+    const projectedTotalSpend = hasLedgerHistory ? projectedTransactional : subMonthlyCost;
+
+    const salaryThisCycle = loggedAmount ?? monthlySalary;
+    const totalIncome = salaryThisCycle + additionalIncome;
+    const expectedCashOnHand = totalIncome - spentSoFar;
+    const expectedSavings = totalIncome - projectedTotalSpend;
+    const savingsRate = totalIncome > 0 ? (expectedSavings / totalIncome) * 100 : 0;
+
+    const paceDeltaPct = prevCycleSpend > 0 ? ((projectedTotalSpend - prevCycleSpend) / prevCycleSpend) * 100 : null;
+
+    const cycleCatBreakdown: Record<string, number> = {};
+    cycleExpensesSoFar.forEach((e) => {
+      const cat = e.category || "Uncategorized";
+      cycleCatBreakdown[cat] = (cycleCatBreakdown[cat] || 0) + (e.amount || 0);
+    });
+
+    return {
+      startStr,
+      endStr,
+      totalDays,
+      elapsedDays,
+      remainingDays,
+      spentSoFar,
+      subMonthlyCost,
+      projectedTotalSpend,
+      committedSpend: subMonthlyCost,
+      projectedRemaining: Math.max(0, projectedTotalSpend - spentSoFar),
+      paceConfidence,
+      totalIncome,
+      isSalaryLogged: loggedAmount !== null,
+      expectedCashOnHand,
+      expectedSavings,
+      savingsRate,
+      prevCycleSpend,
+      prevCycleSpendToSameDay,
+      paceDeltaPct,
+      cycleCatBreakdown: Object.fromEntries(Object.entries(cycleCatBreakdown).sort(([, a], [, b]) => b - a)) as Record<string, number>,
+    };
+  }, [expenses, subscriptions, salaryDay, salaryLog, monthlySalary, additionalIncome, cycleHistoryRaw]);
+
   const cycleHistory = useMemo(() => {
     return cycleHistoryRaw
       .slice(1)
@@ -2020,11 +2119,65 @@ export default function Dashboard() {
             </div>
 
             {mediaSubTab === "watchlist" && (
-              <>{/* TODO: Migrate WatchlistTab */}</>
+              <WatchlistTab
+                watchlist={watchlist}
+                watchlistFilter={watchlistFilter}
+                setWatchlistFilter={setWatchlistFilter}
+                mediaQuery={mediaQuery}
+                setMediaQuery={setMediaQuery}
+                mediaType={mediaType}
+                setMediaType={setMediaType}
+                searchMedia={searchMedia}
+                isSearchingMedia={isSearchingMedia}
+                searchResults={searchResults}
+                addToWatchlist={addToWatchlist}
+                updateWatchItem={updateWatchItem}
+                deleteWatchItem={deleteWatchItem}
+                isFetchingWatchlist={isFetchingWatchlist}
+                showLetterboxdModal={showLetterboxdModal}
+                setShowLetterboxdModal={setShowLetterboxdModal}
+                letterboxdUsername={letterboxdUsername}
+                setLetterboxdUsername={setLetterboxdUsername}
+                handleLetterboxdImport={handleLetterboxdImport}
+                isImportingLetterboxd={isImportingLetterboxd}
+                disconnectLetterboxd={disconnectLetterboxd}
+                anilistUser={anilistUser}
+                connectAnilist={connectAnilist}
+                disconnectAnilist={disconnectAnilist}
+                syncAnilist={syncAnilist}
+                isSyncingAnilist={isSyncingAnilist}
+                traktUser={traktUser}
+                connectTrakt={connectTrakt}
+                disconnectTrakt={disconnectTrakt}
+                syncTrakt={syncTrakt}
+                isSyncingTrakt={isSyncingTrakt}
+                enrichMissingPosters={enrichMissingPosters}
+                isEnrichingPosters={isEnrichingPosters}
+                onItemClick={(item) => setSelectedMediaItem(item)}
+                idToken={user?.idToken}
+                openDataCorrection={() => setIsDataCorrectionOpen(true)}
+              />
             )}
 
             {mediaSubTab === "books" && (
-              <>{/* TODO: Migrate BooksTab */}</>
+              <BooksTab
+                watchlist={watchlist}
+                bookQuery={bookQuery}
+                setBookQuery={setBookQuery}
+                searchBooks={searchBooks}
+                isSearchingBooks={isSearchingBooks}
+                bookResults={bookResults}
+                addBook={addBook}
+                bookFilter={bookFilter}
+                setBookFilter={setBookFilter}
+                updateWatchItem={updateWatchItem}
+                deleteWatchItem={deleteWatchItem}
+                isFetchingWatchlist={isFetchingWatchlist}
+                enrichMissingBookCovers={enrichMissingBookCovers}
+                isEnrichingBookCovers={isEnrichingBookCovers}
+                onItemClick={setSelectedMediaItem}
+                idToken={user?.idToken}
+              />
             )}
 
             {mediaSubTab === "integrations" && (
@@ -2053,7 +2206,42 @@ export default function Dashboard() {
         )}
 
         {activeTab === "investments" && (
-          <>{/* TODO: Migrate InvestmentsTab */}</>
+          <InvestmentsTab
+            investments={investments}
+            currency={currency}
+            invName={invName}
+            setInvName={handleInvNameChange}
+            invCategory={invCategory}
+            setInvCategory={setInvCategory}
+            invQuantity={invQuantity}
+            setInvQuantity={setInvQuantity}
+            invBuyPrice={invBuyPrice}
+            setInvBuyPrice={setInvBuyPrice}
+            invAmount={invAmount}
+            setInvAmount={setInvAmount}
+            invNotes={invNotes}
+            setInvNotes={setInvNotes}
+            invInterestRate={invInterestRate}
+            setInvInterestRate={setInvInterestRate}
+            invStartDate={invStartDate}
+            setInvStartDate={setInvStartDate}
+            invMaturityDate={invMaturityDate}
+            setInvMaturityDate={setInvMaturityDate}
+            invCompounding={invCompounding}
+            setInvCompounding={setInvCompounding}
+            invSipDay={invSipDay}
+            setInvSipDay={setInvSipDay}
+            isAddingAsset={isAddingAsset}
+            addInvestment={addInvestment}
+            deleteInvestment={deleteInvestment}
+            sellInvestment={sellInvestment}
+            isUpdatingPrices={isUpdatingPrices}
+            updateMarketPrices={updateMarketPrices}
+            isFetchingInvestments={isFetchingInvestments}
+            invSuggestions={invSuggestions}
+            setInvSuggestions={setInvSuggestions}
+            selectSuggestion={selectSuggestion}
+          />
         )}
 
         {activeTab === "financial" && isProUser && (

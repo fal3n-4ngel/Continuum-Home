@@ -489,7 +489,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   const monthlyBurn = payCycle.totalDays > 0 ? payCycle.projectedTotalSpend * (30 / payCycle.totalDays) : 0;
   const emergencyRunwayMonths = monthlyBurn > 0 && accessibleReserve > 0 ? accessibleReserve / monthlyBurn : null;
 
-  const catEntries = Object.entries(payCycle.cycleCatBreakdown);
+  const catEntries = Object.entries(payCycle.cycleCatBreakdown || {});
   const maxCatAmount = catEntries.length > 0 ? catEntries[0][1] : 0;
 
   const parsedActual = parseFloat(actualAmount);
