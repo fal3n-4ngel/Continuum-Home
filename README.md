@@ -1,45 +1,25 @@
-<h1 align="center"> Continuum — One Dashboard. Everything You Track. </h1>
-<h1 align="center">
-
-  <br>
-  <div>
-    <a href="https://github.com/fal3n-4ngel/Continuum-Home/issues">
-        <img src="https://img.shields.io/github/issues/fal3n-4ngel/Continuum-Home?color=fab387&labelColor=303446&style=for-the-badge">
-    </a>
-    <a href="https://github.com/fal3n-4ngel/Continuum-Home/stargazers">
-        <img src="https://img.shields.io/github/stars/fal3n-4ngel/Continuum-Home?color=ca9ee6&labelColor=303446&style=for-the-badge">
-    </a>
-    <a href="https://github.com/fal3n-4ngel/Continuum-Home">
-        <img src="https://img.shields.io/github/repo-size/fal3n-4ngel/Continuum-Home?color=ea999c&labelColor=303446&style=for-the-badge">
-    </a>
-    <a href="https://github.com/fal3n-4ngel/Continuum-Home/blob/main/LICENSE">
-        <img src="https://img.shields.io/static/v1.svg?style=for-the-badge&label=License&message=MIT&logoColor=ca9ee6&colorA=313244&colorB=cba6f7"/>
-    </a>
-    <br>
-    </div>
-
-   </h1>
-   
-<img width="2073" height="1269" alt="image" src="https://github.com/user-attachments/assets/d1968d0b-ee2d-4375-8f60-a03bdd9c3521" />
+<h1 align="center">Continuum — One Dashboard. Everything You Track.</h1>
 
 <p align="center">
-  <a href="https://continuum-home.vercel.app/">
-    <strong>🚀 Try Continuum </strong>
-  </a>
+  <a href="https://github.com/fal3n-4ngel/Continuum-Home/issues"><img src="https://img.shields.io/github/issues/fal3n-4ngel/Continuum-Home?color=fab387&labelColor=303446&style=for-the-badge" alt="Issues"></a>
+  <a href="https://github.com/fal3n-4ngel/Continuum-Home/stargazers"><img src="https://img.shields.io/github/stars/fal3n-4ngel/Continuum-Home?color=ca9ee6&labelColor=303446&style=for-the-badge" alt="Stars"></a>
+  <a href="https://github.com/fal3n-4ngel/Continuum-Home"><img src="https://img.shields.io/github/repo-size/fal3n-4ngel/Continuum-Home?color=ea999c&labelColor=303446&style=for-the-badge" alt="Repo Size"></a>
+  <a href="https://github.com/fal3n-4ngel/Continuum-Home/blob/main/LICENSE"><img src="https://img.shields.io/static/v1.svg?style=for-the-badge&label=License&message=MIT&logoColor=ca9ee6&colorA=313244&colorB=cba6f7" alt="License"></a>
 </p>
 
+<img width="2073" height="1269" alt="Continuum Dashboard" src="https://github.com/user-attachments/assets/d1968d0b-ee2d-4375-8f60-a03bdd9c3521" />
+
+<p align="center">
+  <a href="https://continuum-home.vercel.app/"><strong>🚀 Try Continuum Live Demo</strong></a>
+</p>
+
+---
 
 ## What is Continuum?
-Continuum is a self-hostable personal data platform for tracking your finances, investments, media, books, and subscriptions — with an API designed to be used by both applications and AI clients.<br/>It started as a personal API I fed into a Custom GPT so I could log expenses over chat instead of paying for another app. A friend wanted it too, so instead of handing over my personal API collection I built an actual dashboard around it. It's designed to natively integrate with AI assistants through a standardized OpenAPI schema.
 
-## Why Continuum?
-
-Most personal tracking apps are isolated tools,
-Continuum treats your personal data as one system.
+Continuum is a self-hostable personal data platform for tracking finances, investments, media, books, and subscriptions—with a unified REST API designed for both modern web apps and AI assistants.
 
 ```text
-
-
                     Continuum
                         │
              ┌──────────┼──────────┐
@@ -52,375 +32,109 @@ Continuum treats your personal data as one system.
              │          │
              └──────────┼──────────┘
                         │
-                    Continuum API
+                  Continuum API
                         │
               ┌─────────┼─────────┐
               │         │         │
            Web App   ChatGPT    Other
-                                 Clients
-```
-The API is the source of truth.
-
-AI is simply another client.
-
-## Technical Details
-
-```
-Framework: Next.js 16 (App Router, Turbopack) + React 19 + TypeScript
-Styling: Tailwind CSS
-Database & Auth: Firebase (Google Sign-In + Firestore REST API)
-Architecture: Modular Domain-Driven Subdirectories (lib/audit-postback, lib/auth, lib/cron, lib/finance, lib/firebase, lib/integrations, lib/utils)
+                                Clients
 ```
 
-## Architecture
+The API is the source of truth; AI clients interact through standard authenticated endpoints via an OpenAPI schema.
 
-Every caller — a signed-in browser or an external AI client that completed the OAuth flow — ends up with the same kind of bearer token and hits the same API routes; there is no separate "AI" surface. Those routes read through an in-memory + Redis cache in front of Firestore, using the *caller's own* ID token, so per-user isolation is enforced by Firestore security rules rather than app code. Crons are the one exception: they have no user token to act with, so they carry a service account through the Admin SDK instead, which bypasses those same rules.
-
-The other structural decision is that audit telemetry leaves the building entirely: `lib/domain-events` doesn't write to this app's own Firestore, it posts to **monolith-api**, a separate ingestion service that stores audit telemetry encrypted at rest in BigQuery for security auditing, analytics, and session telemetry. Route handlers also call out to Trakt, AniList, OMDb, and Gemini for sync, enrichment, and the AI assistant — plain leaf API calls shown alongside the core flow in the diagram below.
-
-![Continuum Architecture Diagram](architecture-diagram.svg)
+---
 
 ## Features
 
-### 💰 Expense Ledger
-
-Track spending across customizable financial periods.
-
-* Categorized transactions
-* Custom financial/payday periods
-* Multiple currencies
-* Spending analytics
-* Transaction filtering
-* Import/export
-* Expense management through AI
-
-Example:
-
-> "I spent ₹225 on petrol today."
-
-Your AI client can translate that into an authenticated API request and add the transaction.
+- **💰 Expense Ledger**: Transaction tracking with customizable pay cycles, multi-currency support, date range and category filtering, analytics, and CSV import/export.
+- **📈 Investment Portfolio**: Multi-asset tracking across Equities, Crypto, Mutual Funds (live NAV via AMFI), SIPs, Gold, Cash, and Fixed Deposits with live valuation and compounding calculators.
+- **🎬 Media Watchlist**: Unified tracking for movies, shows, and anime with progress tracking and integrations with AniList, Trakt, OMDb, and Letterboxd imports.
+- **📚 Book Library**: Personal book tracker with reading progress backed by OpenLibrary.
+- **💳 Subscription Tracker**: Normalize billing cycles across weekly, monthly, and annual renewals with effective monthly burn analysis.
+- **🤖 AI Native**: Manage data conversationally via OpenAPI 3.1 schema (`/api/openapi.json`) and OpenAI Custom GPT actions.
 
 ---
 
-### 📈 Investment Portfolio
+## Tech Stack & Architecture
 
-Track multiple types of assets from a single portfolio.
+- **Frontend & Server**: Next.js 16 (App Router, Turbopack) + React 19 + TypeScript + Tailwind CSS
+- **Database & Auth**: Firebase (Google Sign-In + Firestore REST API)
+- **Security**: AES-256-GCM encryption on sensitive fields; zero admin credentials in backend (all writes execute using the caller's Firebase ID token subject to Firestore security rules); SSRF-guarded upstream integrations.
+- **Telemetry**: Audit events stream out to a dedicated ingestion service storing structured logs in BigQuery.
 
-Supported categories:
-
-* Equities
-* Cryptocurrency
-* Mutual funds
-* SIPs
-* Gold
-* Cash
-* Fixed deposits
-* Other assets
-
-Supports both manual and live valuation depending on the asset.
+![Continuum Architecture Diagram](architecture-diagram.svg)
 
 ---
 
-### 🎬 Media Watchlist
+## AI Integration (ChatGPT Actions)
 
-Keep your movies, shows and anime in one place.
+Continuum exposes an OpenAPI 3.1 specification at `/api/openapi.json`. This allows external AI clients or Custom GPTs to create transactions, look up assets, and log watchlist items via authenticated HTTP requests.
 
-Integrations include:
-
-* AniList
-* Trakt
-* Letterboxd CSV imports
-* OMDb
-* TVMaze
-
-The watchlist supports progress tracking and multiple statuses including:
-
-* Plan to watch
-* Watching
-* Completed
-* Dropped
-* Paused
+- **Public GPT**: [Continuum Assistant](https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-Home-public)
+- **Self-Hosted Setup**: See [`CUSTOM_GPT_INSTRUCTIONS.md`](CUSTOM_GPT_INSTRUCTIONS.md) for step-by-step GPT configuration, OAuth settings, and the system prompt.
 
 ---
 
-### 📚 Book Library
+## Getting Started
 
-A lightweight personal book tracker backed by the OpenLibrary API.
-
-Track:
-
-* Books
-* Reading progress
-* Reading status
-
----
-
-### 💳 Subscription Tracker
-
-Keep recurring subscriptions in one place.
-
-Continuum normalizes billing cycles so monthly and annual subscriptions can be compared using their effective monthly cost.
-
----
-
-## AI Integration
-
-Continuum exposes an OpenAPI 3.1 schema at:
-
-```text
-/api/openapi.json
-```
-
-This allows compatible AI clients to interact with your personal data through normal API operations.
-
-For example:
-
-```text
-You:
-"I spent ₹500 on dinner."
-
-AI:
-→ Creates an expense
-→ Category: Food
-→ Amount: ₹500
-→ Date: Today
-
-Continuum:
-→ Expense appears in the ledger
-```
-
-The AI does not receive direct access to Firestore.
-
-It receives access to **specific API capabilities**.
-
-### Current integration
-
-Continuum includes a public Custom GPT:
-
-**Continuum Assistant**
-
-Authorization is handled through OAuth 2.0.
-
-You can also connect your own self-hosted instance to a Custom GPT by importing:
-
-```text
-https://your-domain.com/api/openapi.json
-```
-
-and configuring OAuth against your instance.
-
-See [`CUSTOM_GPT_INSTRUCTIONS.md`](CUSTOM_GPT_INSTRUCTIONS.md) for the complete configuration.
-
----
-## Project Structure
-
-```
-lib/
-├── audit-postback/    # Ingest client, session throttling, Custom GPT action detector
-├── auth/              # Auth session, tokens, credentials, OAuth clients, unsubscribe logic
-├── cron/              # Cron execution guards, scheduling, Discord alerting
-├── finance/           # Asset pricing, fixed deposit calculations, subscription logos, metrics
-├── firebase/          # Firestore REST client, admin SDK, sync-push, Zod validators
-├── integrations/      # AniList, Trakt, Discord Webhooks, Gemini AI Budget
-└── utils/             # Dates, formatters, encryption, cache, redis, errors, route-handlers, site config
-```
-
-## Run Using Node.js
-
-### Clone the Repository
+### 1. Clone & Install
 
 ```bash
 git clone https://github.com/fal3n-4ngel/Continuum-Home.git
 cd Continuum-Home
-```
-
-### Install Dependencies
-
-```bash
 npm install
 ```
 
-### Configure Firebase
+### 2. Configure Environment & Firebase
 
-1. Create a project in the [Firebase Console](https://console.firebase.google.com).
-2. Enable **Google Sign-in** under **Authentication** → **Sign-in method**.
-3. Provision a **Firestore Database**.
-4. **Project Settings** → **General** → **Add Web App** to generate the config snippet.
-5. Deploy the security rules that isolate each user's data:
-
-```bash
-npm install -g firebase-tools
-firebase login
-firebase use --add
-firebase deploy --only firestore:rules
-```
-
-### Set Environment Variables
-
+Copy the example environment file:
 ```bash
 cp .env.example .env.local
 ```
 
-Set `FIREBASE_CONFIG` as a minified JSON string and pick an encryption key in `.env.local`:
-
+Set required variables in `.env.local`:
 ```env
 FIREBASE_CONFIG={"apiKey":"...","authDomain":"...","projectId":"..."}
 ENCRYPTION_KEY="your-custom-super-secret-key-phrase"
 ```
 
-Optional keys for Trakt, AniList, and OMDb can also go here — see [`.env.example`](.env.example).
-
-> [!TIP]
-> **Bring-your-own-config mode:** server-wide env vars for third-party APIs are optional. Users can instead supply their own credentials per-request via HTTP headers (`X-Firebase-Config`, `X-Trakt-Client-Id`, etc.) — see `lib/auth/credentials.ts`.
-
-### Run the Development Server
-
+Deploy Firestore security rules:
 ```bash
-npm run dev
+firebase login
+firebase use <your-project-id>
+firebase deploy --only firestore:rules
 ```
 
-### Run the Production Server
+### 3. Run
 
 ```bash
+# Development
+npm run dev
+
+# Production
 npm run build
 npm run start
 ```
 
-### Access the Website
-
-Open your browser and navigate to
-
-```bash
-http://{ip}:3000
-```
-
-## 🔒 Security Model
-
-- **No admin service account.** The backend never holds elevated database credentials — every write is routed through the [Firestore REST API](https://firebase.google.com/docs/firestore/use-rest-api), authenticated with the caller's own Firebase ID token.
-- **AES-256-GCM encryption** on sensitive fields (titles, categories, amounts, notes) before they hit Firestore.
-- **Per-user isolation** enforced by ownership checks in `firestore.rules`.
-- **Hardened API routes** — payloads are validated at the boundary, and upstream proxy routes are strictly allowlisted against SSRF.
-
-## 🤖 Talk to Continuum via ChatGPT
-
-Continuum exposes an OpenAPI schema (`/api/openapi.json`) so you can add expenses, log media, or check your portfolio from a chat window instead of the UI. Requests originating from ChatGPT Actions are automatically detected (`isCustomGptRequest`) and recorded in audit telemetry.
-
-### Official Public Custom GPT
-Open the **[Continuum Assistant](https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-Home-public)**. Authorization runs through standard OAuth 2.0 on your first prompt.
-
-<details>
-  <summary><strong>Configure a Custom GPT for your own self-hosted instance</strong></summary>
-
-1. In ChatGPT: **Explore GPTs** → **Create** → **Configure** → **Actions**.
-2. **Import Schema:** point it at `https://your-domain.com/api/openapi.json`.
-3. **Configure Authentication** → **OAuth**:
-   - **Client ID & Secret:** any dummy strings (e.g. `client` / `secret`).
-   - **Authorization URL:** `https://your-domain.com/api/oauth/authorize`
-   - **Token URL:** `https://your-domain.com/api/oauth/token`
-   - **Token Exchange Method:** `Default (POST request)`.
-4. **Instructions:** paste the contents of [CUSTOM_GPT_INSTRUCTIONS.md](CUSTOM_GPT_INSTRUCTIONS.md).
-5. Save and publish.
-
-</details>
-
-## Troubleshooting
-
-### 1. Portfolio / expense data won't decrypt, or looks garbled
-- Symptoms
-  + Fields render as blank or as raw ciphertext
-  + Data written before now still won't read back correctly
-- Troubleshooting Steps
-  ```node
-  # ENCRYPTION_KEY must stay identical for the lifetime of your data —
-  # changing it makes everything encrypted under the old key unreadable.
-  # Confirm .env.local matches what was used when the data was written.
-  ```
-
-### 2. Google Sign-in fails or Firestore requests get rejected
-- Symptoms
-  + Login redirects back to the login screen
-  + API routes return 401/403
-- Troubleshooting Steps
-  ```node
-  # Confirm Google Sign-in is enabled in Firebase Console → Authentication
-  # Confirm `firebase deploy --only firestore:rules` was run against the right project
-  # Confirm FIREBASE_CONFIG in .env.local matches the same Firebase project
-  ```
-
-### 3. Daily cron emails / Custom GPT Actions aren't firing
-- Symptoms
-  + No daily portfolio/expense/subscription emails
-  + Custom GPT Action calls fail silently
-- Troubleshooting Steps
-  ```node
-  # Confirm CRON_SECRET and RESEND_API_KEY are set in your deployment env
-  # Confirm the GitHub Actions cron workflows have APP_URL and CRON_SECRET as repo secrets
-  # Check /api/cron/health for a live status check
-  ```
-
 ---
 
-## 🤖 Custom GPT Instructions & System Prompt
-
-If you are setting up your own OpenAI Custom GPT or external assistant connected to Continuum via `/api/openapi.json`, use the following system prompt:
-
-```text
-Role and Purpose
-You are the Continuum Assistant, an AI agent designed to help the user manage their finances, investments, subscriptions, and media watchlist. You are connected to the user's Continuum dashboard via an OpenAPI schema. Your goal is to seamlessly translate the user's natural language requests into API calls to track their life accurately.
-
-Core Capabilities & API Mapping
-You have access to several REST API endpoints. Use the following logic to determine which endpoint to call — but always defer to the actual operationId/schema in your imported Actions if anything here seems out of date.
-
-1. Expenses (/api/expenses)
-Logging: When the user says "I spent $20 on lunch" or "Log a $5 coffee expense", call the expense-creation action with title, amount, and category. Log incomes as negative (e.g. -100) so they net out correctly.
-Listing/Analytics: If the user asks "How much did I spend this month?", list expenses (optionally filtered by from/to date) and sum the amounts yourself — there is no separate stats endpoint.
-Modifying: If the user corrects an expense ("Change that lunch to $25"), patch that expense by id.
-Deleting: If the user says "Delete that coffee expense", delete it by id.
-
-2. Portfolio & Investments (/api/portfolio)
-Categories: equity, crypto, mutual_fund, sip, gold, cash, fixed_deposit, other.
-Buying/Adding: When the user says "I bought 10 shares of AAPL at $150", add a new asset with name, category, amount (current value), investedAmount (cost basis), quantity, and buyPrice.
-  - For category "sip": quantity is the recurring installment amount in the user's currency, NOT a unit count — do not treat it as units held. amount is the total current valuation, which the user updates periodically; don't try to derive it by multiplying quantity by a price. If they give you a scheme name (e.g. "HDFC Mid Cap"), you may look it up via the portfolio symbol-search action to get an mfSchemeCode for live NAV tracking, plus optional startDate and sipDay (1-31, the debit day).
-  - For category "fixed_deposit": use interestRate (annual %), startDate, maturityDate, and compounding (monthly/quarterly/half_yearly/yearly) instead of quantity/buyPrice.
-Updating: If the user says "Update my AAPL average buy price to $145", patch that asset by id with the changed field(s) only.
-Selling: If the user says "I sold my AAPL stock for $160", patch that asset by id and set isSold: true, soldPrice: 160, soldAt: <current time in ms>, and amount: 0. Sold assets are excluded from portfolio totals but stay visible in sold history — do not delete them.
-Deleting: If the user says "Remove AAPL from my portfolio entirely" (not sold, just erased from records), delete it by id.
-Note: there's also a full-replace action that overwrites the entire asset list at once — only use it for bulk operations, and always resend every existing field on every asset (including isSold/soldAt/soldPrice) since it's a full replace, not a patch. Prefer the single-asset patch/delete actions for anything about one holding.
-
-3. Subscriptions (/api/subscriptions)
-Tracking: For "Add my $15/month Netflix subscription", create a subscription with billingCycle: "monthly" and a nextBillingDate.
-Updating/Canceling: Patch or delete it by id respectively.
-
-4. Watchlist (/api/watchlist)
-Adding Media: For "Add Inception to my watchlist", add an item with type: "movie" and status: "plan_to_watch".
-Updating Progress: For "I finished season 1 of Breaking Bad", patch that item's progress or status (e.g. to "completed") by id.
-Valid types: movie, show, anime, book. Valid statuses: plan_to_watch, watching, completed, dropped, paused.
-
-Behavioral Guidelines
-Be Concise and Action-Oriented: Do not give long-winded explanations. If the user asks you to log an expense, make the API call and confirm it briefly: "Logged $20 for Lunch."
-Ask for Missing Context: If the user says "I bought TSLA" but doesn't provide the amount or buy price, politely ask for the missing details before making the API call.
-Handle Errors Gracefully: If an API call fails, read the error message returned by the API and explain to the user what went wrong.
-Confirm Destructive Actions: If the user asks to delete a major investment or wipe multiple records, ask for a quick confirmation before firing the delete action.
-```
-
-# Contributors
+## 👥 Contributors
 
 <table>
 <tr>
     <td align="center">
         <a href="https://github.com/fal3n-4ngel">
-            <img src="https://avatars.githubusercontent.com/u/79042374?v=4" width="100;" alt="fal3n-4ngel"/>
+            <img src="https://avatars.githubusercontent.com/u/79042374?v=4" width="100" alt="fal3n-4ngel"/>
             <br />
             <sub><b>Adithya Krishnan</b></sub>
         </a>
     </td>
-   </tr>
+</tr>
 </table>
 
 ## License
-This project is open-source and available under the [MIT License](LICENSE).
 
-Interested in improving Continuum? I welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for issue/branch conventions and CI requirements, or just open an issue, submit a PR, or share ideas on GitHub. Together, we can make this project even better.
+This project is open-source and available under the [MIT License](LICENSE). Contributions are welcome—see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 

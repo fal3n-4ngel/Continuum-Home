@@ -134,7 +134,8 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     customCategories, setCustomCategories, expenseDate, setExpenseDate,
     expenseNotes, setExpenseNotes, isAddingExpense, expenseSearch, setExpenseSearch,
     ledgerCategoryFilter, setLedgerCategoryFilter, ledgerMinAmount, setLedgerMinAmount,
-    ledgerMaxAmount, setLedgerMaxAmount, ledgerSortField, setLedgerSortField,
+    ledgerMaxAmount, setLedgerMaxAmount, ledgerStartDate, setLedgerStartDate, ledgerEndDate, setLedgerEndDate,
+    ledgerSortField, setLedgerSortField,
     ledgerSortDir, setLedgerSortDir, isFetchingExpenses, expensesLoaded,
     subscriptions, expenses, setExpenses, setIsAddingExpense, setSubscriptions
   } = useExpensesStore();
@@ -346,7 +347,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
 
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [expenseSearch, ledgerCategoryFilter, ledgerMinAmount, ledgerMaxAmount, ledgerSortField, ledgerSortDir]);
+  }, [expenseSearch, ledgerCategoryFilter, ledgerMinAmount, ledgerMaxAmount, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
 
   const toLocalDateStr = (d: Date) => {
     const yStr = d.getFullYear();
@@ -372,8 +373,10 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     }
     if (ledgerMinAmount) list = list.filter((e) => (e.amount || 0) >= parseFloat(ledgerMinAmount));
     if (ledgerMaxAmount) list = list.filter((e) => (e.amount || 0) <= parseFloat(ledgerMaxAmount));
+    if (ledgerStartDate) list = list.filter((e) => e.date && e.date.slice(0, 10) >= ledgerStartDate);
+    if (ledgerEndDate) list = list.filter((e) => e.date && e.date.slice(0, 10) <= ledgerEndDate);
     return list;
-  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount]);
+  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerStartDate, ledgerEndDate]);
 
   const filteredExpenses = React.useMemo(() => {
     let list = [...expenses];
@@ -386,6 +389,12 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     if (ledgerCategoryFilter) {
       list = list.filter((e) => e.category === ledgerCategoryFilter);
     }
+    if (ledgerStartDate) {
+      list = list.filter((e) => e.date && e.date.slice(0, 10) >= ledgerStartDate);
+    }
+    if (ledgerEndDate) {
+      list = list.filter((e) => e.date && e.date.slice(0, 10) <= ledgerEndDate);
+    }
     const dir = ledgerSortDir === "asc" ? 1 : -1;
     list = [...list].sort((a, b) => {
       switch (ledgerSortField) {
@@ -396,7 +405,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       }
     });
     return list;
-  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerSortField, ledgerSortDir]);
+  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
 
   const totalSpent = React.useMemo(() => filteredExpensesBase.reduce((sum, e) => sum + (e.amount || 0), 0), [filteredExpensesBase]);
 
@@ -407,7 +416,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       breakdown[cat] = (breakdown[cat] || 0) + (e.amount || 0);
     });
     return Object.fromEntries(Object.entries(breakdown).sort(([, a], [, b]) => b - a));
-  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerSortField, ledgerSortDir]);
+  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
 
   const chartCatBreakdown = React.useMemo(() => {
     const breakdown: Record<string, number> = {};
@@ -424,7 +433,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       if (e.date) map[e.date] = (map[e.date] || 0) + (e.amount || 0);
     });
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-10);
-  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerSortField, ledgerSortDir]);
+  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
 
   const largestItem = React.useMemo(() => {
     if (filteredExpensesBase.length === 0) return null;
@@ -886,6 +895,10 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                   setLedgerMinAmount={setLedgerMinAmount}
                   ledgerMaxAmount={ledgerMaxAmount}
                   setLedgerMaxAmount={setLedgerMaxAmount}
+                  ledgerStartDate={ledgerStartDate}
+                  setLedgerStartDate={setLedgerStartDate}
+                  ledgerEndDate={ledgerEndDate}
+                  setLedgerEndDate={setLedgerEndDate}
                   ledgerSortField={ledgerSortField}
                   setLedgerSortField={setLedgerSortField}
                   ledgerSortDir={ledgerSortDir}

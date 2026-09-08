@@ -39,6 +39,10 @@ interface ExpensesState {
   setLedgerMinAmount: (s: string) => void;
   ledgerMaxAmount: string;
   setLedgerMaxAmount: (s: string) => void;
+  ledgerStartDate: string;
+  setLedgerStartDate: (d: string) => void;
+  ledgerEndDate: string;
+  setLedgerEndDate: (d: string) => void;
   ledgerSortField: "date" | "amount" | "title" | "category";
   setLedgerSortField: (f: "date" | "amount" | "title" | "category") => void;
   ledgerSortDir: "asc" | "desc";
@@ -98,6 +102,10 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
   setLedgerMinAmount: (ledgerMinAmount) => set({ ledgerMinAmount }),
   ledgerMaxAmount: "",
   setLedgerMaxAmount: (ledgerMaxAmount) => set({ ledgerMaxAmount }),
+  ledgerStartDate: "",
+  setLedgerStartDate: (ledgerStartDate) => set({ ledgerStartDate }),
+  ledgerEndDate: "",
+  setLedgerEndDate: (ledgerEndDate) => set({ ledgerEndDate }),
   ledgerSortField: "date",
   setLedgerSortField: (ledgerSortField) => set({ ledgerSortField }),
   ledgerSortDir: "desc",
