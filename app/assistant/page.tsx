@@ -40,9 +40,7 @@ export default function AssistantIntegrationPage() {
         const { initializeApp, getApps } = await import("firebase/app");
         const { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged } = await import("firebase/auth");
 
-        const appName = "dashboard-client";
-        const apps = getApps();
-        const app = apps.find((a) => a.name === appName) || initializeApp(config, appName);
+        const app = getApps().length ? getApps()[0] : initializeApp(config);
         const auth = getAuth(app);
         setAuthApi({ auth, GoogleAuthProvider, signInWithPopup });
 

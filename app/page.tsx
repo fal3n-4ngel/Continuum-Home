@@ -1177,8 +1177,13 @@ export default function Dashboard() {
     }
   };
 
-  const setReconciliation = (cycleStartDate: string, actualAmount: number) => {
-    const next = { ...reconciliations, [cycleStartDate]: actualAmount };
+  const setReconciliation = (cycleStartDate: string, actualAmount: number | null) => {
+    const next = { ...reconciliations };
+    if (actualAmount === null) {
+      delete next[cycleStartDate];
+    } else {
+      next[cycleStartDate] = actualAmount;
+    }
     setReconciliationsState(next);
     if (user) {
       fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ reconciliations: next }) }).catch((err) => console.error(err));
@@ -1272,11 +1277,12 @@ export default function Dashboard() {
 
   const logUnaccountedGap = async (amount: number) => {
     try {
+      const isExpense = amount > 0;
       const res = await fetch("/api/expenses", {
         method: "POST",
         headers: getHeaders(),
         body: JSON.stringify({
-          title: "Unaccounted spending (reconciliation gap)",
+          title: isExpense ? "Unaccounted spending (reconciliation gap)" : "Unaccounted income / cash deposit",
           amount,
           category: "Other",
           date: toLocalDateStr(new Date()),
