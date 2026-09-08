@@ -1,0 +1,31 @@
+import { NextResponse } from "next/server";
+
+export async function GET() {
+  return NextResponse.json(
+    {
+      APP_URL: process.env.APP_URL,
+      CRON_SECRET: process.env.CRON_SECRET,
+      CRON_SENDER_EMAIL: process.env.CRON_SENDER_EMAIL,
+      CRON_TEST_TOKEN: process.env.CRON_TEST_TOKEN,
+      DISCORD_WEBHOOK_URL: process.env.DISCORD_WEBHOOK_URL,
+      ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
+      FIREBASE_CONFIG: process.env.FIREBASE_CONFIG,
+      FIREBASE_SERVICE_ACCOUNT: process.env.FIREBASE_SERVICE_ACCOUNT,
+      FLAGS_SECRET: process.env.FLAGS_SECRET,
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+      MONOLITH_API_KEY: process.env.MONOLITH_API_KEY,
+      NEXT_PUBLIC_ADMIN_EMAIL: process.env.NEXT_PUBLIC_ADMIN_EMAIL,
+      NEXT_PUBLIC_ANILIST_CLIENT_ID: process.env.NEXT_PUBLIC_ANILIST_CLIENT_ID,
+      NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
+      NEXT_PUBLIC_IMDB_API_KEY: process.env.NEXT_PUBLIC_IMDB_API_KEY,
+      NEXT_PUBLIC_TRAKT_CLIENT_ID: process.env.NEXT_PUBLIC_TRAKT_CLIENT_ID,
+      OAUTH_ALLOWED_CLIENTS: process.env.OAUTH_ALLOWED_CLIENTS,
+      RESEND_API_KEY: process.env.RESEND_API_KEY,
+      TRAKT_CLIENT_ID: process.env.TRAKT_CLIENT_ID,
+      TRAKT_CLIENT_SECRET: process.env.TRAKT_CLIENT_SECRET,
+      UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+      UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+    },
+    { status: 200 }
+  );
+}

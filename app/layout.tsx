@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     "AniList sync",
     "Trakt sync",
     "book tracker",
-    "self-hosted dashboard",
+    "self-hostable dashboard",
     "ChatGPT custom GPT",
     "ChatGPT actions",
     "OpenAPI schema",

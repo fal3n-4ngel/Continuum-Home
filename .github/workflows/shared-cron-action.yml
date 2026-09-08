@@ -90,10 +90,10 @@ jobs:
 
   alert:
     needs: trigger-cron
-    if: failure()
+    if: always() && (needs.trigger-cron.result == 'failure' || needs.trigger-cron.result == 'cancelled')
     uses: ./.github/workflows/discord-notify.yml
     with:
       title: "🚨 Cron Workflow Failed: ${{ inputs.job_name != '' && inputs.job_name || inputs.endpoint }}"
-      description: ${{ needs.trigger-cron.outputs.failure_detail }}
+      description: ${{ needs.trigger-cron.outputs.failure_detail != '' && needs.trigger-cron.outputs.failure_detail || 'Cron endpoint trigger failed or timed out. Check GitHub Actions run logs for details.' }}
     secrets:
       DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}

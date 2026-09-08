@@ -191,7 +191,7 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
     question: "Is Continuum free?",
     answer:
-      "Yes. The self-hosted version is free forever — deploy your own copy on Vercel + Firebase's free tiers with zero feature gates. The cloud-hosted standard version is also free to use.",
+      "Yes. The self-hostable version is free forever — deploy your own copy on Vercel + Firebase's free tiers with zero feature gates. The cloud-hosted standard version is also free to use.",
   },
   {
     question: "Where is my data stored?",
@@ -467,12 +467,24 @@ export default function LandingPage({
 
       {/* ─── SECTION 1: HERO ─── */}
       <section className="mx-auto max-w-[1100px] px-6 pt-[70px] pb-[30px] text-center max-[480px]:px-4 max-[480px]:pt-[50px] max-[480px]:pb-6">
-        <span
-          className={`${HERO_BADGE} ${HERO_REVEAL} [animation-delay:0.02s]`}
-        >
-          <BentoLogo size={12} color="#6e6c64" />
-          SELF-HOSTED · OPEN SOURCE · AI-READY
-        </span>
+        <div className={`flex flex-col items-center gap-3 ${HERO_REVEAL} [animation-delay:0.02s]`}>
+          <span className={HERO_BADGE}>
+            <BentoLogo size={12} color="#6e6c64" />
+            SELF-HOSTABLE · OPEN SOURCE · AI-READY
+          </span>
+          <a
+            href="https://www.producthunt.com/products/continuum-2028?embed=true&utm_source=embed&utm_medium=post_embed"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full border border-[#ff6154]/30 bg-[#fff5f4] px-3.5 py-1 text-[11px] font-semibold text-[#ff6154] no-underline transition-all hover:bg-[#ff6154] hover:text-white"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M13.604 8.4h-3.405v3.6h3.405c.996 0 1.795-.806 1.795-1.8s-.799-1.8-1.795-1.8zM24 12c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zm-9.792-3.6H10.199v10.8h2.8v-3.6h1.209c2.54 0 4.592-2.052 4.592-4.592C18.8 8.452 16.748 6.4 14.208 6.4z"/>
+            </svg>
+            <span>Featured on Product Hunt</span>
+            <span className="font-mono text-[10px]">↗</span>
+          </a>
+        </div>
 
         <h1 className={`${HERO_TITLE} ${HERO_REVEAL} [animation-delay:0.08s]`}>
           One place. Everything you track.
@@ -482,9 +494,9 @@ export default function LandingPage({
           </span>
         </h1>
         <p
-          className={`mx-auto mb-8 max-w-[620px] text-base leading-[1.65] text-[#6e6c64] ${HERO_REVEAL} [animation-delay:0.14s]`}
+          className={`mx-auto mb-6 max-w-[620px] text-base leading-[1.65] text-[#6e6c64] ${HERO_REVEAL} [animation-delay:0.14s]`}
         >
-          A self-hosted system for your daily expenses, investments, media watchlists, and book library — with an API designed for both humans and AI agents.
+          A self-hostable system for your daily expenses, investments, media watchlists, and book library — with an API designed for both humans and AI agents.
         </p>
         <div
           className={`flex flex-wrap justify-center gap-3.5 ${HERO_REVEAL} [animation-delay:0.2s]`}
@@ -1754,13 +1766,13 @@ export default function LandingPage({
               </button>
             </div>
 
-            {/* Card 2: Self-Hosted (Highlighted) */}
+            {/* Card 2: Self-Hostable (Highlighted) */}
             <div className="relative flex flex-col rounded-2xl border-2 border-[#1c1b18] bg-white p-7 shadow-[0_8px_24px_-4px_rgba(28,27,24,0.12)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5">
               <span className="mb-4 inline-block self-start rounded-full bg-[#1c1b18] px-2.5 py-1 font-mono text-[9.5px] font-bold tracking-wider text-white uppercase">
                 Recommended · Developer
               </span>
               <p className="mb-1 text-xl font-bold tracking-tight text-[#1c1b18]">
-                Self-Hosted
+                Self-Hostable
               </p>
               <p className="mb-1 text-[36px] leading-none font-extrabold tracking-tight text-[#1c1b18]">
                 $0{" "}
@@ -1926,7 +1938,7 @@ export default function LandingPage({
                 {SITE_NAME}
               </a>
               <p className="max-w-[300px] text-[13px] leading-[1.65] text-[#6e6c64]">
-                A self-hosted personal dashboard and OpenAPI layer for daily expenses, media watchlists, book reading, and investments.
+                A self-hostable personal dashboard and OpenAPI layer for daily expenses, media watchlists, book reading, and investments.
               </p>
               <p className="text-xs text-[#9c9a92]">
                 Built by{" "}

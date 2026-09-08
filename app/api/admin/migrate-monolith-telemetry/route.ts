@@ -31,6 +31,7 @@ export async function POST(req: NextRequest) {
 
     const users = await listAllUsers();
 
+    let usersEmitted = 0;
     let expensesEmitted = 0;
     let subscriptionsEmitted = 0;
     let watchlistEmitted = 0;
@@ -68,6 +69,16 @@ export async function POST(req: NextRequest) {
     };
 
     for (const user of users) {
+      // 0. Migrate User Account Registration Event
+      try {
+        await sendEvent("USER_CREATED", user.uid, `user_${user.uid}`, {
+          email: user.email,
+        });
+        usersEmitted++;
+      } catch (err: any) {
+        errors.push(`User creation event for uid ${user.uid}: ${err.message}`);
+      }
+
       // 1. Migrate Expenses
       try {
         const expenses = await adminListExpenses(user.uid);
@@ -159,12 +170,13 @@ export async function POST(req: NextRequest) {
       success: true,
       usersProcessed: users.length,
       migrated: {
+        usersEmitted,
         expensesEmitted,
         subscriptionsEmitted,
         watchlistEmitted,
         investmentsEmitted,
         salaryEventsEmitted,
-        totalEvents: expensesEmitted + subscriptionsEmitted + watchlistEmitted + investmentsEmitted + salaryEventsEmitted,
+        totalEvents: usersEmitted + expensesEmitted + subscriptionsEmitted + watchlistEmitted + investmentsEmitted + salaryEventsEmitted,
       },
       errors,
     });

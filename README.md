@@ -35,7 +35,7 @@
 </p>
 
 ## What is Continuum?
-Continuum is a self-hosted personal data platform for tracking your finances, investments, media, books, and subscriptions — with an API designed to be used by both applications and AI clients..<br/>It started as a personal API I fed into a Custom GPT so I could log expenses over chat instead of paying for another app. A friend wanted it too, so instead of handing over my personal API collection I built an actual dashboard around it. It's designed to natively integrate with AI assistants through a standardized OpenAPI schema.
+Continuum is a self-hostable personal data platform for tracking your finances, investments, media, books, and subscriptions — with an API designed to be used by both applications and AI clients.<br/>It started as a personal API I fed into a Custom GPT so I could log expenses over chat instead of paying for another app. A friend wanted it too, so instead of handing over my personal API collection I built an actual dashboard around it. It's designed to natively integrate with AI assistants through a standardized OpenAPI schema.
 
 ## Why Continuum?
 
