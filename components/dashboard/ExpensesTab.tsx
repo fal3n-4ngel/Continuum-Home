@@ -12,6 +12,7 @@ import { ExpenseRow } from "./expenses/ExpenseRow";
 import { ExpenseLedgerControls } from "./expenses/ExpenseLedgerControls";
 import { EditExpenseModal } from "./expenses/EditExpenseModal";
 
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
 interface ExpensesTabProps {}
 
 const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
@@ -123,8 +124,9 @@ const isSubscriptionPaidInLedger = (sub: Subscription, expenses: Expense[]) => {
 };
 
 export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
+  "use no memo";
   const {
-    currency, setCurrency, expenseTab, setExpenseTab, activeChart, setActiveChart
+    currency, setCurrency, expenseTab, setExpenseTab, activeChart, setActiveChart, triggerConfirm
   } = useUiStore();
   const {
     timeFilter, setTimeFilter, salaryDay, setSalaryDay,
@@ -370,9 +372,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     return `${yStr}-${mStr}-${dStr}`;
   };
 
-  const triggerConfirm = (title: string, msg: string, cb: () => void) => {
-    if (confirm(`${title}: ${msg}`)) cb();
-  };
 
   const allCategories = React.useMemo(() => {
     const s = new Set<string>();
@@ -395,7 +394,13 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
   }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount]);
 
   const filteredExpenses = React.useMemo(() => {
-    let list = filteredExpensesBase;
+    let list = [...expenses];
+    if (expenseSearch) {
+      const q = expenseSearch.toLowerCase();
+      list = list.filter((e) => (e.title && e.title.toLowerCase().includes(q)) || (e.notes && e.notes.toLowerCase().includes(q)));
+    }
+    if (ledgerMinAmount) list = list.filter((e) => (e.amount || 0) >= parseFloat(ledgerMinAmount));
+    if (ledgerMaxAmount) list = list.filter((e) => (e.amount || 0) <= parseFloat(ledgerMaxAmount));
     if (ledgerCategoryFilter) {
       list = list.filter((e) => e.category === ledgerCategoryFilter);
     }
@@ -409,7 +414,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       }
     });
     return list;
-  }, [filteredExpensesBase, ledgerCategoryFilter, ledgerSortField, ledgerSortDir]);
+  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerSortField, ledgerSortDir]);
 
   const totalSpent = React.useMemo(() => filteredExpensesBase.reduce((sum, e) => sum + (e.amount || 0), 0), [filteredExpensesBase]);
   
@@ -420,7 +425,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       breakdown[cat] = (breakdown[cat] || 0) + (e.amount || 0);
     });
     return Object.fromEntries(Object.entries(breakdown).sort(([, a], [, b]) => b - a));
-  }, [filteredExpenses]);
+  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerSortField, ledgerSortDir]);
 
   const chartCatBreakdown = React.useMemo(() => {
     const breakdown: Record<string, number> = {};
@@ -437,7 +442,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       if (e.date) map[e.date] = (map[e.date] || 0) + (e.amount || 0);
     });
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-10);
-  }, [filteredExpenses]);
+  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerSortField, ledgerSortDir]);
 
   const largestItem = React.useMemo(() => {
     if (filteredExpensesBase.length === 0) return null;

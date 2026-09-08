@@ -24,6 +24,7 @@ import type { SyncEntry } from "@/lib/firebase";
 
 import { useExpensesStore } from "@/lib/stores/expenses-store";
 import { useUiStore } from "@/lib/stores/ui-store";
+import { useAuthStore } from "@/lib/stores/auth-store";
 
 // Modular Dashboard Components
 import LandingPage from "@/components/landing/LandingPage";
@@ -73,13 +74,12 @@ export default function Dashboard() {
     expenseSearch, ledgerMinAmount, ledgerMaxAmount,
     payCycle, cycleHistoryRaw, catBreakdown
   } = useExpensesStore();
-  const { expenseTab } = useUiStore();
+  const { expenseTab, confirmDlg, setConfirmDlg, triggerConfirm } = useUiStore();
+  const { user, setUser, authLoading, setAuthLoading } = useAuthStore();
 
   /* ─── State ─── */
   const [activeTab, setActiveTab] = useState<string>("expenses");
   const [mediaSubTab, setMediaSubTab] = useState<"watchlist" | "books" | "integrations">("watchlist");
-  const [user, setUser] = useState<FirebaseUser | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
   const [selectedMediaItem, setSelectedMediaItem] = useState<WatchlistItem | null>(null);
   const [firebaseAuth, setFirebaseAuth] = useState<FirebaseAuthModule | null>(null);
   const [isEmbedded, setIsEmbedded] = useState(false);
@@ -147,11 +147,7 @@ export default function Dashboard() {
     const cached = window.localStorage.getItem("phub_time_filter");
     return cached === "7" || cached === "30" || cached === "90" || cached === "salary" || cached === "all" ? cached : "all";
   });
-  const [salaryDay, setSalaryDayState] = useState<number>(() => {
-    if (typeof window === "undefined") return 1;
-    const cached = parseInt(window.localStorage.getItem("phub_salary_day") || "", 10);
-    return cached >= 1 && cached <= 31 ? cached : 1;
-  });
+  const [salaryDay, setSalaryDayState] = useState<number>(1);
   const [monthlySalary, setMonthlySalaryState] = useState<number>(() => {
     if (typeof window === "undefined") return 0;
     const cached = parseFloat(window.localStorage.getItem("phub_monthly_salary") || "0");
@@ -255,12 +251,6 @@ export default function Dashboard() {
 
   // Onboarding & Confirm Dialogs
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [confirmDlg, setConfirmDlg] = useState<ConfirmState>({
-    isOpen: false,
-    title: "",
-    message: "",
-    onConfirm: () => {},
-  });
   const [syncPreview, setSyncPreview] = useState<SyncPreviewState>({
     isOpen: false,
     title: "",
@@ -278,29 +268,6 @@ export default function Dashboard() {
       Authorization: `Bearer ${token}`,
     };
   }, [user]);
-
-  const triggerConfirm = (
-    title: string,
-    message: string,
-    onConfirm: () => void,
-    isDestructive = true,
-    confirmText = "Delete",
-    cancelText = "Cancel"
-  ) => {
-    setConfirmDlg({
-      isOpen: true,
-      title,
-      message,
-      onConfirm: () => {
-        onConfirm();
-        setConfirmDlg((prev) => ({ ...prev, isOpen: false }));
-      },
-      confirmText,
-      cancelText,
-      isDestructive,
-      variant: "confirm",
-    });
-  };
 
   const triggerAlert = (
     title: string,
@@ -1118,7 +1085,6 @@ export default function Dashboard() {
         }
         if (data.salaryDay) {
           setSalaryDayState(data.salaryDay);
-          localStorage.setItem("phub_salary_day", String(data.salaryDay));
         }
         if (data.monthlySalary !== undefined) {
           setMonthlySalaryState(data.monthlySalary);
@@ -1165,7 +1131,6 @@ export default function Dashboard() {
 
   const setSalaryDay = (d: number) => {
     setSalaryDayState(d);
-    localStorage.setItem("phub_salary_day", String(d));
     if (user) {
       fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ salaryDay: d }) }).catch((err) => console.error(err));
     }

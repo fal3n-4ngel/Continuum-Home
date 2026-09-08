@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { getCurrencySymbol } from "@/lib/utils";
+import { ConfirmState } from "@/components/dashboard/ConfirmModal";
 
 interface UiState {
   currency: string;
@@ -10,6 +11,16 @@ interface UiState {
   setActiveChart: (c: "category" | "trend") => void;
   activeTab: string;
   setActiveTab: (tab: string) => void;
+  confirmDlg: ConfirmState;
+  setConfirmDlg: (dlg: ConfirmState | ((prev: ConfirmState) => ConfirmState)) => void;
+  triggerConfirm: (
+    title: string,
+    message: string,
+    onConfirm: () => void,
+    isDestructive?: boolean,
+    confirmText?: string,
+    cancelText?: string
+  ) => void;
 }
 
 export const useUiStore = create<UiState>((set) => ({
@@ -24,4 +35,30 @@ export const useUiStore = create<UiState>((set) => ({
   setActiveChart: (c) => set({ activeChart: c }),
   activeTab: "expenses",
   setActiveTab: (t) => set({ activeTab: t }),
+  confirmDlg: {
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  },
+  setConfirmDlg: (dlg) => set((state) => ({
+    confirmDlg: typeof dlg === "function" ? dlg(state.confirmDlg) : dlg,
+  })),
+  triggerConfirm: (title, message, onConfirm, isDestructive = true, confirmText = "Delete", cancelText = "Cancel") => {
+    set({
+      confirmDlg: {
+        isOpen: true,
+        title,
+        message,
+        onConfirm: () => {
+          onConfirm();
+          set({ confirmDlg: { isOpen: false, title: "", message: "", onConfirm: () => {} } });
+        },
+        confirmText,
+        cancelText,
+        isDestructive,
+        variant: "confirm",
+      },
+    });
+  },
 }));

@@ -70,7 +70,6 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
   },
   salaryDay: 1,
   setSalaryDay: (salaryDay) => {
-    if (typeof window !== "undefined") window.localStorage.setItem("phub_salary_day", salaryDay.toString());
     set({ salaryDay });
   },
   
