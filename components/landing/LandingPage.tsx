@@ -472,18 +472,6 @@ export default function LandingPage({
             <BentoLogo size={12} color="#6e6c64" />
             SELF-HOSTABLE · OPEN SOURCE · AI-READY
           </span>
-          <a
-            href="https://www.producthunt.com/products/continuum-2028?embed=true&utm_source=embed&utm_medium=post_embed"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full border border-[#ff6154]/30 bg-[#fff5f4] px-3.5 py-1 text-[11px] font-semibold text-[#ff6154] no-underline transition-all hover:bg-[#ff6154] hover:text-white"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M13.604 8.4h-3.405v3.6h3.405c.996 0 1.795-.806 1.795-1.8s-.799-1.8-1.795-1.8zM24 12c0 6.627-5.373 12-12 12S0 18.627 0 12 5.373 0 12 0s12 5.373 12 12zm-9.792-3.6H10.199v10.8h2.8v-3.6h1.209c2.54 0 4.592-2.052 4.592-4.592C18.8 8.452 16.748 6.4 14.208 6.4z"/>
-            </svg>
-            <span>Featured on Product Hunt</span>
-            <span className="font-mono text-[10px]">↗</span>
-          </a>
         </div>
 
         <h1 className={`${HERO_TITLE} ${HERO_REVEAL} [animation-delay:0.08s]`}>
