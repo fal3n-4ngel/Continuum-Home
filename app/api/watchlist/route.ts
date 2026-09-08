@@ -12,7 +12,7 @@ async function autohealWatchlistItem(session: any, id: string, item: any) {
 
   try {
     if (item.type === "movie" || item.type === "show") {
-      const apiKey = process.env.NEXT_PUBLIC_IMDB_API_KEY;
+      const apiKey = process.env.OMDB_API_KEY;
       if (apiKey) {
         try {
           const res = await fetch(

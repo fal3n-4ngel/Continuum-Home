@@ -8,7 +8,7 @@
 // unrestricted, cross-user access.
 import { getApps, initializeApp, cert, type App } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
-import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import { getFirestore, FieldValue, type Firestore } from "firebase-admin/firestore";
 import { encrypt, decrypt, ApiError, env } from "@/lib/utils";
 import {
   encryptAsset,
@@ -75,6 +75,7 @@ export interface AdminUser {
 // Every registered Auth user with a known email — the fan-out target list
 // for every cron. Paginated since listUsers() caps at 1000 per page.
 // Filters out any user whose settings doc has `deleted === true`.
+// NOTE: This performs O(N) reads and should only be used for admin/migration/cron purposes, NOT for public endpoints.
 export async function listAllUsers(): Promise<AdminUser[]> {
   const auth = getAdminAuth();
   const db = getAdminDb();
@@ -286,4 +287,30 @@ export async function adminPurgeUserData(uid: string): Promise<void> {
 
   // 6. Delete user settings
   await db.collection("settings").doc(uid).delete().catch(() => {});
+}
+
+export async function adminGetUserCount(): Promise<number> {
+  const db = getAdminDb();
+  const doc = await db.collection("stats").doc("users").get();
+  if (!doc.exists) {
+    return 0;
+  }
+  const data = doc.data();
+  return typeof data?.count === "number" ? data.count : 0;
+}
+
+export async function incrementUserCount(): Promise<void> {
+  const db = getAdminDb();
+  await db.collection("stats").doc("users").set(
+    { count: FieldValue.increment(1), lastUpdated: FieldValue.serverTimestamp() },
+    { merge: true }
+  );
+}
+
+export async function decrementUserCount(): Promise<void> {
+  const db = getAdminDb();
+  await db.collection("stats").doc("users").set(
+    { count: FieldValue.increment(-1), lastUpdated: FieldValue.serverTimestamp() },
+    { merge: true }
+  );
 }

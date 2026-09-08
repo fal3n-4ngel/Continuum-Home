@@ -26,10 +26,12 @@
     "flags": "^4.2.1",
     "lucide-react": "^1.25.0",
     "next": "^16.3.0",
+    "papaparse": "^5.7.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "swr": "^2.4.2",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -37,6 +39,7 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.3",
     "@types/node": "^20",
+    "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitejs/plugin-react": "^6.0.5",
@@ -44,6 +47,7 @@
     "eslint-config-next": "16.2.10",
     "happy-dom": "^20.11.1",
     "tailwindcss": "^4",
+    "ts-morph": "^28.0.0",
     "typescript": "^5",
     "vitest": "^4.1.10"
   }

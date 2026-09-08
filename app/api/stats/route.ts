@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { listAllUsers } from "@/lib/firebase/firebase-admin";
+import { adminGetUserCount } from "@/lib/firebase/firebase-admin";
 import { cacheGet, cacheSet } from "@/lib/utils";
 
 // Public, non-personalized, and safe to go stale for an hour — let Next/Vercel
@@ -20,11 +20,11 @@ export async function GET() {
       return NextResponse.json({ userCount: cached }, { headers: { "Cache-Control": CACHE_CONTROL } });
     }
 
-    const users = await listAllUsers();
-    await cacheSet(STATS_CACHE_KEY, users.length, STATS_CACHE_TTL);
-    return NextResponse.json({ userCount: users.length }, { headers: { "Cache-Control": CACHE_CONTROL } });
+    const userCount = await adminGetUserCount();
+    await cacheSet(STATS_CACHE_KEY, userCount, STATS_CACHE_TTL);
+    return NextResponse.json({ userCount: userCount }, { headers: { "Cache-Control": CACHE_CONTROL } });
   } catch (error: any) {
     console.error("Error in /api/stats:", error);
-    return NextResponse.json({ userCount: null }, { status: 200 });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

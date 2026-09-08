@@ -91,7 +91,6 @@ async function lookupAnime(anilistId: number): Promise<LookupOutcome> {
 // through to the next source — matching the original's behavior where only
 // that first fetch failing continues the fallback chain.
 async function lookupTraktDetails(idToken: string | undefined, type: "movie" | "show", traktId: number): Promise<LookupOutcome> {
-  const apiKey = process.env.NEXT_PUBLIC_IMDB_API_KEY;
   const details = await traktRequest(idToken, `${type}s/${traktId}`);
 
   let synopsis: string | null = details?.overview || null;
@@ -102,9 +101,9 @@ async function lookupTraktDetails(idToken: string | undefined, type: "movie" | "
   const imdbId = details?.ids?.imdb;
   let omdbSucceeded = false;
 
-  if (imdbId && apiKey) {
+  if (imdbId) {
     try {
-      const res = await fetch(`https://www.omdbapi.com/?i=${imdbId}&plot=full&apikey=${apiKey}`);
+      const res = await fetch(`/api/omdb?i=${imdbId}&plot=full`);
       if (res.ok) {
         const data = await res.json();
         if (data.Director && data.Director !== "N/A") director = data.Director;
@@ -166,10 +165,8 @@ async function lookupTvMazeSummary(title: string): Promise<LookupOutcome> {
 }
 
 async function lookupOmdbByTitle(title: string): Promise<LookupOutcome> {
-  const apiKey = process.env.NEXT_PUBLIC_IMDB_API_KEY;
-  if (!apiKey) return { stop: false };
   try {
-    const res = await fetch(`https://www.omdbapi.com/?t=${encodeURIComponent(title)}&plot=full&apikey=${apiKey}`);
+    const res = await fetch(`/api/omdb?t=${encodeURIComponent(title)}&plot=full`);
     if (!res.ok) return { stop: false };
     const data = await res.json();
     const result: LookupOutcome = {

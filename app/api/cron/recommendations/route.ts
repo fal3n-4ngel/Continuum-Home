@@ -188,7 +188,7 @@ Return no other text or markdown blocks. Just the raw JSON object.
             console.error("[Cron Recs] OpenLibrary fetch failed:", e);
           }
         } else {
-          const omdbKey = process.env.NEXT_PUBLIC_IMDB_API_KEY;
+          const omdbKey = process.env.OMDB_API_KEY;
           if (omdbKey) {
             try {
               const res = await fetch(

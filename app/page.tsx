@@ -22,6 +22,9 @@ import { traktRequest } from "@/lib/integrations";
 import { pushWatchlistUpdate } from "@/lib/firebase";
 import type { SyncEntry } from "@/lib/firebase";
 
+import { useExpensesStore } from "@/lib/stores/expenses-store";
+import { useUiStore } from "@/lib/stores/ui-store";
+
 // Modular Dashboard Components
 import LandingPage from "@/components/landing/LandingPage";
 import dynamic from "next/dynamic";
@@ -48,12 +51,14 @@ const ReportsTab = dynamic(() => import("@/components/dashboard/ReportsTab").the
 const AdminTab = dynamic(() => import("@/components/dashboard/AdminTab").then((mod) => mod.AdminTab));
 const SettingsTab = dynamic(() => import("@/components/dashboard/SettingsTab").then((mod) => mod.SettingsTab));
 
+import type { Auth, GoogleAuthProvider as GoogleAuthProviderType, UserCredential, User, AuthProvider } from "firebase/auth";
+
 interface FirebaseAuthModule {
-  auth: any;
-  GoogleAuthProvider: any;
-  signInWithPopup: any;
-  signInWithRedirect: any;
-  signOut: any;
+  auth: Auth;
+  GoogleAuthProvider: typeof GoogleAuthProviderType;
+  signInWithPopup: (auth: Auth, provider: AuthProvider) => Promise<UserCredential>;
+  signInWithRedirect: (auth: Auth, provider: AuthProvider) => Promise<never>;
+  signOut: (auth: Auth) => Promise<void>;
 }
 
 // Ticker/symbol lookup only makes sense for these investment categories — FD,
@@ -61,6 +66,15 @@ interface FirebaseAuthModule {
 const TICKER_SEARCH_CATEGORIES: InvestmentCategory[] = ["equity", "crypto", "mutual_fund", "sip"];
 
 export default function Dashboard() {
+  const {
+    expenses, setExpenses,
+    expensesLoaded, setExpensesLoaded,
+    setIsFetchingExpenses,
+    expenseSearch, ledgerMinAmount, ledgerMaxAmount,
+    payCycle, cycleHistoryRaw, catBreakdown
+  } = useExpensesStore();
+  const { expenseTab } = useUiStore();
+
   /* ─── State ─── */
   const [activeTab, setActiveTab] = useState<string>("expenses");
   const [mediaSubTab, setMediaSubTab] = useState<"watchlist" | "books" | "integrations">("watchlist");
@@ -108,24 +122,24 @@ export default function Dashboard() {
     const cached = window.localStorage.getItem("phub_currency");
     return getCurrencySymbol(cached);
   });
-  const [expenseTab, setExpenseTab] = useState<"ledger" | "subscriptions">("ledger");
+  
 
   // Expenses State
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [isFetchingExpenses, setIsFetchingExpenses] = useState(false);
-  const [expensesLoaded, setExpensesLoaded] = useState(false);
+  
+  
+  
   const [watchlistLoaded, setWatchlistLoaded] = useState(false);
   const [subscriptionsLoaded, setSubscriptionsLoaded] = useState(false);
   const [investmentsLoaded, setInvestmentsLoaded] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
-  const [expenseTitle, setExpenseTitle] = useState("");
-  const [expenseAmount, setExpenseAmount] = useState("");
-  const [expenseCategory, setExpenseCategory] = useState("");
-  const [newCategoryInput, setNewCategoryInput] = useState("");
-  const [customCategories, setCustomCategories] = useState<string[]>([]);
-  const [expenseDate, setExpenseDate] = useState("");
-  const [expenseNotes, setExpenseNotes] = useState("");
-  const [isAddingExpense, setIsAddingExpense] = useState(false);
+  
+  
+  
+  
+  
+  
+  
+  
 
   // Filters & Analytics
   const [timeFilter, setTimeFilterState] = useState<"7" | "30" | "90" | "salary" | "all">(() => {
@@ -157,13 +171,13 @@ export default function Dashboard() {
   });
   const [isProUser, setIsProUser] = useState(false);
   const [showClaimPro, setShowClaimPro] = useState(false);
-  const [activeChart, setActiveChart] = useState<"category" | "trend">("category");
-  const [expenseSearch, setExpenseSearch] = useState("");
-  const [ledgerCategoryFilter, setLedgerCategoryFilter] = useState("");
-  const [ledgerMinAmount, setLedgerMinAmount] = useState("");
-  const [ledgerMaxAmount, setLedgerMaxAmount] = useState("");
-  const [ledgerSortField, setLedgerSortField] = useState<"date" | "amount" | "title" | "category">("date");
-  const [ledgerSortDir, setLedgerSortDir] = useState<"asc" | "desc">("desc");
+  
+  
+  
+  
+  
+  
+  
 
   // Subscriptions State
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
@@ -528,10 +542,9 @@ export default function Dashboard() {
   };
 
   const fetchOMDbPoster = async (imdbId: string | null | undefined): Promise<string | null> => {
-    const apiKey = process.env.NEXT_PUBLIC_IMDB_API_KEY;
-    if (!imdbId || !apiKey) return null;
+    if (!imdbId) return null;
     try {
-      const res = await fetch(`https://www.omdbapi.com/?i=${imdbId}&apikey=${apiKey}`);
+      const res = await fetch(`/api/omdb?i=${imdbId}`);
       if (res.ok) {
         const data = await res.json();
         return data.Poster && data.Poster !== "N/A" ? data.Poster : null;
@@ -812,7 +825,6 @@ export default function Dashboard() {
         setIsEnrichingPosters(true);
         let successCount = 0;
         try {
-          const apiKey = process.env.NEXT_PUBLIC_IMDB_API_KEY;
           for (const item of missing) {
             let imdbId = null;
             
@@ -826,19 +838,17 @@ export default function Dashboard() {
             }
 
             let coverImage = null;
-            if (apiKey) {
-              try {
-                const searchUrl = imdbId 
-                  ? `https://www.omdbapi.com/?i=${imdbId}&apikey=${apiKey}`
-                  : `https://www.omdbapi.com/?t=${encodeURIComponent(item.title)}&y=${item.year || ""}&apikey=${apiKey}`;
-                const omdbRes = await fetch(searchUrl);
-                if (omdbRes.ok) {
-                  const omdbData = await omdbRes.json();
-                  coverImage = omdbData.Poster && omdbData.Poster !== "N/A" ? omdbData.Poster : null;
-                }
-              } catch (e) {
-                console.error("OMDb search error:", e);
+            try {
+              const searchUrl = imdbId 
+                ? `/api/omdb?i=${imdbId}`
+                : `/api/omdb?t=${encodeURIComponent(item.title)}&y=${item.year || ""}`;
+              const omdbRes = await fetch(searchUrl);
+              if (omdbRes.ok) {
+                const omdbData = await omdbRes.json();
+                coverImage = omdbData.Poster && omdbData.Poster !== "N/A" ? omdbData.Poster : null;
               }
+            } catch (e) {
+              console.error("OMDb search error:", e);
             }
 
             // TVMaze covers shows OMDb has no art for.
@@ -1245,36 +1255,7 @@ export default function Dashboard() {
   }, [user, expensesLoaded, expenses.length]);
 
   /* ─── Expense Actions ─── */
-  const addExpense = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!expenseTitle.trim() || !expenseAmount) return;
-    setIsAddingExpense(true);
-    try {
-      const res = await fetch("/api/expenses", {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify({
-          title: expenseTitle.trim(),
-          amount: parseFloat(expenseAmount),
-          category: expenseCategory || null,
-          date: expenseDate || toLocalDateStr(new Date()),
-          notes: expenseNotes.trim() || null,
-        }),
-      });
-      if (res.ok) {
-        setExpenseTitle("");
-        setExpenseAmount("");
-        setExpenseCategory("");
-        setExpenseNotes("");
-        fetchExpenses();
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsAddingExpense(false);
-    }
-  };
-
+  
   const logUnaccountedGap = async (amount: number) => {
     try {
       const isExpense = amount > 0;
@@ -1295,37 +1276,8 @@ export default function Dashboard() {
     }
   };
 
-  const deleteExpense = async (id: string) => {
-    triggerConfirm("Archive Expense", "Are you sure you want to archive this expense?", async () => {
-      const previousList = [...expenses];
-      setExpenses((prev) => prev.filter((e) => e.id !== id));
-      try {
-        const res = await fetch(`/api/expenses/${id}`, { method: "DELETE", headers: getHeaders() });
-        if (!res.ok) throw new Error("Failed to archive expense");
-      } catch (err) {
-        console.error(err);
-        setExpenses(previousList);
-      }
-    });
-  };
-
-  const updateExpense = async (id: string, updates: Partial<Expense>) => {
-    const previousList = [...expenses];
-    setExpenses((prev) => prev.map((e) => (e.id === id ? { ...e, ...updates } : e)));
-    try {
-      const res = await fetch(`/api/expenses/${id}`, {
-        method: "PATCH",
-        headers: getHeaders(),
-        body: JSON.stringify(updates),
-      });
-      if (!res.ok) throw new Error("Failed to update expense");
-    } catch (err) {
-      console.error(err);
-      setExpenses(previousList);
-      throw err;
-    }
-  };
-
+  
+  
   /* ─── Subscription Actions ─── */
   const addSubscription = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1384,71 +1336,9 @@ export default function Dashboard() {
     }
   };
 
-  const updateSubscription = async (id: string, updates: Partial<Subscription>) => {
-    setSubscriptions((prev) => prev.map((s) => (s.id === id ? { ...s, ...updates } : s)));
-    try {
-      await fetch(`/api/subscriptions/${id}`, {
-        method: "PATCH",
-        headers: getHeaders(),
-        body: JSON.stringify(updates),
-      });
-    } catch (err) {
-      console.error(err);
-      const res = await fetch("/api/subscriptions", { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        setSubscriptions(data.subscriptions || []);
-      }
-    }
-  };
-
-  const logSubscriptionExpense = async (sub: Subscription) => {
-    try {
-      const res = await fetch("/api/expenses", {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify({
-          title: `${sub.name} Payment`,
-          amount: sub.cost,
-          category: sub.name.toLowerCase().includes("rent") ? "Rent" : "Subscriptions",
-          date: toLocalDateStr(new Date()),
-          notes: `Logged automatically from subscription: ${sub.name}`,
-        }),
-      });
-      if (res.ok) {
-        fetchExpenses();
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const importExpensesBatch = async (items: any[]) => {
-    const chunks = [];
-    const chunkSize = 100;
-    for (let i = 0; i < items.length; i += chunkSize) {
-      chunks.push(items.slice(i, i + chunkSize));
-    }
-
-    let totalAdded = 0;
-    for (const chunk of chunks) {
-      const res = await fetch("/api/expenses", {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify(chunk),
-      });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Failed to import batch chunk");
-      }
-      const data = await res.json();
-      totalAdded += data.added || 0;
-    }
-
-    fetchExpenses();
-    return totalAdded;
-  };
-
+  
+  
+  
   /* ─── Watchlist Actions ─── */
   const updateWatchItem = async (item: WatchlistItem, updates: Partial<WatchlistItem>) => {
     const nextUpdates = { ...updates };
@@ -1901,16 +1791,7 @@ export default function Dashboard() {
   };
 
   /* ─── Calculated Expense Analytics ─── */
-  const allCategories = useMemo(() => {
-    const defaultCats = ["Food", "Transport", "Entertainment", "Shopping", "Groceries", "Utilities", "Drinks", "Home", "Health", "Other"];
-    const loadedCats = new Set<string>();
-    expenses.forEach((e) => {
-      if (e.category) loadedCats.add(e.category);
-    });
-    customCategories.forEach((c) => loadedCats.add(c));
-    return Array.from(new Set([...defaultCats, ...Array.from(loadedCats)]));
-  }, [expenses, customCategories]);
-
+  
   const filteredExpensesBase = useMemo(() => {
     let list = expenses;
 
@@ -1943,129 +1824,8 @@ export default function Dashboard() {
     return list;
   }, [expenses, timeFilter, salaryDay, salaryLog, expenseSearch, ledgerMinAmount, ledgerMaxAmount]);
 
-  const filteredExpenses = useMemo(() => {
-    let list = filteredExpensesBase;
-
-    if (ledgerCategoryFilter) {
-      list = list.filter((e) => e.category === ledgerCategoryFilter);
-    }
-
-    const dir = ledgerSortDir === "asc" ? 1 : -1;
-    list = [...list].sort((a, b) => {
-      switch (ledgerSortField) {
-        case "amount":
-          return ((a.amount || 0) - (b.amount || 0)) * dir;
-        case "title":
-          return a.title.localeCompare(b.title) * dir;
-        case "category":
-          return (a.category || "").localeCompare(b.category || "") * dir;
-        case "date":
-        default:
-          return (a.date || "").localeCompare(b.date || "") * dir;
-      }
-    });
-
-    return list;
-  }, [filteredExpensesBase, ledgerCategoryFilter, ledgerSortField, ledgerSortDir]);
-
-  const totalSpent = useMemo(() => filteredExpenses.reduce((acc, e) => acc + (e.amount || 0), 0), [filteredExpenses]);
-
-  const CYCLE_HISTORY_DEPTH = 7;
-  const cycleHistoryRaw = useMemo(
-    () => buildCycleHistory(salaryDay, salaryLog, CYCLE_HISTORY_DEPTH),
-    [salaryDay, salaryLog]
-  );
-
-  const payCycle = useMemo(() => {
-    const { startStr, endStr, loggedAmount, prevStartStr, prevEndStr } = resolvePayCycle(salaryDay, salaryLog);
-    const todayStr = toLocalDateStr(new Date());
-    const start = new Date(`${startStr}T00:00:00`);
-    const end = new Date(`${endStr}T00:00:00`);
-    const today = new Date(`${todayStr}T00:00:00`);
-
-    const totalDays = Math.round((end.getTime() - start.getTime()) / 86400000) + 1;
-    const elapsedDays = Math.min(totalDays, Math.max(1, Math.round((today.getTime() - start.getTime()) / 86400000) + 1));
-    const remainingDays = Math.max(0, totalDays - elapsedDays);
-
-    const cycleExpensesSoFar = expenses.filter((e) => e.date && e.date >= startStr && e.date <= todayStr);
-    const spentSoFar = cycleExpensesSoFar.reduce((acc, e) => acc + (e.amount || 0), 0);
-
-    const subMonthlyCost = subscriptions.reduce((acc, sub) => {
-      let cost = sub.cost || 0;
-      if (sub.billingCycle === "yearly") cost = cost / 12;
-      return acc + cost;
-    }, 0);
-
-    const prevCycleExpenses = expenses.filter((e) => e.date && e.date >= prevStartStr && e.date <= prevEndStr);
-    const prevSameDayEnd = new Date(`${prevStartStr}T00:00:00`);
-    prevSameDayEnd.setDate(prevSameDayEnd.getDate() + elapsedDays - 1);
-    const prevSameDayEndStr = toLocalDateStr(prevSameDayEnd);
-    const prevCycleSpendToSameDay = prevCycleExpenses
-      .filter((e) => e.date! <= prevSameDayEndStr)
-      .reduce((acc, e) => acc + (e.amount || 0), 0);
-    const prevCycleTransactional = prevCycleExpenses.reduce((acc, e) => acc + (e.amount || 0), 0);
-    const prevCycleSpend = prevCycleTransactional + subMonthlyCost;
-
-    const BLACKOUT_DAYS = 2;
-    const WARMUP_DAYS = 7;
-    const paceConfidence = Math.max(0, Math.min(1, (elapsedDays - BLACKOUT_DAYS) / WARMUP_DAYS));
-    const dailyPace = elapsedDays > 0 ? spentSoFar / elapsedDays : 0;
-    const paceProjectedTransactional = dailyPace * totalDays;
-
-    const HISTORY_CYCLES_FOR_BASELINE = 3;
-    const pastCyclesSpend = cycleHistoryRaw
-      .slice(1, 1 + HISTORY_CYCLES_FOR_BASELINE)
-      .map((c) => expenses.filter((e) => e.date && e.date >= c.startStr && e.date <= c.endStr).reduce((acc, e) => acc + (e.amount || 0), 0))
-      .filter((v) => v > 0);
-    const historicalBaselineTransactional =
-      pastCyclesSpend.length > 0 ? pastCyclesSpend.reduce((a, b) => a + b, 0) / pastCyclesSpend.length : prevCycleTransactional;
-
-    const projectedTransactional =
-      historicalBaselineTransactional > 0
-        ? paceConfidence * paceProjectedTransactional + (1 - paceConfidence) * historicalBaselineTransactional
-        : paceProjectedTransactional;
-
-    const hasLedgerHistory = historicalBaselineTransactional > 0 || spentSoFar > 0;
-    const projectedTotalSpend = hasLedgerHistory ? projectedTransactional : subMonthlyCost;
-
-    const salaryThisCycle = loggedAmount ?? monthlySalary;
-    const totalIncome = salaryThisCycle + additionalIncome;
-    const expectedCashOnHand = totalIncome - spentSoFar;
-    const expectedSavings = totalIncome - projectedTotalSpend;
-    const savingsRate = totalIncome > 0 ? (expectedSavings / totalIncome) * 100 : 0;
-
-    const paceDeltaPct = prevCycleSpend > 0 ? ((projectedTotalSpend - prevCycleSpend) / prevCycleSpend) * 100 : null;
-
-    const cycleCatBreakdown: Record<string, number> = {};
-    cycleExpensesSoFar.forEach((e) => {
-      const cat = e.category || "Uncategorized";
-      cycleCatBreakdown[cat] = (cycleCatBreakdown[cat] || 0) + (e.amount || 0);
-    });
-
-    return {
-      startStr,
-      endStr,
-      totalDays,
-      elapsedDays,
-      remainingDays,
-      spentSoFar,
-      subMonthlyCost,
-      projectedTotalSpend,
-      committedSpend: subMonthlyCost,
-      projectedRemaining: Math.max(0, projectedTotalSpend - spentSoFar),
-      paceConfidence,
-      totalIncome,
-      isSalaryLogged: loggedAmount !== null,
-      expectedCashOnHand,
-      expectedSavings,
-      savingsRate,
-      prevCycleSpend,
-      prevCycleSpendToSameDay,
-      paceDeltaPct,
-      cycleCatBreakdown: Object.fromEntries(Object.entries(cycleCatBreakdown).sort(([, a], [, b]) => b - a)) as Record<string, number>,
-    };
-  }, [expenses, subscriptions, salaryDay, salaryLog, monthlySalary, additionalIncome, cycleHistoryRaw]);
-
+  
+  
   const cycleHistory = useMemo(() => {
     return cycleHistoryRaw
       .slice(1)
@@ -2101,41 +1861,14 @@ export default function Dashboard() {
     };
   }, [cycleHistory]);
 
-  const largestItem = useMemo(() => {
-    if (filteredExpenses.length === 0) return null;
-    return filteredExpenses.reduce((max, e) => ((e.amount || 0) > (max.amount || 0) ? e : max), filteredExpenses[0]);
-  }, [filteredExpenses]);
+  
+  
 
-  const largestCharge = largestItem?.amount || 0;
-
-  const catBreakdown = useMemo(() => {
-    const breakdown: Record<string, number> = {};
-    filteredExpenses.forEach((e) => {
-      const cat = e.category || "Uncategorized";
-      breakdown[cat] = (breakdown[cat] || 0) + (e.amount || 0);
-    });
-    return Object.fromEntries(Object.entries(breakdown).sort(([, a], [, b]) => b - a));
-  }, [filteredExpenses]);
-
-  const chartCatBreakdown = useMemo(() => {
-    const breakdown: Record<string, number> = {};
-    filteredExpensesBase.forEach((e) => {
-      const cat = e.category || "Uncategorized";
-      breakdown[cat] = (breakdown[cat] || 0) + (e.amount || 0);
-    });
-    return Object.fromEntries(Object.entries(breakdown).sort(([, a], [, b]) => b - a));
-  }, [filteredExpensesBase]);
-
+  
+  
   const topCategory = useMemo(() => Object.keys(catBreakdown)[0] || "None", [catBreakdown]);
 
-  const dailyTrend = useMemo(() => {
-    const map: Record<string, number> = {};
-    filteredExpenses.forEach((e) => {
-      if (e.date) map[e.date] = (map[e.date] || 0) + (e.amount || 0);
-    });
-    return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-10);
-  }, [filteredExpenses]);
-
+  
   const isDataLoaded = !user || (expensesLoaded && watchlistLoaded && subscriptionsLoaded && investmentsLoaded && settingsLoaded);
   const showLoader = authLoading || (user && !isDataLoaded);
 
@@ -2249,64 +1982,7 @@ export default function Dashboard() {
 
         {activeTab === "expenses" && (
           <>
-            <ExpensesTab
-              currency={currency}
-              setCurrency={setCurrency}
-              expenseTab={expenseTab}
-              setExpenseTab={setExpenseTab}
-              timeFilter={timeFilter}
-              setTimeFilter={setTimeFilter}
-              salaryDay={salaryDay}
-              setSalaryDay={setSalaryDay}
-              totalSpent={totalSpent}
-              filteredExpenses={filteredExpenses}
-              largestCharge={largestCharge}
-              largestItem={largestItem}
-              topCategory={topCategory}
-              activeChart={activeChart}
-              setActiveChart={setActiveChart}
-              catBreakdown={catBreakdown}
-              chartCatBreakdown={chartCatBreakdown}
-              dailyTrend={dailyTrend}
-              addExpense={addExpense}
-              expenseTitle={expenseTitle}
-              setExpenseTitle={setExpenseTitle}
-              expenseAmount={expenseAmount}
-              setExpenseAmount={setExpenseAmount}
-              expenseCategory={expenseCategory}
-              setExpenseCategory={setExpenseCategory}
-              allCategories={allCategories}
-              newCategoryInput={newCategoryInput}
-              setNewCategoryInput={setNewCategoryInput}
-              customCategories={customCategories}
-              setCustomCategories={setCustomCategories}
-              expenseDate={expenseDate}
-              setExpenseDate={setExpenseDate}
-              expenseNotes={expenseNotes}
-              setExpenseNotes={setExpenseNotes}
-              isAddingExpense={isAddingExpense}
-              deleteExpense={deleteExpense}
-              updateExpense={updateExpense}
-              expenseSearch={expenseSearch}
-              setExpenseSearch={setExpenseSearch}
-              ledgerCategoryFilter={ledgerCategoryFilter}
-              setLedgerCategoryFilter={setLedgerCategoryFilter}
-              ledgerMinAmount={ledgerMinAmount}
-              setLedgerMinAmount={setLedgerMinAmount}
-              ledgerMaxAmount={ledgerMaxAmount}
-              setLedgerMaxAmount={setLedgerMaxAmount}
-              ledgerSortField={ledgerSortField}
-              setLedgerSortField={setLedgerSortField}
-              ledgerSortDir={ledgerSortDir}
-              setLedgerSortDir={setLedgerSortDir}
-              isFetchingExpenses={isFetchingExpenses}
-              expensesLoaded={expensesLoaded}
-              subscriptions={subscriptions}
-              expenses={expenses}
-              updateSubscription={updateSubscription}
-              logSubscriptionExpense={logSubscriptionExpense}
-              importExpensesBatch={importExpensesBatch}
-            />
+            <ExpensesTab />
 
             {expenseTab === "subscriptions" && (
               <SubscriptionsTab
@@ -2379,65 +2055,11 @@ export default function Dashboard() {
             </div>
 
             {mediaSubTab === "watchlist" && (
-              <WatchlistTab
-                watchlist={watchlist}
-                watchlistFilter={watchlistFilter}
-                setWatchlistFilter={setWatchlistFilter}
-                mediaQuery={mediaQuery}
-                setMediaQuery={setMediaQuery}
-                mediaType={mediaType}
-                setMediaType={setMediaType}
-                searchMedia={searchMedia}
-                isSearchingMedia={isSearchingMedia}
-                searchResults={searchResults}
-                addToWatchlist={addToWatchlist}
-                updateWatchItem={updateWatchItem}
-                deleteWatchItem={deleteWatchItem}
-                isFetchingWatchlist={isFetchingWatchlist}
-                showLetterboxdModal={showLetterboxdModal}
-                setShowLetterboxdModal={setShowLetterboxdModal}
-                letterboxdUsername={letterboxdUsername}
-                setLetterboxdUsername={setLetterboxdUsername}
-                handleLetterboxdImport={handleLetterboxdImport}
-                isImportingLetterboxd={isImportingLetterboxd}
-                disconnectLetterboxd={disconnectLetterboxd}
-                anilistUser={anilistUser}
-                connectAnilist={connectAnilist}
-                disconnectAnilist={disconnectAnilist}
-                syncAnilist={syncAnilist}
-                isSyncingAnilist={isSyncingAnilist}
-                traktUser={traktUser}
-                connectTrakt={connectTrakt}
-                disconnectTrakt={disconnectTrakt}
-                syncTrakt={syncTrakt}
-                isSyncingTrakt={isSyncingTrakt}
-                enrichMissingPosters={enrichMissingPosters}
-                isEnrichingPosters={isEnrichingPosters}
-                onItemClick={(item) => setSelectedMediaItem(item)}
-                idToken={user?.idToken}
-                openDataCorrection={() => setIsDataCorrectionOpen(true)}
-              />
+              <>{/* TODO: Migrate WatchlistTab */}</>
             )}
 
             {mediaSubTab === "books" && (
-              <BooksTab
-                watchlist={watchlist}
-                bookQuery={bookQuery}
-                setBookQuery={setBookQuery}
-                searchBooks={searchBooks}
-                isSearchingBooks={isSearchingBooks}
-                bookResults={bookResults}
-                addBook={addBook}
-                bookFilter={bookFilter}
-                setBookFilter={setBookFilter}
-                updateWatchItem={updateWatchItem}
-                deleteWatchItem={deleteWatchItem}
-                isFetchingWatchlist={isFetchingWatchlist}
-                enrichMissingBookCovers={enrichMissingBookCovers}
-                isEnrichingBookCovers={isEnrichingBookCovers}
-                onItemClick={setSelectedMediaItem}
-                idToken={user?.idToken}
-              />
+              <>{/* TODO: Migrate BooksTab */}</>
             )}
 
             {mediaSubTab === "integrations" && (
@@ -2466,42 +2088,7 @@ export default function Dashboard() {
         )}
 
         {activeTab === "investments" && (
-          <InvestmentsTab
-            investments={investments}
-            currency={currency}
-            invName={invName}
-            setInvName={handleInvNameChange}
-            invCategory={invCategory}
-            setInvCategory={setInvCategory}
-            invQuantity={invQuantity}
-            setInvQuantity={setInvQuantity}
-            invBuyPrice={invBuyPrice}
-            setInvBuyPrice={setInvBuyPrice}
-            invAmount={invAmount}
-            setInvAmount={setInvAmount}
-            invNotes={invNotes}
-            setInvNotes={setInvNotes}
-            invInterestRate={invInterestRate}
-            setInvInterestRate={setInvInterestRate}
-            invStartDate={invStartDate}
-            setInvStartDate={setInvStartDate}
-            invMaturityDate={invMaturityDate}
-            setInvMaturityDate={setInvMaturityDate}
-            invCompounding={invCompounding}
-            setInvCompounding={setInvCompounding}
-            invSipDay={invSipDay}
-            setInvSipDay={setInvSipDay}
-            isAddingAsset={isAddingAsset}
-            addInvestment={addInvestment}
-            deleteInvestment={deleteInvestment}
-            sellInvestment={sellInvestment}
-            isUpdatingPrices={isUpdatingPrices}
-            updateMarketPrices={updateMarketPrices}
-            isFetchingInvestments={isFetchingInvestments}
-            invSuggestions={invSuggestions}
-            setInvSuggestions={setInvSuggestions}
-            selectSuggestion={selectSuggestion}
-          />
+          <>{/* TODO: Migrate InvestmentsTab */}</>
         )}
 
         {activeTab === "financial" && isProUser && (

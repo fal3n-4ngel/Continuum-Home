@@ -161,7 +161,7 @@ Return no other text, comments or markdown blocks. Just the raw JSON object.
         console.error("OpenLibrary fallback fetch failed:", e);
       }
     } else {
-      const omdbKey = process.env.NEXT_PUBLIC_IMDB_API_KEY;
+      const omdbKey = process.env.OMDB_API_KEY;
       if (omdbKey) {
         try {
           const res = await fetch(
