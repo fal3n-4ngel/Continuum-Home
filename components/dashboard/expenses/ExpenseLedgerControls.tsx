@@ -11,6 +11,10 @@ interface ExpenseLedgerControlsProps {
   setLedgerMinAmount: (s: string) => void;
   ledgerMaxAmount: string;
   setLedgerMaxAmount: (s: string) => void;
+  ledgerStartDate: string;
+  setLedgerStartDate: (d: string) => void;
+  ledgerEndDate: string;
+  setLedgerEndDate: (d: string) => void;
   ledgerSortField: "date" | "amount" | "title" | "category";
   setLedgerSortField: (f: "date" | "amount" | "title" | "category") => void;
   ledgerSortDir: "asc" | "desc";
@@ -30,6 +34,10 @@ export const ExpenseLedgerControls: React.FC<ExpenseLedgerControlsProps> = ({
   setLedgerMinAmount,
   ledgerMaxAmount,
   setLedgerMaxAmount,
+  ledgerStartDate,
+  setLedgerStartDate,
+  ledgerEndDate,
+  setLedgerEndDate,
   ledgerSortField,
   setLedgerSortField,
   ledgerSortDir,
@@ -54,6 +62,39 @@ export const ExpenseLedgerControls: React.FC<ExpenseLedgerControlsProps> = ({
           <option key={c} value={c}>{c}</option>
         ))}
       </select>
+      <div className="flex items-center gap-1">
+        <input
+          type="date"
+          value={ledgerStartDate}
+          onChange={(e) => setLedgerStartDate(e.target.value)}
+          title="From date"
+          aria-label="From date"
+          className={`${INPUT_CLASS} cursor-pointer px-2 py-1 text-[11px]`}
+        />
+        <span className="text-[11px] text-text-secondary">to</span>
+        <input
+          type="date"
+          value={ledgerEndDate}
+          onChange={(e) => setLedgerEndDate(e.target.value)}
+          title="To date"
+          aria-label="To date"
+          className={`${INPUT_CLASS} cursor-pointer px-2 py-1 text-[11px]`}
+        />
+        {(ledgerStartDate || ledgerEndDate) && (
+          <button
+            type="button"
+            onClick={() => {
+              setLedgerStartDate("");
+              setLedgerEndDate("");
+            }}
+            title="Clear date filter"
+            aria-label="Clear date filter"
+            className="cursor-pointer rounded-md border border-border-subtle bg-bg-card px-2 py-1 text-[11px] font-semibold text-text-secondary transition-all duration-200 hover:bg-bg-primary hover:text-text-primary"
+          >
+            ✕
+          </button>
+        )}
+      </div>
       <input
         type="number"
         placeholder={`Min (${currency})`}
