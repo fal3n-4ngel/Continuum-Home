@@ -24,7 +24,6 @@ export interface PortfolioEmailData {
   usdToInr: number;
   appUrl: string;
   unsubscribeUrl?: string;
-  /** Renders the sample-data banner. Admin preview only. */
   isPreview?: boolean;
 }
 

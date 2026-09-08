@@ -18,7 +18,6 @@ export async function GET(req: NextRequest) {
     let settings = await getSettings(session);
 
     if (!settings) {
-      // First-time user provisioning: Initialize default settings in Firestore
       const initialSettings = {
         timeFilter: "all" as const,
         salaryDay: 1,
@@ -33,7 +32,6 @@ export async function GET(req: NextRequest) {
       await updateSettings(session, initialSettings);
       settings = await getSettings(session);
 
-      // Audit Domain Event: USER_CREATED
       recordDomainEvent({
         eventType: DOMAIN_EVENTS.USER_CREATED,
         userId: session.uid,
@@ -45,7 +43,6 @@ export async function GET(req: NextRequest) {
         },
       });
 
-      // Discord Webhook Alert: New User Signup
       postDiscordEmbed({
         title: "🎉 New User Registration!",
         description: `A new user joined Continuum: **${session.user.displayName || session.user.email || session.uid}**`,
@@ -79,7 +76,6 @@ export async function PATCH(req: NextRequest) {
     const patch = validateSettingsPatch(body);
     await updateSettings(session, patch);
 
-    // Dispatch Monolith Audit Telemetry for Salary Updates & Preference Logs
     if (patch.monthlySalary !== undefined || patch.salaryDay !== undefined) {
       recordDomainEvent({
         eventType: DOMAIN_EVENTS.SALARY_UPDATED,
@@ -113,7 +109,6 @@ export async function DELETE(req: NextRequest) {
   try {
     const session = await requireUser(req);
 
-    // 1. Dispatch Monolith USER_DELETED postback event
     recordDomainEvent({
       eventType: DOMAIN_EVENTS.USER_DELETED,
       userId: session.uid,
@@ -124,7 +119,6 @@ export async function DELETE(req: NextRequest) {
       },
     });
 
-    // 2. Permanently purge all user documents from Firestore
     await adminPurgeUserData(session.uid);
 
     return NextResponse.json({ success: true, message: "Account data permanently deleted." });

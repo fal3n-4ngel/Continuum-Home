@@ -36,7 +36,6 @@ export async function POST(req: NextRequest) {
       throw new ApiError(400, "Invalid JSON body");
     }
 
-    // Batch payloads: { items: [...] } or a raw array
     const itemsField = (body as { items?: unknown } | null)?.items;
     const batchItems = Array.isArray(body) ? body : Array.isArray(itemsField) ? itemsField : null;
 
@@ -45,7 +44,6 @@ export async function POST(req: NextRequest) {
       const results = await createExpenseBatch(session, entries);
       const added = results.filter((r) => r.success).length;
 
-      // One event for the whole batch, not one per row.
       if (added > 0) {
         recordDomainEvent({
           eventType: DOMAIN_EVENTS.EXPENSE_CREATED,
@@ -61,7 +59,6 @@ export async function POST(req: NextRequest) {
     const entry = validateExpenseEntry(body);
     const result = await createExpense(session, entry);
 
-    // Structured fields only — title/notes are free-text and stay in Firestore, encrypted.
     recordDomainEvent({
       eventType: DOMAIN_EVENTS.EXPENSE_CREATED,
       userId: session.uid,

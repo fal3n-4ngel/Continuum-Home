@@ -19,7 +19,6 @@ async function assertAdmin(req: NextRequest) {
   return session;
 }
 
-// GET — list all pro claims (admin only)
 export async function GET(req: NextRequest) {
   try {
     await assertAdmin(req);
@@ -28,8 +27,6 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const statusFilter = url.searchParams.get("status") || "pending";
 
-    // Fetch ordered by submittedAt only (no composite index needed) and filter
-    // by status in JS — pro_claims collection stays small so this is fine.
     const snap = await db.collection("pro_claims").orderBy("submittedAt", "desc").limit(200).get();
     let claims = snap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
     if (statusFilter !== "all") {
@@ -42,7 +39,6 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// POST — approve or deny a specific claim (admin only)
 export async function POST(req: NextRequest) {
   try {
     await assertAdmin(req);
@@ -73,13 +69,11 @@ export async function POST(req: NextRequest) {
       throw new ApiError(409, `Claim is already ${claimData.status}`);
     }
 
-    // Update the claim status
     await claimRef.update({
       status: action === "approve" ? "approved" : "denied",
       reviewedAt: Date.now(),
     });
 
-    // If approving, flip isPro on their settings document
     if (action === "approve") {
       const uid = claimData.uid as string;
       const settingsRef = db.collection("settings").doc(uid);
@@ -98,8 +92,6 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      // Bust settings cache so the user gets the new value on next load
-      // Cache key mirrors the pattern in lib/firebase.ts: settings:<projectId>:<uid>
       try {
         const rawConfig = env.FIREBASE_CONFIG;
         if (rawConfig) {
@@ -107,14 +99,13 @@ export async function POST(req: NextRequest) {
           if (projectId) await cacheInvalidate(`settings:${projectId}:${uid}`);
         }
       } catch {
-        // Non-fatal — cache will expire naturally
       }
     }
 
     waitUntil(sendDiscordEmbed(
       "Admin Audit Log",
       `Admin **${action === "approve" ? "APPROVED" : "DENIED"}** Pro claim for user: \`${claimData.email || claimData.uid}\``,
-      action === "approve" ? 5763719 : 15548997, // Green for approve, Red for deny
+      action === "approve" ? 5763719 : 15548997,
       "Continuum Dashboard • Admin Audit"
     ));
 

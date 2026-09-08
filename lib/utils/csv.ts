@@ -1,6 +1,3 @@
-// Client-only CSV export used by the Reports tab. Handles quoting for
-// commas/quotes/newlines in field values, which the earlier one-off
-// Letterboxd export didn't need to worry about (title-only).
 export function downloadCsv(filename: string, headers: string[], rows: (string | number | null | undefined)[][]) {
   const escape = (val: string | number | null | undefined) => {
     const s = val === null || val === undefined ? "" : String(val);

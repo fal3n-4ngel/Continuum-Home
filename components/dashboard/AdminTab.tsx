@@ -3,16 +3,17 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { FirebaseUser, ProClaim } from "@/types";
-import { 
-  Shield, 
-  Trash2, 
-  Bell, 
-  Mail, 
-  RefreshCw, 
-  BarChart2, 
-  Sparkles, 
-  AlertTriangle, 
-  Star, 
+import { getAuthHeaders } from "@/lib/utils";
+import {
+  Shield,
+  Trash2,
+  Bell,
+  Mail,
+  RefreshCw,
+  BarChart2,
+  Sparkles,
+  AlertTriangle,
+  Star,
   Activity,
   Server,
   TerminalSquare,
@@ -26,10 +27,8 @@ interface AdminTabProps {
 }
 
 export function AdminTab({ user }: AdminTabProps) {
-  // Tabs State
   const [activeTab, setActiveTab] = useState<"analytics" | "communications" | "system" | "pro-requests">("analytics");
 
-  // Admin stats
   const [stats, setStats] = useState<{
     expenses: number;
     subscriptions: number;
@@ -40,7 +39,6 @@ export function AdminTab({ user }: AdminTabProps) {
   const [statsLoading, setStatsLoading] = useState(false);
   const [gptMetrics, setGptMetrics] = useState<any>(null);
 
-  // Operation states
   const [cronRunning, setCronRunning] = useState<string | null>(null);
   const [flushLoading, setFlushLoading] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
@@ -48,13 +46,11 @@ export function AdminTab({ user }: AdminTabProps) {
   const [confirmModal, setConfirmModal] = useState<{ id: string; title: string } | null>(null);
   const [statusMessage, setStatusMessage] = useState<{ text: string; type: "success" | "error" | "info" } | null>(null);
 
-  // Pro Requests state
   const [proClaims, setProClaims] = useState<ProClaim[]>([]);
   const [proClaimsLoading, setProClaimsLoading] = useState(false);
   const [proClaimsFilter, setProClaimsFilter] = useState<"pending" | "approved" | "denied" | "all">("pending");
   const [proActionLoading, setProActionLoading] = useState<string | null>(null);
 
-  // Announcement states
   const [annSubject, setAnnSubject] = useState("Rebranding Notice: PHub is now Continuum");
   const [annTitle, setAnnTitle] = useState("PHub has officially rebranded to Continuum");
   const [annContent, setAnnContent] = useState(`We are excited to share that PHub has officially rebranded to Continuum.
@@ -71,7 +67,6 @@ Thank you for being part of our journey!`);
   const [annSending, setAnnSending] = useState<"preview" | "send" | null>(null);
   const [annConfirmModal, setAnnConfirmModal] = useState(false);
 
-  // Discord states
   const [discordMsg, setDiscordMsg] = useState("");
   const [discordSending, setDiscordSending] = useState(false);
 
@@ -119,8 +114,8 @@ Thank you for being part of our journey!`);
       const data = await res.json();
       if (res.ok) {
         setStatusMessage({
-          text: action === "preview" 
-            ? `Preview sent successfully to admin.` 
+          text: action === "preview"
+            ? `Preview sent successfully to admin.`
             : `Announcement broadcast sent successfully! Details: Success: ${data.details?.success}, Failed: ${data.details?.failed}`,
           type: "success",
         });
@@ -140,13 +135,8 @@ Thank you for being part of our journey!`);
     }
   };
 
-  const getHeaders = () => ({
-    "Content-Type": "application/json",
-    "X-Client": "web",
-    Authorization: `Bearer ${user.idToken}`,
-  });
+  const getHeaders = () => getAuthHeaders(user.idToken);
 
-  // Fetch admin metrics & GPT usage
   const fetchStats = async () => {
     setStatsLoading(true);
     try {
@@ -165,8 +155,8 @@ Thank you for being part of our journey!`);
       const portfolio = portRes.ok ? await portRes.json() : null;
       const metrics = metricsRes.ok ? await metricsRes.json() : null;
 
-      const portAssets = Array.isArray(portfolio) 
-        ? portfolio 
+      const portAssets = Array.isArray(portfolio)
+        ? portfolio
         : (portfolio && Array.isArray(portfolio.assets) ? portfolio.assets : []);
 
       const portValue = portAssets.reduce((sum: number, asset: any) => sum + (Number(asset.amount) || 0), 0);
@@ -186,7 +176,6 @@ Thank you for being part of our journey!`);
     }
   };
 
-  // Fetch Pro claim requests
   const fetchProClaims = async (filter = proClaimsFilter) => {
     setProClaimsLoading(true);
     try {
@@ -209,7 +198,6 @@ Thank you for being part of our journey!`);
     fetchProClaims();
   }, [user.idToken]);
 
-  // Handle Approve/Deny action
   const handleProAction = async (id: string, action: "approve" | "deny") => {
     setProActionLoading(id);
     setStatusMessage(null);
@@ -234,7 +222,6 @@ Thank you for being part of our journey!`);
     }
   };
 
-  // Run a cron task in production
   const handleProductionCronClick = (id: string, title: string) => {
     setConfirmModal({ id, title });
   };
@@ -267,7 +254,6 @@ Thank you for being part of our journey!`);
     }
   };
 
-  // Send a test preview email to admin's inbox
   const sendPreviewEmail = async (task: string) => {
     setPreviewLoading(true);
     setStatusMessage(null);
@@ -291,7 +277,6 @@ Thank you for being part of our journey!`);
     }
   };
 
-  // Flush Redis Edge Cache
   const flushCache = async () => {
     setFlushLoading(true);
     setStatusMessage(null);
@@ -314,7 +299,6 @@ Thank you for being part of our journey!`);
     }
   };
 
-  // Migrate DB Encryption
   const runEncryptionMigration = async () => {
     if (!window.confirm("WARNING: This will re-encrypt all user records in the Firestore database. Proceed?")) return;
     setMigrationLoading(true);
@@ -433,7 +417,6 @@ Thank you for being part of our journey!`);
 
   return (
     <div className="flex flex-col gap-6 w-full max-md:pb-8">
-      {/* Page Title & Tabs */}
       <div>
         <div className="flex items-center gap-3 mb-6">
           <Shield className="h-6 w-6 text-text-primary animate-pulse" />
@@ -449,11 +432,11 @@ Thank you for being part of our journey!`);
               key={tab}
               onClick={() => {
                 setActiveTab(tab as any);
-                setStatusMessage(null); // Clear errors when switching tabs
+                setStatusMessage(null);
               }}
               className={`relative pb-3 text-[13px] font-medium transition-all whitespace-nowrap capitalize ${
-                activeTab === tab 
-                  ? "text-text-primary" 
+                activeTab === tab
+                  ? "text-text-primary"
                   : "text-text-muted hover:text-text-primary"
               }`}
             >
@@ -466,21 +449,18 @@ Thank you for being part of our journey!`);
         </div>
       </div>
 
-      {/* Global Status Message */}
       {statusMessage && (
         <div className={`rounded-none border px-4 py-3 text-xs animate-[heroFadeUp_0.3s_ease-out_both] ${
-          statusMessage.type === "success" 
-            ? "border-[#bbf7d0] bg-[#f0fdf4]/80 text-[#166534]" 
+          statusMessage.type === "success"
+            ? "border-[#bbf7d0] bg-[#f0fdf4]/80 text-[#166534]"
             : "border-[#fecaca] bg-[#fef2f2]/80 text-[#991b1b]"
         }`}>
           {statusMessage.text}
         </div>
       )}
 
-      {/* ──────────────── TAB: ANALYTICS ──────────────── */}
       {activeTab === "analytics" && (
         <div className="flex flex-col gap-6 animate-[fadeIn_0.3s_ease-out_both]">
-          {/* System Metrics Cards */}
           <div className="grid grid-cols-4 gap-4 max-md:grid-cols-2">
             {[
               { label: "EXPENSES", val: statsLoading ? "..." : stats?.expenses },
@@ -495,9 +475,7 @@ Thank you for being part of our journey!`);
             ))}
           </div>
 
-          {/* Global API Analytics */}
           <div className="grid grid-cols-2 gap-6 max-lg:grid-cols-1 mt-4">
-            {/* Top Endpoints (Agent Only - Web tracking was disabled to save Redis costs) */}
             <div className={CARD}>
               <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
                 <TerminalSquare className="h-4 w-4" /> Most Used Functionality (Agent)
@@ -519,14 +497,13 @@ Thank you for being part of our journey!`);
               )}
             </div>
 
-            {/* Power Users */}
             <div className={CARD}>
               <div className="flex items-center justify-between border-b-2 border-border-subtle pb-3 mb-4">
                 <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2">
                   <Users className="h-4 w-4" /> API Uses Per User (Agent)
                 </h3>
               </div>
-              
+
               {gptMetrics?.globalMetrics?.agent?.topUsers && gptMetrics.globalMetrics.agent.topUsers.length > 0 ? (
                 <div className="flex flex-col gap-2">
                   {gptMetrics.globalMetrics.agent.topUsers.map((u: any, i: number) => (
@@ -545,7 +522,6 @@ Thank you for being part of our journey!`);
             </div>
           </div>
 
-          {/* Custom GPT Analytics */}
           <div className={CARD}>
             <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
               <Activity className="h-4 w-4" /> Custom GPT Actions Log
@@ -595,16 +571,13 @@ Thank you for being part of our journey!`);
         </div>
       )}
 
-      {/* ──────────────── TAB: COMMUNICATIONS ──────────────── */}
       {activeTab === "communications" && (
         <div className="flex flex-col gap-6 animate-[fadeIn_0.3s_ease-out_both]">
-          {/* Custom Discord Alert Dispatcher */}
           <div className={CARD}>
             <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
               <TerminalSquare className="h-4 w-4" /> Discord Bot Dispatcher
             </h3>
             <div className="grid grid-cols-[1.2fr_1fr] gap-6 max-lg:grid-cols-1">
-              {/* Form Side */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Custom Alert Message</label>
@@ -627,12 +600,11 @@ Thank you for being part of our journey!`);
                 </div>
               </div>
 
-              {/* Preview Side */}
               <div className="flex flex-col gap-2 rounded-none border-2 border-border-subtle bg-bg-primary/20 p-4">
                 <div className="flex items-center justify-between border-b-2 border-border-subtle pb-2 mb-2">
                   <span className="font-mono text-[9px] font-bold text-text-secondary uppercase tracking-wider">LIVE DISCORD PREVIEW</span>
                 </div>
-                
+
                 <div className="flex-1 bg-[#313338] p-4 flex gap-3 overflow-hidden shadow-inner">
                   <div className="shrink-0 w-10 h-10 rounded-full bg-[#5865F2] flex items-center justify-center text-white font-bold text-lg">
                     C
@@ -643,7 +615,7 @@ Thank you for being part of our journey!`);
                       <span className="text-[10px] bg-[#5865F2] text-white px-1 py-0.5 rounded-sm font-semibold tracking-wide">APP</span>
                       <span className="text-[#949BA4] text-[12px]">Today at {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
                     </div>
-                    
+
                     <div className="mt-1 border-l-4 border-[#d4c6b1] bg-[#2B2D31] rounded-r p-3">
                       <div className="text-white font-semibold text-[15px] mb-1">System Notification</div>
                       <div className="text-[#DBDEE1] text-[14px] whitespace-pre-wrap font-sans break-words leading-relaxed">{discordMsg || "Your message will appear here..."}</div>
@@ -655,14 +627,12 @@ Thank you for being part of our journey!`);
             </div>
           </div>
 
-          {/* System Announcements */}
           <div className={CARD}>
             <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
               <Bell className="h-4 w-4" /> System Announcement Dispatcher
             </h3>
-            
+
             <div className="grid grid-cols-[1.2fr_1fr] gap-6 max-lg:grid-cols-1">
-              {/* Column 1: Editor Form */}
               <div className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Email Subject Line</label>
@@ -674,7 +644,7 @@ Thank you for being part of our journey!`);
                     className="w-full rounded-none border-2 border-border-subtle bg-bg-primary px-3.5 py-2 text-xs text-text-primary outline-none transition-all focus:border-text-primary"
                   />
                 </div>
-                
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Header Title</label>
                   <input
@@ -715,13 +685,12 @@ Thank you for being part of our journey!`);
                 </div>
               </div>
 
-              {/* Column 2: Live HTML Viewport Preview */}
               <div className="flex flex-col gap-2 rounded-none border-2 border-border-subtle bg-bg-primary/20 p-4">
                 <div className="flex items-center justify-between border-b-2 border-border-subtle pb-2 mb-2">
                   <span className="font-mono text-[9px] font-bold text-text-secondary uppercase tracking-wider">LIVE EMAIL PREVIEW</span>
                   <span className="text-[10px] text-text-muted italic">Updates in real-time</span>
                 </div>
-                
+
                 <div className="text-xs text-text-secondary mb-2 font-mono truncate">
                   <strong className="text-text-primary">Subject:</strong> {annSubject || "(No Subject)"}
                 </div>
@@ -739,10 +708,8 @@ Thank you for being part of our journey!`);
         </div>
       )}
 
-      {/* ──────────────── TAB: SYSTEM OPERATIONS ──────────────── */}
       {activeTab === "system" && (
         <div className="grid grid-cols-[1.5fr_1fr] gap-6 max-md:grid-cols-1 animate-[fadeIn_0.3s_ease-out_both]">
-          {/* Left Column: Cron Alerts Operations */}
           <CronTriggerSection
             previewLoading={previewLoading}
             cronRunning={cronRunning}
@@ -750,7 +717,6 @@ Thank you for being part of our journey!`);
             handleProductionCronClick={handleProductionCronClick}
           />
 
-          {/* Right Column: Database / Cache Systems */}
           <div className="flex flex-col gap-6">
             <div className={`${CARD} flex flex-col gap-4`}>
               <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3">
@@ -779,7 +745,6 @@ Thank you for being part of our journey!`);
               </div>
             </div>
 
-            {/* Quick Server Info */}
             <div className={`${CARD} flex flex-col gap-4`}>
               <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3">
                 <Server className="h-4 w-4" /> System Info
@@ -803,7 +768,6 @@ Thank you for being part of our journey!`);
         </div>
       )}
 
-      {/* ──────────────── TAB: PRO REQUESTS ──────────────── */}
       {activeTab === "pro-requests" && (
         <div className="animate-[fadeIn_0.3s_ease-out_both]">
           <ProClaimsQueue
@@ -818,7 +782,6 @@ Thank you for being part of our journey!`);
         </div>
       )}
 
-      {/* Confirmation Modal */}
       {confirmModal && typeof document !== "undefined" && createPortal(
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-text-primary/40 backdrop-blur-[4px]"
@@ -863,7 +826,6 @@ Thank you for being part of our journey!`);
         document.body
       )}
 
-      {/* Announcement Broadcast Confirmation Modal */}
       {annConfirmModal && typeof document !== "undefined" && createPortal(
         <div
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-text-primary/40 backdrop-blur-[4px]"

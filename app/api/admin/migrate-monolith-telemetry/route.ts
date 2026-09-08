@@ -69,7 +69,6 @@ export async function POST(req: NextRequest) {
     };
 
     for (const user of users) {
-      // 0. Migrate User Account Registration Event
       try {
         await sendEvent("USER_CREATED", user.uid, `user_${user.uid}`, {
           email: user.email,
@@ -79,7 +78,6 @@ export async function POST(req: NextRequest) {
         errors.push(`User creation event for uid ${user.uid}: ${err.message}`);
       }
 
-      // 1. Migrate Expenses
       try {
         const expenses = await adminListExpenses(user.uid);
         for (const exp of expenses) {
@@ -94,7 +92,6 @@ export async function POST(req: NextRequest) {
         errors.push(`Expenses for uid ${user.uid}: ${err.message}`);
       }
 
-      // 2. Migrate Subscriptions
       try {
         const subscriptions = await adminListSubscriptions(user.uid);
         for (const sub of subscriptions) {
@@ -109,7 +106,6 @@ export async function POST(req: NextRequest) {
         errors.push(`Subscriptions for uid ${user.uid}: ${err.message}`);
       }
 
-      // 3. Migrate Watchlist
       try {
         const watchlist = await adminListWatchlist(user.uid);
         for (const item of watchlist) {
@@ -124,7 +120,6 @@ export async function POST(req: NextRequest) {
         errors.push(`Watchlist for uid ${user.uid}: ${err.message}`);
       }
 
-      // 4. Migrate Investments/Portfolio
       try {
         const portfolio = await adminGetPortfolio(user.uid);
         if (portfolio && portfolio.assets) {
@@ -142,7 +137,6 @@ export async function POST(req: NextRequest) {
         errors.push(`Portfolio for uid ${user.uid}: ${err.message}`);
       }
 
-      // 5. Migrate Settings & Salary Updates
       try {
         const settingsDoc = await getAdminDb().collection("settings").doc(user.uid).get();
         if (settingsDoc.exists) {

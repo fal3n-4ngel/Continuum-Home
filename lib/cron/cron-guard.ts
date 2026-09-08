@@ -2,10 +2,6 @@ import { redis } from "@/lib/utils";
 import { getAdminDb } from "@/lib/firebase/firebase-admin";
 export { getIstDateString } from "@/lib/utils";
 
-
-/**
- * Checks if a cron email dispatch for a given user and cron task key has already been executed today.
- */
 export async function hasCronBeenSentToday(cronKey: string, uid: string, dateStr: string): Promise<boolean> {
   const lockKey = `cron_sent:${cronKey}:${uid}:${dateStr}`;
 
@@ -26,19 +22,14 @@ export async function hasCronBeenSentToday(cronKey: string, uid: string, dateStr
       if (snap.exists) return true;
     }
   } catch {
-    // Firestore not configured or uninitialized — fail open safely
   }
 
   return false;
 }
 
-/**
- * Records that a cron email dispatch for a given user and cron task key succeeded today.
- */
 export async function markCronAsSentToday(cronKey: string, uid: string, dateStr: string): Promise<void> {
   const lockKey = `cron_sent:${cronKey}:${uid}:${dateStr}`;
 
-  // 48h TTL outlives any same-day retry without pinning the key forever.
   if (redis) {
     try {
       await redis.set(lockKey, "1", { ex: 172800 });

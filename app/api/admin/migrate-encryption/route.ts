@@ -16,9 +16,6 @@ export async function POST(req: NextRequest) {
     const session = await requireUser(req);
     const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "";
 
-    // Verify admin access — this only gates WHO can trigger the migration.
-    // The migration itself runs across every user's data via the Admin SDK,
-    // not just the calling admin's own records.
     if (!session.user.email || session.user.email !== adminEmail) {
       return NextResponse.json({ error: "Forbidden: Admin access required." }, { status: 403 });
     }
@@ -32,11 +29,6 @@ export async function POST(req: NextRequest) {
     const errors: string[] = [];
 
     for (const user of users) {
-      // Expenses: adminListExpenses already decrypts on read (or passes
-      // through unchanged if a record was never encrypted). Re-saving every
-      // record through adminReEncryptExpense always writes it back encrypted,
-      // so this is a safe no-op for already-encrypted records and a real
-      // migration for legacy plaintext ones.
       try {
         const expenses = await adminListExpenses(user.uid);
         for (const exp of expenses) {
@@ -57,8 +49,6 @@ export async function POST(req: NextRequest) {
         errors.push(`expenses list for uid ${user.uid}: ${err.message || "Unknown error"}`);
       }
 
-      // Portfolio: same re-save-to-force-encrypt approach, applied to the
-      // single portfolio document's assets array and valuation history.
       try {
         const portfolio = await adminGetPortfolio(user.uid);
         const valuationHistory = portfolio?.valuationHistory || {};

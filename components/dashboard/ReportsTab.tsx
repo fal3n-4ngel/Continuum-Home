@@ -21,10 +21,6 @@ interface SalaryLogEntry {
   amount: number;
 }
 
-// Mirrors the shape of app/page.tsx's `cycleHistory` (past COMPLETE pay
-// cycles, newest first) — passed straight through rather than recomputed
-// here, since building it requires salary log + subscriptions + multi-cycle
-// baselining logic that already lives in one place.
 interface CycleHistoryEntry {
   startStr: string;
   endStr: string;
@@ -83,7 +79,6 @@ const ReportCardHeader: React.FC<{ title: string; icon: React.ReactNode; count: 
   </div>
 );
 
-/* ─── EXPENSES REPORT CARD ─── */
 const ExpenseReportCard: React.FC<{ expenses: Expense[]; currency: string; salaryDay: number; salaryLog: Record<string, SalaryLogEntry> }> = ({
   expenses,
   currency,
@@ -217,7 +212,6 @@ const ExpenseReportCard: React.FC<{ expenses: Expense[]; currency: string; salar
   );
 };
 
-/* ─── INVESTMENTS REPORT CARD ─── */
 const InvestmentReportCard: React.FC<{ investments: InvestmentAsset[]; currency: string }> = ({
   investments,
   currency,
@@ -244,7 +238,7 @@ const InvestmentReportCard: React.FC<{ investments: InvestmentAsset[]; currency:
         if (category && i.category !== category) return false;
         if (status === "active" && i.isSold) return false;
         if (status === "sold" && !i.isSold) return false;
-        
+
         const val = getEffectiveAmount(i);
         const minVal = parseFloat(minValuation);
         if (!isNaN(minVal) && val < minVal) return false;
@@ -367,11 +361,6 @@ const InvestmentReportCard: React.FC<{ investments: InvestmentAsset[]; currency:
   );
 };
 
-/* ─── MONTHLY DISCREPANCY REPORT (Pro) ─── */
-// How closely each reconciled pay cycle's confirmed "actual amount left"
-// matched what the ledger predicted — the audit trail behind Financial
-// Health's "Does This Match Reality?" check, across all history rather than
-// just the last few cycles shown there.
 const DiscrepancyReportCard: React.FC<{
   cycleHistory: CycleHistoryEntry[];
   reconciliations: Record<string, number>;
@@ -481,7 +470,6 @@ const DiscrepancyReportCard: React.FC<{
   );
 };
 
-/* ─── MEDIA WATCHLIST CARD ─── */
 const STATUS_OPTIONS: { id: MediaStatus | "all"; label: string }[] = [
   { id: "all", label: "All statuses" },
   { id: "watching", label: "Watching / In Progress" },
@@ -611,7 +599,6 @@ const MediaReportCard: React.FC<{ title: string; icon: React.ReactNode; type: Me
   );
 };
 
-/* ─── MAIN REPORTS TAB ─── */
 export const ReportsTab: React.FC<ReportsTabProps> = ({
   expenses,
   watchlist,
@@ -632,7 +619,6 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
 
   return (
     <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]">
-      {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border-subtle pb-4">
         <div>
           <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">Data Export & Reports</h1>
@@ -646,7 +632,6 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
         </div>
       </div>
 
-      {/* Financial Reports Section */}
       <div className="flex flex-col gap-4">
         <h2 className="text-[13px] font-bold tracking-[0.8px] text-text-secondary uppercase border-l-2 border-l-text-primary pl-2">
           💰 Financial Reports
@@ -660,7 +645,6 @@ export const ReportsTab: React.FC<ReportsTabProps> = ({
         </div>
       </div>
 
-      {/* Media Watchlist Reports Section */}
       <div className="flex flex-col gap-4 mt-2">
         <h2 className="text-[13px] font-bold tracking-[0.8px] text-text-secondary uppercase border-l-2 border-l-text-primary pl-2">
           🎬 Media Watchlist Reports

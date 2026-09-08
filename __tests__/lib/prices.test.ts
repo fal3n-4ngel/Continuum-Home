@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 
-// vitest.setup.ts mocks @/lib/finance globally for the cron integration tests,
-// so this suite has to reach past that to exercise the real implementation.
 const { createPriceFetcher, fetchAssetPrice } = await vi.importActual<typeof import("@/lib/finance")>("@/lib/finance");
 
 describe("createPriceFetcher", () => {
@@ -21,7 +19,6 @@ describe("createPriceFetcher", () => {
   it("fetches an asset once no matter how many users hold it", async () => {
     const fetchPrice = createPriceFetcher();
 
-    // Same holding appearing across three different users' portfolios.
     const results = await Promise.all([
       fetchPrice("equity", "RELIANCE", 83.5),
       fetchPrice("equity", "RELIANCE", 83.5),
@@ -48,7 +45,6 @@ describe("createPriceFetcher", () => {
     await Promise.all([
       fetchPrice("equity", "RELIANCE", 83.5),
       fetchPrice("equity", "TCS", 83.5),
-      // Same category+name, different AMFI scheme — must not collapse.
       fetchPrice("sip", "HDFC Mid Cap", 83.5, "118989"),
       fetchPrice("sip", "HDFC Mid Cap", 83.5, "105758"),
     ]);
@@ -64,8 +60,6 @@ describe("createPriceFetcher", () => {
   });
 });
 
-// The scheme code and the asset name are both client-supplied and both end up
-// interpolated into an upstream URL, so neither may reach fetch() unvalidated.
 describe("fetchAssetPrice request-target safety", () => {
   let fetchSpy: ReturnType<typeof vi.spyOn>;
 

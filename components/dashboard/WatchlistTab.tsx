@@ -135,20 +135,17 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
   const [titleSearch, setTitleSearch] = React.useState("");
   const [sortBy, setSortBy] = React.useState<"title" | "rating" | "year">("year");
 
-  // Search & Add enhanced UX states
   const [addingMap, setAddingMap] = React.useState<Record<string, boolean>>({});
   const [justAddedMap, setJustAddedMap] = React.useState<Record<string, boolean>>({});
   const [hasSearched, setHasSearched] = React.useState(false);
   const [feedbackToast, setFeedbackToast] = React.useState<{ text: string; type: "success" | "error" } | null>(null);
 
-  // Auto-dismiss toast feedback
   React.useEffect(() => {
     if (!feedbackToast) return;
     const timer = setTimeout(() => setFeedbackToast(null), 4000);
     return () => clearTimeout(timer);
   }, [feedbackToast]);
 
-  // Sync mediaType with activeCategoryTab when changing view tab
   React.useEffect(() => {
     if (activeCategoryTab === "movie" && mediaType !== "movie") {
       setMediaType("movie");
@@ -304,7 +301,6 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
         throw new Error("Failed to log recommendation.");
       }
 
-      // Mark as logged in Firestore recommendations cache document
       await fetch("/api/assistant/recommendations", {
         method: "POST",
         headers: {
@@ -331,8 +327,6 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
     }
   };
 
-  // Category tab is now a strict 3-way split: Movies / TV Shows / Anime each
-  // show only their own type — no more combined "Movies & Shows" bucket.
   const filteredWatchlist = watchlist
     .filter((item) => {
       if (item.type !== activeCategoryTab) return false;
@@ -364,7 +358,6 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
 
   return (
     <div className="flex flex-col gap-5 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]"><h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">Media library</h1>
-      {/* 4 Overview Stat Cards */}
       <div className="grid grid-cols-4 max-md:grid-cols-2 gap-4">
         <div className={`${STAT_CARD} border-t-2 border-t-accent-blue/80`}>
           <span className={LABEL_MONO}>WATCHING NOW</span>
@@ -400,11 +393,8 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
         </div>
       </div>
 
-      {/* Main 2-Column Section */}
       <div className="grid grid-cols-[260px_minmax(0,1fr)] items-start gap-5 max-md:grid-cols-1">
-        {/* Left Column wrapper */}
         <div className="flex flex-col gap-5">
-          {/* SEARCH & ADD CARD */}
           <div className={BENTO_CARD}>
             <span className={`${LABEL_MONO} mb-1 block`}>SEARCH &amp; ADD</span>
             <p className="mb-3.5 text-[11px] text-text-muted">AniList &amp; Trakt search</p>
@@ -459,7 +449,6 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
               </button>
             </form>
 
-            {/* Feedback Toast */}
             {feedbackToast && (
               <div
                 className={`mt-3 flex items-center justify-between gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all animate-[fadeIn_0.2s_ease] ${
@@ -482,7 +471,6 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
               </div>
             )}
 
-            {/* Search Results */}
             {searchResults.length > 0 && (
               <div className="mt-4 flex max-h-[300px] flex-col gap-2.5 overflow-y-auto pr-1">
                 {searchResults.map((res, i) => {
@@ -534,7 +522,6 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
               </div>
             )}
 
-            {/* Empty State when search returns 0 results */}
             {hasSearched && !isSearchingMedia && searchResults.length === 0 && (
               <div className="mt-4 rounded-md border border-dashed border-border-subtle p-3 text-center text-xs text-text-muted">
                 No {mediaType === "movie" ? "movies" : mediaType === "show" ? "TV shows" : "anime"} found for "{mediaQuery}".
@@ -542,7 +529,6 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
             )}
           </div>
 
-          {/* AI Recommendations Panel */}
           <div className={BENTO_CARD}>
           <span className={`${LABEL_MONO} mb-3 block`}>🤖 AI Recommendation of the Day</span>
           <p className="text-[10px] leading-[1.4] text-text-secondary mb-3">
@@ -661,12 +647,9 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
         </div>
       </div>
 
-      {/* Right Column: Watchlist Bento Container */}
       <div className={`${BENTO_CARD} p-5`}>
-          {/* Header Row Controls */}
           <div className="mb-4 flex flex-col gap-3 border-b border-border-subtle pb-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              {/* Category Tabs */}
               <div className="flex gap-1.5 rounded-lg bg-bg-secondary p-[3px] max-md:overflow-x-auto max-md:w-full hide-scrollbar">
                 <button onClick={() => setActiveCategoryTab("movie")} className={`${pillClass(activeCategoryTab === "movie")} max-md:flex-1 max-md:justify-center`}>
                   🎬 Movies
@@ -679,7 +662,6 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                 </button>
               </div>
 
-              {/* Right side status pills */}
               <div className="flex flex-wrap items-center gap-2.5">
                 {watchlist.some((w) => !w.coverImage && (w.type === "movie" || w.type === "show")) && enrichMissingPosters && (
                   <button
@@ -719,7 +701,6 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
               </div>
             </div>
 
-            {/* Search & sort row */}
             <div className="flex flex-wrap items-center gap-2.5">
               <input
                 type="text"
@@ -740,7 +721,6 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
             </div>
           </div>
 
-          {/* Watchlist Grid */}
           <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] max-md:grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-5 overflow-y-auto max-h-[65vh] pr-1 pb-10 custom-scrollbar">
             {isFetchingWatchlist && watchlist.length === 0 ? (
               Array.from({ length: 8 }).map((_, idx) => (
@@ -754,7 +734,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
             ) : (
               filteredWatchlist.map((item) => (
                 <div key={item.id} className="group flex flex-col rounded-[14px] border border-border-subtle bg-bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-                  <div 
+                  <div
                     onClick={() => onItemClick(item)}
                     className="relative aspect-[2/3] w-full overflow-hidden rounded-t-[14px] cursor-pointer"
                   >
@@ -773,7 +753,6 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                         {item.type === "movie" ? "🎬" : item.type === "show" ? "📺" : "🌸"}
                       </div>
                     )}
-                    {/* Delete button absolute overlay - touch-friendly on mobile */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -784,7 +763,6 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                     >
                       <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />
                     </button>
-                    {/* Quick episodes overlay if show/anime - touch-friendly on mobile */}
                     {(item.type === "show" || item.type === "anime") && (
                       <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1 rounded bg-black/60 px-1.5 py-0.5 text-white backdrop-blur-md max-md:opacity-100 opacity-0 group-hover:opacity-100 transition-all duration-200" onClick={(e) => e.stopPropagation()}>
                         <span className="font-mono text-[9px] font-medium mr-0.5">
@@ -805,12 +783,12 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="flex flex-col flex-1 justify-between gap-3 p-3.5">
                     <div>
-                      <p 
+                      <p
                         onClick={() => onItemClick(item)}
-                        className="cursor-pointer line-clamp-2 min-h-[36px] font-serif text-[13px] font-bold tracking-tight text-text-primary leading-tight group-hover:text-text-primary/90 transition-colors" 
+                        className="cursor-pointer line-clamp-2 min-h-[36px] font-serif text-[13px] font-bold tracking-tight text-text-primary leading-tight group-hover:text-text-primary/90 transition-colors"
                         title={item.title}
                       >
                         {item.title}
@@ -819,7 +797,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                         {item.type === "movie" ? "Movie" : item.type === "show" ? "Show" : "Anime"} {item.year ? `(${item.year})` : ""}
                       </p>
                     </div>
-                    
+
                     <div className="flex flex-col gap-1.5 mt-auto">
                       <div className="relative w-full">
                         <select

@@ -1,8 +1,5 @@
 import type { NextConfig } from "next";
 
-// Mirrors the USE_UAT_CONFIG flip in lib/env.ts. This runs at build time, so
-// it cannot import that module — without this the /__/auth rewrite would still
-// proxy to production Firebase while the running app talked to UAT.
 function getFirebaseProjectId(): string {
   const raw =
     (process.env.USE_UAT_CONFIG === "true" && process.env.UAT_FIREBASE_CONFIG) ||
@@ -23,7 +20,6 @@ const securityHeaders = [
   { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
   { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
 ];
-
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,

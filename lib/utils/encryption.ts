@@ -2,9 +2,8 @@ import crypto from "crypto";
 import { env } from "@/lib/utils/env";
 import { notifyError } from "./error-notifier";
 
-// AES-256-GCM configuration
 const ALGORITHM = "aes-256-gcm";
-const IV_LENGTH = 12; // 96 bits for GCM
+const IV_LENGTH = 12;
 
 export class EncryptionError extends Error {
   constructor(message: string, public readonly cause?: unknown) {
@@ -20,7 +19,6 @@ export class DecryptionError extends Error {
   }
 }
 
-/** Sends real-time security alerts to Discord when cryptographic operations fail unexpectedly */
 function sendCryptoDiscordAlert(title: string, details: string, isCritical = false): void {
   notifyError({
     context: `🔐 Security: ${title}`,
@@ -30,7 +28,6 @@ function sendCryptoDiscordAlert(title: string, details: string, isCritical = fal
   });
 }
 
-/** Gets or derives a 32-byte encryption key */
 function getEncryptionKey(): Buffer {
   const secret = env.ENCRYPTION_KEY;
   if (secret) {
@@ -40,10 +37,6 @@ function getEncryptionKey(): Buffer {
   throw new Error('ENCRYPTION_KEY environment variable is required for encryption operations');
 }
 
-/**
- * Encrypts a plain text string into a single versioned serialized string: "v1:iv:authTag:ciphertext"
- * Fails closed by throwing EncryptionError rather than falling back to plaintext.
- */
 export function encrypt(text: string): string {
   if (!text) return text;
   try {
@@ -65,15 +58,11 @@ export function encrypt(text: string): string {
   }
 }
 
-/**
- * Decrypts a versioned "v1:iv:authTag:ciphertext" or legacy "iv:authTag:ciphertext" string back to plain text.
- */
 export function decrypt(encryptedText: string): string {
   if (!encryptedText || typeof encryptedText !== "string") {
     return encryptedText || "";
   }
 
-  // Handle plain unencrypted strings (legacy migration safety)
   if (!encryptedText.includes(":")) {
     return encryptedText;
   }
@@ -88,7 +77,6 @@ export function decrypt(encryptedText: string): string {
       [ivHex, authTagHex, ciphertextHex] = parts;
     }
   } else {
-    // Legacy unversioned "iv:authTag:ciphertext"
     const parts = encryptedText.split(":");
     if (parts.length === 3) {
       [ivHex, authTagHex, ciphertextHex] = parts;

@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
   try {
     const { user } = await requireUser(req);
     const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com";
-    
+
     if (user.email !== adminEmail) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
         {
           title: "System Notification",
           description: message,
-          color: 13944497, // Hex #d4c6b1 (sepia theme color)
+          color: 13944497,
           timestamp: new Date().toISOString(),
           footer: {
             text: "Continuum Dashboard • Manual Trigger"

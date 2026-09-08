@@ -2,7 +2,7 @@ import React from "react";
 import { createPortal } from "react-dom";
 import Papa from "papaparse";
 import { Expense, Subscription } from "@/types";
-import { downloadCsv } from "@/lib/utils";
+import { downloadCsv, getAuthHeaders } from "@/lib/utils";
 
 import { useExpensesStore } from "@/lib/stores/expenses-store";
 import { useUiStore } from "@/lib/stores/ui-store";
@@ -26,13 +26,12 @@ const INPUT_CLASS = "rounded-lg border border-border-subtle bg-bg-card px-3 py-2
 const LEDGER_TH = "border-b border-border-subtle bg-bg-card px-3 py-2.5 font-mono text-[11px] font-semibold tracking-[0.5px] text-text-muted uppercase";
 const LEDGER_TD = "border-b border-border-subtle px-3 py-3 align-middle text-[13px] text-text-primary";
 
-
 const normalizeCsvDate = (dateStr: string): string => {
   const clean = dateStr.trim();
   if (!clean) return "";
-  
+
   if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
-  
+
   const dmy = clean.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
   if (dmy) {
     const d = dmy[1].padStart(2, "0");
@@ -40,7 +39,7 @@ const normalizeCsvDate = (dateStr: string): string => {
     const y = dmy[3];
     return `${y}-${m}-${d}`;
   }
-  
+
   const ymd = clean.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
   if (ymd) {
     const y = ymd[1];
@@ -48,7 +47,7 @@ const normalizeCsvDate = (dateStr: string): string => {
     const d = ymd[3].padStart(2, "0");
     return `${y}-${m}-${d}`;
   }
-  
+
   try {
     const d = new Date(clean);
     if (!isNaN(d.getTime())) {
@@ -58,7 +57,7 @@ const normalizeCsvDate = (dateStr: string): string => {
       return `${yStr}-${mStr}-${dStr}`;
     }
   } catch {}
-  
+
   return "";
 };
 
@@ -78,14 +77,14 @@ const advanceBillingDate = (dateStr: string, cycle: "monthly" | "yearly"): strin
   const year = parseInt(parts[0], 10);
   const month = parseInt(parts[1], 10);
   const day = parseInt(parts[2], 10);
-  
+
   const d = new Date(year, month - 1, day);
   if (cycle === "monthly") {
     d.setMonth(d.getMonth() + 1);
   } else {
     d.setFullYear(d.getFullYear() + 1);
   }
-  
+
   const yStr = d.getFullYear();
   const mStr = String(d.getMonth() + 1).padStart(2, "0");
   const dStr = String(d.getDate()).padStart(2, "0");
@@ -98,17 +97,17 @@ const isSubscriptionPaidInLedger = (sub: Subscription, expenses: Expense[]) => {
   if (parts.length !== 3) return false;
   const sYear = parts[0];
   const sMonth = parts[1];
-  
+
   return expenses.some((exp) => {
     if (!exp.date) return false;
     const expParts = exp.date.split("-").map(Number);
     if (expParts.length !== 3) return false;
     const eYear = expParts[0];
     const eMonth = expParts[1];
-    
+
     const sameMonth = eYear === sYear && eMonth === sMonth;
     const sameYear = eYear === sYear;
-    
+
     const dateMatch = sub.billingCycle === "monthly" ? sameMonth : sameYear;
     if (!dateMatch) return false;
 
@@ -116,9 +115,9 @@ const isSubscriptionPaidInLedger = (sub: Subscription, expenses: Expense[]) => {
     const subName = sub.name.toLowerCase().trim();
     const nameMatch = expTitle.includes(subName) || subName.includes(expTitle) ||
                       (subName.includes("rent") && expTitle.includes("rent"));
-    
+
     const amtMatch = Math.abs((exp.amount || 0) - sub.cost) < (sub.cost * 0.1) || (exp.amount || 0) === sub.cost;
-    
+
     return nameMatch && amtMatch;
   });
 };
@@ -141,21 +140,10 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
   } = useExpensesStore();
   const { user } = useAuthStore();
 
-  const getHeaders = React.useCallback(() => {
-    const embeddedToken = typeof window !== "undefined" ? localStorage.getItem("phub_embedded_token") : null;
-    const token = (user?.idToken && user.idToken !== "embedded_token") ? user.idToken : (embeddedToken || "");
-    return {
-      "Content-Type": "application/json",
-      "X-Client": "web",
-      Authorization: `Bearer ${token}`,
-    };
-  }, [user]);
+  const getHeaders = React.useCallback(() => getAuthHeaders(user?.idToken), [user]);
 
   const fetchExpenses = React.useCallback(async () => {
-    // Stub
   }, []);
-
-
 
   const [currentPage, setCurrentPage] = React.useState(1);
   const pageSize = 15;
@@ -170,7 +158,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
   const [showLogModal, setShowLogModal] = React.useState(false);
   const [pendingSubToPay, setPendingSubToPay] = React.useState<Subscription | null>(null);
 
-  // CSV States
   const [showImportResultModal, setShowImportResultModal] = React.useState(false);
   const [importResultText, setImportResultText] = React.useState("");
   const [isImporting, setIsImporting] = React.useState(false);
@@ -192,7 +179,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       exp.amount,
       exp.notes || "",
     ]);
-    
+
     const today = new Date();
     const stamp = `${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, "0")}${today.getDate().toString().padStart(2, "0")}`;
     downloadCsv(`ledger_export_${stamp}.csv`, headers, rows);
@@ -241,7 +228,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
             return l.includes("notes") || l.includes("note") || l.includes("memo");
           });
 
-          // Fallbacks
           if (!titleField) titleField = fields[0];
           if (!amountField) amountField = fields.length > 1 ? fields[1] : fields[0];
           if (!categoryField) categoryField = fields.length > 2 ? fields[2] : undefined;
@@ -256,7 +242,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
             const amtStr = rawAmount.replace(/[^\d\.]/g, "") || "0";
             const amount = parseFloat(amtStr);
 
-            if (!title || isNaN(amount) || amount <= 0) continue; // Skip invalid entries
+            if (!title || isNaN(amount) || amount <= 0) continue;
 
             const category = categoryField && row[categoryField] ? String(row[categoryField]).trim() : "Other";
 
@@ -315,12 +301,11 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     return (subscriptions || []).filter((sub) => {
       if (!sub.nextBillingDate) return false;
       const dueDate = parseDateOnly(sub.nextBillingDate);
-      
-      // Auto-remove alert if it is already logged in the ledger
+
       if (isSubscriptionPaidInLedger(sub, expenses)) {
         return false;
       }
-      
+
       return dueDate >= now && dueDate <= sevenDaysFromNow;
     }).sort((a, b) => {
       const aDate = a.nextBillingDate ? parseDateOnly(a.nextBillingDate).getTime() : 0;
@@ -338,7 +323,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     }
   };
 
-  // Auto-advance due dates for past/today bills if matched in ledger
   React.useEffect(() => {
     if (!subscriptions || !expenses || !updateSubscription) return;
 
@@ -347,10 +331,10 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     const mStr = String(d.getMonth() + 1).padStart(2, "0");
     const dStr = String(d.getDate()).padStart(2, "0");
     const todayStr = `${yStr}-${mStr}-${dStr}`;
-    
+
     subscriptions.forEach((sub) => {
       if (!sub.nextBillingDate) return;
-      
+
       if (sub.nextBillingDate <= todayStr) {
         if (isSubscriptionPaidInLedger(sub, expenses)) {
           const nextDate = advanceBillingDate(sub.nextBillingDate, sub.billingCycle);
@@ -364,14 +348,12 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     setCurrentPage(1);
   }, [expenseSearch, ledgerCategoryFilter, ledgerMinAmount, ledgerMaxAmount, ledgerSortField, ledgerSortDir]);
 
-
   const toLocalDateStr = (d: Date) => {
     const yStr = d.getFullYear();
     const mStr = String(d.getMonth() + 1).padStart(2, "0");
     const dStr = String(d.getDate()).padStart(2, "0");
     return `${yStr}-${mStr}-${dStr}`;
   };
-
 
   const allCategories = React.useMemo(() => {
     const s = new Set<string>();
@@ -417,7 +399,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
   }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerSortField, ledgerSortDir]);
 
   const totalSpent = React.useMemo(() => filteredExpensesBase.reduce((sum, e) => sum + (e.amount || 0), 0), [filteredExpensesBase]);
-  
+
   const catBreakdown = React.useMemo(() => {
     const breakdown: Record<string, number> = {};
     filteredExpenses.forEach((e) => {
@@ -517,8 +499,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     }
   };
 
-
-
   const logSubscriptionExpense = async (sub: Subscription) => {
     try {
       const res = await fetch("/api/expenses", {
@@ -561,7 +541,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
 
   return (
     <>
-      {/* Tab controls & currency selector */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex gap-0.5 rounded-lg bg-bg-secondary p-[3px]">
@@ -624,10 +603,8 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
         )}
       </div>
 
-      {/* LEDGER TAB */}
       {expenseTab === "ledger" && (
         <div className="flex flex-col gap-7 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]"> <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">Expenses Ledger</h1>
-          {/* Stat Cards */}
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 max-md:grid-cols-2 max-md:gap-2.5">
             <div className={`${STAT_CARD} !bg-[var(--accent-blue)] !border-none`}>
               <span className={`${LABEL_MONO} !text-[#1A1A1A]/70`}>Total Spent</span>
@@ -651,7 +628,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
             </div>
           </div>
 
-          {/* Chart */}
           <div className={BENTO_CARD}>
             <div className="mb-6 flex items-center justify-between">
               <h3 className="text-[15px] font-semibold">Analytics</h3>
@@ -731,7 +707,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
             )}
           </div>
 
-          {/* Upcoming Bills Calendar Widget */}
           {upcomingSubscriptions.length > 0 && (
             <div className={BENTO_CARD}>
               <h3 className="text-sm font-semibold tracking-[-0.3px] text-text-primary mb-3 flex items-center gap-1.5">
@@ -789,7 +764,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
             </div>
           )}
 
-          {/* Form + Table */}
           <div className="grid grid-cols-[300px_1fr] gap-6 max-md:grid-cols-1">
             <div className="flex flex-col gap-5">
               <div className={BENTO_CARD}>
@@ -805,7 +779,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                     ))}
                   </select>
 
-                  {/* Quick Category Chips */}
                   <div className="flex flex-wrap gap-1 my-0.5">
                     {["Food", "Groceries", "Rent", "Utilities", "Shopping", "Transport"].map((c) => (
                       <button
@@ -853,7 +826,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                 </form>
               </div>
 
-              {/* Categories breakdown list */}
               <div className={BENTO_CARD}>
                 <span className={`${LABEL_MONO} mb-3.5 block`}>Categories</span>
                 <div className="flex flex-col gap-2.5">
@@ -876,7 +848,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
               </div>
             </div>
 
-            {/* Ledger Table */}
             <div className={`${BENTO_CARD} flex flex-col`}>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -966,7 +937,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                 </table>
               </div>
 
-              {/* Pagination Controls */}
               {totalPages > 1 && (
                 <div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-3.5">
                   <span className="text-xs text-text-muted">

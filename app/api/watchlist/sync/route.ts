@@ -11,7 +11,6 @@ export async function POST(req: NextRequest) {
   try {
     const session = await requireUser(req);
 
-    // Distributed lock to prevent race conditions (double-sync bugs)
     const lockKey = `sync:lock:watchlist:${session.uid}`;
     if (redis) {
       const acquired = await redis.set(lockKey, "1", { nx: true, px: 30000 });

@@ -129,7 +129,6 @@ async function handleHealthAnalytics(req: NextRequest, isForceRefresh: boolean) 
       try {
         body = await req.json();
       } catch {
-        // Fall back to query params if body empty
       }
     }
 
@@ -154,7 +153,6 @@ async function handleHealthAnalytics(req: NextRequest, isForceRefresh: boolean) 
         try {
           cycleCatBreakdown = JSON.parse(rawCat);
         } catch {
-          // ignore parse error
         }
       }
     }
@@ -193,7 +191,6 @@ async function handleHealthAnalytics(req: NextRequest, isForceRefresh: boolean) 
       fingerprint,
     });
 
-    // Lock and Budget checks
     const lockKey = startStr || "current_cycle";
     const gotLock = await acquireGenerationLock(session.uid, "spend_analytics", lockKey);
     if (!gotLock) {

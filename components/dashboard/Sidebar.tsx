@@ -81,7 +81,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   return (
     <aside className="fixed top-0 bottom-0 left-0 z-[100] flex w-[250px] flex-col justify-between border-r border-border-subtle bg-bg-sidebar px-4 py-6 max-md:hidden min-[769px]:max-[1100px]:w-[210px]">
-      {/* Brand Header */}
       <div className="mb-6 flex items-center gap-2.5 px-2">
         <LogoMark size={22} className="text-text-primary" />
         <div>
@@ -89,9 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Main Navigation */}
       <div className="flex flex-1 flex-col gap-1 overflow-y-auto">
-        {/* Finance group */}
         <div onClick={() => setActiveTab("expenses")} className={navLinkClass(activeTab === "expenses")}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
           <span>Expenses &amp; Subs</span>
@@ -109,7 +106,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* Lifestyle group */}
         <div onClick={() => setActiveTab("media")} className={`${navLinkClass(activeTab === "media")} mt-3 border-t border-border-subtle pt-4`}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
           <span>Library</span>
@@ -133,7 +129,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
         )}
 
-        {/* Integrations Section */}
         <div className="mt-5 flex flex-col gap-1.5 border-t border-border-subtle pt-3.5">
           <span className="block px-2 pb-1 font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary">Integrations</span>
 
@@ -267,7 +262,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Footer */}
       <div className="mt-4 flex flex-col gap-1">
         <div className="border-t border-border-subtle my-2 mx-1" />
         <a href="/assistant" className="mb-1 flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-xs font-medium text-text-secondary no-underline transition-all duration-200 hover:bg-bg-primary hover:text-text-primary">
@@ -283,7 +277,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           Support this project
         </a>
 
-        {/* Upgrade to Pro CTA — only for non-pro users */}
         {!isProUser && (
           <button
             onClick={onClaimPro}
@@ -300,7 +293,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         )}
 
-        {/* Pro badge — only for pro users */}
         {isProUser && (
           <div className="mb-2 flex items-center gap-3 rounded-lg px-3.5 py-2.5">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-text-muted">

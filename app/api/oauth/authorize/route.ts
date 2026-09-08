@@ -7,7 +7,6 @@ import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
-// GET: Render the authorization consent screen
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const clientId = searchParams.get("client_id");
@@ -32,7 +31,6 @@ export async function GET(req: NextRequest) {
     firebaseConfig.authDomain = domainFromHost;
   }
 
-  // Render a clean, premium cream-neutral styled HTML login/consent screen
   const html = `
     <!DOCTYPE html>
     <html lang="en">
@@ -166,9 +164,9 @@ export async function GET(req: NextRequest) {
     <body>
       <div class="card" id="consent-card">
         <div class="logo">Continuum</div>
-        
+
         <div id="loading" class="loader">Verifying login status…</div>
-        
+
         <div id="auth-panel" style="display: none;">
           <h2 class="title">Sign In Required</h2>
           <p class="subtitle">Please sign in to authorize ChatGPT to connect with your dashboard data.</p>
@@ -178,7 +176,7 @@ export async function GET(req: NextRequest) {
         <div id="consent-panel" style="display: none;">
           <h2 class="title">Connect to ChatGPT</h2>
           <p class="subtitle">Authorize ChatGPT to retrieve expenses, subscriptions, portfolio data, and read/write notes.</p>
-          
+
           <div class="user-badge">
             <img id="u-avatar" class="user-avatar" src="" style="display:none;" />
             <div id="u-avatar-placeholder" class="user-avatar" style="display: flex; align-items: center; justify-content: center; font-weight: bold; color: #7c7a72;">U</div>
@@ -214,11 +212,11 @@ export async function GET(req: NextRequest) {
           loadingDiv.style.display = 'none';
           if (user) {
             currentUser = user;
-            
+
             // Set User Details
             document.getElementById('u-name').innerText = user.displayName || 'Authorized User';
             document.getElementById('u-email').innerText = user.email;
-            
+
             if (user.photoURL) {
               const avatar = document.getElementById('u-avatar');
               avatar.src = user.photoURL;
@@ -251,14 +249,14 @@ export async function GET(req: NextRequest) {
 
         document.getElementById('allow-btn').onclick = async () => {
           if (!currentUser) return;
-          
+
           document.getElementById('allow-btn').innerText = "Authorizing…";
           document.getElementById('allow-btn').disabled = true;
           errBox.style.display = 'none';
 
           try {
             const idToken = await currentUser.getIdToken(true);
-            
+
             // Fetch refresh token from Firebase SDK internals
             // Firebase stores tokens in auth.currentUser.refreshToken
             const refreshToken = currentUser.refreshToken;
@@ -298,7 +296,6 @@ export async function GET(req: NextRequest) {
   });
 }
 
-// POST: Validate credentials and register a temporary authorization code
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -323,7 +320,6 @@ export async function POST(req: NextRequest) {
     const authCode = crypto.randomUUID();
     const cacheKey = `oauth:code:${authCode}`;
 
-    // Store auth code mapped to user's Firebase Refresh Token (5 min TTL)
     await redis.set(cacheKey, refreshToken, { ex: 300 });
 
     const redirectUrl = `${redirectUri}?code=${authCode}&state=${state}`;

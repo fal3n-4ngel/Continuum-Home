@@ -18,7 +18,6 @@ export default function AdminPage() {
   const [authLoading, setAuthLoading] = useState(true);
   const [firebaseAuth, setFirebaseAuth] = useState<FirebaseAuthModule | null>(null);
 
-  // Initialize Firebase Auth
   useEffect(() => {
     let unsubscribe: (() => void) | undefined;
     import("firebase/app").then(async ({ initializeApp, getApps }) => {
@@ -80,7 +79,6 @@ export default function AdminPage() {
   const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com";
   const isAdmin = user && user.email === adminEmail;
 
-  /* ─── Loading State ─── */
   if (authLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-bg-primary text-text-primary">
@@ -92,7 +90,6 @@ export default function AdminPage() {
     );
   }
 
-  /* ─── Login Guard ─── */
   if (!user) {
     return (
       <div className="flex h-screen items-center justify-center bg-bg-primary">
@@ -116,7 +113,6 @@ export default function AdminPage() {
     );
   }
 
-  /* ─── Authorization Guard ─── */
   if (!isAdmin) {
     return (
       <div className="flex h-screen items-center justify-center bg-bg-primary">
@@ -142,11 +138,9 @@ export default function AdminPage() {
     );
   }
 
-  /* ─── Main Admin Console ─── */
   return (
     <div className="min-h-screen bg-bg-primary p-10 max-md:p-5">
       <div className="mx-auto max-w-[900px] flex flex-col gap-6">
-        {/* Header Action Nav */}
         <div className="flex items-center justify-end gap-3 border-b-2 border-border-subtle pb-4">
           <Link href="/" className="flex items-center gap-1.5 rounded-none border-2 border-border-subtle bg-bg-card px-4 py-2 text-xs font-bold uppercase tracking-wide text-text-primary hover:bg-bg-primary no-underline transition-all">
             <Home className="h-3.5 w-3.5" /> Dashboard
@@ -156,7 +150,6 @@ export default function AdminPage() {
           </button>
         </div>
 
-        {/* Embedded Modular Admin Tab component */}
         <AdminTab user={user} />
       </div>
     </div>

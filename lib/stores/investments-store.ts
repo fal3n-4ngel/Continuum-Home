@@ -6,7 +6,7 @@ interface InvestmentsState {
   setInvestments: (investments: InvestmentAsset[]) => void;
   isFetchingInvestments: boolean;
   setIsFetchingInvestments: (is: boolean) => void;
-  
+
   invName: string;
   setInvName: (s: string) => void;
   invMfSchemeCode: string;
@@ -31,7 +31,7 @@ interface InvestmentsState {
   setInvCompounding: (c: FdCompounding) => void;
   invSipDay: string;
   setInvSipDay: (s: string) => void;
-  
+
   isAddingAsset: boolean;
   setIsAddingAsset: (is: boolean) => void;
   isUpdatingPrices: boolean;
@@ -40,7 +40,7 @@ interface InvestmentsState {
   setInvSuggestions: (s: InvestmentQuote[]) => void;
   showInvestmentsTab: boolean;
   setShowInvestmentsTab: (show: boolean) => void;
-  
+
   investmentsLoaded: boolean;
   setInvestmentsLoaded: (loaded: boolean) => void;
 }
@@ -50,7 +50,7 @@ export const useInvestmentsStore = create<InvestmentsState>((set) => ({
   setInvestments: (investments) => set({ investments }),
   isFetchingInvestments: false,
   setIsFetchingInvestments: (isFetchingInvestments) => set({ isFetchingInvestments }),
-  
+
   invName: "",
   setInvName: (invName) => set({ invName }),
   invMfSchemeCode: "",
@@ -75,7 +75,7 @@ export const useInvestmentsStore = create<InvestmentsState>((set) => ({
   setInvCompounding: (invCompounding) => set({ invCompounding }),
   invSipDay: "",
   setInvSipDay: (invSipDay) => set({ invSipDay }),
-  
+
   isAddingAsset: false,
   setIsAddingAsset: (isAddingAsset) => set({ isAddingAsset }),
   isUpdatingPrices: false,
@@ -84,7 +84,7 @@ export const useInvestmentsStore = create<InvestmentsState>((set) => ({
   setInvSuggestions: (invSuggestions) => set({ invSuggestions }),
   showInvestmentsTab: true,
   setShowInvestmentsTab: (showInvestmentsTab) => set({ showInvestmentsTab }),
-  
+
   investmentsLoaded: false,
   setInvestmentsLoaded: (investmentsLoaded) => set({ investmentsLoaded }),
 }));

@@ -249,7 +249,6 @@ const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
 
   return (
     <div className="rounded-card border border-border-subtle border-t-2 border-t-[#e39282]/80 bg-bg-card p-5 shadow-subtle flex flex-col gap-4 relative overflow-hidden transition-all duration-200">
-      {/* Top Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle pb-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle bg-bg-primary text-text-secondary">
@@ -290,7 +289,6 @@ const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
         </div>
       </div>
 
-      {/* Loading Skeleton */}
       {loading && !report && (
         <div className="py-6 flex items-center justify-center gap-2 text-xs font-medium text-text-secondary">
           <RotateCw size={16} className="animate-spin text-text-muted" />
@@ -298,7 +296,6 @@ const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
         </div>
       )}
 
-      {/* Error state */}
       {error && !report && (
         <div className="flex items-center gap-2 rounded-lg border border-[#fbd38d]/60 bg-[#FDF6F0] p-3 text-xs text-[#c05621]">
           <AlertTriangle size={15} className="shrink-0 text-[#c05621]" />
@@ -306,15 +303,12 @@ const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
         </div>
       )}
 
-      {/* Report Content */}
       {report && (
         <div className="flex flex-col gap-4 text-xs">
-          {/* Executive Summary (Journal Lead Line) */}
           <div className="border-l-2 border-l-[#e39282]/80 pl-3.5 py-1 text-text-secondary text-[12.5px] leading-relaxed italic">
             <p className="font-medium text-text-primary">{cleanText(report.executiveSummary)}</p>
           </div>
 
-          {/* Top Categories Progress Breakdown */}
           {report.topCategories && report.topCategories.length > 0 && (
             <div className="rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4">
               <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary block mb-3">
@@ -344,7 +338,6 @@ const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
             </div>
           )}
 
-          {/* Safe Spend Advice Box */}
           {report.safeSpendAdvice && (
             <div className="flex items-start gap-3 rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-3.5 text-text-primary">
               <ShieldCheck size={16} className="shrink-0 text-text-secondary mt-0.5" />
@@ -357,9 +350,7 @@ const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
             </div>
           )}
 
-          {/* Spend Trends & Anomalies Grid */}
           <div className="grid grid-cols-2 gap-4 max-md:grid-cols-1">
-            {/* Monthly Spend Trends */}
             {report.spendTrends && report.spendTrends.length > 0 && (
               <div className="rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4">
                 <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary flex items-center gap-1.5 mb-2.5">
@@ -376,7 +367,6 @@ const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
               </div>
             )}
 
-            {/* Anomalies */}
             {report.anomalies && report.anomalies.length > 0 && (
               <div className="rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4">
                 <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary flex items-center gap-1.5 mb-2.5">
@@ -394,7 +384,6 @@ const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
             )}
           </div>
 
-          {/* Saving Opportunities */}
           {report.savingOpportunities && report.savingOpportunities.length > 0 && (
             <div className="rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4">
               <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary flex items-center gap-1.5 mb-2.5">
@@ -493,13 +482,9 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   const maxCatAmount = catEntries.length > 0 ? catEntries[0][1] : 0;
 
   const parsedActual = parseFloat(actualAmount);
-  // Discrepancy is positive when expected > actual (missing spend) and negative when actual > expected (extra cash)
   const rawDiscrepancy = savedReconciliation !== undefined ? payCycle.expectedCashOnHand - savedReconciliation : null;
   const isSynced = savedReconciliation !== undefined && rawDiscrepancy !== null && Math.abs(rawDiscrepancy) <= DISCREPANCY_THRESHOLD;
 
-  // Dynamic confirmed cash left:
-  // When reconciled/synced, actual cash left equals expected cash on hand (which updates dynamically as new expenses are logged).
-  // When there is an unlogged gap, confirmed cash left is expected cash minus the unlogged gap (savedReconciliation).
   const confirmedCashLeft = isSynced || savedReconciliation === undefined
     ? payCycle.expectedCashOnHand
     : payCycle.expectedCashOnHand - (rawDiscrepancy ?? 0);
@@ -538,7 +523,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   const handleLogGap = (amount: number) => {
     logUnaccountedGap(amount);
     setGapLoggedFor(payCycle.startStr);
-    // Update saved reconciliation baseline to the newly synced expected cash amount
     const newExpected = payCycle.expectedCashOnHand - amount;
     setReconciliation(payCycle.startStr, Math.max(0, Math.round(newExpected)));
   };
@@ -566,27 +550,21 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
     }
   };
 
-  // Safe-to-Spend Allowance calculations based on Target Savings Goal
   const remainingDays = Math.max(1, payCycle.remainingDays);
   const daysThisWeek = Math.min(7, remainingDays);
 
-  // Unspent cash remaining in account right now
   const unspentCash = Math.max(0, payCycle.totalIncome - payCycle.spentSoFar);
 
-  // Spendable budget remaining to reach target savings goal
   const spendablePoolForTarget = unspentCash - targetSavingsGoal;
 
-  // Is user behind target savings goal?
   const isBehindTarget = spendablePoolForTarget < 0;
 
-  // Gross daily and weekly limits to hit target
   const grossDailyLimit = isBehindTarget ? 0 : spendablePoolForTarget / remainingDays;
   const grossWeekLimit = grossDailyLimit * daysThisWeek;
 
-  // Calculate Sunday of the current calendar week (Sunday to Saturday)
   const todayStr = toLocalDateStr(new Date());
   const todayObj = new Date();
-  const dayOfWeek = todayObj.getDay(); // 0 is Sunday, 1 is Monday, ..., 6 is Saturday
+  const dayOfWeek = todayObj.getDay();
   const sundayObj = new Date(todayObj);
   sundayObj.setDate(todayObj.getDate() - dayOfWeek);
   const weekStartStr = toLocalDateStr(sundayObj);
@@ -599,7 +577,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
     .filter((e) => e.date && e.date >= weekStartStr && e.date <= todayStr && typeof e.amount === "number")
     .reduce((sum, e) => sum + (e.amount || 0), 0);
 
-  // Net remaining safe spend for today and this week after subtracting already spent amounts
   const safeToday = Math.max(0, grossDailyLimit - todaySpent);
   const safeWeek = Math.max(0, grossWeekLimit - thisWeekSpent);
 
@@ -607,7 +584,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
 
   return (
     <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full">
-      {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border-subtle pb-4">
         <div>
           <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">Financial Health</h1>
@@ -620,7 +596,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         </span>
       </div>
 
-      {/* Target Savings Goal Control Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-subtle border-t-2 border-t-[#2e7d32]/70 bg-bg-card p-4 shadow-subtle">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#2e7d32]/20 bg-[#E6F4EA] text-[#2e7d32] shadow-2xs">
@@ -669,7 +644,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         </div>
       </div>
 
-      {/* Top 5 KPI Executive Stat Cards */}
       <div className="grid grid-cols-5 gap-4 max-2xl:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
         <div className={`${STAT_CARD} border-t-2 border-t-accent-blue/80`}>
           <div>
@@ -782,7 +756,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         </div>
       </div>
 
-      {/* Gemini AI Financial Health Analytics Widget */}
       <GeminiHealthAnalytics
         currency={currency}
         payCycle={payCycle}
@@ -791,9 +764,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         getHeaders={getHeaders}
       />
 
-      {/* Main Section 1: Cycle Control Center & Smart Reconciliation */}
       <div className="grid grid-cols-2 gap-5 max-lg:grid-cols-1">
-        {/* Left Card: Pay Cycle Progress & Spending Pace */}
         <div className={`${BENTO_CARD} border-t-2 border-t-accent-blue/80`}>
           <div>
             <div className="flex items-center justify-between border-b border-border-subtle pb-3">
@@ -805,7 +776,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
               </span>
             </div>
 
-            {/* Cycle Timeline Progress */}
             <div className="mt-4">
               <div className="h-2 w-full overflow-hidden rounded-full bg-bg-secondary">
                 <div
@@ -819,7 +789,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
               </div>
             </div>
 
-            {/* Pace Delta vs Last Cycle */}
             <div className="mt-4">
               {payCycle.paceDeltaPct === null ? (
                 <p className="text-[11px] text-text-muted">No prior cycle data to compare pace against yet.</p>
@@ -860,7 +829,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
               )}
             </div>
 
-            {/* Projected Spend Formula */}
             <div className="mt-4 border-t border-border-subtle pt-3 space-y-1.5 text-[11px]">
               <div className="flex items-center justify-between">
                 <span className="text-text-secondary">Spent so far (logged)</span>
@@ -886,7 +854,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             </div>
           </div>
 
-          {/* Top Category Spending Progress Bars */}
           {catEntries.length > 0 && (
             <div className="mt-4 border-t border-border-subtle pt-3">
               <span className={`${LABEL_MONO} mb-2 block`}>Top Categories This Cycle</span>
@@ -913,10 +880,8 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           )}
         </div>
 
-        {/* Right Card: Smart Reconciliation & Payday Settings */}
         <div className={`${BENTO_CARD} border-t-2 border-t-[#e39282]/80`}>
           <div>
-            {/* Inner Header with Switcher Tabs */}
             <div className="flex items-center justify-between border-b border-border-subtle pb-3">
               <div className="flex items-center gap-1 rounded-full bg-[#EAE5DC]/60 p-1 border border-border-subtle/40 shadow-2xs">
                 <button
@@ -1081,7 +1046,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                   </div>
                 )}
 
-                {/* Track Record */}
                 <div className="border-t border-border-subtle pt-3">
                   <span className={LABEL_MONO}>Reconciliation Track Record</span>
                   {reconciliationTrack.length === 0 ? (
@@ -1107,7 +1071,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                 </div>
               </div>
             ) : (
-              /* Income Settings Tab */
               <div className="mt-4 space-y-4">
                 <div className="space-y-2">
                   <span className={LABEL_MONO}>This Cycle's Payday Date &amp; Amount</span>
@@ -1175,9 +1138,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         </div>
       </div>
 
-      {/* Main Section 2: Emergency Runway & Cycle History */}
       <div className="grid grid-cols-2 gap-5 max-lg:grid-cols-1">
-        {/* Emergency Runway Card */}
         <div className={`${BENTO_CARD} border-t-2 border-t-[#2e7d32]/70`}>
           <div>
             <div className="flex items-center justify-between border-b border-border-subtle pb-3">
@@ -1229,7 +1190,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           </div>
         </div>
 
-        {/* Cycle History Card */}
         <div className={`${BENTO_CARD} border-t-2 border-t-text-primary/60`}>
           <div>
             <div className="flex items-center justify-between border-b border-border-subtle pb-3">

@@ -48,7 +48,7 @@ describe("GET /api/assistant/health-analytics", () => {
       savingOpportunities: ["Set aside target savings"],
       safeSpendAdvice: "Spend under 500 daily.",
       fingerprint,
-      updatedAt: Date.now() - 3600 * 1000, // 1 hour ago
+      updatedAt: Date.now() - 3600 * 1000,
     };
 
     vi.mocked(firebase.getHealthAnalytics).mockResolvedValue(freshReport);

@@ -4,7 +4,6 @@ import { COLORS } from "../theme";
 export interface AnnouncementEmailData {
   subject: string;
   title: string;
-  /** Author-written body. Rendered with `white-space: pre-wrap` so newlines survive. */
   content: string;
   appUrl: string;
   isPreview?: boolean;
@@ -24,8 +23,6 @@ export function buildAnnouncementEmail(data: AnnouncementEmailData): { subject: 
       </td></tr>`
     : "";
 
-  // Announcements use a narrower measure than the data-dense reports — this is
-  // prose, and 600px keeps the line length readable.
   const body = wrap(
     `${previewNotice}
       <tr><td>

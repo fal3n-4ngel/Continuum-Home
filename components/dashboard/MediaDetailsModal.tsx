@@ -17,14 +17,6 @@ const stripHtml = (html: string) => {
   return html.replace(/<[^>]*>/g, "");
 };
 
-// Confidence gate for text-search fallbacks (OMDb "?t=", TVMaze singlesearch,
-// Google Books intitle, OpenLibrary search): these search BY the stored
-// title and can confidently return a different, wrong entity — e.g.
-// searching "Alien 3" matching a documentary called "The Making of 'Alien
-// 3'". A loose substring check would still pass that case (the stored title
-// is literally contained in the wrong result), so this requires the two
-// titles to match exactly once normalized, before any of that branch's
-// year/cover is trusted.
 const normalizeTitle = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "");
 const isConfidentMatch = (storedTitle: string, candidateTitle: string | null | undefined) => {
   if (!candidateTitle) return false;
@@ -33,15 +25,6 @@ const isConfidentMatch = (storedTitle: string, candidateTitle: string | null | u
   return !!a && !!b && a === b;
 };
 
-// One outcome shape shared by every lookup source below. `stop: true` means
-// "a synopsis was found here, don't try further fallback sources" — mirrors
-// the early `return`s the old single mega-function used to have inline.
-// Splitting these out of one function keeps each source's own branching
-// isolated (each is independently trivial to type-check) instead of one
-// ~300-line function threading foundTitle/foundYear/foundCover/omdbSucceeded
-// through five nested try/catch blocks, which is a well-known TypeScript
-// control-flow-analysis slow path — this file alone was taking 10-15x longer
-// to lint than any other file in the project (~60s+ vs ~4-6s).
 interface LookupOutcome {
   synopsis?: string | null;
   director?: string | null;
@@ -84,12 +67,6 @@ async function lookupAnime(anilistId: number): Promise<LookupOutcome> {
   };
 }
 
-// Fetches Trakt's own details, then falls back to OMDb-by-imdbId for
-// director/synopsis/year/cover, then Trakt's People endpoint for director
-// only if OMDb didn't succeed at all. Lets the initial Trakt fetch's
-// exception propagate (uncaught here) so the caller's try/catch can fall
-// through to the next source — matching the original's behavior where only
-// that first fetch failing continues the fallback chain.
 async function lookupTraktDetails(idToken: string | undefined, type: "movie" | "show", traktId: number): Promise<LookupOutcome> {
   const details = await traktRequest(idToken, `${type}s/${traktId}`);
 
@@ -146,8 +123,6 @@ async function lookupTvMazeSummary(title: string): Promise<LookupOutcome> {
       director: data._embedded?.cast?.[0]?.person?.name || null,
       stop: !!data.summary,
     };
-    // Fuzzy text search by the (possibly wrong) stored title — year/cover
-    // only trusted when TVMaze's own result title matches what we searched.
     if (isConfidentMatch(title, data.name)) {
       if (data.premiered) {
         const parsed = parseInt(String(data.premiered).slice(0, 4), 10);
@@ -173,8 +148,6 @@ async function lookupOmdbByTitle(title: string): Promise<LookupOutcome> {
       director: data.Director && data.Director !== "N/A" ? data.Director : null,
       stop: false,
     };
-    // OMDb's "?t=" is an approximate title search, not an id lookup — same
-    // fuzzy-match caveat as TVMaze above.
     if (isConfidentMatch(title, data.Title)) {
       if (data.Year) {
         const parsed = parseInt(String(data.Year).slice(0, 4), 10);
@@ -210,8 +183,6 @@ async function lookupBooks(title: string): Promise<LookupOutcome> {
       const bookTitle = data.items?.[0]?.volumeInfo?.title;
       const bookCover = data.items?.[0]?.volumeInfo?.imageLinks?.thumbnail;
       if (authors && authors.length > 0) author = authors.join(", ");
-      // Books never get a foundTitle suggestion — only year/cover, and only
-      // when the search's own result title matches what we searched for.
       if (isConfidentMatch(title, bookTitle)) {
         if (publishedDate) {
           const parsed = parseInt(String(publishedDate).slice(0, 4), 10);
@@ -268,10 +239,6 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
   const [author, setAuthor] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Lets the user correct title/year/cover art directly from the popup — the
-  // AI agent or a sync source occasionally gets these wrong (or omits year
-  // entirely), and there was previously no way to fix it short of deleting
-  // and re-adding the item.
   const [isEditing, setIsEditing] = useState(false);
   const [displayTitle, setDisplayTitle] = useState(item.title);
   const [displayYear, setDisplayYear] = useState(item.year);
@@ -280,19 +247,7 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
   const [editYear, setEditYear] = useState(item.year != null ? String(item.year) : "");
   const [editCover, setEditCover] = useState(item.coverImage || "");
 
-  // Title/year/cover found from the same lookups already run for the
-  // synopsis (AniList / Trakt / OMDb / TVMaze / Google Books / OpenLibrary —
-  // each is an authoritative source we either looked up by id or searched by
-  // the stored title against). A missing year or cover is backfilled
-  // automatically; a title or year that disagrees with what's stored is
-  // surfaced as one combined "mismatch found" banner rather than
-  // auto-overwritten, since the agent or sync source could just be wrong
-  // about which one is right.
   const [discrepancy, setDiscrepancy] = useState<{ title?: string; year?: number; coverImage?: string } | null>(null);
-  // A missing poster is usually a symptom, not the root problem — the title
-  // that was searched by didn't match anything at all. Surfaced separately
-  // from `discrepancy` because there's nothing to "auto-fix" here; the user
-  // has to supply a corrected title before any lookup can find a cover.
   const [noMatchFound, setNoMatchFound] = useState(false);
 
   useEffect(() => {
@@ -344,9 +299,6 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
       setSynopsis(null);
       setDirector(null);
       setAuthor(null);
-      // Tracked locally rather than via state, since several lookup sources
-      // below can each contribute a value and we want to reconcile once,
-      // after the fetch settles, instead of racing partial state updates.
       let foundTitle: string | null = null;
       let foundYear: number | null = null;
       let foundCover: string | null = null;
@@ -376,7 +328,6 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
           }
         }
 
-        // TVMaze fallback for shows Trakt misses.
         if (item.type === "show") {
           const r = await lookupTvMazeSummary(item.title);
           if (active && r.synopsis) setSynopsis(r.synopsis);
@@ -386,7 +337,6 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
           if (r.stop && active) return;
         }
 
-        // OMDb fallback when Trakt has no synopsis.
         if (item.type === "movie" || item.type === "show") {
           const r = await lookupOmdbByTitle(item.title);
           if (active && r.director) setDirector(r.director);
@@ -421,12 +371,6 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
         if (active) {
           setIsLoading(false);
 
-          // Reconcile once: backfill a missing year or cover silently, and
-          // surface anything that disagrees with what's stored as one
-          // combined "mismatch found" banner instead of separate flows. If
-          // the poster is missing AND the lookup found nothing at all — no
-          // title, no year, no cover — that's usually because the stored
-          // title didn't match anything, not a fluke of a missing image.
           const mismatch: { title?: string; year?: number; coverImage?: string } = {};
           const autoUpdates: Partial<WatchlistItem> = {};
 
@@ -439,9 +383,6 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
           }
           if (foundTitle && foundTitle.trim().toLowerCase() !== item.title.trim().toLowerCase()) {
             mismatch.title = foundTitle;
-            // Only bundle the found cover with the title fix — applying a
-            // "found via a different title" poster on its own, without also
-            // correcting the title, would be confusing.
             if (foundCover && !item.coverImage) mismatch.coverImage = foundCover;
           } else if (foundCover && !item.coverImage) {
             autoUpdates.coverImage = foundCover;
@@ -466,29 +407,20 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
     return () => {
       active = false;
     };
-    // updateWatchItem intentionally omitted: it's a prop from a large parent
-    // component and isn't memoized there, so it gets a new identity on every
-    // parent render. Calling it inside this effect (for the auto-fix) causes
-    // a parent re-render → new updateWatchItem reference → effect re-fires →
-    // calls it again — an infinite refetch loop. We only want this effect to
-    // re-run when the user actually opens a different item.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item, user.idToken]);
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
       <div className="flex w-[500px] max-w-[90%] flex-col gap-4 rounded-card border border-border-subtle bg-[#f4f3ec] p-6 shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)] text-text-primary relative max-h-[85vh] overflow-y-auto">
-        {/* Close Button */}
-        <button 
-          onClick={onClose} 
+        <button
+          onClick={onClose}
           className="absolute top-4.5 right-4.5 cursor-pointer border-none bg-transparent p-1 text-base text-text-secondary hover:text-text-primary transition-colors"
         >
           ✕
         </button>
 
-        {/* Modal Content Layout */}
         <div className="flex gap-5 max-sm:flex-col">
-          {/* Left Column: Poster / Cover */}
           <div className="w-32 shrink-0 max-sm:mx-auto relative">
             {isSafeImageUrl(displayCover) ? (
               <>
@@ -504,7 +436,6 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
             )}
           </div>
 
-          {/* Right Column: Metadata & Synopsis */}
           <div className="flex-1 min-w-0 pr-6">
             <span className="inline-block rounded bg-[#eae8e0] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-text-secondary">
               {item.type === "movie" ? "Movie" : item.type === "show" ? "TV Show" : item.type === "anime" ? "Anime" : "Book"}
@@ -643,7 +574,6 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
               </div>
             )}
 
-            {/* Status & Rating */}
             <div className="mt-4 flex flex-col gap-2.5 border-t border-b border-border-subtle py-3.5">
               <div className="flex justify-between text-xs">
                 <span className="text-text-secondary">Status:</span>
@@ -667,7 +597,6 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
               </div>
             </div>
 
-            {/* Synopsis Section */}
             <div className="mt-4">
               <h4 className="font-serif text-[12px] font-bold text-text-primary">Synopsis</h4>
               <div className="mt-1.5 max-h-[160px] overflow-y-auto pr-1 text-[11.5px] leading-[1.6] text-text-secondary whitespace-pre-line">
@@ -679,7 +608,6 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
               </div>
             </div>
 
-            {/* Additional Info */}
             <div className="mt-4 text-[9.5px] text-text-muted flex flex-col gap-1 border-t border-border-subtle pt-3">
               <p>Last Updated: {new Date(item.updatedAt).toLocaleDateString("en-IN", { dateStyle: "medium" })}</p>
               {item.anilistId && (

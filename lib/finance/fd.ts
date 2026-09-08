@@ -1,7 +1,3 @@
-// Fixed Deposit valuation math — shared by the client (live display in
-// InvestmentsTab/FinancialHealthTab) and the daily cron email, so an FD's
-// value reflects accrued interest automatically instead of requiring the
-// user to manually bump "amount" every time they look at the dashboard.
 
 export type FdCompounding = "monthly" | "quarterly" | "half_yearly" | "yearly";
 
@@ -27,11 +23,6 @@ function yearsBetween(startDate: string, asOf: Date): number {
   return diff > 0 ? diff / MS_PER_YEAR : 0;
 }
 
-// Standard compound interest: A = P * (1 + r/n)^(n*t). Growth is capped at
-// the maturity date — once an FD matures, banks stop compounding at the
-// contracted rate (it's either renewed at a new rate or swept to a savings
-// account), so projecting further at the original rate would overstate the
-// balance.
 export function computeFdValue(
   principal: number,
   annualRatePct: number,
@@ -77,11 +68,6 @@ interface FdLikeAsset {
   compounding?: FdCompounding;
 }
 
-// Single source of truth for "what is this asset actually worth right now."
-// For every non-FD category the stored `amount` is authoritative (kept fresh
-// by live price sync). For an FD there's no live price feed, so the accrued
-// value is derived from the interest terms instead of trusting a possibly
-// stale stored `amount`.
 export function getEffectiveAmount(asset: FdLikeAsset, asOf: Date = new Date()): number {
   if (asset.category === "fixed_deposit" && asset.interestRate && asset.startDate) {
     const principal = asset.investedAmount ?? asset.amount;

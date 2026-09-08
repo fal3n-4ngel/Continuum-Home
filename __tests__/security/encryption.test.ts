@@ -26,7 +26,6 @@ describe("Fail-Closed Encryption & Versioned Decryption", () => {
   it("handles legacy unversioned iv:tag:cipher payloads for backward compatibility", () => {
     const raw = "Legacy encrypted title";
     const encrypted = encrypt(raw);
-    // Remove v1: prefix to simulate legacy payload
     const legacyPayload = encrypted.replace(/^v1:/, "");
     const decrypted = decrypt(legacyPayload);
     expect(decrypted).toBe(raw);

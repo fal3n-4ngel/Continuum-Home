@@ -8,7 +8,7 @@ interface MediaState {
   setIsFetchingWatchlist: (is: boolean) => void;
   watchlistLoaded: boolean;
   setWatchlistLoaded: (loaded: boolean) => void;
-  
+
   mediaQuery: string;
   setMediaQuery: (s: string) => void;
   mediaType: "movie" | "show" | "anime" | "book";
@@ -21,14 +21,14 @@ interface MediaState {
   setWatchlistFilter: (f: "all" | "anime" | "movie" | "show") => void;
   isEnrichingPosters: boolean;
   setIsEnrichingPosters: (is: boolean) => void;
-  
+
   showLetterboxdModal: boolean;
   setShowLetterboxdModal: (show: boolean) => void;
   letterboxdUsername: string;
   setLetterboxdUsername: (u: string) => void;
   isImportingLetterboxd: boolean;
   setIsImportingLetterboxd: (is: boolean) => void;
-  
+
   bookQuery: string;
   setBookQuery: (s: string) => void;
   isSearchingBooks: boolean;
@@ -39,7 +39,7 @@ interface MediaState {
   setBookFilter: (f: "all" | "reading" | "to_read" | "completed") => void;
   isEnrichingBookCovers: boolean;
   setIsEnrichingBookCovers: (is: boolean) => void;
-  
+
   anilistUser: AniListUser | null;
   setAnilistUser: (u: AniListUser | null) => void;
   traktUser: TraktUser | null;
@@ -53,7 +53,7 @@ export const useMediaStore = create<MediaState>((set) => ({
   setIsFetchingWatchlist: (isFetchingWatchlist) => set({ isFetchingWatchlist }),
   watchlistLoaded: false,
   setWatchlistLoaded: (watchlistLoaded) => set({ watchlistLoaded }),
-  
+
   mediaQuery: "",
   setMediaQuery: (mediaQuery) => set({ mediaQuery }),
   mediaType: "movie",
@@ -66,14 +66,14 @@ export const useMediaStore = create<MediaState>((set) => ({
   setWatchlistFilter: (watchlistFilter) => set({ watchlistFilter }),
   isEnrichingPosters: false,
   setIsEnrichingPosters: (isEnrichingPosters) => set({ isEnrichingPosters }),
-  
+
   showLetterboxdModal: false,
   setShowLetterboxdModal: (showLetterboxdModal) => set({ showLetterboxdModal }),
   letterboxdUsername: "",
   setLetterboxdUsername: (letterboxdUsername) => set({ letterboxdUsername }),
   isImportingLetterboxd: false,
   setIsImportingLetterboxd: (isImportingLetterboxd) => set({ isImportingLetterboxd }),
-  
+
   bookQuery: "",
   setBookQuery: (bookQuery) => set({ bookQuery }),
   isSearchingBooks: false,
@@ -84,7 +84,7 @@ export const useMediaStore = create<MediaState>((set) => ({
   setBookFilter: (bookFilter) => set({ bookFilter }),
   isEnrichingBookCovers: false,
   setIsEnrichingBookCovers: (isEnrichingBookCovers) => set({ isEnrichingBookCovers }),
-  
+
   anilistUser: null,
   setAnilistUser: (anilistUser) => set({ anilistUser }),
   traktUser: null,

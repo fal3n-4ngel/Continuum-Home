@@ -1,10 +1,3 @@
-// Single Discord webhook sender for the whole app. Alert payloads are the
-// last line of defence when something breaks unattended (crons, background
-// jobs), so the failure modes here matter: a malformed embed is rejected by
-// Discord with a 400 and the alert vanishes. Everything below is built to
-// make that impossible — values are truncated to Discord's documented
-// limits before sending, and a non-2xx response is logged rather than
-// silently swallowed.
 
 export interface DiscordEmbedField {
   name: string;
@@ -21,7 +14,6 @@ export interface DiscordEmbed {
   timestamp?: string;
 }
 
-// https://discord.com/developers/docs/resources/message#embed-object-embed-limits
 const MAX_TITLE = 256;
 const MAX_DESCRIPTION = 4096;
 const MAX_FIELD_NAME = 256;
@@ -38,13 +30,9 @@ function clamp(text: string, max: number): string {
   return `${text.slice(0, max - 1)}…`;
 }
 
-// Wraps text in a fenced code block that is guaranteed to still fit inside a
-// field value once the fences are added — used for stack traces and error
-// logs, where truncating after the fact would strip the closing fence and
-// leave Discord rendering the rest of the embed as code.
 export function codeBlock(text: string, max: number = MAX_FIELD_VALUE): string {
   const fence = "```";
-  const budget = max - fence.length * 2 - 2; // 2 newlines
+  const budget = max - fence.length * 2 - 2;
   return `${fence}\n${clamp(text, budget)}\n${fence}`;
 }
 
@@ -74,8 +62,6 @@ export async function postDiscordEmbed(embed: DiscordEmbed): Promise<void> {
       body: JSON.stringify({ username: "Continuum Alerts", embeds: [safeEmbed] }),
     });
     if (!res.ok) {
-      // Don't throw — an unsendable alert must never take down the request
-      // that was trying to report a problem in the first place.
       console.error(`Discord webhook rejected alert (${res.status}): ${await res.text()}`);
     }
   } catch (e) {

@@ -10,12 +10,11 @@ export const metadata = {
 
 export default function PrivacyPolicyPage() {
   const containerClass = "max-w-[700px] mx-auto flex flex-col gap-6 text-text-primary leading-relaxed";
-  
+
   return (
     <div className="min-h-screen bg-[#f4f3ec] p-10 max-md:p-5">
       <div className={containerClass}>
-        
-        {/* Header */}
+
         <div className="flex items-center justify-between border-b border-border-subtle pb-5">
           <div className="flex items-center gap-3">
             <Shield className="h-6 w-6 text-text-primary" />
@@ -26,9 +25,8 @@ export default function PrivacyPolicyPage() {
           </Link>
         </div>
 
-        {/* Content Body */}
         <div className="bg-white rounded-card border border-border-subtle p-8 max-md:p-6 shadow-subtle flex flex-col gap-6 text-sm text-text-secondary">
-          
+
           <section className="flex flex-col gap-2">
             <h2 className="font-serif text-base font-bold text-text-primary">1. Introduction</h2>
             <p>
@@ -39,7 +37,7 @@ export default function PrivacyPolicyPage() {
           <section className="flex flex-col gap-2">
             <h2 className="font-serif text-base font-bold text-text-primary">2. Data Collection & Ownership</h2>
             <p>
-              All your transaction ledger, subscriptions, libraries, notes, and investment data are stored directly inside your personal **Firebase Firestore database**. 
+              All your transaction ledger, subscriptions, libraries, notes, and investment data are stored directly inside your personal **Firebase Firestore database**.
             </p>
             <ul className="list-disc pl-5 flex flex-col gap-1.5 mt-1">
               <li>
@@ -110,7 +108,6 @@ export default function PrivacyPolicyPage() {
 
         </div>
 
-        {/* Footer */}
         <p className="text-center text-[10px] text-text-muted mt-4">
           Last updated: {new Date().toLocaleDateString("en-IN", { dateStyle: "long" })} • {SITE_NAME}
         </p>

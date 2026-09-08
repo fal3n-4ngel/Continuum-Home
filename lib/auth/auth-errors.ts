@@ -1,7 +1,3 @@
-// Firebase auth error codes are technical ("Firebase: Error (auth/popup-blocked).")
-// — surfaced from confirmed real-world reports, ad blockers (AdGuard etc.) and
-// privacy extensions are a common cause of the popup-flavored ones, since they
-// intercept window.open() the same way they'd block an ad popup.
 export function friendlyAuthErrorMessage(e: { code?: string; message?: string }): string {
   switch (e.code) {
     case "auth/popup-blocked":
@@ -19,11 +15,6 @@ export function friendlyAuthErrorMessage(e: { code?: string; message?: string })
   }
 }
 
-// auth/network-request-failed is included in the popup->redirect fallback
-// trigger list too: an ad blocker or privacy extension (confirmed in
-// practice: AdGuard) can intercept the popup's underlying request rather
-// than the window.open() call itself, surfacing as a network failure
-// instead of a clean popup-blocked code.
 export const POPUP_FALLBACK_CODES = new Set([
   "auth/popup-blocked",
   "auth/popup-closed-by-user",

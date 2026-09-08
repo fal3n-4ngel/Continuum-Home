@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { notifyError } from "./error-notifier";
 
-// Error with an HTTP status, safe to surface to the client verbatim.
 export class ApiError extends Error {
   status: number;
 
@@ -21,9 +20,6 @@ const STATUS_LABELS: Record<number, string> = {
   502: "Bad Gateway",
 };
 
-// Maps any thrown value to a JSON error response. Only ApiError messages are
-// exposed; anything else is logged server-side and returned as an opaque 500 so
-// internals (stack traces, upstream URLs, config details) never leak.
 export function toErrorResponse(error: unknown, context: string): NextResponse {
   let status = 500;
 

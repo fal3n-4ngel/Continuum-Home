@@ -1,5 +1,3 @@
-// Maps common subscription name patterns to their logo.dev domain, so the
-// subscriptions tab can show a real brand icon without the user picking one.
 const SUB_LOGO_MAP: [RegExp, string][] = [
   [/netflix/i, "netflix.com"],
   [/spotify|sportofy/i, "spotify.com"],

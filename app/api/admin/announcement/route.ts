@@ -31,7 +31,6 @@ export const POST = withAdmin("POST /api/admin/announcement", async (req) => {
   const finalHtml = built.html;
 
   if (action === "preview") {
-    // Send only to admin
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
@@ -46,7 +45,6 @@ export const POST = withAdmin("POST /api/admin/announcement", async (req) => {
     if (!res.ok) throw new Error(`Resend failed: ${await res.text()}`);
     return NextResponse.json({ success: true, message: `Preview sent to ${env.ADMIN_EMAIL}` });
   } else {
-    // Send to all users
     const users = await listAllUsers();
     const validEmails = users
       .map((u) => u.email)
@@ -56,7 +54,6 @@ export const POST = withAdmin("POST /api/admin/announcement", async (req) => {
       return NextResponse.json({ success: true, message: "No registered users to send to." });
     }
 
-    // Send emails
     const results = await Promise.all(
       validEmails.map(async (email) => {
         try {
@@ -84,7 +81,7 @@ export const POST = withAdmin("POST /api/admin/announcement", async (req) => {
     waitUntil(sendDiscordEmbed(
       "Admin Audit Log",
       `Admin broadcasted an announcement: **${subject}**\nDelivered to ${successCount} users (${failedCount} failed).`,
-      10181046, // Purple Hex
+      10181046,
       "Continuum Dashboard • Admin Audit"
     ));
 

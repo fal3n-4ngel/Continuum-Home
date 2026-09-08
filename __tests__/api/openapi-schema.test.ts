@@ -11,7 +11,6 @@ describe("openapi portfolio schema parity", () => {
     expect(asset.properties.category.enum).toEqual(expectedCategories);
     expect(patch.properties.category.enum).toEqual(expectedCategories);
 
-    // Every field validateInvestmentAsset() accepts must be documented.
     const expected = [
       "id", "name", "category", "amount", "investedAmount", "quantity", "buyPrice",
       "currentPrice", "previousClose", "notes", "createdAt", "isSold", "soldAt",
@@ -20,7 +19,6 @@ describe("openapi portfolio schema parity", () => {
     ];
     expect(Object.keys(asset.properties).sort()).toEqual([...expected].sort());
 
-    // Patch documents the same fields minus the server-owned ones.
     const patchExpected = expected.filter((f) => f !== "id" && f !== "createdAt");
     expect(Object.keys(patch.properties).sort()).toEqual([...patchExpected].sort());
 

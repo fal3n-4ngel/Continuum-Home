@@ -24,9 +24,8 @@ export const DataCorrectionModal: React.FC<DataCorrectionModalProps> = ({
   getHeaders,
   triggerAlert,
 }) => {
-  const [isMerging, setIsMerging] = useState<string | null>(null); // group key
+  const [isMerging, setIsMerging] = useState<string | null>(null);
 
-  // Group items by normalized title and type
   const duplicateGroups = useMemo(() => {
     const groups: Record<string, WatchlistItem[]> = {};
     for (const item of watchlist) {
@@ -35,8 +34,7 @@ export const DataCorrectionModal: React.FC<DataCorrectionModalProps> = ({
       if (!groups[key]) groups[key] = [];
       groups[key].push(item);
     }
-    
-    // Only return groups that actually have duplicates (length > 1)
+
     return Object.entries(groups)
       .filter(([_, items]) => items.length > 1)
       .map(([key, items]) => ({ key, items }));
@@ -47,7 +45,6 @@ export const DataCorrectionModal: React.FC<DataCorrectionModalProps> = ({
     setIsMerging(groupKey);
 
     try {
-      // Pick the "primary" item - prioritize items that have external IDs, then higher progress
       const sorted = [...items].sort((a, b) => {
         const aScore = (a.anilistId ? 100 : 0) + (a.traktId ? 100 : 0) + Number(a.progress || 0);
         const bScore = (b.anilistId ? 100 : 0) + (b.traktId ? 100 : 0) + Number(b.progress || 0);
@@ -57,7 +54,6 @@ export const DataCorrectionModal: React.FC<DataCorrectionModalProps> = ({
       const primary = sorted[0];
       const duplicates = sorted.slice(1);
 
-      // Construct merged data by taking the best attributes from all
       const mergedData: Partial<WatchlistItem> = { ...primary };
       for (const dup of duplicates) {
         if (!mergedData.anilistId && dup.anilistId) mergedData.anilistId = dup.anilistId;
@@ -65,10 +61,9 @@ export const DataCorrectionModal: React.FC<DataCorrectionModalProps> = ({
         if (!mergedData.coverImage && dup.coverImage) mergedData.coverImage = dup.coverImage;
         if (!mergedData.year && dup.year) mergedData.year = dup.year;
         if (!mergedData.totalEpisodes && dup.totalEpisodes) mergedData.totalEpisodes = dup.totalEpisodes;
-        // Keep highest progress
         if (Number(dup.progress || 0) > Number(mergedData.progress || 0)) {
           mergedData.progress = dup.progress;
-          mergedData.status = dup.status; // inherit status of the highest progress
+          mergedData.status = dup.status;
         }
       }
 
@@ -146,7 +141,7 @@ export const DataCorrectionModal: React.FC<DataCorrectionModalProps> = ({
                       {isMerging === key ? "Merging..." : "Merge Group"}
                     </button>
                   </div>
-                  
+
                   <div className="space-y-2">
                     {items.map((item) => (
                       <div key={item.id} className="flex items-center justify-between rounded bg-bg-card px-3 py-2 text-[13px] border border-border-subtle/50">

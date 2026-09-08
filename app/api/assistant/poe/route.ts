@@ -5,8 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   const encoder = new TextEncoder();
-  
-  // Set up headers for Server-Sent Events stream
+
   const responseHeaders = {
     "Content-Type": "text/event-stream",
     "Cache-Control": "no-cache, no-transform",
@@ -31,9 +30,8 @@ export async function POST(req: NextRequest) {
 
         const fakeHeaders = new Headers();
         fakeHeaders.set("authorization", `Bearer ${key}`);
-        
+
         try {
-          // Construct fake request for authentication check
           const fakeReq = new NextRequest(req.url, { headers: fakeHeaders });
           await requireUser(fakeReq);
         } catch (err: any) {
@@ -62,8 +60,7 @@ export async function POST(req: NextRequest) {
         }
 
         const lastMessage = query[query.length - 1]?.content || "";
-        
-        // Convert Poe history role "assistant" to Gemini sdk role "model"
+
         const geminiHistory = query.slice(0, -1).map((q: any) => ({
           role: q.role === "assistant" ? "model" : "user",
           parts: [{ text: q.content }]

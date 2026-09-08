@@ -1,9 +1,3 @@
-// Single source of truth for email CSS, shared by the crons and the admin
-// preview. Two defensive quirks are deliberate:
-//   `-webkit-text-fill-color` alongside `color`, because iOS Mail and Gmail
-//   dark mode override plain colour; and `linear-gradient(X, X)` alongside
-//   `background-color`, because those clients repaint flat backgrounds but
-//   leave gradients alone. Both gradients are solid colours by design.
 
 export const EMAIL_CSS = `
     :root { color-scheme: light; supported-color-schemes: light; }

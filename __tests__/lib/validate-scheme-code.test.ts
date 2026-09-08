@@ -5,9 +5,6 @@ function assetWith(mfSchemeCode: unknown) {
   return { assets: [{ name: "HDFC Mid Cap", category: "sip", amount: 1000, investedAmount: 1000, mfSchemeCode }] };
 }
 
-// mfSchemeCode is interpolated into the mfapi.in NAV request in lib/prices.ts,
-// so rejecting a malformed one at the API boundary is a request-forgery guard,
-// not just input tidiness.
 describe("mfSchemeCode validation", () => {
   it("accepts a numeric AMFI scheme code", () => {
     const [asset] = validatePortfolioAssets(assetWith("118989"));

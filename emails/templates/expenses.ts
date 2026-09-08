@@ -29,8 +29,6 @@ export interface ExpensesEmailData {
   isPreview?: boolean;
 }
 
-// The hero deliberately breaks from the neutral palette to match the blue
-// "Total Spent" tile on the dashboard, so the email reads as the same product.
 const HERO_BG = "#bfdbfe";
 const HERO_BORDER = "#93c5fd";
 const HERO_RULE = "#3b82f6";

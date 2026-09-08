@@ -9,14 +9,8 @@ import { reserveGeminiCall } from "@/lib/integrations";
 import { env } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-// Gemini free-tier throttling (13s between calls, see GEMINI_MIN_INTERVAL_MS
-// below) means this route now runs for roughly (users × 4 types × 13s).
-// Bump this if you add users and the cron starts timing out — and note
-// Vercel's plan-level cap on function duration still applies on top of this
-// (e.g. Hobby plans cap lower than Pro regardless of this value).
 export const maxDuration = 300;
 
-// Calculate calendar date in IST (UTC+5:30)
 function getCalendarIstDate() {
   const nowUtc = new Date();
   const istOffset = 5.5 * 60 * 60 * 1000;
@@ -35,18 +29,9 @@ function sleep(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// The free Gemini tier caps gemini-2.5-flash at 5 requests/minute PER
-// PROJECT (not per user), so this has to throttle across the whole cron
-// run, not just within one user. lastGeminiCallAt is module-scoped rather
-// than per-user so every generateContent() call anywhere in this
-// invocation shares the same clock. 13s spacing keeps 60/13 ≈ 4.6 req/min,
-// just under the 5/min ceiling.
 const GEMINI_MIN_INTERVAL_MS = 13_000;
 let lastGeminiCallAt = 0;
 
-// Pulls the server-suggested wait out of a Gemini 429's RetryInfo detail,
-// e.g. { retryDelay: "48s" }. Returns null if the error isn't a parseable
-// quota error, in which case the caller shouldn't bother retrying.
 function extractRetryDelayMs(err: any): number | null {
   const details = err?.errorDetails;
   if (!Array.isArray(details)) return null;
@@ -100,17 +85,11 @@ async function processUser(user: AdminUser, geminiApiKey: string, dateStr: strin
     },
   });
 
-  // Sequential, not Promise.all: concurrent calls would burst 4 requests at
-  // once against a 5-req/min quota shared across every user in this run.
   const outcomes: boolean[] = [];
   for (const type of TYPES) {
     outcomes.push(
       await (async () => {
       try {
-        // Shared daily budget with the on-demand fallback route
-        // (app/api/assistant/recommendations) — this cron run alone can use
-        // up to users × 4 types, so it needs to respect the same cap rather
-        // than assuming it owns the whole day's quota.
         const withinBudget = await reserveGeminiCall();
         if (!withinBudget) {
           console.warn(`[Cron Recs] Daily Gemini budget exhausted, skipping "${type}" for uid ${user.uid}`);
@@ -170,7 +149,6 @@ Return no other text or markdown blocks. Just the raw JSON object.
         const replyText = await generateThrottled(model, prompt);
         const geminiResult = JSON.parse(replyText.trim());
 
-        // Enrichment (Quick, single-attempt lookup)
         let coverImage: string | null = null;
         let score: string | null = null;
 

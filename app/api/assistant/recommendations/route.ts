@@ -7,16 +7,15 @@ import { reserveGeminiCall, acquireGenerationLock, isGeminiQuotaError } from "@/
 
 export const dynamic = "force-dynamic";
 
-// Calculate active recommendation date in IST (UTC+5:30) with 6 AM rollover
 function getActiveIstDate() {
   const nowUtc = new Date();
   const istOffset = 5.5 * 60 * 60 * 1000;
   const nowIst = new Date(nowUtc.getTime() + istOffset);
-  
+
   if (nowIst.getUTCHours() < 6) {
     nowIst.setUTCDate(nowIst.getUTCDate() - 1);
   }
-  
+
   const yyyy = nowIst.getUTCFullYear();
   const mm = String(nowIst.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(nowIst.getUTCDate()).padStart(2, "0");
@@ -26,7 +25,7 @@ function getActiveIstDate() {
 export async function GET(req: NextRequest) {
   try {
     const session = await requireUser(req);
-    const type = req.nextUrl.searchParams.get("type") || "movie"; // "movie", "show", "anime", or "book"
+    const type = req.nextUrl.searchParams.get("type") || "movie";
 
     const dateStr = getActiveIstDate();
     const key = `${type}_${dateStr}`;
@@ -36,21 +35,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ recommendation: currentRec });
     }
 
-    // Fallback for users the nightly cron missed.
-    // Rate-guarded on two axes since this path (unlike the cron) can be hit
-    // concurrently and unboundedly — by multiple tabs/widgets for the same
-    // user, and by every user at once — against a tiny 20/day free-tier cap
-    // shared across the whole project:
-    //   - acquireGenerationLock: only one concurrent request per (user, type,
-    //     day) actually calls Gemini; the rest just miss this round and pick
-    //     up the saved result on their next poll.
-    //   - reserveGeminiCall: a shared daily budget across this route AND the
-    //     cron, so this fallback can't blow through whatever the cron
-    //     already spent today.
-    // Both degrade to an empty recommendation (200, recommendation: null)
-    // rather than an error — the frontend already treats that as "nothing to
-    // show yet," so no error UI and no Discord alert for an expected,
-    // handled condition.
     const gotLock = await acquireGenerationLock(session.uid, type, dateStr);
     if (!gotLock) {
       return NextResponse.json({ recommendation: null });
@@ -74,7 +58,7 @@ export async function GET(req: NextRequest) {
       const books = allItems.filter((i) => i.type === "book");
       const readList = books.filter((b) => b.status === "completed").map((b) => b.title).slice(-15);
       const planList = books.filter((b) => b.status === "plan_to_watch").map((b) => b.title).slice(-15);
-      
+
       prompt = `
 You are a premium library assistant. Based on the user's reading lists:
 Completed books: ${JSON.stringify(readList)}
@@ -132,10 +116,6 @@ Return no other text, comments or markdown blocks. Just the raw JSON object.
       const response = await model.generateContent(prompt);
       replyText = response.response.text();
     } catch (err) {
-      // Safety net: reserveGeminiCall()'s own count can still drift from
-      // Google's real usage (the cron spends against the same budget from a
-      // separate process). Degrade the same way a budget/lock miss does,
-      // instead of a raw 500 + Discord alert for an already-expected condition.
       if (isGeminiQuotaError(err)) {
         return NextResponse.json({ recommendation: null });
       }
@@ -143,7 +123,6 @@ Return no other text, comments or markdown blocks. Just the raw JSON object.
     }
     const geminiResult = JSON.parse(replyText.trim());
 
-    // Quick single-attempt lookup
     let coverImage: string | null = null;
     let score: string | null = null;
 
@@ -204,7 +183,6 @@ Return no other text, comments or markdown blocks. Just the raw JSON object.
       date: dateStr,
     };
 
-    // Save to Firestore so it's cached for future loads
     await saveDailyRecommendation(session, type, dateStr, payload);
 
     return NextResponse.json({ recommendation: payload });
@@ -213,7 +191,6 @@ Return no other text, comments or markdown blocks. Just the raw JSON object.
   }
 }
 
-// POST endpoint to update the isLogged status of a recommendation
 export async function POST(req: NextRequest) {
   try {
     const session = await requireUser(req);

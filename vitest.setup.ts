@@ -1,7 +1,6 @@
 import "@testing-library/jest-dom";
 import { vi } from "vitest";
 
-// Mock Firebase Admin module globally for integration tests
 vi.mock("@/lib/firebase/firebase-admin", () => ({
   getAdminDb: vi.fn().mockReturnValue(null),
   requireUser: vi.fn(),
@@ -28,23 +27,17 @@ vi.mock("@/lib/firebase/firebase-admin", () => ({
   ]),
   adminUpdatePortfolioValuationHistory: vi.fn().mockResolvedValue(true),
   adminSaveDailyRecommendation: vi.fn().mockResolvedValue(true),
-  // Opted in to everything, matching the real "missing key means subscribed"
-  // default — so cron tests exercise the send path rather than the skip path.
   adminGetEmailSubscriptions: vi.fn().mockResolvedValue({ expenses: true, portfolio: true, subscriptions: true }),
   adminSetEmailSubscriptions: vi.fn().mockResolvedValue(undefined),
 }));
 
-// Mock prices module
 const mockPrice = { priceInr: 2600, priceUsd: 31.14, previousCloseInr: 2580, previousCloseUsd: 30.9 };
 vi.mock("@/lib/prices", () => ({
   fetchAssetPrice: vi.fn().mockResolvedValue(mockPrice),
-  // Mirrors the real factory's shape — the cron routes call this once per run
-  // and pass the returned fetcher down into per-user processing.
   createPriceFetcher: vi.fn(() => vi.fn().mockResolvedValue(mockPrice)),
   getUsdToInrRate: vi.fn().mockResolvedValue(83.5),
 }));
 
-// Mock auth module
 vi.mock("@/lib/auth", () => ({
   buildUnsubscribeUrl: vi.fn((email: string, topic: string) => `http://localhost:3000/api/unsubscribe?token=mocked_${topic}`),
   requireUser: vi.fn().mockImplementation(async (req: any) => {

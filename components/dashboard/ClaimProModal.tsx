@@ -69,15 +69,12 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
         className="relative w-full max-h-[92dvh] overflow-y-auto rounded-t-[16px] sm:rounded-[12px] sm:w-[460px] sm:max-w-[92vw] border-x border-t border-border-subtle sm:border bg-bg-card shadow-[0_-8px_32px_rgba(0,0,0,0.1)] sm:shadow-[0_16px_48px_rgba(0,0,0,0.12)] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Mobile drag handle */}
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
           <div className="h-1 w-10 rounded-full bg-border-subtle" />
         </div>
 
-        {/* Thin accent bar at top */}
         <div className="h-[2px] w-full bg-text-primary" />
 
-        {/* Header */}
         <div className="flex items-start justify-between px-7 pt-6 pb-5 border-b border-border-subtle">
           <div>
             <p className="font-mono text-[9px] font-bold uppercase tracking-[1.2px] text-text-muted mb-1.5">Pro Access</p>
@@ -97,7 +94,6 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
 
         <div className="px-7 py-6 flex flex-col gap-6">
           {submitState === "success" ? (
-            /* ─── Success ─── */
             <div className="flex flex-col items-center gap-5 py-4 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border-subtle bg-bg-primary">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="text-text-primary">
@@ -118,7 +114,6 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
               </button>
             </div>
           ) : submitState === "already_pending" ? (
-            /* ─── Already pending ─── */
             <div className="flex flex-col items-center gap-5 py-4 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border-subtle bg-bg-primary">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-secondary">
@@ -139,10 +134,8 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
               </button>
             </div>
           ) : (
-            /* ─── Form ─── */
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
-              {/* Pro perks — minimal list */}
               <div className="flex flex-col gap-2 rounded-[8px] border border-border-subtle bg-bg-primary px-4 py-3.5">
                 <p className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted mb-0.5">Included with Pro</p>
                 {[
@@ -157,7 +150,6 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
                 ))}
               </div>
 
-              {/* Sponsor links */}
               <div className="flex flex-col gap-2">
                 <p className="text-[11px] font-semibold text-text-secondary">Support the project first</p>
                 <div className="flex gap-2">
@@ -186,7 +178,6 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
                 </div>
               </div>
 
-              {/* Platform toggle */}
               <div className="flex flex-col gap-2">
                 <p className="text-[11px] font-semibold text-text-secondary">Where did you support?</p>
                 <div className="flex gap-1.5 rounded-[8px] border border-border-subtle bg-bg-primary p-1">
@@ -207,7 +198,6 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
                 </div>
               </div>
 
-              {/* Handle */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="pro-handle" className="text-[11px] font-semibold text-text-secondary">
                   {platform === "github" ? "GitHub username" : "Supporter email"}
@@ -228,7 +218,6 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
                 </p>
               </div>
 
-              {/* Note (optional) */}
               <div className="flex flex-col gap-1.5">
                 <label htmlFor="pro-note" className="text-[11px] font-semibold text-text-secondary">
                   Additional note <span className="font-normal text-text-muted">(optional)</span>
@@ -243,12 +232,10 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
                 />
               </div>
 
-              {/* Error */}
               {submitState === "error" && (
                 <p className="text-[11.5px] text-[#b3666b]">{errorMsg}</p>
               )}
 
-              {/* Actions */}
               <div className="flex gap-2.5 pt-1">
                 <button
                   type="button"

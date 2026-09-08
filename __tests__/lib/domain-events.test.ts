@@ -9,12 +9,10 @@ import {
 import { DOMAIN_EVENTS } from "@/lib/domain-events/types";
 import * as errorNotifier from "@/lib/utils/error-notifier";
 
-// Mock Next.js after() to execute immediately for testing
 vi.mock("next/server", () => ({
   after: (fn: () => Promise<void>) => fn(),
 }));
 
-// Mock errorNotifier
 vi.mock("@/lib/utils/error-notifier", () => ({
   notifyError: vi.fn(),
 }));
@@ -52,7 +50,6 @@ describe("Domain Events Client Resilience & Retry Queue", () => {
       payload: { amount: 50 },
     });
 
-    // Give microtask queue time to run
     await new Promise((r) => setTimeout(r, 20));
 
     expect(getPendingDomainEventsCount()).toBe(1);
@@ -88,12 +85,10 @@ describe("Domain Events Client Resilience & Retry Queue", () => {
     await new Promise((r) => setTimeout(r, 20));
 
     expect(getPendingDomainEventsCount()).toBe(2);
-    // Should be called only once due to 15-minute throttle
     expect(errorNotifier.notifyError).toHaveBeenCalledTimes(1);
   });
 
   it("flushes pending events successfully when postback service recovers", async () => {
-    // First call fails
     globalThis.fetch = vi.fn().mockResolvedValueOnce({
       ok: false,
       status: 503,
@@ -109,7 +104,6 @@ describe("Domain Events Client Resilience & Retry Queue", () => {
 
     expect(getPendingDomainEventsCount()).toBe(1);
 
-    // Subsequent calls succeed
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,

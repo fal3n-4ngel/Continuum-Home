@@ -49,12 +49,10 @@ export default function LoginPage() {
         if (!cancelled && !auth.currentUser) {
           const hasAttempted = sessionStorage.getItem("redirect_sent");
           if (hasAttempted) {
-            // Already attempted redirect once and came back unauthenticated -> stop loop!
             sessionStorage.removeItem("redirect_sent");
             setStatus("error");
             setError("Unable to complete sign-in. Please try again from the main page.");
           } else {
-            // First time on /login -> initiate redirect
             sessionStorage.setItem("redirect_sent", "1");
             setStatus("redirecting");
             await signInWithRedirect(auth, new GoogleAuthProvider());

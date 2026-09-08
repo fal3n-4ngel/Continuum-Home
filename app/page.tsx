@@ -1,5 +1,5 @@
 "use client";
-import { SITE_NAME } from "@/lib/utils";
+import { SITE_NAME, getAuthHeaders } from "@/lib/utils";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
@@ -26,7 +26,6 @@ import { useExpensesStore } from "@/lib/stores/expenses-store";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
 
-// Modular Dashboard Components
 import LandingPage from "@/components/landing/LandingPage";
 import dynamic from "next/dynamic";
 import { Sidebar } from "@/components/dashboard/Sidebar";
@@ -40,7 +39,6 @@ import { ClaimProModal } from "@/components/dashboard/ClaimProModal";
 import { DataCorrectionModal } from "@/components/dashboard/DataCorrectionModal";
 import { DeleteAccountModal } from "@/components/dashboard/DeleteAccountModal";
 
-// Dynamically import heavy dashboard tabs to optimize initial bundle size
 const ExpensesTab = dynamic(() => import("@/components/dashboard/ExpensesTab").then((mod) => mod.ExpensesTab));
 const SubscriptionsTab = dynamic(() => import("@/components/dashboard/SubscriptionsTab").then((mod) => mod.SubscriptionsTab));
 const WatchlistTab = dynamic(() => import("@/components/dashboard/WatchlistTab").then((mod) => mod.WatchlistTab));
@@ -62,8 +60,6 @@ interface FirebaseAuthModule {
   signOut: (auth: Auth) => Promise<void>;
 }
 
-// Ticker/symbol lookup only makes sense for these investment categories — FD,
-// cash, gold, and other are free-text labels with nothing to search a market for.
 const TICKER_SEARCH_CATEGORIES: InvestmentCategory[] = ["equity", "crypto", "mutual_fund", "sip"];
 
 export default function Dashboard() {
@@ -77,14 +73,12 @@ export default function Dashboard() {
   const { expenseTab, confirmDlg, setConfirmDlg, triggerConfirm } = useUiStore();
   const { user, setUser, authLoading, setAuthLoading, isProUser, setIsProUser } = useAuthStore();
 
-  /* ─── State ─── */
   const [activeTab, setActiveTab] = useState<string>("expenses");
   const [mediaSubTab, setMediaSubTab] = useState<"watchlist" | "books" | "integrations">("watchlist");
   const [selectedMediaItem, setSelectedMediaItem] = useState<WatchlistItem | null>(null);
   const [firebaseAuth, setFirebaseAuth] = useState<FirebaseAuthModule | null>(null);
   const [isEmbedded, setIsEmbedded] = useState(false);
 
-  /* ─── URL Tab Router (for iframe embedding & deep linking) ─── */
   useEffect(() => {
     if (typeof window !== "undefined") {
       const searchParams = new URLSearchParams(window.location.search);
@@ -110,38 +104,20 @@ export default function Dashboard() {
     }
   }, []);
 
-
-
-  // Integrations
   const [anilistUser, setAnilistUser] = useState<AniListUser | null>(null);
   const [traktUser, setTraktUser] = useState<TraktUser | null>(null);
 
-  // Currency & Navigation
   const [currency, setCurrencyState] = useState<string>(() => {
     if (typeof window === "undefined") return "₹";
     const cached = window.localStorage.getItem("phub_currency");
     return getCurrencySymbol(cached);
   });
-  
 
-  // Expenses State
-  
-  
-  
   const [watchlistLoaded, setWatchlistLoaded] = useState(false);
   const [subscriptionsLoaded, setSubscriptionsLoaded] = useState(false);
   const [investmentsLoaded, setInvestmentsLoaded] = useState(false);
   const [settingsLoaded, setSettingsLoaded] = useState(false);
-  
-  
-  
-  
-  
-  
-  
-  
 
-  // Filters & Analytics
   const [timeFilter, setTimeFilterState] = useState<"7" | "30" | "90" | "salary" | "all">(() => {
     if (typeof window === "undefined") return "all";
     const cached = window.localStorage.getItem("phub_time_filter");
@@ -166,15 +142,7 @@ export default function Dashboard() {
     subscriptions: true,
   });
   const [showClaimPro, setShowClaimPro] = useState(false);
-  
-  
-  
-  
-  
-  
-  
 
-  // Subscriptions State
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [isFetchingSubscriptions, setIsFetchingSubscriptions] = useState(false);
   const [subName, setSubName] = useState("");
@@ -184,7 +152,6 @@ export default function Dashboard() {
   const [subNextDate, setSubNextDate] = useState("");
   const [isAddingSub, setIsAddingSub] = useState(false);
 
-  // Watchlist State
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [isFetchingWatchlist, setIsFetchingWatchlist] = useState(false);
   const [mediaQuery, setMediaQuery] = useState("");
@@ -194,23 +161,19 @@ export default function Dashboard() {
   const [watchlistFilter, setWatchlistFilter] = useState<"all" | "anime" | "movie" | "show">("all");
   const [isEnrichingPosters, setIsEnrichingPosters] = useState(false);
 
-  // Letterboxd RSS Sync Modal
   const [showLetterboxdModal, setShowLetterboxdModal] = useState(false);
   const [letterboxdUsername, setLetterboxdUsername] = useState("");
   const [isImportingLetterboxd, setIsImportingLetterboxd] = useState(false);
 
-  // Data Correction & Account Deletion Modals
   const [isDataCorrectionOpen, setIsDataCorrectionOpen] = useState(false);
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
 
-  // Book Library State
   const [bookQuery, setBookQuery] = useState("");
   const [isSearchingBooks, setIsSearchingBooks] = useState(false);
   const [bookResults, setBookResults] = useState<SearchResult[]>([]);
   const [bookFilter, setBookFilter] = useState<"all" | "reading" | "to_read" | "completed">("all");
   const [isEnrichingBookCovers, setIsEnrichingBookCovers] = useState(false);
 
-  // Investments State
   const [investments, setInvestments] = useState<InvestmentAsset[]>([]);
   const [isFetchingInvestments, setIsFetchingInvestments] = useState(false);
   const [invName, setInvName] = useState("");
@@ -231,7 +194,6 @@ export default function Dashboard() {
   const [showInvestmentsTab, setShowInvestmentsTab] = useState(true);
   const [enableChatAssistant, setEnableChatAssistant] = useState(false);
 
-  // Load Feature Flags
   useEffect(() => {
     fetch("/api/flags")
       .then((res) => (res.ok ? res.json() : null))
@@ -248,7 +210,6 @@ export default function Dashboard() {
       .catch((err) => console.error("Failed to load feature flags:", err));
   }, []);
 
-  // Onboarding & Confirm Dialogs
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [syncPreview, setSyncPreview] = useState<SyncPreviewState>({
     isOpen: false,
@@ -258,15 +219,7 @@ export default function Dashboard() {
     onConfirm: () => {},
   });
 
-  const getHeaders = useCallback(() => {
-    const embeddedToken = typeof window !== "undefined" ? localStorage.getItem("phub_embedded_token") : null;
-    const token = (user?.idToken && user.idToken !== "embedded_token") ? user.idToken : (embeddedToken || "");
-    return {
-      "Content-Type": "application/json",
-      "X-Client": "web",
-      Authorization: `Bearer ${token}`,
-    };
-  }, [user]);
+  const getHeaders = useCallback(() => getAuthHeaders(user?.idToken), [user]);
 
   const triggerAlert = (
     title: string,
@@ -285,7 +238,6 @@ export default function Dashboard() {
     });
   };
 
-  /* ─── AniList / Trakt Auth ─── */
   async function loadAnilistUser(token: string) {
     try {
       const data = await anilistQuery(`query { Viewer { id name avatar { large } } }`, {}, token);
@@ -295,7 +247,6 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error("Failed to load AniList profile:", err);
-      // Fallback: stay connected but with a generic name if network fails
       setAnilistUser({ id: 0, name: "AniList User", avatar: null, token });
     }
   }
@@ -324,7 +275,6 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error("Failed to load Trakt profile:", err);
-      // Fallback: stay connected but with a generic name if network fails
       setTraktUser({
         username: "trakt_user",
         name: "Trakt User",
@@ -352,14 +302,9 @@ export default function Dashboard() {
     setLetterboxdUsername("");
   }
 
-  /* ─── AniList & Trakt Library Sync ─── */
   const [isSyncingAnilist, setIsSyncingAnilist] = useState(false);
   const [isSyncingTrakt, setIsSyncingTrakt] = useState(false);
 
-  // Shared by every sync source (AniList/Trakt/Letterboxd): compares the
-  // entries about to be pushed against the current watchlist so we can show
-  // the user a real new-vs-updated breakdown before anything is written,
-  // rather than only reporting a count after the fact.
   const describeSyncChanges = (existing: WatchlistItem, e: SyncEntry): string[] => {
     const changes: string[] = [];
     if (existing.status !== e.status) {
@@ -538,7 +483,6 @@ export default function Dashboard() {
       const entries: SyncEntry[] = [];
       const processedTraktIds = new Set<number>();
 
-      // Process watched movies
       if (Array.isArray(watchedMovies)) {
         for (const item of watchedMovies) {
           if (!item?.movie) continue;
@@ -570,7 +514,6 @@ export default function Dashboard() {
         }
       }
 
-      // Process watchlist movies
       if (Array.isArray(watchlistMovies)) {
         for (const item of watchlistMovies) {
           if (!item?.movie) continue;
@@ -603,13 +546,12 @@ export default function Dashboard() {
         }
       }
 
-      // Process watched shows
       if (Array.isArray(watchedShows)) {
         for (const item of watchedShows) {
           if (!item?.show) continue;
           const traktId = item.show.ids?.trakt;
           if (traktId) processedTraktIds.add(Number(traktId));
-          
+
           let progress = 0;
           if (Array.isArray(item.seasons)) {
             for (const season of item.seasons) {
@@ -655,7 +597,6 @@ export default function Dashboard() {
           if (!coverImage && item.show.ids?.imdb) {
             coverImage = await fetchOMDbPoster(item.show.ids.imdb);
           }
-          // TVMaze fallback for TV shows
           if (!coverImage && item.show.ids?.imdb) {
             try {
               const tvmazeRes = await fetch(`https://api.tvmaze.com/lookup/shows?imdb=${item.show.ids.imdb}`);
@@ -682,7 +623,6 @@ export default function Dashboard() {
         }
       }
 
-      // Process watchlist shows
       if (Array.isArray(watchlistShows)) {
         for (const item of watchlistShows) {
           if (!item?.show) continue;
@@ -793,7 +733,7 @@ export default function Dashboard() {
         try {
           for (const item of missing) {
             let imdbId = null;
-            
+
             if (item.traktId) {
               try {
                 const details = await traktRequest(user?.idToken, `${item.type}s/${item.traktId}`);
@@ -805,7 +745,7 @@ export default function Dashboard() {
 
             let coverImage = null;
             try {
-              const searchUrl = imdbId 
+              const searchUrl = imdbId
                 ? `/api/omdb?i=${imdbId}`
                 : `/api/omdb?t=${encodeURIComponent(item.title)}&y=${item.year || ""}`;
               const omdbRes = await fetch(searchUrl);
@@ -817,7 +757,6 @@ export default function Dashboard() {
               console.error("OMDb search error:", e);
             }
 
-            // TVMaze covers shows OMDb has no art for.
             if (!coverImage && item.type === "show") {
               try {
                 const searchUrl = imdbId
@@ -915,7 +854,6 @@ export default function Dashboard() {
     );
   };
 
-  /* ─── Handle OAuth Tokens & Firebase Auth ─── */
   useEffect(() => {
     const hash = window.location.hash;
     const params = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
@@ -933,7 +871,6 @@ export default function Dashboard() {
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
 
-    // Init Firebase Auth
     let unsubscribe: (() => void) | undefined;
     import("firebase/app").then(async ({ initializeApp, getApps }) => {
       const res = await fetch("/api/auth/config");
@@ -990,7 +927,6 @@ export default function Dashboard() {
     };
   }, []);
 
-  /* ─── Handle Integrations Profile Load ─── */
   useEffect(() => {
     if (!user) return;
     const aniToken = localStorage.getItem("anilist_token");
@@ -1004,7 +940,6 @@ export default function Dashboard() {
     if (lbUser) setLetterboxdUsername(lbUser);
   }, [user]);
 
-  /* ─── API Fetchers ─── */
   const fetchExpenses = async () => {
     setIsFetchingExpenses(true);
     try {
@@ -1126,35 +1061,33 @@ export default function Dashboard() {
     }
   };
 
+  const patchSettings = useCallback((data: Record<string, unknown>) => {
+    if (user) {
+      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify(data) }).catch((err) => console.error(err));
+    }
+  }, [user, getHeaders]);
+
   const setTimeFilter = (f: "7" | "30" | "90" | "salary" | "all") => {
     setTimeFilterState(f);
     localStorage.setItem("phub_time_filter", f);
-    if (user) {
-      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ timeFilter: f }) }).catch((err) => console.error(err));
-    }
+    patchSettings({ timeFilter: f });
   };
 
   const setSalaryDay = (d: number) => {
     setSalaryDayState(d);
-    if (user) {
-      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ salaryDay: d }) }).catch((err) => console.error(err));
-    }
+    patchSettings({ salaryDay: d });
   };
 
   const setMonthlySalary = (val: number) => {
     setMonthlySalaryState(val);
     localStorage.setItem("phub_monthly_salary", String(val));
-    if (user) {
-      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ monthlySalary: val }) }).catch((err) => console.error(err));
-    }
+    patchSettings({ monthlySalary: val });
   };
 
   const setAdditionalIncome = (val: number) => {
     setAdditionalIncomeState(val);
     localStorage.setItem("phub_additional_income", String(val));
-    if (user) {
-      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ additionalIncome: val }) }).catch((err) => console.error(err));
-    }
+    patchSettings({ additionalIncome: val });
   };
 
   const setReconciliation = (cycleStartDate: string, actualAmount: number | null) => {
@@ -1165,42 +1098,36 @@ export default function Dashboard() {
       next[cycleStartDate] = actualAmount;
     }
     setReconciliationsState(next);
-    if (user) {
-      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ reconciliations: next }) }).catch((err) => console.error(err));
-    }
+    patchSettings({ reconciliations: next });
   };
 
   const setSalaryLogEntry = (date: string, amount: number) => {
     const next = { ...salaryLog, [date]: { date, amount } };
     setSalaryLogState(next);
-    if (user) {
-      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ salaryLog: next }) }).catch((err) => console.error(err));
-    }
+    patchSettings({ salaryLog: next });
   };
 
   const setCurrency = (c: string) => {
     const symbol = getCurrencySymbol(c);
     setCurrencyState(symbol);
     localStorage.setItem("phub_currency", symbol);
-    if (user) {
-      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ currency: symbol }) }).catch((err) => console.error(err));
-    }
+    patchSettings({ currency: symbol });
   };
 
   const setEmailSubscriptions = (next: { expenses: boolean; portfolio: boolean; subscriptions: boolean }) => {
     setEmailSubscriptionsState(next);
-    if (user) {
-      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify({ emailSubscriptions: next }) }).catch((err) => console.error(err));
-    }
+    patchSettings({ emailSubscriptions: next });
   };
 
   useEffect(() => {
     if (user) {
-      fetchExpenses();
-      fetchWatchlist();
-      fetchSubscriptions();
-      fetchInvestments();
-      fetchSettings();
+      Promise.allSettled([
+        fetchExpenses(),
+        fetchWatchlist(),
+        fetchSubscriptions(),
+        fetchInvestments(),
+        fetchSettings(),
+      ]);
     }
   }, [user]);
 
@@ -1212,7 +1139,6 @@ export default function Dashboard() {
     return () => window.removeEventListener("watchlist-updated", handleWatchlistUpdate);
   }, [user]);
 
-  /* ─── Onboarding Guide Check ─── */
   useEffect(() => {
     if (!user || !expensesLoaded) return;
     if (localStorage.getItem("phub_onboarding_seen")) return;
@@ -1224,8 +1150,6 @@ export default function Dashboard() {
     }
   }, [user, expensesLoaded, expenses.length]);
 
-  /* ─── Expense Actions ─── */
-  
   const logUnaccountedGap = async (amount: number) => {
     try {
       const isExpense = amount > 0;
@@ -1246,9 +1170,6 @@ export default function Dashboard() {
     }
   };
 
-  
-  
-  /* ─── Subscription Actions ─── */
   const addSubscription = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subName.trim() || !subCost || !subNextDate) return;
@@ -1306,17 +1227,13 @@ export default function Dashboard() {
     }
   };
 
-  
-  
-  
-  /* ─── Watchlist Actions ─── */
   const updateWatchItem = async (item: WatchlistItem, updates: Partial<WatchlistItem>) => {
     const nextUpdates = { ...updates };
     if (nextUpdates.progress !== undefined) {
       const total = nextUpdates.totalEpisodes !== undefined && nextUpdates.totalEpisodes !== null
         ? Number(nextUpdates.totalEpisodes)
         : (item.totalEpisodes !== undefined && item.totalEpisodes !== null ? Number(item.totalEpisodes) : null);
-      
+
       if (total && total > 0 && Number(nextUpdates.progress) >= total) {
         nextUpdates.status = "completed";
       } else if (total && total > 0 && Number(nextUpdates.progress) < total && item.status === "completed" && nextUpdates.status === undefined) {
@@ -1505,7 +1422,6 @@ export default function Dashboard() {
     }
   };
 
-  /* ─── Book Library Actions ─── */
   const searchBooks = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!bookQuery.trim()) return;
@@ -1568,7 +1484,6 @@ export default function Dashboard() {
     }
   };
 
-  /* ─── Investments Actions ─── */
   useEffect(() => {
     if (!invName.trim() || !TICKER_SEARCH_CATEGORIES.includes(invCategory)) {
       setInvSuggestions([]);
@@ -1591,8 +1506,6 @@ export default function Dashboard() {
     return () => clearTimeout(delayDebounce);
   }, [invName, invCategory, user]);
 
-  // Wraps setInvName for manual typing so a stale mfSchemeCode from a
-  // previously selected mutual fund suggestion doesn't stick to a new name.
   const handleInvNameChange = (value: string) => {
     setInvName(value);
     setInvMfSchemeCode("");
@@ -1736,9 +1649,6 @@ export default function Dashboard() {
       if (res.ok) {
         const data = await res.json();
         const pricedAssets = (data.assets || []).map((a: any) => {
-          // SIP's "quantity" is the recurring installment amount, not units
-          // held, so it can't be multiplied by NAV to get a valuation —
-          // leave Total Valuation as whatever the user last entered.
           const liveValue =
             a.category !== "sip" && a.quantity && a.currentPriceInr
               ? a.quantity * a.currentPriceInr
@@ -1760,8 +1670,6 @@ export default function Dashboard() {
     }
   };
 
-  /* ─── Calculated Expense Analytics ─── */
-  
   const filteredExpensesBase = useMemo(() => {
     let list = expenses;
 
@@ -1925,14 +1833,8 @@ export default function Dashboard() {
     };
   }, [cycleHistory]);
 
-  
-  
-
-  
-  
   const topCategory = useMemo(() => Object.keys(catBreakdown)[0] || "None", [catBreakdown]);
 
-  
   const isDataLoaded = !user || (expensesLoaded && watchlistLoaded && subscriptionsLoaded && investmentsLoaded && settingsLoaded);
   const showLoader = authLoading || (user && !isDataLoaded);
 
@@ -1952,7 +1854,7 @@ export default function Dashboard() {
           .bento-cell-3 { animation-delay: 0.4s; }
           .bento-cell-4 { animation-delay: 0.6s; }
         `}</style>
-        
+
         <div className="flex flex-col items-center gap-6">
           <div className="grid grid-cols-2 gap-1.5 w-11 h-11">
             <div className="bento-cell bento-cell-1 rounded-[4px] bg-text-primary" />
@@ -1960,7 +1862,7 @@ export default function Dashboard() {
             <div className="bento-cell bento-cell-3 rounded-[4px] bg-text-primary/60" />
             <div className="bento-cell bento-cell-4 rounded-[4px] bg-text-primary/30" />
           </div>
-          
+
           <div className="flex flex-col items-center gap-1.5 text-center animate-[heroFadeUp_0.6s_ease-out_both]">
             <span className="font-body font-semibold text-lg tracking-tight">{SITE_NAME}</span>
             <span className="text-[12px] tracking-wide text-text-muted font-mono uppercase">
@@ -2043,7 +1945,6 @@ export default function Dashboard() {
 
       <main className="ml-[250px] flex w-full max-w-[1680px] flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(68px+env(safe-area-inset-bottom))]">
 
-
         {activeTab === "expenses" && (
           <>
             <ExpensesTab />
@@ -2076,7 +1977,7 @@ export default function Dashboard() {
           <>
           <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">My Library</h1>
             <div className="mb-8 flex gap-6 border-b border-border-subtle max-sm:gap-4 max-sm:overflow-x-auto max-sm:scrollbar-none">
-              
+
               <button
                 onClick={() => setMediaSubTab("watchlist")}
                 className={`relative pb-3 text-[13px] font-medium transition-all ${
@@ -2356,8 +2257,6 @@ export default function Dashboard() {
           updateWatchItem={updateWatchItem}
         />
       )}
-
-
 
       {user && (
         <ClaimProModal

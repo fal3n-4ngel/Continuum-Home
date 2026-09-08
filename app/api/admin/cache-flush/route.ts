@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     waitUntil(sendDiscordEmbed(
       "Admin Audit Log",
       `Admin flushed the global Redis cache.`,
-      15105570, // Orange Hex
+      15105570,
       "Continuum Dashboard • Admin Audit"
     ));
 

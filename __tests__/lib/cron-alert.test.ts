@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron";
 
-// waitUntil normally hands the promise to the platform to finish after the
-// response is sent; here we collect them so assertions can await delivery.
 const { pending } = vi.hoisted(() => ({ pending: [] as Promise<unknown>[] }));
 vi.mock("@vercel/functions", () => ({
   waitUntil: (p: Promise<unknown>) => {
@@ -61,7 +59,6 @@ describe("cron alerting", () => {
     const fields = Object.fromEntries(embed.fields.map((f: any) => [f.name, f.value]));
     expect(fields.Failed).toBe("1 / 2");
     expect(fields.Errors).toContain("b@x.com: Resend API failed: 429");
-    // Partial failure, not a total outage.
     expect(embed.footer.text).toContain("Partial");
   });
 
@@ -89,8 +86,6 @@ describe("cron alerting", () => {
   });
 
   it("keeps oversized error logs inside Discord's field limit", async () => {
-    // 200 failures with long messages would blow the 1024-char field cap and
-    // get the whole alert rejected with a 400 if it weren't truncated.
     const results: CronUserResult[] = Array.from({ length: 200 }, (_, i) => ({
       uid: `u${i}`,
       email: `user${i}@example.com`,
@@ -105,7 +100,6 @@ describe("cron alerting", () => {
     for (const field of embed.fields) {
       expect(field.value.length).toBeLessThanOrEqual(1024);
     }
-    // Truncation must not strip the closing fence of the code block.
     const errors = embed.fields.find((f: any) => f.name === "Errors").value;
     expect(errors.startsWith("```")).toBe(true);
     expect(errors.endsWith("```")).toBe(true);

@@ -20,11 +20,6 @@ const STATUS_LABELS: Record<number, string> = {
   502: "Bad Gateway",
 };
 
-/**
- * Universal Discord Error Dispatcher.
- * Single source of truth for catching and notifying errors across API routes, background jobs,
- * cryptographic operations, and integration endpoints.
- */
 export function notifyError(options: ErrorNoticeOptions): void;
 export function notifyError(context: string, error: unknown, status?: number): void;
 export function notifyError(
@@ -53,7 +48,6 @@ export function notifyError(
     isCritical = status >= 500;
   }
 
-  // Suppress noise for expected unauthenticated (401) and not found (404) requests
   if (status === 401 || status === 404) return;
 
   const errorMessage = error instanceof Error ? error.message : String(error);
@@ -85,7 +79,6 @@ export function notifyError(
         footer: { text: "Continuum System • Universal Error Catching Wrapper" },
       });
     } catch {
-      // Best-effort error notification
     }
   };
 
@@ -96,10 +89,6 @@ export function notifyError(
   }
 }
 
-/**
- * Universal Higher-Order Error Wrapper.
- * Wraps any async function or task in a try/catch block that automatically reports uncaught errors to Discord.
- */
 export function withErrorCatch<T extends (...args: any[]) => Promise<any>>(
   context: string,
   fn: T

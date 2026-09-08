@@ -27,18 +27,12 @@ async function searchYahoo(query: string) {
     symbol: q.symbol,
     name: q.shortname || q.longname || q.symbol,
     exchange: q.exchange,
-    type: q.quoteType, // e.g. EQUITY, CRYPTOCURRENCY, MUTUALFUND
+    type: q.quoteType,
   }));
 }
 
-// mfapi.in's own /mf/search endpoint caps out at 15 results ordered by
-// scheme code ascending (i.e. oldest funds first), so a broad query like
-// "HDFC" surfaces decades-old matured FMPs and dividend plans instead of
-// the live Direct Growth schemes people actually SIP into today. We cache
-// AMFI's full ~38k-scheme dump once per server instance and rank matches
-// ourselves instead.
 let mfDirectoryCache: { data: MfSchemeRaw[]; fetchedAt: number } | null = null;
-const MF_DIRECTORY_TTL = 12 * 60 * 60 * 1000; // AMFI's scheme list changes rarely
+const MF_DIRECTORY_TTL = 12 * 60 * 60 * 1000;
 
 async function getMfDirectory(): Promise<MfSchemeRaw[]> {
   if (mfDirectoryCache && Date.now() - mfDirectoryCache.fetchedAt < MF_DIRECTORY_TTL) {
@@ -70,7 +64,7 @@ async function searchMfApi(query: string) {
   const scored = matches.map((s) => {
     const nameLower = s.schemeName.toLowerCase();
     let score = 0;
-    if (s.isinGrowth) score += 2; // has a live growth-plan ISIN
+    if (s.isinGrowth) score += 2;
     if (nameLower.includes("direct")) score += 3;
     if (nameLower.includes("growth")) score += 3;
     if (nameLower.includes("idcw") || nameLower.includes("dividend")) score -= 3;
@@ -100,8 +94,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ quotes: [] });
     }
 
-    // Indian mutual fund / SIP schemes: search AMFI's scheme list via
-    // mfapi.in, plus Yahoo as a fallback for non-Indian funds.
     if (category === "mutual_fund" || category === "sip") {
       const [mfQuotes, yahooQuotes] = await Promise.all([
         searchMfApi(query).catch(() => []),

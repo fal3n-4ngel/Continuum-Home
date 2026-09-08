@@ -1,16 +1,3 @@
-// Registered OAuth clients allowed to complete the /api/oauth/authorize flow
-// and receive a user's Firebase refresh token. Without this, any client_id/
-// redirect_uri pair was accepted verbatim and the auth code (which resolves
-// to the user's permanent refresh token) was redirected wherever the caller
-// asked — a crafted link could exfiltrate any authorizing user's account.
-//
-// OAUTH_ALLOWED_CLIENTS is a JSON array of either:
-//   { "clientId": "monolith-dashboard", "redirectUri": "https://exact/match/callback" }
-//   { "clientId": "chatgpt", "redirectUriPrefix": "https://chatgpt.com/aip/" }
-// Prefix entries exist for platforms like ChatGPT Actions, whose callback
-// URL embeds a per-GPT id we don't control or know ahead of time
-// (https://chatgpt.com/aip/{g-id}/oauth/callback) — the prefix still pins
-// the redirect to that platform's own domain.
 interface OAuthClientEntry {
   clientId: string;
   redirectUri?: string;

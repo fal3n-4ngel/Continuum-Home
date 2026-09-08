@@ -11,7 +11,6 @@ export interface AuthedUser {
   displayName: string | null;
 }
 
-/** Verified session context for Firebase and user identity. */
 export interface Session {
   creds: Credentials;
   config: FirebaseWebConfig;
@@ -56,7 +55,6 @@ function recordAuthFailure(ip: string) {
   }
 }
 
-/** Verifies Firebase ID token with Identity Toolkit and caches user session. */
 export async function verifyIdToken(config: FirebaseWebConfig, idToken: string): Promise<AuthedUser> {
   const tokenHash = createHash("sha256").update(idToken).digest("hex");
   const cacheKey = `auth:${config.projectId}:${tokenHash}`;
@@ -91,7 +89,6 @@ export async function verifyIdToken(config: FirebaseWebConfig, idToken: string):
   return user;
 }
 
-/** Exchanges a refresh token for a fresh ID token. */
 export async function refreshIdToken(
   config: FirebaseWebConfig,
   refreshToken: string
@@ -137,7 +134,6 @@ export async function refreshIdToken(
   return result;
 }
 
-/** Authenticates request bearer token and returns session context. */
 export async function requireUser(req: NextRequest): Promise<Session> {
   const ip = clientIp(req);
   checkAuthFailures(ip);
@@ -157,7 +153,6 @@ export async function requireUser(req: NextRequest): Promise<Session> {
     throw new ApiError(401, "Missing bearer token.");
   }
 
-  // Secure internal bypass for end-to-end integration testing cron
   const cronTestToken = process.env.CRON_TEST_TOKEN;
   if (cronTestToken && token === cronTestToken) {
     const user: AuthedUser = { uid: "cron-test-bot", email: "bot@continuum.home", displayName: "Test Bot" };
@@ -167,26 +162,24 @@ export async function requireUser(req: NextRequest): Promise<Session> {
 async function trackApiMetrics(req: NextRequest, uid: string, email: string | null) {
   try {
     if (!redis) return;
-    const identifier = uid; // Always track by UID to prevent duplicate rows for same user
+    const identifier = uid;
     let endpoint = req.nextUrl.pathname;
-    
-    // Normalize dynamic routes so they group properly instead of creating a row per ID
+
     endpoint = endpoint.replace(/\/(expenses|subscriptions|watchlist|portfolio)\/[^/]+(\/|$)/, '/$1/[id]$2');
-    
+
     const clientHeader = req.headers.get("x-client") || "";
     const isWeb = clientHeader === "web";
     const isAgent = !isWeb;
 
     const promises: Promise<any>[] = [];
 
-    // Only track AI Agent actions to preserve Redis limits. Web traffic (SWR) is ignored.
     if (isAgent) {
       promises.push(
         redis.zincrby(`metrics:agent:endpoints`, 1, endpoint),
         redis.zincrby(`metrics:agent:users_volume`, 1, identifier),
         redis.hset(`metrics:agent:user_last_active`, { [identifier]: Date.now().toString() })
       );
-      
+
       if (email) {
         promises.push(redis.hset("metrics:uid_to_email", { [identifier]: email }));
       }
@@ -196,7 +189,6 @@ async function trackApiMetrics(req: NextRequest, uid: string, email: string | nu
       await Promise.all(promises);
     }
 
-    // Legacy GPT specific tracking (if requested by Custom GPT)
     if (isAgent) {
       const todayStr = new Date().toISOString().slice(0, 10);
       await Promise.all([
@@ -227,7 +219,6 @@ async function trackApiMetrics(req: NextRequest, uid: string, email: string | nu
     }
   }
 
-  // Track API requests asynchronously
   trackApiMetrics(req, user.uid, user.email).catch(() => {});
 
   const session = { creds, config, uid: user.uid, idToken: resolvedIdToken, user };

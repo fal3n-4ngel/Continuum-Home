@@ -10,7 +10,6 @@ interface LandingPageProps {
   firebaseAuthReady: boolean;
 }
 
-/* ─── Live multi-timezone clock ─── */
 const CLOCK_ZONES: { label: string; region: string; zone: string }[] = [
   {
     label: "Local",
@@ -35,7 +34,6 @@ function useTicker() {
   return now;
 }
 
-/* ─── ChatGPT demo thread: cycles through example exchanges on a loop ─── */
 const GPT_EXAMPLES: { user: string; replyMain: string; replyDetail: string }[] =
   [
     {
@@ -173,7 +171,6 @@ const HERO_CTA_PRIMARY =
   "flex cursor-pointer items-center gap-2 rounded-full border-none bg-text-primary px-7 py-[13px] text-sm font-semibold text-white no-underline transition-all duration-200 hover:-translate-y-px hover:bg-[#2e2d27] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50";
 const STEP_DESC = "text-[13px] leading-[1.55] text-text-secondary";
 
-// Enhanced Architecture Node styling
 const DIAGRAM_NODE =
   "flex items-center gap-3 rounded-xl border border-[#e2e0d8] bg-white px-3.5 py-3 shadow-[0_2px_8px_rgba(28,27,24,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#1c1b18] hover:shadow-[0_6px_18px_-4px_rgba(28,27,24,0.1)]";
 const NODE_ICON =
@@ -296,7 +293,6 @@ export default function LandingPage({
     const timer = setTimeout(updateCoords, 250);
     window.addEventListener("resize", updateCoords);
 
-    // Use ResizeObserver for responsive recalculation
     const container = document.getElementById("dg-container");
     let observer: ResizeObserver | null = null;
     if (container && typeof ResizeObserver !== "undefined") {
@@ -311,7 +307,6 @@ export default function LandingPage({
     };
   }, []);
 
-  // Smooth bezier curve generator helper
   const drawCurve = (p1: DiagramPoint, p2: DiagramPoint) => {
     const midX = (p1.x + p2.x) / 2;
     return `M ${p1.x} ${p1.y} C ${midX} ${p1.y}, ${midX} ${p2.y}, ${p2.x} ${p2.y}`;
@@ -328,7 +323,6 @@ export default function LandingPage({
         @keyframes flowDash { to { stroke-dashoffset: -20; } }
       `}</style>
 
-      {/* ─── Navigation Header ─── */}
       <header className="sticky top-0 z-[1000] mx-auto flex max-w-[1300px] items-center justify-between border-b border-border-subtle/60 bg-bg-primary/92 px-20 py-4.5 backdrop-blur-[10px] max-[900px]:px-6 max-[900px]:py-3.5">
         <a
           href="#"
@@ -465,7 +459,6 @@ export default function LandingPage({
         </nav>
       </header>
 
-      {/* ─── SECTION 1: HERO ─── */}
       <section className="mx-auto max-w-[1100px] px-6 pt-[70px] pb-[30px] text-center max-[480px]:px-4 max-[480px]:pt-[50px] max-[480px]:pb-6">
         <div className={`flex flex-col items-center gap-3 ${HERO_REVEAL} [animation-delay:0.02s]`}>
           <span className={HERO_BADGE}>
@@ -514,7 +507,6 @@ export default function LandingPage({
           </p>
         )}
 
-        {/* Focused Hero Category Badges */}
         <div
           className={`mt-7 flex flex-wrap justify-center gap-2.5 ${HERO_REVEAL} [animation-delay:0.26s]`}
         >
@@ -533,7 +525,6 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* ─── SECTION 2: ARCHITECTURE DIAGRAM (Directly under Hero) ─── */}
       <section
         id="how-it-works"
         className="mx-auto max-w-[1150px] px-6 pt-2 pb-[60px] text-center max-[480px]:px-4 max-[480px]:pb-10"
@@ -542,10 +533,8 @@ export default function LandingPage({
           className="max-[768px]:px-2 max-[768px]:py-[10px]"
           id="dg-container"
         >
-          {/* Main Diagram Container Box */}
           <div className="relative overflow-hidden rounded-2xl border border-[#e2e0d8] bg-white p-8 shadow-[0_8px_30px_rgba(28,27,24,0.05)] [background-image:radial-gradient(#e5e3db_1px,transparent_1px)] [background-size:24px_24px]">
-            
-            {/* Top Bar Header */}
+
             <div className="mb-6 flex items-center justify-between border-b border-[#e8e6de] pb-4 max-[480px]:flex-col max-[480px]:items-start max-[480px]:gap-2">
               <div className="flex items-center gap-2 text-left">
                 <span className="flex h-2 w-2 rounded-full bg-[#22c55e] animate-pulse" />
@@ -560,9 +549,7 @@ export default function LandingPage({
               </div>
             </div>
 
-            {/* Desktop View */}
             <div className="block max-[768px]:hidden">
-              {/* Perfectly Aligned Top Header Grid */}
               <div className="mb-4 grid grid-cols-[230px_240px_140px_240px] justify-between text-left border-b border-[#f4f3ec] pb-2">
                 <span className={FEATURE_NUM}>1. INCOMING DATA</span>
                 <span className={FEATURE_NUM}>2. CONTINUUM ENGINE</span>
@@ -572,7 +559,6 @@ export default function LandingPage({
 
               {coords && (
                 <svg className="pointer-events-none absolute inset-0 z-[1] h-full w-full max-[900px]:hidden">
-                  {/* Row 1 Connections: External Sync -> Expense Analytics */}
                   <path
                     d={drawCurve(coords.c1_1_r, coords.c2_1_l)}
                     stroke="#3b82f6"
@@ -581,7 +567,6 @@ export default function LandingPage({
                     fill="none"
                     className="animate-[flowDash_1.2s_linear_infinite]"
                   />
-                  {/* External Sync -> Media Sync Engine */}
                   <path
                     d={drawCurve(coords.c1_1_r, coords.c2_2_l)}
                     stroke="#3b82f6"
@@ -590,7 +575,6 @@ export default function LandingPage({
                     fill="none"
                     className="animate-[flowDash_1.2s_linear_infinite]"
                   />
-                  {/* Local Entries -> Reading Library */}
                   <path
                     d={drawCurve(coords.c1_2_r, coords.c2_3_l)}
                     stroke="#3b82f6"
@@ -600,7 +584,6 @@ export default function LandingPage({
                     className="animate-[flowDash_1.2s_linear_infinite]"
                   />
 
-                  {/* Engine Nodes -> API Hub */}
                   <path
                     d={drawCurve(coords.c2_1_r, coords.hub_l)}
                     stroke="#3b82f6"
@@ -626,7 +609,6 @@ export default function LandingPage({
                     className="animate-[flowDash_1.2s_linear_infinite]"
                   />
 
-                  {/* API Hub -> Client Interfaces */}
                   <path
                     d={drawCurve(coords.hub_r, coords.c4_1_l)}
                     stroke="#3b82f6"
@@ -646,9 +628,7 @@ export default function LandingPage({
                 </svg>
               )}
 
-              {/* 4 Column Layout with Fixed Structured Heights */}
               <div className="relative z-[2] grid grid-cols-[230px_240px_140px_240px] justify-between items-center h-[290px] text-left">
-                {/* Column 1: Incoming */}
                 <div className="flex flex-col justify-around h-full py-2">
                   <div className={DIAGRAM_NODE} id="dg-c1-n1">
                     <div className={`${NODE_ICON} bg-[#ede9fe]`}>☁️</div>
@@ -673,7 +653,6 @@ export default function LandingPage({
                   </div>
                 </div>
 
-                {/* Column 2: Engine */}
                 <div className="flex flex-col justify-between h-full py-1">
                   <div className={DIAGRAM_NODE} id="dg-c2-n1">
                     <div className={`${NODE_ICON} bg-[#e39282]/20`}>📊</div>
@@ -709,7 +688,6 @@ export default function LandingPage({
                   </div>
                 </div>
 
-                {/* Column 3: Hub Center */}
                 <div className="flex items-center justify-center h-full">
                   <div
                     className="relative flex h-[86px] w-[86px] flex-col items-center justify-center gap-[3px] rounded-[22px] bg-[#1c1b18] text-white shadow-[0_10px_30px_rgba(28,27,24,0.22)]"
@@ -723,7 +701,6 @@ export default function LandingPage({
                   </div>
                 </div>
 
-                {/* Column 4: Client Interfaces */}
                 <div className="flex flex-col justify-around h-full py-2">
                   <div className={DIAGRAM_NODE} id="dg-c4-n1">
                     <div className={`${NODE_ICON} bg-[#d1b89a]/30`}>📱</div>
@@ -755,7 +732,6 @@ export default function LandingPage({
               </div>
             </div>
 
-            {/* Mobile View */}
             <div className="relative z-[2] hidden max-[768px]:flex max-[768px]:flex-col max-[768px]:items-center max-[768px]:gap-4">
               <div className="flex w-full flex-col items-center gap-2">
                 <span className={FEATURE_NUM}>1. INCOMING DATA</span>
@@ -794,7 +770,6 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* ─── SECTION 3: AI HOOK & DEMONSTRATION ─── */}
       <section
         id="ai"
         className="border-t border-b border-[#e5e3db] bg-[#eae8e0] px-6 py-[80px]"
@@ -805,7 +780,7 @@ export default function LandingPage({
               🤖 OpenAPI 3.1 &amp; AI Agents
             </span>
             <h2 className={`${HERO_TITLE} mb-4 text-left text-[38px] max-[480px]:text-[28px]`}>
-             
+
               <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
                 Your data, your AI agent.
               </span>
@@ -814,8 +789,6 @@ export default function LandingPage({
               Every API route in Continuum exposes a clean, standard OpenAPI 3.1 specification. Plug the schema directly into custom ChatGPT Actions, Claude, Gemini function calling, or MCP tool servers to interact with your data in plain English.
             </p>
 
-            {/* Architecture guarantee highlight box */}
-       
             <ul className="mb-7 flex list-none flex-col gap-3 p-0">
               <li className="flex items-start gap-3 text-sm leading-[1.5] text-[#1c1b18]">
                 <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#10b981] text-[11px] text-white">
@@ -842,7 +815,6 @@ export default function LandingPage({
             </a>
           </div>
 
-          {/* ChatGPT Interactive Live Demo Component */}
           <div className="overflow-hidden rounded-2xl border border-[#e5e3db] bg-white shadow-[0_20px_40px_-15px_rgba(110,108,100,0.14)]">
             <div className="flex h-9 items-center justify-between border-b border-[#e5e3db] bg-[#f4f3ec] px-4">
               <div className="flex items-center gap-1.5">
@@ -864,7 +836,6 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* ─── SECTION 4: UNIFIED DASHBOARD SHOWCASE ─── */}
       <section
         id="dashboard"
         className="mx-auto max-w-[1100px] px-6 py-[80px] text-center"
@@ -881,7 +852,6 @@ export default function LandingPage({
           A clean editorial interface designed for daily use. Track custom salary cycles, anime &amp; movie watchlists, book reading progress, and stock quotes without app fatigue.
         </p>
 
-        {/* Tab Switcher for UI Showcase */}
         <div className="mb-8 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => setActiveDashTab("finance")}
@@ -925,9 +895,7 @@ export default function LandingPage({
           </button>
         </div>
 
-        {/* Interactive Dashboard UI Preview Card */}
         <div className="overflow-hidden rounded-2xl border border-[#e5e3db] bg-white shadow-[0_16px_36px_-10px_rgba(28,27,24,0.08)]">
-          {/* Top Browser Chrome Bar */}
           <div className="flex h-10 items-center justify-between border-b border-[#e5e3db] bg-[#f4f3ec] px-4">
             <div className="flex items-center gap-2">
               <div className={`${BROWSER_DOT} bg-[#ff5f56]`} />
@@ -942,17 +910,15 @@ export default function LandingPage({
             </div>
           </div>
 
-          {/* Main Dashboard Frame with Left Sidebar (1:1 with Real App Layout) */}
           <div className="grid grid-cols-[190px_1fr] max-[768px]:grid-cols-1 text-left bg-[#f7f4ee]">
-            
-            {/* Left Navigation Sidebar */}
+
             <div className="flex flex-col justify-between border-r border-[#e7e3da] bg-[#f4f0ea] p-3.5 text-[11.5px] max-[768px]:hidden">
               <div className="flex flex-col gap-1">
                 <div className="flex items-center gap-2 px-2 py-1.5 font-semibold text-[#1c1b18] mb-3 border-b border-[#e7e3da]/70 pb-2.5">
                   <BentoLogo size={15} color="#1c1b18" />
                   <span className="font-bold text-[13px] tracking-tight">Continuum</span>
                 </div>
-                
+
                 <button
                   onClick={() => setActiveDashTab("finance")}
                   className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left font-medium transition-colors cursor-pointer ${
@@ -997,7 +963,6 @@ export default function LandingPage({
                 </div>
               </div>
 
-              {/* Sidebar Integrations & User Footer */}
               <div className="flex flex-col gap-2 pt-3 border-t border-[#e7e3da] text-[10px] text-[#6e6c64]">
                 <span className="font-mono text-[9px] font-bold uppercase text-[#9c9a92] px-2">Integrations</span>
                 <div className="flex items-center gap-1.5 px-2 text-[10.5px]">
@@ -1014,11 +979,9 @@ export default function LandingPage({
               </div>
             </div>
 
-            {/* Main Active Tab Body Area with Uniform Fixed Height */}
             <div className="p-5 max-[480px]:p-3 bg-[#f7f4ee] h-[510px] overflow-y-auto">
               {activeDashTab === "finance" && (
                 <div className="flex flex-col gap-4 font-body">
-                  {/* Top Bar with Ledger / Subscriptions & Currency */}
                   <div className="flex items-center justify-between border-b border-[#e5e1d8] pb-2.5 max-[600px]:flex-col max-[600px]:items-start max-[600px]:gap-2">
                     <div className="flex items-center gap-4">
                       <h3 className="text-lg font-bold tracking-tight text-[#1c1b18] italic font-serif" style={SERIF_ITALIC_STYLE}>
@@ -1035,7 +998,6 @@ export default function LandingPage({
                     </div>
                   </div>
 
-                  {/* 4 Stat Metric Cards */}
                   <div className="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
                     <div className="rounded-xl border border-[#7ca4c7] bg-[#90b4d4] p-3 text-[#1c1b18]">
                       <span className="text-[9px] font-bold tracking-wider uppercase opacity-85">Total Spent</span>
@@ -1059,9 +1021,7 @@ export default function LandingPage({
                     </div>
                   </div>
 
-                  {/* Middle Row: Analytics Bar Chart Left + Upcoming Bills Right */}
                   <div className="grid grid-cols-[1.3fr_1fr] gap-3 max-[900px]:grid-cols-1">
-                    {/* Analytics Bar Chart Section (Fixed Bar Rendering) */}
                     <div className="rounded-xl border border-[#e5e1d8] bg-white p-3 shadow-xs flex flex-col justify-between">
                       <div className="flex items-center justify-between border-b border-[#f4f0ea] pb-2 mb-2">
                         <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#1c1b18]">Analytics</h4>
@@ -1071,7 +1031,6 @@ export default function LandingPage({
                         </div>
                       </div>
 
-                      {/* Bar Track Container with Explicit Min-Height Flex Bars */}
                       <div className="flex h-24 items-end justify-between gap-1 pt-1">
                         {[
                           { cat: "FOOD", height: "88%", amt: "₹5.8k", color: "bg-[#b85c5c]" },
@@ -1097,7 +1056,6 @@ export default function LandingPage({
                       </div>
                     </div>
 
-                    {/* Upcoming Bills Row */}
                     <div className="rounded-xl border border-[#e5e1d8] bg-white p-3 shadow-xs flex flex-col justify-between">
                       <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#1c1b18] mb-2 border-b border-[#f4f0ea] pb-2">
                         📅 Upcoming Bills
@@ -1134,7 +1092,6 @@ export default function LandingPage({
                     </div>
                   </div>
 
-                  {/* Bottom Row: Log Transaction Left + Ledger Sheet Table Right */}
                   <div className="grid grid-cols-[200px_1fr] gap-3 max-[900px]:grid-cols-1">
                     <div className="rounded-xl border border-[#e5e1d8] bg-white p-3 text-xs flex flex-col gap-2 shadow-xs">
                       <span className="font-mono text-[9px] font-bold uppercase text-[#9c9a92]">Log Transaction</span>
@@ -1191,14 +1148,12 @@ export default function LandingPage({
 
               {activeDashTab === "media" && (
                 <div className="flex flex-col gap-5 font-body">
-                  {/* Header Title */}
                   <div className="flex items-center justify-between border-b border-[#e5e1d8] pb-3">
                     <h3 className="text-xl font-bold tracking-tight text-[#1c1b18] italic font-serif" style={SERIF_ITALIC_STYLE}>
                       Media library
                     </h3>
                   </div>
 
-                  {/* 4 Stat Metric Cards */}
                   <div className="grid grid-cols-4 gap-3.5 max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
                     <div className="rounded-xl border border-[#e5e1d8] bg-white p-4">
                       <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64]">Watching Now</span>
@@ -1222,7 +1177,6 @@ export default function LandingPage({
                     </div>
                   </div>
 
-                  {/* Split Bottom: Search & AI Recommendation Left + Media Grid with Real Thumbnails Right */}
                   <div className="grid grid-cols-[220px_1fr] gap-4 max-[900px]:grid-cols-1">
                     <div className="flex flex-col gap-3">
                       <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 text-xs flex flex-col gap-2 shadow-xs">
@@ -1236,7 +1190,6 @@ export default function LandingPage({
                         <button className="rounded-lg bg-[#6e6c64] py-1.5 text-xs font-bold text-white cursor-pointer">Search</button>
                       </div>
 
-                      {/* AI Recommendation Card with Real Thumbnail Image */}
                       <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 text-xs shadow-xs">
                         <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#9c9a92]">🤖 AI Recommendation</span>
                         <div className="mt-2.5 flex gap-2.5 items-center">
@@ -1269,7 +1222,6 @@ export default function LandingPage({
                         </div>
                       </div>
 
-                      {/* Poster Grid with Real Visual Poster Images */}
                       <div className="grid grid-cols-4 gap-3 max-[600px]:grid-cols-2">
                         {[
                           {
@@ -1329,7 +1281,6 @@ export default function LandingPage({
 
               {activeDashTab === "investments" && (
                 <div className="flex flex-col gap-5 font-body">
-                  {/* Header Title & Sync Button */}
                   <div className="flex items-center justify-between border-b border-[#e5e1d8] pb-3">
                     <div>
                       <h3 className="text-xl font-bold tracking-tight text-[#1c1b18] italic font-serif" style={SERIF_ITALIC_STYLE}>
@@ -1340,7 +1291,6 @@ export default function LandingPage({
                     <button className="rounded-lg bg-[#1c1b18] px-3 py-1.5 text-xs font-semibold text-white cursor-pointer shadow-xs">🔄 Sync Live Prices</button>
                   </div>
 
-                  {/* 5 Stat Metric Cards */}
                   <div className="grid grid-cols-5 gap-3 max-[900px]:grid-cols-3 max-[480px]:grid-cols-1">
                     <div className="rounded-xl border border-[#e5e1d8] bg-white p-3">
                       <span className="text-[9px] font-bold tracking-wider uppercase text-[#6e6c64]">Portfolio Value</span>
@@ -1369,7 +1319,6 @@ export default function LandingPage({
                     </div>
                   </div>
 
-                  {/* Middle Asset Allocation Split */}
                   <div className="grid grid-cols-2 gap-4 max-[800px]:grid-cols-1 text-xs">
                     <div className="rounded-xl border border-[#e5e1d8] bg-white p-4 shadow-xs">
                       <span className="font-bold text-[#1c1b18]">Current Asset Allocation</span>
@@ -1396,7 +1345,6 @@ export default function LandingPage({
                     </div>
                   </div>
 
-                  {/* Bottom Form Left + Holdings Table Right */}
                   <div className="grid grid-cols-[220px_1fr] gap-4 max-[900px]:grid-cols-1 text-xs">
                     <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 flex flex-col gap-2 shadow-xs">
                       <span className="font-mono text-[9.5px] font-bold uppercase text-[#9c9a92]">Add Investment</span>
@@ -1433,14 +1381,12 @@ export default function LandingPage({
 
               {activeDashTab === "books" && (
                 <div className="flex flex-col gap-5 font-body">
-                  {/* Header Title */}
                   <div className="flex items-center justify-between border-b border-[#e5e1d8] pb-3">
                     <h3 className="text-xl font-bold tracking-tight text-[#1c1b18] italic font-serif" style={SERIF_ITALIC_STYLE}>
                       Book Library
                     </h3>
                   </div>
 
-                  {/* 4 Stat Metric Cards */}
                   <div className="grid grid-cols-4 gap-3.5 max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
                     <div className="rounded-xl border border-[#e5e1d8] bg-white p-4">
                       <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64]">Reading Now</span>
@@ -1464,7 +1410,6 @@ export default function LandingPage({
                     </div>
                   </div>
 
-                  {/* Split Bottom: Search Left + Book Cover Thumbnails Right */}
                   <div className="grid grid-cols-[220px_1fr] gap-4 max-[900px]:grid-cols-1">
                     <div className="flex flex-col gap-3">
                       <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 text-xs flex flex-col gap-2 shadow-xs">
@@ -1473,7 +1418,6 @@ export default function LandingPage({
                         <button className="rounded-lg bg-[#6e6c64] py-1.5 text-xs font-bold text-white cursor-pointer">Search</button>
                       </div>
 
-                      {/* AI Book Recommendation Card with OpenLibrary Cover Image */}
                       <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 text-xs shadow-xs">
                         <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#9c9a92]">🤖 AI Book Recommendation</span>
                         <div className="mt-2.5 flex gap-2.5 items-center">
@@ -1501,7 +1445,6 @@ export default function LandingPage({
                         </div>
                       </div>
 
-                      {/* Book Cover Shelf Grid with Real OpenLibrary Book Cover Images */}
                       <div className="grid grid-cols-4 gap-3 max-[600px]:grid-cols-2">
                         {[
                           {
@@ -1549,7 +1492,6 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* ─── SECTION 5: BUILT FOR EVERYONE ─── */}
       <section className="border-t border-b border-[#e5e1d8] bg-[#f4f1ea] px-6 py-[80px]">
         <div className="mx-auto max-w-[1100px] text-center">
           <span className={`${HERO_BADGE} bg-[#eae6dc] border-[#d4cebf] text-[#55534c]`}>Universal Access</span>
@@ -1594,7 +1536,6 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* ─── SECTION 6: SELF-HOSTING ─── */}
       <section
         id="setup"
         className="bg-[#faf8f5] px-6 py-[80px]"
@@ -1686,7 +1627,6 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* ─── SECTION 7: PRICING (Cloud / Self-Hosted / Supporter) ─── */}
       <section
         id="pricing"
         className="border-t border-b border-[#e5e1d8] bg-[#f4f1ea] px-6 py-[80px] text-center"
@@ -1705,7 +1645,6 @@ export default function LandingPage({
           </p>
 
           <div className="mt-10 grid grid-cols-3 gap-5 text-left max-[900px]:mx-auto max-[900px]:max-w-[480px] max-[900px]:grid-cols-1">
-            {/* Card 1: Cloud Standard */}
             <div className="relative flex flex-col rounded-2xl border border-[#e5e1d8] bg-white p-7 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-subtle">
               <span className="mb-4 inline-block self-start rounded-full bg-[#f7f4ee] border border-[#e5e1d8] px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-[#6e6c64] uppercase">
                 Free Cloud Hosted
@@ -1754,7 +1693,6 @@ export default function LandingPage({
               </button>
             </div>
 
-            {/* Card 2: Self-Hostable (Highlighted) */}
             <div className="relative flex flex-col rounded-2xl border-2 border-[#1c1b18] bg-white p-7 shadow-[0_8px_24px_-4px_rgba(28,27,24,0.12)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5">
               <span className="mb-4 inline-block self-start rounded-full bg-[#1c1b18] px-2.5 py-1 font-mono text-[9.5px] font-bold tracking-wider text-white uppercase">
                 Recommended · Developer
@@ -1799,7 +1737,6 @@ export default function LandingPage({
               </a>
             </div>
 
-            {/* Card 3: Supporter Tier */}
             <div className="relative flex flex-col rounded-2xl border border-[#e5e1d8] bg-white p-7 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-subtle">
               <span className="mb-4 inline-block self-start rounded-full bg-[#f7f4ee] border border-[#e5e1d8] px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-[#6e6c64] uppercase">
                 Open Source Supporter
@@ -1849,7 +1786,6 @@ export default function LandingPage({
         </div>
       </section>
 
-      {/* ─── FAQ ─── */}
       <section className="bg-[#faf8f5] px-6 py-[80px] max-[480px]:py-[50px]">
         <div className="mx-auto grid max-w-[1100px] grid-cols-[1.1fr_1fr] gap-[50px] max-[900px]:grid-cols-1 max-[900px]:gap-8">
           <div>
@@ -1913,7 +1849,6 @@ export default function LandingPage({
         }}
       />
 
-      {/* ─── Footer ─── */}
       <footer className="border-t border-border-subtle bg-bg-card">
         <div className="mx-auto max-w-[1100px] px-20 pt-12 max-[900px]:px-6 max-[900px]:pt-10">
           <div className="grid grid-cols-[1.6fr_1fr_1fr] gap-[50px] border-b border-border-subtle pb-10 max-[900px]:grid-cols-1 max-[900px]:gap-8 max-[900px]:pb-8">
@@ -2099,7 +2034,6 @@ export default function LandingPage({
         </div>
       </footer>
 
-      {/* Floating GitHub Star Prompt Widget */}
       <a
         href="https://github.com/fal3n-4ngel/Continuum-Home"
         target="_blank"

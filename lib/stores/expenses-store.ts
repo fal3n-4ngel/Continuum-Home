@@ -8,12 +8,12 @@ interface ExpensesState {
   setIsFetchingExpenses: (is: boolean) => void;
   expensesLoaded: boolean;
   setExpensesLoaded: (loaded: boolean) => void;
-  
+
   timeFilter: "7" | "30" | "90" | "salary" | "all";
   setTimeFilter: (f: "7" | "30" | "90" | "salary" | "all") => void;
   salaryDay: number;
   setSalaryDay: (d: number) => void;
-  
+
   expenseTitle: string;
   setExpenseTitle: (s: string) => void;
   expenseAmount: string;
@@ -30,7 +30,7 @@ interface ExpensesState {
   setExpenseNotes: (s: string) => void;
   isAddingExpense: boolean;
   setIsAddingExpense: (is: boolean) => void;
-  
+
   expenseSearch: string;
   setExpenseSearch: (s: string) => void;
   ledgerCategoryFilter: string;
@@ -43,10 +43,10 @@ interface ExpensesState {
   setLedgerSortField: (f: "date" | "amount" | "title" | "category") => void;
   ledgerSortDir: "asc" | "desc";
   setLedgerSortDir: (d: "asc" | "desc") => void;
-  
+
   subscriptions: Subscription[];
   setSubscriptions: (subs: Subscription[]) => void;
-  
+
   payCycle: any;
   setPayCycle: (p: any) => void;
   catBreakdown: Record<string, number>;
@@ -62,7 +62,7 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
   setIsFetchingExpenses: (is) => set({ isFetchingExpenses: is }),
   expensesLoaded: false,
   setExpensesLoaded: (loaded) => set({ expensesLoaded: loaded }),
-  
+
   timeFilter: "all",
   setTimeFilter: (timeFilter) => {
     if (typeof window !== "undefined") window.localStorage.setItem("phub_time_filter", timeFilter);
@@ -72,7 +72,7 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
   setSalaryDay: (salaryDay) => {
     set({ salaryDay });
   },
-  
+
   expenseTitle: "",
   setExpenseTitle: (expenseTitle) => set({ expenseTitle }),
   expenseAmount: "",
@@ -89,7 +89,7 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
   setExpenseNotes: (expenseNotes) => set({ expenseNotes }),
   isAddingExpense: false,
   setIsAddingExpense: (isAddingExpense) => set({ isAddingExpense }),
-  
+
   expenseSearch: "",
   setExpenseSearch: (expenseSearch) => set({ expenseSearch }),
   ledgerCategoryFilter: "",
@@ -102,10 +102,10 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
   setLedgerSortField: (ledgerSortField) => set({ ledgerSortField }),
   ledgerSortDir: "desc",
   setLedgerSortDir: (ledgerSortDir) => set({ ledgerSortDir }),
-  
+
   subscriptions: [],
   setSubscriptions: (subscriptions) => set({ subscriptions }),
-  
+
   payCycle: { startStr: "", endStr: "", subMonthlyCost: 0 },
   setPayCycle: (payCycle) => set({ payCycle }),
   catBreakdown: {},

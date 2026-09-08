@@ -74,8 +74,6 @@ function requireObject(body: unknown, what: string): Record<string, unknown> {
   return body as Record<string, unknown>;
 }
 
-/* ─── Expenses ─── */
-
 export function validateExpenseEntry(body: unknown): ExpenseEntry {
   const b = requireObject(body, "Expense entry");
   return {
@@ -112,8 +110,6 @@ export function validateExpenseBatch(items: unknown[]): ExpenseEntry[] {
   });
 }
 
-/* ─── Watchlist ─── */
-
 type NewWatchlistItem = Omit<WatchlistItem, "id" | "updatedAt" | "createdAt">;
 
 function optionalNullableNumber(
@@ -148,8 +144,6 @@ export function validateNewWatchlistItem(body: unknown): NewWatchlistItem {
   };
 }
 
-// Whitelists patchable fields — arbitrary keys in the body are ignored rather
-// than written to Firestore.
 export function validateWatchlistPatch(body: unknown): Partial<NewWatchlistItem> {
   const b = requireObject(body, "Watchlist patch");
   const patch: Partial<NewWatchlistItem> = {};
@@ -200,8 +194,6 @@ export function validateSyncPayload(body: unknown): { source: SyncSource; entrie
   return { source, entries };
 }
 
-/* ─── Subscriptions ─── */
-
 export function validateSubscriptionEntry(body: unknown): SubscriptionEntry {
   const b = requireObject(body, "Subscription entry");
   return {
@@ -213,8 +205,6 @@ export function validateSubscriptionEntry(body: unknown): SubscriptionEntry {
   };
 }
 
-// Whitelists patchable fields — arbitrary keys (id, createdAt, userId, ...)
-// in the body are dropped rather than written to Firestore.
 export function validateSubscriptionPatch(body: unknown): Partial<Omit<SubscriptionRecord, "id" | "createdAt">> {
   const b = requireObject(body, "Subscription patch");
   const patch: Partial<Omit<SubscriptionRecord, "id" | "createdAt">> = {};
@@ -229,9 +219,7 @@ export function validateSubscriptionPatch(body: unknown): Partial<Omit<Subscript
   return patch;
 }
 
-/* ─── Dashboard Settings ─── */
-
-const MAX_RECONCILIATION_ENTRIES = 366; // ~a year of pay cycles
+const MAX_RECONCILIATION_ENTRIES = 366;
 
 function asReconciliationsMap(value: unknown, field: string): Record<string, number> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -268,8 +256,6 @@ function asSalaryLogMap(value: unknown, field: string): Record<string, { date: s
   return result;
 }
 
-// Whitelists patchable fields — arbitrary keys in the body are dropped
-// rather than written to Firestore.
 export function validateSettingsPatch(body: unknown): Partial<Omit<DashboardSettings, "updatedAt">> {
   const b = requireObject(body, "Settings patch");
   const patch: Partial<Omit<DashboardSettings, "updatedAt">> = {};
@@ -294,8 +280,6 @@ export function validateSettingsPatch(body: unknown): Partial<Omit<DashboardSett
   return patch;
 }
 
-/* ─── Notes ─── */
-
 const MAX_NOTE_LENGTH = 50_000;
 
 export function validateNoteContent(body: unknown): string {
@@ -310,18 +294,12 @@ export function validateNoteContent(body: unknown): string {
   return content;
 }
 
-/* ─── Portfolio / Investments ─── */
-
 function validateFdDates(startDate: string | undefined, maturityDate: string | undefined) {
   if (startDate && maturityDate && maturityDate < startDate) {
     badRequest("Field 'maturityDate' must not be before 'startDate'.");
   }
 }
 
-// AMFI scheme codes are numeric. Pinning the shape here matters beyond input
-// hygiene: the stored value is interpolated into the mfapi.in NAV request in
-// lib/prices.ts, so an unconstrained string would let a client steer the path
-// of a server-side request.
 function asSchemeCode(value: unknown): string | undefined {
   const code = asTrimmedString(value, "mfSchemeCode", 10, false);
   if (code === undefined) return undefined;
@@ -363,8 +341,6 @@ function validateInvestmentAsset(raw: unknown, index: number): InvestmentAsset {
   }
 }
 
-// Whitelists and type-checks every asset in the portfolio, rather than
-// writing whatever shape the client sends straight to Firestore.
 export function validatePortfolioAssets(body: unknown): InvestmentAsset[] {
   const b = requireObject(body, "Portfolio payload");
   if (!Array.isArray(b.assets)) badRequest("Field 'assets' must be an array.");
