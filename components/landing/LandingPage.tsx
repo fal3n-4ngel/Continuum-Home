@@ -1820,7 +1820,7 @@ export default function LandingPage({
                 Supporter Tier
               </p>
               <p className="mb-1 text-[36px] leading-none font-extrabold tracking-tight text-[#1c1b18]">
-                $3{" "}
+                $1{" "}
                 <span className="text-[13px] font-normal tracking-normal text-[#9c9a92]">
                   / month
                 </span>
