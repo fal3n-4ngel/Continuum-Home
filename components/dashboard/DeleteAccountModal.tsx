@@ -46,7 +46,7 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <style>{`@keyframes fadeInScale { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }`}</style>
-        
+
         <div className="flex items-center gap-3 border-b border-border-subtle pb-3.5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-bg-primary text-text-primary">
             <Trash2 size={16} />

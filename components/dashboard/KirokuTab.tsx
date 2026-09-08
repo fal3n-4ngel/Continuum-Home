@@ -114,7 +114,6 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
 
   return (
     <div className="flex flex-col gap-5 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full max-w-5xl mx-auto">
-      {/* Header matching dashboard theme */}
       <div className="flex items-center justify-between">
         <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2 flex items-center gap-3">
           Kiroku Assistant
@@ -128,13 +127,10 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
         </button>
       </div>
 
-      {/* Main Chat Container */}
       <div className="flex flex-col h-[calc(100vh-200px)] w-full bg-bg-card border border-border-subtle rounded-2xl shadow-sm overflow-hidden">
-        
-        {/* Messages Stream */}
+
         <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col gap-5 bg-transparent custom-scrollbar">
-          
-          {/* Guidelines Card shown at the beginning */}
+
           {history.length === 0 && (
             <div className="rounded-xl border border-border-subtle bg-bg-primary/50 p-6 shadow-sm text-[14px] leading-relaxed text-text-secondary flex flex-col gap-4 mx-auto max-w-2xl w-full mt-4 mb-4">
               <div className="flex items-center gap-2 text-text-primary">
@@ -172,17 +168,17 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
               <div
                 className={`max-w-[85%] md:max-w-[70%] px-5 py-3 text-[14.5px] leading-relaxed shadow-sm ${
                   msg.sender === "user"
-                    ? "bg-text-primary text-bg-primary rounded-[22px] rounded-br-[6px]" // iMessage style right
+                    ? "bg-text-primary text-bg-primary rounded-[22px] rounded-br-[6px]"
                     : msg.sender === "system"
                     ? "bg-red-50 border border-red-200 text-red-700 text-center font-medium text-[12px] py-2 px-4 rounded-xl w-full max-w-md mx-auto"
-                    : "bg-[#f4f2ea] border border-[#e8e4d8] text-text-primary rounded-[22px] rounded-bl-[6px]" // Warm chat bubble left
+                    : "bg-[#f4f2ea] border border-[#e8e4d8] text-text-primary rounded-[22px] rounded-bl-[6px]"
                 }`}
               >
                 {msg.sender === "user" || msg.sender === "system" ? msg.text : renderMarkdown(msg.text)}
               </div>
             </div>
           ))}
-          
+
           {loading && (
             <div className="flex justify-start">
               <div className="bg-[#f4f2ea] border border-[#e8e4d8] rounded-[22px] rounded-bl-[6px] px-5 py-4 shadow-sm flex items-center gap-2">
@@ -194,7 +190,6 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
           )}
         </div>
 
-        {/* Form Input */}
         <div className="p-4 md:p-6 border-t border-border-subtle bg-bg-card/50 backdrop-blur-sm">
           <form onSubmit={handleSend} className="relative flex items-center max-w-4xl mx-auto">
             <input

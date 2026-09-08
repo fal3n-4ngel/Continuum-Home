@@ -31,7 +31,6 @@ export async function POST(req: NextRequest) {
     const assets = validatePortfolioAssets(body);
     await updatePortfolio(session, assets);
 
-    // A whole-portfolio replace, so this is one event covering every asset in the payload.
     recordDomainEvent({
       eventType: DOMAIN_EVENTS.INVESTMENT_UPDATED,
       userId: session.uid,

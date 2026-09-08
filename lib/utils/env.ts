@@ -1,6 +1,3 @@
-// Per-deployment configuration (Production / UAT / local dev).
-// Getters, not constants: tests mutate process.env between cases, and a
-// frozen constant would pin whatever was set at first import.
 
 export type Environment = "production" | "uat" | "development";
 
@@ -8,8 +5,6 @@ function isUatConfigEnabled(): boolean {
   return process.env.USE_UAT_CONFIG === "true";
 }
 
-// Data-plane only — the variables that decide which dataset you touch. Shared
-// infrastructure (Resend, Discord) is deliberately excluded.
 const UAT_OVERRIDABLE = [
   "FIREBASE_CONFIG",
   "FIREBASE_SERVICE_ACCOUNT",
@@ -21,7 +16,6 @@ const UAT_OVERRIDABLE = [
 
 type Overridable = (typeof UAT_OVERRIDABLE)[number];
 
-/** Resolves `UAT_<NAME>` ahead of `<NAME>` while the UAT flip is on. */
 function pick(name: Overridable): string | undefined {
   if (isUatConfigEnabled()) {
     const override = process.env[`UAT_${name}`];
@@ -31,14 +25,11 @@ function pick(name: Overridable): string | undefined {
 }
 
 function resolveEnvironment(): Environment {
-  // UAT config means UAT data, so report UAT — this is what makes Discord
-  // alerts and the health endpoint truthful when flipped locally.
   if (isUatConfigEnabled()) return "uat";
 
   const explicit = process.env.APP_ENV;
   if (explicit === "production" || explicit === "uat" || explicit === "development") return explicit;
 
-  // UAT is a branch-aliased Preview deployment.
   if (process.env.VERCEL_ENV === "production") return "production";
   if (process.env.VERCEL_ENV === "preview") return "uat";
   return "development";
@@ -84,9 +75,6 @@ export const env = {
     return pick("UPSTASH_REDIS_REST_TOKEN") || "";
   },
 
-  // Both spellings accepted so neither silently falls through to the default.
-  // Client components must read NEXT_PUBLIC_ADMIN_EMAIL directly — Next.js
-  // inlines those at build time.
   get ADMIN_EMAIL(): string {
     return process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com";
   },
@@ -100,19 +88,12 @@ export function isUatDeployment(): boolean {
   return env.ENVIRONMENT === "uat";
 }
 
-/**
- * Redirects every recipient on non-production deployments.
- * Keyed to an explicit env var rather than ENVIRONMENT so a misfiring
- * environment probe fails closed — mail reaches the real user instead of
- * production mail vanishing into a test inbox.
- */
 export function resolveEmailRecipient(realEmail: string): { to: string; subjectPrefix: string } {
   const override = emailOverride();
   if (!override) return { to: realEmail, subjectPrefix: "" };
   return { to: override, subjectPrefix: `[UAT→${realEmail}] ` };
 }
 
-/** Misconfigurations safe to boot with. Reported by the health cron, never thrown. */
 export function configWarnings(): string[] {
   const warnings: string[] = [];
 

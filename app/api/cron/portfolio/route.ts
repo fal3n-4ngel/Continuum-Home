@@ -53,13 +53,8 @@ async function processUser(
 
       let currentValue = asset.amount;
       if (category === "fixed_deposit") {
-        // No live price feed for FDs — value comes from compound interest
-        // accrual on the principal instead.
         currentValue = getEffectiveAmount(asset);
       } else if (category === "sip") {
-        // SIP's "quantity" field records the recurring installment amount,
-        // not units held — multiplying it by NAV would be nonsense. SIP
-        // valuation stays whatever the user last entered as Total Valuation.
       } else if (asset.quantity !== undefined && currentPrice > 0) {
         currentValue = quantity * currentPrice;
       } else if (isLive) {
@@ -116,7 +111,6 @@ async function processUser(
   const dailyChange = yesterdayVal !== null ? totalCurrent - yesterdayVal : 0;
   const weeklyChange = lastWeekVal !== null ? totalCurrent - lastWeekVal : 0;
 
-  // Save today's valuation history
   valHistory[todayDateStr] = totalCurrent;
   await adminUpdatePortfolioValuationHistory(user.uid, valHistory);
 
@@ -168,7 +162,6 @@ export const POST = withCron(
     const force = req.nextUrl.searchParams.get("force") === "true";
     const users = await listAllUsers();
     const usdToInr = await getUsdToInrRate();
-    // Shared across the whole fan-out so overlapping holdings are fetched once.
     const fetchPrice = createPriceFetcher();
 
     const results: CronUserResult[] = [];

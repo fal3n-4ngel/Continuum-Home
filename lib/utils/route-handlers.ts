@@ -1,6 +1,3 @@
-// Auth + error-handling wrappers shared by the API routes. Each owns one
-// authorization model and funnels throws through toErrorResponse, so an
-// unhandled error can never leak a stack trace to a caller.
 
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser, type Session } from "@/lib/auth";
@@ -9,8 +6,6 @@ import { env } from "@/lib/utils";
 
 export type RouteContext = { params: Promise<Record<string, string>> };
 
-// ctx is optional: Next.js always supplies it, but static routes ignore it and
-// tests invoke handlers with just a request.
 type Handler = (req: NextRequest, ctx?: RouteContext) => Promise<NextResponse>;
 
 export function withErrors(label: string, handler: Handler): Handler {
@@ -45,10 +40,6 @@ export function withAdmin(
   });
 }
 
-/**
- * `requireResend` fails the whole run fast rather than fanning out across every
- * user and failing once per account.
- */
 export function withCron(
   job: string,
   handler: (req: NextRequest, ctx?: RouteContext) => Promise<NextResponse>,

@@ -93,7 +93,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         <p className="text-[13px] text-text-muted">Manage your preferences and how Continuum Home reaches you.</p>
       </div>
 
-      {/* Currency */}
       <div className={`${BENTO_CARD} border-t-2 border-t-accent-blue/80`}>
         <div className={CARD_HEADER}>
           <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
@@ -120,7 +119,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         </div>
       </div>
 
-      {/* Income & Pay Cycle */}
       <div className={`${BENTO_CARD} border-t-2 border-t-[#2e7d32]/70`}>
         <div className={CARD_HEADER}>
           <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
@@ -180,7 +178,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         </div>
       </div>
 
-      {/* Email Notifications */}
       <div className={`${BENTO_CARD} border-t-2 border-t-[#e39282]/80`}>
         <div className={CARD_HEADER}>
           <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
@@ -213,7 +210,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         Changes on this page save automatically.
       </p>
 
-      {/* Danger Zone / Account Deletion */}
       <div className={`${BENTO_CARD} border-t-2 border-t-[#b3666b]/80 mt-2`}>
         <div className={CARD_HEADER}>
           <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-[#b3666b]">

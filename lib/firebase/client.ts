@@ -1,16 +1,8 @@
 import { Session } from "@/lib/auth";
 import { ApiError } from "@/lib/utils";
 
-/* ─── Firestore REST transport ───
- * All reads/writes go through the Firestore REST API authenticated with the
- * caller's own Firebase ID token (never an unauthenticated SDK instance), so
- * the per-user Firestore security rules are enforced by the database itself —
- * the API server holds no privileged credentials that could bypass them. */
-
 export const FIRESTORE_HOST = "https://firestore.googleapis.com/v1";
 
-// Document ids appear in REST paths and backtick-quoted field masks; restrict
-// them so neither can be broken out of. Covers Firestore auto-ids and UUIDs.
 export const DOC_ID_RE = /^[A-Za-z0-9_-]{1,128}$/;
 
 export function assertDocId(id: string, what: string): string {
@@ -49,9 +41,6 @@ export async function fsFetch<T = unknown>(session: Session, url: string, init?:
   throw new ApiError(502, "Database request failed.");
 }
 
-/* ─── Firestore value encoding ─── */
-
-// Mirrors the Firestore REST API's discriminated "Value" wire format.
 export type FirestoreValue =
   | { nullValue: null }
   | { stringValue: string }
@@ -116,8 +105,6 @@ export function idFromName(name: string): string {
   return name.split("/").pop() || name;
 }
 
-// Runs a single-collection equality query scoped to the user. The userId
-// filter also satisfies the security-rule ownership check for list queries.
 export async function runOwnedQuery(session: Session, collectionId: string): Promise<{ id: string; data: Record<string, unknown> }[]> {
   const body = {
     structuredQuery: {

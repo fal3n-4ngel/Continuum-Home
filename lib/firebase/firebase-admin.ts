@@ -1,14 +1,6 @@
-// Firebase Admin SDK access — used exclusively by cron routes, which need
-// to fan out across every registered user. Everywhere else in this app,
-// Firestore is accessed via REST with the caller's own ID token (see
-// lib/firebase.ts) so per-user security rules are the enforcement
-// mechanism; there is no other privileged path. This module is the one
-// deliberate exception, gated by CRON_SECRET at the route level, and it
-// bypasses Firestore rules entirely — treat every export here as
-// unrestricted, cross-user access.
 import { getApps, initializeApp, cert, type App } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
-import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import { getFirestore, FieldValue, type Firestore } from "firebase-admin/firestore";
 import { encrypt, decrypt, ApiError, env } from "@/lib/utils";
 import {
   encryptAsset,
@@ -51,8 +43,6 @@ function getAdminApp(): App {
     credential: cert({
       projectId: parsed.project_id,
       clientEmail: parsed.client_email,
-      // Service-account JSON stores real newlines, but env vars commonly
-      // flatten them to the literal two-character sequence "\n".
       privateKey: parsed.private_key.replace(/\\n/g, "\n"),
     }),
   });
@@ -72,9 +62,6 @@ export interface AdminUser {
   email: string;
 }
 
-// Every registered Auth user with a known email — the fan-out target list
-// for every cron. Paginated since listUsers() caps at 1000 per page.
-// Filters out any user whose settings doc has `deleted === true`.
 export async function listAllUsers(): Promise<AdminUser[]> {
   const auth = getAdminAuth();
   const db = getAdminDb();
@@ -95,7 +82,7 @@ export async function listAllUsers(): Promise<AdminUser[]> {
     try {
       const doc = await db.collection("settings").doc(u.uid).get();
       if (doc.exists && doc.data()?.deleted === true) {
-        continue; // Skip archived/deleted users
+        continue;
       }
       activeUsers.push(u);
     } catch (e) {
@@ -168,17 +155,11 @@ export async function adminUpdatePortfolioValuationHistory(uid: string, valuatio
   await db.collection("portfolios").doc(uid).set({ valuationHistory: encryptValuationHistory(valuationHistory), updatedAt: Date.now() }, { merge: true });
 }
 
-// Re-saves a user's portfolio assets through the same encryption used by the
-// REST write path — used by the admin encryption-migration route to force
-// any legacy plaintext holdings to be encrypted at rest.
 export async function adminUpdatePortfolioAssets(uid: string, assets: InvestmentAsset[]): Promise<void> {
   const db = getAdminDb();
   await db.collection("portfolios").doc(uid).set({ assets: assets.map(encryptAsset), updatedAt: Date.now() }, { merge: true });
 }
 
-// Re-encrypts and re-saves a single expense document in place — the
-// migration equivalent of updateExpense() in lib/firebase.ts, but callable
-// across every user's documents rather than just the caller's own.
 export async function adminReEncryptExpense(
   uid: string,
   id: string,
@@ -203,8 +184,6 @@ export async function adminListWatchlist(uid: string): Promise<WatchlistItem[]> 
   if (!doc.exists) return [];
   const data = doc.data() || {};
   const itemsMap = data.items && typeof data.items === "object" ? (data.items as Record<string, WatchlistItem>) : {};
-  // Malformed/partial entries (e.g. a doc missing `title`) shouldn't reach
-  // callers — every consumer assumes the required WatchlistItem fields exist.
   return Object.entries(itemsMap)
     .map(([id, item]) => ({ ...item, id }))
     .filter((item) => typeof item.title === "string" && item.title.length > 0);
@@ -216,8 +195,6 @@ export interface EmailSubscriptions {
   subscriptions: boolean;
 }
 
-// Users predate this field, so absence of a key means "still subscribed"
-// (opt-out model) rather than defaulting new fields to off.
 export async function adminGetEmailSubscriptions(uid: string): Promise<EmailSubscriptions> {
   const db = getAdminDb();
   const doc = await db.collection("settings").doc(uid).get();
@@ -232,9 +209,6 @@ export async function adminGetEmailSubscriptions(uid: string): Promise<EmailSubs
   };
 }
 
-// Uses set-with-merge (deep merge on Firestore nested maps) rather than the
-// REST updateMask path in lib/firebase.ts, so a single-category unsubscribe
-// link can flip one key without needing to read-then-write the whole map.
 export async function adminSetEmailSubscriptions(uid: string, updates: Partial<EmailSubscriptions>): Promise<void> {
   const db = getAdminDb();
   await db.collection("settings").doc(uid).set({ emailSubscriptions: updates, updatedAt: Date.now() }, { merge: true });
@@ -259,31 +233,51 @@ export async function adminSaveDailyRecommendation(
 export async function adminPurgeUserData(uid: string): Promise<void> {
   const db = getAdminDb();
 
-  // 1. Delete expenses
   const expensesSnap = await db.collection("expenses").where("userId", "==", uid).get();
   const expensesBatch = db.batch();
   expensesSnap.docs.forEach((doc) => expensesBatch.delete(doc.ref));
   if (!expensesSnap.empty) await expensesBatch.commit();
 
-  // 2. Delete subscriptions
   const subsSnap = await db.collection("subscriptions").where("userId", "==", uid).get();
   const subsBatch = db.batch();
   subsSnap.docs.forEach((doc) => subsBatch.delete(doc.ref));
   if (!subsSnap.empty) await subsBatch.commit();
 
-  // 3. Delete portfolio
   await db.collection("portfolios").doc(uid).delete().catch(() => {});
 
-  // 4. Delete watchlist
   await db.collection("watchlists").doc(uid).delete().catch(() => {});
 
-  // 5. Delete recommendations subcollection & doc
   const recsEntries = await db.collection("recommendations").doc(uid).collection("entries").get();
   const recsBatch = db.batch();
   recsEntries.docs.forEach((doc) => recsBatch.delete(doc.ref));
   if (!recsEntries.empty) await recsBatch.commit();
   await db.collection("recommendations").doc(uid).delete().catch(() => {});
 
-  // 6. Delete user settings
   await db.collection("settings").doc(uid).delete().catch(() => {});
+}
+
+export async function adminGetUserCount(): Promise<number> {
+  const db = getAdminDb();
+  const doc = await db.collection("stats").doc("users").get();
+  if (!doc.exists) {
+    return 0;
+  }
+  const data = doc.data();
+  return typeof data?.count === "number" ? data.count : 0;
+}
+
+export async function incrementUserCount(): Promise<void> {
+  const db = getAdminDb();
+  await db.collection("stats").doc("users").set(
+    { count: FieldValue.increment(1), lastUpdated: FieldValue.serverTimestamp() },
+    { merge: true }
+  );
+}
+
+export async function decrementUserCount(): Promise<void> {
+  const db = getAdminDb();
+  await db.collection("stats").doc("users").set(
+    { count: FieldValue.increment(-1), lastUpdated: FieldValue.serverTimestamp() },
+    { merge: true }
+  );
 }

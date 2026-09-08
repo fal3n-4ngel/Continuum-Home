@@ -75,7 +75,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         </div>
 
         <div className="flex flex-wrap gap-2">
-   
+
           <button
             onClick={() => setShowOnboarding(false)}
             className="flex-[1_1_200px] rounded-md border border-border-subtle bg-transparent px-4 py-2 text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary"

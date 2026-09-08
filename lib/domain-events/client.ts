@@ -7,14 +7,13 @@ const DEFAULT_MONOLITH_API_URL = "https://monolith-postbacks.adithyakrishnan.com
 const MAX_BODY_BYTES = 16_000;
 const TIMEOUT_MS = 10_000;
 const MAX_QUEUED_EVENTS = 50;
-const ALERT_THROTTLE_MS = 15 * 60 * 1000; // 15 minutes
+const ALERT_THROTTLE_MS = 15 * 60 * 1000;
 
 let mutedUntil = 0;
 let lastAlertSentAt = 0;
 const recentEvents = new Map<string, number>();
 const DUP_WINDOW_MS = 500;
 
-/** In-memory fallback queue for events that failed to post during outages. */
 const pendingEvents: DomainEvent[] = [];
 
 function resolveEndpoint(): string | null {
@@ -23,7 +22,6 @@ function resolveEndpoint(): string | null {
   return `${rawUrl.replace(/\/$/, "")}/api/v1/events/postback`;
 }
 
-/** Resolves MONOLITH_API_KEY authorization header. */
 function authHeader(): Record<string, string> | null {
   const key = process.env.MONOLITH_API_KEY;
   return key ? { Authorization: `Bearer ${key}` } : null;
@@ -61,7 +59,6 @@ function triggerPostbackAlert(endpoint: string, eventType: string, reason: strin
   });
 }
 
-/** Internal handler for delivering a single domain event. */
 async function dispatchPostback(event: DomainEvent): Promise<boolean> {
   const environment = env.ENVIRONMENT;
   const verbose = environment !== "production";
@@ -134,7 +131,6 @@ async function dispatchPostback(event: DomainEvent): Promise<boolean> {
   }
 }
 
-/** Flushes queued pending domain events that failed during previous outages. */
 export async function flushPendingDomainEvents(): Promise<{ flushed: number; remaining: number }> {
   if (pendingEvents.length === 0) return { flushed: 0, remaining: 0 };
   let flushed = 0;
@@ -163,7 +159,6 @@ export function resetDomainEventStateForTesting(): void {
   recentEvents.clear();
 }
 
-/** Domain event dispatch scheduled via Next.js after() with auto-retry queue. */
 export function recordDomainEvent(event: DomainEvent): void {
   if (typeof window !== "undefined") return;
 

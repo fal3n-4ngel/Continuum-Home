@@ -28,14 +28,9 @@
   </a>
 </p>
 
-<p align="center">
-  <a href="https://www.producthunt.com/products/continuum-2028?embed=true&utm_source=embed&utm_medium=post_embed" target="_blank" rel="noopener">
-    <img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=continuum-2028&theme=light" alt="Continuum - Self-hosted personal dashboard for expenses & AI agents | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" />
-  </a>
-</p>
 
 ## What is Continuum?
-Continuum is a self-hosted personal data platform for tracking your finances, investments, media, books, and subscriptions — with an API designed to be used by both applications and AI clients..<br/>It started as a personal API I fed into a Custom GPT so I could log expenses over chat instead of paying for another app. A friend wanted it too, so instead of handing over my personal API collection I built an actual dashboard around it. It's designed to natively integrate with AI assistants through a standardized OpenAPI schema.
+Continuum is a self-hostable personal data platform for tracking your finances, investments, media, books, and subscriptions — with an API designed to be used by both applications and AI clients.<br/>It started as a personal API I fed into a Custom GPT so I could log expenses over chat instead of paying for another app. A friend wanted it too, so instead of handing over my personal API collection I built an actual dashboard around it. It's designed to natively integrate with AI assistants through a standardized OpenAPI schema.
 
 ## Why Continuum?
 

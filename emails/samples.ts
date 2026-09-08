@@ -1,6 +1,3 @@
-// Sample data for admin previews. Previews render through the same template
-// functions the crons use, so a template change cannot reach production
-// without also changing the preview.
 
 import type { PortfolioEmailData } from "./templates/portfolio";
 import type { ExpensesEmailData, ExpensePeriod } from "./templates/expenses";

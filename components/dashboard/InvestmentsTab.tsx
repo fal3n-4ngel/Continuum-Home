@@ -2,16 +2,16 @@ import React from "react";
 import { createPortal } from "react-dom";
 import { InvestmentAsset, InvestmentCategory, InvestmentQuote, FdCompounding } from "@/types";
 import { getEffectiveAmount, computeFdMaturityValue, daysUntil, FD_COMPOUNDING_LABELS } from "@/lib/finance";
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  HelpCircle, 
-  ShieldAlert, 
-  BookOpen, 
-  Compass, 
-  Info, 
-  RotateCw, 
-  Plus, 
+import {
+  TrendingUp,
+  TrendingDown,
+  HelpCircle,
+  ShieldAlert,
+  BookOpen,
+  Compass,
+  Info,
+  RotateCw,
+  Plus,
   Trash2,
   AlertTriangle,
   DollarSign,
@@ -71,9 +71,6 @@ const LEDGER_TD = "border-b border-border-subtle px-3.5 py-4 align-middle text-[
 
 interface DynamicFieldConfig {
   namePlaceholder: string;
-  // Whether a ticker/symbol lookup makes sense for this category — false
-  // for FD/cash/gold/other, where the name is just a free-text label, not
-  // something to search a market for.
   searchEnabled: boolean;
   amountLabel: string;
   amountPlaceholder: string;
@@ -250,9 +247,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
 }) => {
   const safeInvestments = Array.isArray(investments) ? investments : [];
 
-  // Differentiate active and sold assets. Fixed Deposits have no live price
-  // feed, so `amount` here is overridden with the compound-interest accrued
-  // value (see lib/fd.ts) — every other category passes through unchanged.
   const activeInvestments = safeInvestments.filter((a) => !a.isSold).map((a) => ({ ...a, amount: getEffectiveAmount(a) }));
   const soldInvestments = safeInvestments.filter((a) => a.isSold);
 
@@ -262,25 +256,20 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
   const profitPct = totalInvested > 0 ? (totalProfit / totalInvested) * 100 : 0;
   const holdingsCount = activeInvestments.length;
 
-  // Realized stats from sold assets
   const totalRealizedCost = soldInvestments.reduce((acc, a) => acc + (a.investedAmount || 0), 0);
   const totalRealizedReturn = soldInvestments.reduce((acc, a) => acc + (a.soldPrice || 0), 0);
   const totalRealizedProfit = totalRealizedReturn - totalRealizedCost;
   const realizedProfitPct = totalRealizedCost > 0 ? (totalRealizedProfit / totalRealizedCost) * 100 : 0;
 
-  // Excludes "sip" — its quantity field holds the installment amount, not
-  // units held, so it can't be multiplied by price for a day-change figure.
   const trackableForDaily = activeInvestments.filter((a) => a.category !== "sip" && a.quantity && a.currentPrice != null && a.previousClose != null);
   const hasDailyData = trackableForDaily.length > 0;
   const todaysPnl = trackableForDaily.reduce((acc, a) => acc + a.quantity! * (a.currentPrice! - a.previousClose!), 0);
   const yesterdayTrackedValue = trackableForDaily.reduce((acc, a) => acc + a.quantity! * a.previousClose!, 0);
   const todaysPnlPct = yesterdayTrackedValue > 0 ? (todaysPnl / yesterdayTrackedValue) * 100 : 0;
 
-  // Guide Tabs
   const [activeGuideTab, setActiveGuideTab] = React.useState<"allocations" | "classes" | "advice">("allocations");
   const [selectedRiskProfile, setSelectedRiskProfile] = React.useState<"conservative" | "balanced" | "aggressive">("balanced");
 
-  // Sell Modal States
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
     setMounted(true);
@@ -293,14 +282,14 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
   const [sellError, setSellError] = React.useState<string | null>(null);
 
   const categoryColors: Record<InvestmentCategory, string> = {
-    equity: "#A0C4E2",       // Soft Aesthetic Sky Blue
-    crypto: "#C4A0E2",       // Soft Lavender Purple
-    mutual_fund: "#7DB6D5",  // Soft Pastel Ocean
-    sip: "#78B9B0",          // Soft Sage Teal
-    gold: "#E5B85C",         // Soft Aesthetic Mustard Gold
-    cash: "#8CC69A",         // Soft Mint Green
-    fixed_deposit: "#9AB885", // Soft Warm Olive Green
-    other: "#9E9C94",        // Soft Warm Muted Grey
+    equity: "#A0C4E2",
+    crypto: "#C4A0E2",
+    mutual_fund: "#7DB6D5",
+    sip: "#78B9B0",
+    gold: "#E5B85C",
+    cash: "#8CC69A",
+    fixed_deposit: "#9AB885",
+    other: "#9E9C94",
   };
 
   const categoryLabels: Record<InvestmentCategory, string> = {
@@ -334,7 +323,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
     .filter(([, val]) => val > 0)
     .sort((a, b) => b[1] - a[1]) as [InvestmentCategory, number][];
 
-  // Donut values
   const radius = 35;
   const strokeWidth = 10;
   const circumference = 2 * Math.PI * radius;
@@ -368,7 +356,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
   const largestHolding = [...activeInvestments].sort((a, b) => (b.amount || 0) - (a.amount || 0))[0];
   const largestHoldingPct = totalValue > 0 && largestHolding ? ((largestHolding.amount || 0) / totalValue) * 100 : 0;
 
-  // Grouped Categories for Strategy comparison
   const actualGroupTotals = {
     cash: (categoryTotals["cash"] || 0) + (categoryTotals["fixed_deposit"] || 0),
     gold: categoryTotals["gold"] || 0,
@@ -395,7 +382,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
 
   const currentFieldConfig = getFieldConfig(invCategory);
 
-  // Asset Coach tips generator
   const getCoachTips = () => {
     const tips: { type: "info" | "warning" | "success"; text: string }[] = [];
     if (holdingsCount === 0) {
@@ -462,7 +448,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
 
   return (
     <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]">
-      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle pb-4">
         <div>
           <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">Wealth & Portfolio Management</h1>
@@ -480,7 +465,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
         </button>
       </div>
 
-      {/* Stat Cards */}
       <AssetSummaryCards
         currency={currency}
         totalValue={totalValue}
@@ -494,9 +478,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
         todaysPnlPct={todaysPnlPct}
       />
 
-      {/* Wealth Analytics & Allocation Section */}
       <div className="grid grid-cols-[1.3fr_1fr] gap-5 max-md:grid-cols-1">
-        {/* Allocation Donut Chart */}
         <div className={`${BENTO_CARD} border-t-2 border-t-accent-blue/80`}>
           <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-4">
             <h2 className="text-[14px] font-bold tracking-tight text-text-primary flex items-center gap-1.5">
@@ -514,7 +496,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
             </div>
           ) : (
             <div className="flex items-center gap-8 max-sm:flex-col max-sm:gap-6">
-              {/* Donut SVG */}
               <div className="relative flex h-[130px] w-[130px] shrink-0 items-center justify-center">
                 <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
                   <circle
@@ -540,14 +521,12 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                     />
                   ))}
                 </svg>
-                {/* Center Label */}
                 <div className="absolute flex flex-col items-center justify-center text-center">
                   <span className="text-[9px] font-semibold text-text-muted tracking-[0.5px] uppercase">Net Worth</span>
                   <span className="text-[14px] font-bold text-text-primary mt-0.5">{currency}{(totalValue / 1000).toFixed(0)}k</span>
                 </div>
               </div>
 
-              {/* Legend Grid */}
               <div className="grid flex-1 grid-cols-1 gap-2.5 text-xs">
                 {donutSegments.map((seg, idx) => (
                   <div key={idx} className="flex items-center justify-between min-w-0 border-b border-border-subtle/30 pb-1">
@@ -569,7 +548,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
             </div>
           )}
 
-          {/* Performance Highlights */}
           {activeInvestments.length > 0 && (
             <div className="mt-5 grid grid-cols-2 gap-3 pt-4 border-t border-border-subtle">
               <div className="rounded-xl bg-[#E6F4EA]/60 border border-[#2e7d32]/20 p-3 flex flex-col gap-0.5">
@@ -598,7 +576,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
           )}
         </div>
 
-        {/* Financial Strategy Coach & Education Hub */}
         <div className={`${BENTO_CARD} border-t-2 border-t-[#2e7d32]/70`}>
           <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-4">
             <div className="flex items-center gap-1 rounded-full bg-[#EAE5DC]/60 p-1 border border-border-subtle/40 shadow-2xs">
@@ -629,7 +606,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
             </div>
           </div>
 
-          {/* Guide Content: Target Allocation */}
           {activeGuideTab === "allocations" && (
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between mb-1">
@@ -649,12 +625,11 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                 </div>
               </div>
 
-              {/* Progress bars comparing Actual vs Target */}
               <div className="flex flex-col gap-3 mt-1.5">
                 {Object.entries(targetModels[selectedRiskProfile]).map(([groupKey, targetPct]) => {
                   const actualVal = actualGroupTotals[groupKey as keyof typeof actualGroupTotals] || 0;
                   const actualPct = totalValue > 0 ? (actualVal / totalValue) * 100 : 0;
-                  
+
                   if (targetPct === 0 && actualPct === 0) return null;
 
                   return (
@@ -668,17 +643,15 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                         </div>
                       </div>
                       <div className="relative h-2 w-full rounded bg-bg-secondary overflow-hidden">
-                        {/* Target marker */}
-                        <div 
+                        <div
                           className="absolute top-0 bottom-0 w-0.5 bg-text-secondary/40 z-10"
                           style={{ left: `${targetPct}%` }}
                         />
-                        {/* Actual progress */}
-                        <div 
+                        <div
                           className="h-full rounded-full transition-all duration-300"
-                          style={{ 
+                          style={{
                             width: `${actualPct}%`,
-                            backgroundColor: Math.abs(actualPct - targetPct) < 8 ? "#2e7d32" : "#A0C4E2" 
+                            backgroundColor: Math.abs(actualPct - targetPct) < 8 ? "#2e7d32" : "#A0C4E2"
                           }}
                         />
                       </div>
@@ -698,7 +671,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
             </div>
           )}
 
-          {/* Guide Content: Asset Classes Explanation */}
           {activeGuideTab === "classes" && (
             <div className="flex flex-col gap-3 max-h-[220px] overflow-y-auto pr-1">
               <div className="border-l-2 border-l-[#A0C4E2] pl-2 py-0.5">
@@ -728,19 +700,18 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
             </div>
           )}
 
-          {/* Guide Content: AI Advisory Coach */}
           {activeGuideTab === "advice" && (
             <div className="flex flex-col gap-3">
               <span className="text-xs font-bold text-text-primary">Portfolio Evaluation & Tips:</span>
               <div className="flex flex-col gap-2 max-h-[190px] overflow-y-auto pr-1">
                 {getCoachTips().map((tip, idx) => (
-                  <div 
-                    key={idx} 
+                  <div
+                    key={idx}
                     className={`rounded-lg border p-3 text-[11px] leading-normal flex items-start gap-2 ${
-                      tip.type === "warning" 
-                        ? "bg-rose-50/40 border-rose-200/50 text-rose-800" 
-                        : tip.type === "success" 
-                          ? "bg-emerald-50/40 border-emerald-200/50 text-emerald-800" 
+                      tip.type === "warning"
+                        ? "bg-rose-50/40 border-rose-200/50 text-rose-800"
+                        : tip.type === "success"
+                          ? "bg-emerald-50/40 border-emerald-200/50 text-emerald-800"
                           : "bg-blue-50/30 border-blue-200/40 text-blue-800"
                     }`}
                   >
@@ -756,16 +727,13 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
         </div>
       </div>
 
-      {/* Bottom 2-Column Section */}
       <div className="grid grid-cols-[290px_1fr] items-start gap-5 max-md:grid-cols-1">
-        {/* Left Column Card: ADD ASSET */}
         <div className={`${BENTO_CARD} relative border-t-2 border-t-text-primary/60`}>
           <div className="flex items-center gap-1.5 border-b border-border-subtle pb-3 mb-4">
             <Plus className="h-4.5 w-4.5 text-text-secondary" />
             <span className={LABEL_MONO}>Add Investment</span>
           </div>
-          
-          {/* Helper class indicator block */}
+
           <div className="mb-4 rounded bg-bg-secondary p-3 text-[10.5px] leading-relaxed text-text-secondary border border-border-subtle/50">
             <span className="font-bold text-text-primary block mb-0.5 capitalize">
               {categoryLabels[invCategory]}
@@ -780,9 +748,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                 placeholder={currentFieldConfig.namePlaceholder}
                 value={invName}
                 onChange={(e) => setInvName(e.target.value)}
-                // Delay the clear so a click on a suggestion below still
-                // registers before the dropdown unmounts — onBlur otherwise
-                // fires first and the suggestion's onClick never runs.
                 onBlur={() => setTimeout(() => setInvSuggestions([]), 150)}
                 required
                 className={INPUT_CLASS}
@@ -814,9 +779,9 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
 
             <div className="flex flex-col gap-1">
               <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">Asset Category</span>
-              <select 
-                value={invCategory} 
-                onChange={(e) => setInvCategory(e.target.value as InvestmentCategory)} 
+              <select
+                value={invCategory}
+                onChange={(e) => setInvCategory(e.target.value as InvestmentCategory)}
                 className={`${INPUT_CLASS} cursor-pointer text-xs`}
               >
                 <option value="equity">Equity (Stocks)</option>
@@ -986,7 +951,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
               />
             </div>
 
-            {/* Micro-tip helper text */}
             <span className="text-[9.5px] leading-normal text-text-secondary italic mt-1">
               {currentFieldConfig.trackingTip}
             </span>
@@ -997,9 +961,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
           </form>
         </div>
 
-        {/* Right Column Card: HOLDINGS PORTFOLIO Table */}
         <div className="flex flex-col gap-5 overflow-hidden">
-          {/* Active Holdings Table */}
           <div className={`${BENTO_CARD} p-5 border-t-2 border-t-[#e39282]/80`}>
             <div className="flex items-center justify-between border-b border-border-subtle pb-3.5 mb-4">
               <span className={LABEL_MONO}>Active Holdings Ledger</span>
@@ -1047,7 +1009,6 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
             </div>
           </div>
 
-          {/* Sold / Realized History Table */}
           {soldInvestments.length > 0 && (
             <div className={`${BENTO_CARD} p-5 border-t-2 border-t-[#2e7d32]/70`}>
               <div className="flex items-center justify-between border-b border-border-subtle pb-3.5 mb-4">
@@ -1088,7 +1049,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                             {asset.notes && <p className="mt-0.5 text-[9.5px] text-text-muted font-normal">{asset.notes}</p>}
                           </td>
                           <td className={LEDGER_TD}>
-                            <span 
+                            <span
                               className="rounded px-1.5 py-0.5 font-mono text-[8.5px] font-semibold text-white uppercase opacity-70"
                               style={{ backgroundColor: categoryColors[asset.category] || "#6b7280" }}
                             >

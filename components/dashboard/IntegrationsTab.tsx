@@ -73,7 +73,6 @@ export const IntegrationsTab = ({
   return (
     <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]"><h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">Integrations</h1>
       <div className="grid grid-cols-4 gap-5 max-xl:grid-cols-2 max-sm:grid-cols-2 max-sm:gap-3">
-        {/* AniList Card */}
         <div className={`${BENTO_CARD} flex flex-col justify-between p-5 max-sm:p-3.5 min-h-[155px]`}>
           <div className="flex items-start gap-3.5 max-sm:flex-col max-sm:gap-2">
             <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.05)] bg-[#1e2630]">
@@ -111,7 +110,6 @@ export const IntegrationsTab = ({
           </div>
         </div>
 
-        {/* Trakt Card */}
         <div className={`${BENTO_CARD} flex flex-col justify-between p-5 max-sm:p-3.5 min-h-[155px]`}>
           <div className="flex items-start gap-3.5 max-sm:flex-col max-sm:gap-2">
             <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.05)] bg-transparent">
@@ -162,7 +160,6 @@ export const IntegrationsTab = ({
           </div>
         </div>
 
-        {/* Letterboxd Card */}
         <div className={`${BENTO_CARD} flex flex-col justify-between p-5 max-sm:p-3.5 min-h-[155px]`}>
           <div className="flex items-start gap-3.5 max-sm:flex-col max-sm:gap-2">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1c1b18] text-white">
@@ -198,7 +195,6 @@ export const IntegrationsTab = ({
           </div>
         </div>
 
-        {/* Export CSV Card */}
         <div className={`${BENTO_CARD} flex flex-col justify-between p-5 max-sm:p-3.5 min-h-[155px]`}>
           <div className="flex items-start gap-3.5 max-sm:flex-col max-sm:gap-2">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-secondary text-text-primary">

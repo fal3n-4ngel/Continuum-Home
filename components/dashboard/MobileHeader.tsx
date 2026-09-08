@@ -51,15 +51,12 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   return (
     <>
       <header className="sticky top-0 z-[100] hidden min-h-[52px] items-center justify-between border-b border-border-subtle bg-bg-card px-4 max-md:flex">
-        {/* Left: Logo */}
         <div className="flex items-center gap-2">
           <LogoMark size={20} className="text-text-primary" />
           <span className="text-base font-medium tracking-tight text-text-primary">{SITE_NAME}</span>
         </div>
 
-        {/* Right: Actions */}
         <div className="flex items-center gap-2">
-          {/* Pro button — free users */}
           {!isProUser && (
             <button
               onClick={onClaimPro}
@@ -73,7 +70,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             </button>
           )}
 
-          {/* Pro badge — pro users */}
           {isProUser && (
             <div title="Pro Account" className="flex h-7 items-center justify-center gap-1 rounded-full border border-[#7c3aed]/30 bg-[#7c3aed]/5 px-2.5">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 text-[#7c3aed] relative -top-[0.5px]">
@@ -151,7 +147,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         </div>
       </header>
 
-      {/* Mobile Navigation Bar */}
       <nav className="fixed right-0 bottom-0 left-0 z-[1000] hidden min-h-[60px] items-stretch justify-around border-t border-border-subtle bg-bg-card pb-[env(safe-area-inset-bottom)] max-md:flex">
         <div onClick={() => setActiveTab("expenses")} className={mobileNavLinkClass(activeTab === "expenses")}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>

@@ -242,7 +242,6 @@ export async function POST(req: NextRequest) {
     const globalKey = "rate:gemini:global:minute";
     const userKey = `rate:gemini:user:${uid}:minute`;
 
-    // Global Cap: 15 req/min
     const globalCount = await redis.incr(globalKey);
     if (globalCount === 1) await redis.expire(globalKey, 60);
     if (globalCount > 15) {
@@ -252,7 +251,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // User Cap: 5 req/min
     const userCount = await redis.incr(userKey);
     if (userCount === 1) await redis.expire(userKey, 60);
     if (userCount > 5) {
@@ -276,7 +274,6 @@ export async function POST(req: NextRequest) {
       tools: [{ functionDeclarations }]
     });
 
-    // SDK expects format: [{ role: "user" | "model", parts: [{ text: "..." } | { functionCall: ... } | { functionResponse: ... }] }]
     const sdkHistory = history.map((h: any) => ({
       role: h.role,
       parts: h.parts
@@ -296,7 +293,6 @@ export async function POST(req: NextRequest) {
         const rawResult = await executeTool(session, call.name, call.args);
         const toolResult = (rawResult && typeof rawResult === "object" && !Array.isArray(rawResult)) ? rawResult : { result: rawResult };
 
-        // Send function execution feedback to chat
         response = await chat.sendMessage([{
           functionResponse: {
             name: call.name,
@@ -306,10 +302,8 @@ export async function POST(req: NextRequest) {
 
         attempts++;
       } else {
-        // Retrieve updated history from chat
         const updatedHistory = await chat.getHistory();
-        
-        // Return text answer and dialogue logs
+
         return NextResponse.json({
           reply: response.response.text(),
           history: updatedHistory

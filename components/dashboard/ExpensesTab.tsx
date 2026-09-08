@@ -1,69 +1,19 @@
 import React from "react";
 import { createPortal } from "react-dom";
+import Papa from "papaparse";
 import { Expense, Subscription } from "@/types";
-import { downloadCsv } from "@/lib/utils";
+import { downloadCsv, getAuthHeaders } from "@/lib/utils";
+
+import { useExpensesStore } from "@/lib/stores/expenses-store";
+import { useUiStore } from "@/lib/stores/ui-store";
+import { useAuthStore } from "@/lib/stores/auth-store";
+
 import { ExpenseRow } from "./expenses/ExpenseRow";
 import { ExpenseLedgerControls } from "./expenses/ExpenseLedgerControls";
 import { EditExpenseModal } from "./expenses/EditExpenseModal";
 
-interface ExpensesTabProps {
-  currency: string;
-  setCurrency: (c: string) => void;
-  expenseTab: "ledger" | "subscriptions";
-  setExpenseTab: (t: "ledger" | "subscriptions") => void;
-  timeFilter: "7" | "30" | "90" | "salary" | "all";
-  setTimeFilter: (f: "7" | "30" | "90" | "salary" | "all") => void;
-  salaryDay: number;
-  setSalaryDay: (d: number) => void;
-  totalSpent: number;
-  filteredExpenses: Expense[];
-  largestCharge: number;
-  largestItem: Expense | null;
-  topCategory: string;
-  activeChart: "category" | "trend";
-  setActiveChart: (c: "category" | "trend") => void;
-  catBreakdown: Record<string, number>;
-  chartCatBreakdown: Record<string, number>;
-  dailyTrend: [string, number][];
-  addExpense: (e: React.FormEvent) => void;
-  expenseTitle: string;
-  setExpenseTitle: (s: string) => void;
-  expenseAmount: string;
-  setExpenseAmount: (s: string) => void;
-  expenseCategory: string;
-  setExpenseCategory: (s: string) => void;
-  allCategories: string[];
-  newCategoryInput: string;
-  setNewCategoryInput: (s: string) => void;
-  customCategories: string[];
-  setCustomCategories: React.Dispatch<React.SetStateAction<string[]>>;
-  expenseDate: string;
-  setExpenseDate: (s: string) => void;
-  expenseNotes: string;
-  setExpenseNotes: (s: string) => void;
-  isAddingExpense: boolean;
-  deleteExpense: (id: string) => void;
-  updateExpense?: (id: string, updates: Partial<Expense>) => Promise<void>;
-  expenseSearch: string;
-  setExpenseSearch: (s: string) => void;
-  ledgerCategoryFilter: string;
-  setLedgerCategoryFilter: (s: string) => void;
-  ledgerMinAmount: string;
-  setLedgerMinAmount: (s: string) => void;
-  ledgerMaxAmount: string;
-  setLedgerMaxAmount: (s: string) => void;
-  ledgerSortField: "date" | "amount" | "title" | "category";
-  setLedgerSortField: (f: "date" | "amount" | "title" | "category") => void;
-  ledgerSortDir: "asc" | "desc";
-  setLedgerSortDir: (d: "asc" | "desc") => void;
-  isFetchingExpenses: boolean;
-  expensesLoaded: boolean;
-  subscriptions: Subscription[];
-  expenses: Expense[];
-  updateSubscription: (id: string, updates: Partial<Subscription>) => void;
-  logSubscriptionExpense: (sub: Subscription) => Promise<void>;
-  importExpensesBatch: (items: any[]) => Promise<number>;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+interface ExpensesTabProps {}
 
 const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
 const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
@@ -76,36 +26,12 @@ const INPUT_CLASS = "rounded-lg border border-border-subtle bg-bg-card px-3 py-2
 const LEDGER_TH = "border-b border-border-subtle bg-bg-card px-3 py-2.5 font-mono text-[11px] font-semibold tracking-[0.5px] text-text-muted uppercase";
 const LEDGER_TD = "border-b border-border-subtle px-3 py-3 align-middle text-[13px] text-text-primary";
 
-const parseCsvLine = (text: string): string[] => {
-  const result: string[] = [];
-  let cell = "";
-  let insideQuote = false;
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    if (char === '"') {
-      if (insideQuote && text[i + 1] === '"') {
-        cell += '"';
-        i++; // Skip second quote
-      } else {
-        insideQuote = !insideQuote;
-      }
-    } else if (char === "," && !insideQuote) {
-      result.push(cell.trim());
-      cell = "";
-    } else {
-      cell += char;
-    }
-  }
-  result.push(cell.trim());
-  return result;
-};
-
 const normalizeCsvDate = (dateStr: string): string => {
   const clean = dateStr.trim();
   if (!clean) return "";
-  
+
   if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
-  
+
   const dmy = clean.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
   if (dmy) {
     const d = dmy[1].padStart(2, "0");
@@ -113,7 +39,7 @@ const normalizeCsvDate = (dateStr: string): string => {
     const y = dmy[3];
     return `${y}-${m}-${d}`;
   }
-  
+
   const ymd = clean.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
   if (ymd) {
     const y = ymd[1];
@@ -121,7 +47,7 @@ const normalizeCsvDate = (dateStr: string): string => {
     const d = ymd[3].padStart(2, "0");
     return `${y}-${m}-${d}`;
   }
-  
+
   try {
     const d = new Date(clean);
     if (!isNaN(d.getTime())) {
@@ -131,7 +57,7 @@ const normalizeCsvDate = (dateStr: string): string => {
       return `${yStr}-${mStr}-${dStr}`;
     }
   } catch {}
-  
+
   return "";
 };
 
@@ -151,14 +77,14 @@ const advanceBillingDate = (dateStr: string, cycle: "monthly" | "yearly"): strin
   const year = parseInt(parts[0], 10);
   const month = parseInt(parts[1], 10);
   const day = parseInt(parts[2], 10);
-  
+
   const d = new Date(year, month - 1, day);
   if (cycle === "monthly") {
     d.setMonth(d.getMonth() + 1);
   } else {
     d.setFullYear(d.getFullYear() + 1);
   }
-  
+
   const yStr = d.getFullYear();
   const mStr = String(d.getMonth() + 1).padStart(2, "0");
   const dStr = String(d.getDate()).padStart(2, "0");
@@ -171,17 +97,17 @@ const isSubscriptionPaidInLedger = (sub: Subscription, expenses: Expense[]) => {
   if (parts.length !== 3) return false;
   const sYear = parts[0];
   const sMonth = parts[1];
-  
+
   return expenses.some((exp) => {
     if (!exp.date) return false;
     const expParts = exp.date.split("-").map(Number);
     if (expParts.length !== 3) return false;
     const eYear = expParts[0];
     const eMonth = expParts[1];
-    
+
     const sameMonth = eYear === sYear && eMonth === sMonth;
     const sameYear = eYear === sYear;
-    
+
     const dateMatch = sub.billingCycle === "monthly" ? sameMonth : sameYear;
     if (!dateMatch) return false;
 
@@ -189,71 +115,36 @@ const isSubscriptionPaidInLedger = (sub: Subscription, expenses: Expense[]) => {
     const subName = sub.name.toLowerCase().trim();
     const nameMatch = expTitle.includes(subName) || subName.includes(expTitle) ||
                       (subName.includes("rent") && expTitle.includes("rent"));
-    
+
     const amtMatch = Math.abs((exp.amount || 0) - sub.cost) < (sub.cost * 0.1) || (exp.amount || 0) === sub.cost;
-    
+
     return nameMatch && amtMatch;
   });
 };
 
-export const ExpensesTab: React.FC<ExpensesTabProps> = ({
-  currency,
-  setCurrency,
-  expenseTab,
-  setExpenseTab,
-  timeFilter,
-  setTimeFilter,
-  salaryDay,
-  setSalaryDay,
-  totalSpent,
-  filteredExpenses,
-  largestCharge,
-  largestItem,
-  topCategory,
-  activeChart,
-  setActiveChart,
-  catBreakdown,
-  chartCatBreakdown,
-  dailyTrend,
-  addExpense,
-  expenseTitle,
-  setExpenseTitle,
-  expenseAmount,
-  setExpenseAmount,
-  expenseCategory,
-  setExpenseCategory,
-  allCategories,
-  newCategoryInput,
-  setNewCategoryInput,
-  customCategories,
-  setCustomCategories,
-  expenseDate,
-  setExpenseDate,
-  expenseNotes,
-  setExpenseNotes,
-  isAddingExpense,
-  deleteExpense,
-  updateExpense,
-  expenseSearch,
-  setExpenseSearch,
-  ledgerCategoryFilter,
-  setLedgerCategoryFilter,
-  ledgerMinAmount,
-  setLedgerMinAmount,
-  ledgerMaxAmount,
-  setLedgerMaxAmount,
-  ledgerSortField,
-  setLedgerSortField,
-  ledgerSortDir,
-  setLedgerSortDir,
-  isFetchingExpenses,
-  expensesLoaded,
-  subscriptions,
-  expenses,
-  updateSubscription,
-  logSubscriptionExpense,
-  importExpensesBatch,
-}) => {
+export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
+  "use no memo";
+  const {
+    currency, setCurrency, expenseTab, setExpenseTab, activeChart, setActiveChart, triggerConfirm
+  } = useUiStore();
+  const {
+    timeFilter, setTimeFilter, salaryDay, setSalaryDay,
+    expenseTitle, setExpenseTitle, expenseAmount, setExpenseAmount,
+    expenseCategory, setExpenseCategory, newCategoryInput, setNewCategoryInput,
+    customCategories, setCustomCategories, expenseDate, setExpenseDate,
+    expenseNotes, setExpenseNotes, isAddingExpense, expenseSearch, setExpenseSearch,
+    ledgerCategoryFilter, setLedgerCategoryFilter, ledgerMinAmount, setLedgerMinAmount,
+    ledgerMaxAmount, setLedgerMaxAmount, ledgerSortField, setLedgerSortField,
+    ledgerSortDir, setLedgerSortDir, isFetchingExpenses, expensesLoaded,
+    subscriptions, expenses, setExpenses, setIsAddingExpense, setSubscriptions
+  } = useExpensesStore();
+  const { user } = useAuthStore();
+
+  const getHeaders = React.useCallback(() => getAuthHeaders(user?.idToken), [user]);
+
+  const fetchExpenses = React.useCallback(async () => {
+  }, []);
+
   const [currentPage, setCurrentPage] = React.useState(1);
   const pageSize = 15;
 
@@ -267,7 +158,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
   const [showLogModal, setShowLogModal] = React.useState(false);
   const [pendingSubToPay, setPendingSubToPay] = React.useState<Subscription | null>(null);
 
-  // CSV States
   const [showImportResultModal, setShowImportResultModal] = React.useState(false);
   const [importResultText, setImportResultText] = React.useState("");
   const [isImporting, setIsImporting] = React.useState(false);
@@ -289,88 +179,111 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
       exp.amount,
       exp.notes || "",
     ]);
-    
+
     const today = new Date();
     const stamp = `${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, "0")}${today.getDate().toString().padStart(2, "0")}`;
     downloadCsv(`ledger_export_${stamp}.csv`, headers, rows);
   };
 
-  const handleImportCsv = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImportCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
+    const inputEl = e.target;
     setIsImporting(true);
-    const reader = new FileReader();
-    
-    reader.onload = async (event) => {
-      try {
-        const text = event.target?.result as string;
-        if (!text) throw new Error("CSV file is empty");
-        
-        const rawLines = text.split(/\r?\n/).filter(line => line.trim().length > 0);
-        if (rawLines.length < 2) throw new Error("CSV file must contain a header row and at least one data row");
-        
-        const headers = parseCsvLine(rawLines[0]).map(h => h.toLowerCase().trim());
-        
-        let titleIdx = headers.findIndex(h => h.includes("title") || h.includes("description") || h.includes("desc") || h.includes("name") || h.includes("item"));
-        let amountIdx = headers.findIndex(h => h.includes("amount") || h.includes("cost") || h.includes("price") || h.includes("value") || h.includes("amt"));
-        let categoryIdx = headers.findIndex(h => h.includes("category") || h.includes("type") || h.includes("cat"));
-        let dateIdx = headers.findIndex(h => h.includes("date") || h.includes("time") || h.includes("created"));
-        let notesIdx = headers.findIndex(h => h.includes("notes") || h.includes("note") || h.includes("memo"));
-        
-        // Fallbacks
-        if (titleIdx === -1) titleIdx = 0;
-        if (amountIdx === -1) amountIdx = headers.length > 1 ? 1 : 0;
-        if (categoryIdx === -1) categoryIdx = headers.length > 2 ? 2 : -1;
-        if (dateIdx === -1) dateIdx = headers.length > 3 ? 3 : -1;
-        if (notesIdx === -1) notesIdx = headers.length > 4 ? 4 : -1;
-        
-        const entries: any[] = [];
-        
-        for (let i = 1; i < rawLines.length; i++) {
-          const cells = parseCsvLine(rawLines[i]);
-          if (cells.length === 0 || (cells.length === 1 && !cells[0])) continue;
-          
-          const title = cells[titleIdx]?.trim() || "";
-          const amtStr = cells[amountIdx]?.replace(/[^\d\.]/g, "") || "0";
-          const amount = parseFloat(amtStr);
-          
-          if (!title || isNaN(amount) || amount <= 0) continue; // Skip invalid entries
-          
-          const category = categoryIdx !== -1 && cells[categoryIdx] ? cells[categoryIdx].trim() : "Other";
-          
-          let date = dateIdx !== -1 && cells[dateIdx] ? cells[dateIdx].trim() : "";
-          date = normalizeCsvDate(date) || getLocalDateStr();
-          
-          const notes = notesIdx !== -1 && cells[notesIdx] ? cells[notesIdx].trim() : "";
-          
-          entries.push({
-            title,
-            amount,
-            category,
-            date,
-            notes: notes || null
+
+    Papa.parse<Record<string, any>>(file, {
+      header: true,
+      skipEmptyLines: "greedy",
+      transformHeader: (header) => header.trim(),
+      complete: async (results) => {
+        try {
+          if (!results.data || results.data.length === 0) {
+            throw new Error("CSV file is empty or contains no data rows");
+          }
+
+          const fields = results.meta.fields || (results.data[0] ? Object.keys(results.data[0]) : []);
+          if (fields.length === 0) {
+            throw new Error("CSV file must contain a header row and at least one data row");
+          }
+
+          let titleField = fields.find((f) => {
+            const l = f.toLowerCase();
+            return l.includes("title") || l.includes("description") || l.includes("desc") || l.includes("name") || l.includes("item");
           });
+          let amountField = fields.find((f) => {
+            const l = f.toLowerCase();
+            return l.includes("amount") || l.includes("cost") || l.includes("price") || l.includes("value") || l.includes("amt");
+          });
+          let categoryField = fields.find((f) => {
+            const l = f.toLowerCase();
+            return l.includes("category") || l.includes("type") || l.includes("cat");
+          });
+          let dateField = fields.find((f) => {
+            const l = f.toLowerCase();
+            return l.includes("date") || l.includes("time") || l.includes("created");
+          });
+          let notesField = fields.find((f) => {
+            const l = f.toLowerCase();
+            return l.includes("notes") || l.includes("note") || l.includes("memo");
+          });
+
+          if (!titleField) titleField = fields[0];
+          if (!amountField) amountField = fields.length > 1 ? fields[1] : fields[0];
+          if (!categoryField) categoryField = fields.length > 2 ? fields[2] : undefined;
+          if (!dateField) dateField = fields.length > 3 ? fields[3] : undefined;
+          if (!notesField) notesField = fields.length > 4 ? fields[4] : undefined;
+
+          const entries: any[] = [];
+
+          for (const row of results.data) {
+            const title = titleField ? String(row[titleField] ?? "").trim() : "";
+            const rawAmount = amountField ? String(row[amountField] ?? "") : "0";
+            const amtStr = rawAmount.replace(/[^\d\.]/g, "") || "0";
+            const amount = parseFloat(amtStr);
+
+            if (!title || isNaN(amount) || amount <= 0) continue;
+
+            const category = categoryField && row[categoryField] ? String(row[categoryField]).trim() : "Other";
+
+            let date = dateField && row[dateField] ? String(row[dateField]).trim() : "";
+            date = normalizeCsvDate(date) || getLocalDateStr();
+
+            const notes = notesField && row[notesField] ? String(row[notesField]).trim() : "";
+
+            entries.push({
+              title,
+              amount,
+              category: category || "Other",
+              date,
+              notes: notes || null,
+            });
+          }
+
+          if (entries.length === 0) {
+            throw new Error("No valid transactions found in the CSV. Make sure a description and a positive amount are provided.");
+          }
+
+          const added = await importExpensesBatch(entries);
+          setImportResultText(`Successfully imported ${added} transactions into your ledger!`);
+          setShowImportResultModal(true);
+        } catch (err: any) {
+          console.error(err);
+          setImportResultText(`Import Failed: ${err.message || "An unexpected error occurred during CSV parsing."}`);
+          setShowImportResultModal(true);
+        } finally {
+          setIsImporting(false);
+          inputEl.value = "";
         }
-        
-        if (entries.length === 0) {
-          throw new Error("No valid transactions found in the CSV. Make sure a description and a positive amount are provided.");
-        }
-        
-        const added = await importExpensesBatch(entries);
-        setImportResultText(`Successfully imported ${added} transactions into your ledger!`);
-        setShowImportResultModal(true);
-      } catch (err: any) {
+      },
+      error: (err) => {
         console.error(err);
         setImportResultText(`Import Failed: ${err.message || "An unexpected error occurred during CSV parsing."}`);
         setShowImportResultModal(true);
-      } finally {
         setIsImporting(false);
-        e.target.value = "";
-      }
-    };
-    
-    reader.readAsText(file);
+        inputEl.value = "";
+      },
+    });
   };
 
   const upcomingSubscriptions = React.useMemo(() => {
@@ -388,12 +301,11 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
     return (subscriptions || []).filter((sub) => {
       if (!sub.nextBillingDate) return false;
       const dueDate = parseDateOnly(sub.nextBillingDate);
-      
-      // Auto-remove alert if it is already logged in the ledger
+
       if (isSubscriptionPaidInLedger(sub, expenses)) {
         return false;
       }
-      
+
       return dueDate >= now && dueDate <= sevenDaysFromNow;
     }).sort((a, b) => {
       const aDate = a.nextBillingDate ? parseDateOnly(a.nextBillingDate).getTime() : 0;
@@ -402,7 +314,15 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
     });
   }, [subscriptions, expenses]);
 
-  // Auto-advance due dates for past/today bills if matched in ledger
+  const updateSubscription = async (id: string, updates: Partial<Subscription>) => {
+    setSubscriptions(subscriptions.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+    try {
+      await fetch(`/api/subscriptions/${id}`, { method: "PATCH", headers: getHeaders(), body: JSON.stringify(updates) });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   React.useEffect(() => {
     if (!subscriptions || !expenses || !updateSubscription) return;
 
@@ -411,10 +331,10 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
     const mStr = String(d.getMonth() + 1).padStart(2, "0");
     const dStr = String(d.getDate()).padStart(2, "0");
     const todayStr = `${yStr}-${mStr}-${dStr}`;
-    
+
     subscriptions.forEach((sub) => {
       if (!sub.nextBillingDate) return;
-      
+
       if (sub.nextBillingDate <= todayStr) {
         if (isSubscriptionPaidInLedger(sub, expenses)) {
           const nextDate = advanceBillingDate(sub.nextBillingDate, sub.billingCycle);
@@ -422,11 +342,195 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
         }
       }
     });
-  }, [subscriptions, expenses, updateSubscription]);
+  }, [subscriptions, expenses]);
 
   React.useEffect(() => {
     setCurrentPage(1);
   }, [expenseSearch, ledgerCategoryFilter, ledgerMinAmount, ledgerMaxAmount, ledgerSortField, ledgerSortDir]);
+
+  const toLocalDateStr = (d: Date) => {
+    const yStr = d.getFullYear();
+    const mStr = String(d.getMonth() + 1).padStart(2, "0");
+    const dStr = String(d.getDate()).padStart(2, "0");
+    return `${yStr}-${mStr}-${dStr}`;
+  };
+
+  const allCategories = React.useMemo(() => {
+    const s = new Set<string>();
+    expenses.forEach((e) => {
+      if (e.category) s.add(e.category);
+    });
+    customCategories.forEach((c) => s.add(c));
+    return Array.from(s).sort();
+  }, [expenses, customCategories]);
+
+  const filteredExpensesBase = React.useMemo(() => {
+    let list = [...expenses];
+    if (expenseSearch) {
+      const q = expenseSearch.toLowerCase();
+      list = list.filter((e) => (e.title && e.title.toLowerCase().includes(q)) || (e.notes && e.notes.toLowerCase().includes(q)));
+    }
+    if (ledgerMinAmount) list = list.filter((e) => (e.amount || 0) >= parseFloat(ledgerMinAmount));
+    if (ledgerMaxAmount) list = list.filter((e) => (e.amount || 0) <= parseFloat(ledgerMaxAmount));
+    return list;
+  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount]);
+
+  const filteredExpenses = React.useMemo(() => {
+    let list = [...expenses];
+    if (expenseSearch) {
+      const q = expenseSearch.toLowerCase();
+      list = list.filter((e) => (e.title && e.title.toLowerCase().includes(q)) || (e.notes && e.notes.toLowerCase().includes(q)));
+    }
+    if (ledgerMinAmount) list = list.filter((e) => (e.amount || 0) >= parseFloat(ledgerMinAmount));
+    if (ledgerMaxAmount) list = list.filter((e) => (e.amount || 0) <= parseFloat(ledgerMaxAmount));
+    if (ledgerCategoryFilter) {
+      list = list.filter((e) => e.category === ledgerCategoryFilter);
+    }
+    const dir = ledgerSortDir === "asc" ? 1 : -1;
+    list = [...list].sort((a, b) => {
+      switch (ledgerSortField) {
+        case "amount": return ((a.amount || 0) - (b.amount || 0)) * dir;
+        case "title": return (a.title || "").localeCompare(b.title || "") * dir;
+        case "category": return (a.category || "").localeCompare(b.category || "") * dir;
+        case "date": default: return (a.date || "").localeCompare(b.date || "") * dir;
+      }
+    });
+    return list;
+  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerSortField, ledgerSortDir]);
+
+  const totalSpent = React.useMemo(() => filteredExpensesBase.reduce((sum, e) => sum + (e.amount || 0), 0), [filteredExpensesBase]);
+
+  const catBreakdown = React.useMemo(() => {
+    const breakdown: Record<string, number> = {};
+    filteredExpenses.forEach((e) => {
+      const cat = e.category || "Uncategorized";
+      breakdown[cat] = (breakdown[cat] || 0) + (e.amount || 0);
+    });
+    return Object.fromEntries(Object.entries(breakdown).sort(([, a], [, b]) => b - a));
+  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerSortField, ledgerSortDir]);
+
+  const chartCatBreakdown = React.useMemo(() => {
+    const breakdown: Record<string, number> = {};
+    filteredExpensesBase.forEach((e) => {
+      const cat = e.category || "Uncategorized";
+      breakdown[cat] = (breakdown[cat] || 0) + (e.amount || 0);
+    });
+    return Object.fromEntries(Object.entries(breakdown).sort(([, a], [, b]) => b - a));
+  }, [filteredExpensesBase]);
+
+  const dailyTrend = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    filteredExpenses.forEach((e) => {
+      if (e.date) map[e.date] = (map[e.date] || 0) + (e.amount || 0);
+    });
+    return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-10);
+  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerSortField, ledgerSortDir]);
+
+  const largestItem = React.useMemo(() => {
+    if (filteredExpensesBase.length === 0) return null;
+    return filteredExpensesBase.reduce((max, e) => ((e.amount || 0) > (max.amount || 0) ? e : max), filteredExpensesBase[0]);
+  }, [filteredExpensesBase]);
+  const largestCharge = largestItem?.amount || 0;
+
+  const topCategory = React.useMemo(() => {
+    const entries = Object.entries(chartCatBreakdown);
+    if (entries.length === 0) return "None";
+    return entries.reduce((max, cur) => ((cur[1] as number) > (max[1] as number) ? cur : max), entries[0])[0];
+  }, [chartCatBreakdown]);
+
+  const addExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!expenseTitle.trim() || !expenseAmount) return;
+    setIsAddingExpense(true);
+    try {
+      const res = await fetch("/api/expenses", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          title: expenseTitle.trim(),
+          amount: parseFloat(expenseAmount),
+          category: expenseCategory || null,
+          date: expenseDate || toLocalDateStr(new Date()),
+          notes: expenseNotes.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        setExpenseTitle("");
+        setExpenseAmount("");
+        setExpenseCategory("");
+        setExpenseNotes("");
+        fetchExpenses();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAddingExpense(false);
+    }
+  };
+
+  const deleteExpense = async (id: string) => {
+    triggerConfirm("Archive Expense", "Are you sure you want to archive this expense?", async () => {
+      const previousList = [...expenses];
+      setExpenses(previousList.filter((e) => e.id !== id));
+      try {
+        const res = await fetch(`/api/expenses/${id}`, { method: "DELETE", headers: getHeaders() });
+        if (!res.ok) throw new Error("Failed to archive");
+      } catch (err) {
+        console.error(err);
+        setExpenses(previousList);
+      }
+    });
+  };
+
+  const updateExpense = async (id: string, updates: Partial<Expense>) => {
+    const previousList = [...expenses];
+    setExpenses(previousList.map((e) => (e.id === id ? { ...e, ...updates } : e)));
+    try {
+      const res = await fetch(`/api/expenses/${id}`, {
+        method: "PATCH",
+        headers: getHeaders(),
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) throw new Error("Failed to update");
+    } catch (err) {
+      console.error(err);
+      setExpenses(previousList);
+      throw err;
+    }
+  };
+
+  const logSubscriptionExpense = async (sub: Subscription) => {
+    try {
+      const res = await fetch("/api/expenses", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          title: `${sub.name} Payment`,
+          amount: sub.cost,
+          category: sub.name.toLowerCase().includes("rent") ? "Rent" : "Subscriptions",
+          date: toLocalDateStr(new Date()),
+          notes: `Logged automatically from subscription: ${sub.name}`,
+        }),
+      });
+      if (res.ok) fetchExpenses();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const importExpensesBatch = async (items: any[]) => {
+    const chunks = [];
+    for (let i = 0; i < items.length; i += 100) chunks.push(items.slice(i, i + 100));
+    let totalAdded = 0;
+    for (const chunk of chunks) {
+      const res = await fetch("/api/expenses", { method: "POST", headers: getHeaders(), body: JSON.stringify(chunk) });
+      if (!res.ok) throw new Error("Failed to import batch chunk");
+      const data = await res.json();
+      totalAdded += data.added || 0;
+    }
+    fetchExpenses();
+    return totalAdded;
+  };
 
   const totalItems = filteredExpenses.length;
   const totalPages = Math.ceil(totalItems / pageSize) || 1;
@@ -437,7 +541,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
 
   return (
     <>
-      {/* Tab controls & currency selector */}
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="flex gap-0.5 rounded-lg bg-bg-secondary p-[3px]">
@@ -500,10 +603,8 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
         )}
       </div>
 
-      {/* LEDGER TAB */}
       {expenseTab === "ledger" && (
         <div className="flex flex-col gap-7 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]"> <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">Expenses Ledger</h1>
-          {/* Stat Cards */}
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 max-md:grid-cols-2 max-md:gap-2.5">
             <div className={`${STAT_CARD} !bg-[var(--accent-blue)] !border-none`}>
               <span className={`${LABEL_MONO} !text-[#1A1A1A]/70`}>Total Spent</span>
@@ -527,7 +628,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
             </div>
           </div>
 
-          {/* Chart */}
           <div className={BENTO_CARD}>
             <div className="mb-6 flex items-center justify-between">
               <h3 className="text-[15px] font-semibold">Analytics</h3>
@@ -607,7 +707,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
             )}
           </div>
 
-          {/* Upcoming Bills Calendar Widget */}
           {upcomingSubscriptions.length > 0 && (
             <div className={BENTO_CARD}>
               <h3 className="text-sm font-semibold tracking-[-0.3px] text-text-primary mb-3 flex items-center gap-1.5">
@@ -665,7 +764,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
             </div>
           )}
 
-          {/* Form + Table */}
           <div className="grid grid-cols-[300px_1fr] gap-6 max-md:grid-cols-1">
             <div className="flex flex-col gap-5">
               <div className={BENTO_CARD}>
@@ -681,7 +779,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
                     ))}
                   </select>
 
-                  {/* Quick Category Chips */}
                   <div className="flex flex-wrap gap-1 my-0.5">
                     {["Food", "Groceries", "Rent", "Utilities", "Shopping", "Transport"].map((c) => (
                       <button
@@ -712,7 +809,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
                       onClick={() => {
                         const trimmed = newCategoryInput.trim();
                         if (trimmed && !customCategories.includes(trimmed)) {
-                          setCustomCategories((prev) => [...prev, trimmed]);
+                          setCustomCategories([...customCategories, trimmed]);
                           setExpenseCategory(trimmed);
                           setNewCategoryInput("");
                         }
@@ -729,7 +826,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
                 </form>
               </div>
 
-              {/* Categories breakdown list */}
               <div className={BENTO_CARD}>
                 <span className={`${LABEL_MONO} mb-3.5 block`}>Categories</span>
                 <div className="flex flex-col gap-2.5">
@@ -752,7 +848,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
               </div>
             </div>
 
-            {/* Ledger Table */}
             <div className={`${BENTO_CARD} flex flex-col`}>
               <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -842,7 +937,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = ({
                 </table>
               </div>
 
-              {/* Pagination Controls */}
               {totalPages > 1 && (
                 <div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-3.5">
                   <span className="text-xs text-text-muted">

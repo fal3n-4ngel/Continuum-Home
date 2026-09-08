@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     "AniList sync",
     "Trakt sync",
     "book tracker",
-    "self-hosted dashboard",
+    "self-hostable dashboard",
     "ChatGPT custom GPT",
     "ChatGPT actions",
     "OpenAPI schema",
@@ -70,8 +70,6 @@ export const metadata: Metadata = {
   },
 };
 
-// Person + WebApplication structured data — helps search engines attribute
-// the project and surface it as a proper app listing rather than a bare page.
 const structuredData = {
   "@context": "https://schema.org",
   "@graph": [

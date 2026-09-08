@@ -32,8 +32,6 @@ export async function POST(req: NextRequest) {
 
     const db = getAdminDb();
 
-    // Check if user already has an open/pending request — query by uid only
-    // to avoid needing a composite index; filter by status in JS.
     const existingSnap = await db
       .collection("pro_claims")
       .where("uid", "==", session.uid)
@@ -48,7 +46,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if user is already pro
     const settingsDoc = await db.collection("settings").doc(session.uid).get();
     if (settingsDoc.exists && settingsDoc.data()?.isPro === true) {
       return NextResponse.json({ error: "Your account is already a Pro account." }, { status: 409 });
@@ -69,7 +66,7 @@ export async function POST(req: NextRequest) {
     waitUntil(sendDiscordEmbed(
       "Admin Audit Log",
       `🔔 **NEW PRO REQUEST**\nUser \`${session.user.email || session.uid}\` requested Pro status via ${platform} (Handle: ${sanitizedHandle}).\nCheck the Admin Panel to approve or deny.`,
-      16776960, // Yellow Hex
+      16776960,
       "Continuum Dashboard • Admin Audit"
     ));
 
@@ -79,7 +76,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET — let the user check their own claim status
 export async function GET(req: NextRequest) {
   try {
     const session = await requireUser(req);

@@ -55,8 +55,6 @@ describe("APP_URL", () => {
 });
 
 describe("ADMIN_EMAIL", () => {
-  // Both spellings existed in the codebase; neither may silently fall through
-  // to the default just because the other one was the one that got set.
   it("accepts either the server or the public spelling", () => {
     process.env.ADMIN_EMAIL = "ops@example.com";
     expect(env.ADMIN_EMAIL).toBe("ops@example.com");
@@ -80,8 +78,6 @@ describe("email redirection", () => {
     });
   });
 
-  // Redirection is opt-in via env var, not inferred from ENVIRONMENT: a
-  // misfiring environment probe must never swallow production mail.
   it("does not redirect on a uat deployment that lacks the override", () => {
     process.env.VERCEL_ENV = "preview";
     expect(resolveEmailRecipient("real@user.com").to).toBe("real@user.com");

@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export const POST = withAdmin("POST /api/admin/cron", async (req) => {
   const body = await req.json();
-  const triggerType = body?.triggerType || body?.task; // "subscriptions" | "expenses_weekly" | "expenses_monthly" | "portfolio" | "recommendations"
+  const triggerType = body?.triggerType || body?.task;
 
   let cronPath = "";
   if (triggerType === "subscriptions") {
@@ -47,7 +47,7 @@ export const POST = withAdmin("POST /api/admin/cron", async (req) => {
   waitUntil(sendDiscordEmbed(
     "Admin Audit Log",
     `Admin manually triggered cron task: **${triggerType}**`,
-    3447003, // Blue Hex
+    3447003,
     "Continuum Dashboard • Admin Audit"
   ));
 

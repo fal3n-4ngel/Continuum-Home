@@ -30,8 +30,6 @@ export const AssetRow: React.FC<AssetRowProps> = ({
   const investedVal = asset.investedAmount || asset.amount || 0;
   const assetProfit = currentVal - investedVal;
   const assetProfitPct = investedVal > 0 ? (assetProfit / investedVal) * 100 : 0;
-  // "sip" repurposes `quantity` to hold the installment amount, not units
-  // held, so it can't be divided/multiplied against price like other categories.
   const isSip = asset.category === "sip";
   const avgBuy = !isSip && asset.quantity && asset.quantity > 0 ? investedVal / asset.quantity : (asset.buyPrice || 0);
   const hasDayChange = !isSip && !!asset.quantity && asset.currentPrice != null && asset.previousClose != null;
@@ -51,7 +49,7 @@ export const AssetRow: React.FC<AssetRowProps> = ({
         {asset.notes && <p className="mt-1 text-[10px] text-text-muted font-normal">{asset.notes}</p>}
       </td>
       <td className={LEDGER_TD}>
-        <span 
+        <span
           className="rounded-full px-2.5 py-0.5 font-mono text-[9px] font-bold text-white uppercase shadow-2xs"
           style={{ backgroundColor: categoryColors[asset.category] || "#6b7280" }}
         >

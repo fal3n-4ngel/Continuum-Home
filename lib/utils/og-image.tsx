@@ -1,5 +1,3 @@
-// Shared JSX tree for the social preview images (opengraph-image.tsx and
-// twitter-image.tsx both render this at 1200x630 via next/og's ImageResponse).
 export function SocialCard() {
   const pills = ["Expenses", "Watchlist", "Investments", "Books", "AI Agent"];
 

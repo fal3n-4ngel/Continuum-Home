@@ -24,8 +24,6 @@ describe("portfolio email template", () => {
     expect(html).toContain("Unsubscribe from portfolio updates");
   });
 
-  // Transactional sends (admin preview) have no list to leave, so the footer
-  // must not invite an unsubscribe that would do nothing.
   it("omits the unsubscribe footer when no URL is supplied", () => {
     const { html } = buildPortfolioEmail(base);
     expect(html).not.toContain("Unsubscribe from portfolio updates");

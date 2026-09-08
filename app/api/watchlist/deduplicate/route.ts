@@ -30,7 +30,6 @@ export async function POST(req: NextRequest) {
       throw new ApiError(400, "Missing or invalid mergedData");
     }
 
-    // Verify ownership
     const itemsMap = await getRawWatchlist(session);
     if (!itemsMap[primaryId]) {
       throw new ApiError(404, "Primary item not found or not owned by user");
@@ -44,13 +43,11 @@ export async function POST(req: NextRequest) {
     const now = Date.now();
     const patches: Record<string, Record<string, unknown> | null> = {};
 
-    // Apply merged updates to the primary item
     patches[primaryId] = {
       ...mergedData,
       updatedAt: now,
     };
 
-    // Delete duplicates by setting their patch to null
     for (const dupId of duplicateIds) {
       patches[dupId] = null;
     }

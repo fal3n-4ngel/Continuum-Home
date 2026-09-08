@@ -15,8 +15,6 @@ export async function GET(req: NextRequest) {
   const errors: string[] = [];
   const baseUrl = env.APP_URL;
 
-  // Cache failures degrade silently — every read falls through to Firestore at
-  // full cost while the app still looks healthy. Only a probe surfaces it.
   const cache = await redisStatus();
   if (cache.state === "error") {
     errors.push(`Redis Error: cache is configured but unreachable — ${cache.detail}`);
@@ -25,10 +23,9 @@ export async function GET(req: NextRequest) {
   const warnings = configWarnings();
 
   try {
-    // Consequential ops must stay flagged or the ChatGPT UI regression returns.
     const openApiRes = await getOpenApi();
     const schema = await openApiRes.json();
-    
+
     for (const [path, methods] of Object.entries(schema.paths || {})) {
       for (const [method, operation] of Object.entries(methods as any)) {
         if (['post', 'patch', 'delete'].includes(method)) {
@@ -62,7 +59,7 @@ export async function GET(req: NextRequest) {
         errors.push(`E2E POST Error: Returned ${postRes.status} - ${await postRes.text()}`);
       } else {
         const postData = await postRes.json();
-        const id = postData.id || postData.results?.[0]?.id; // handles single or batch
+        const id = postData.id || postData.results?.[0]?.id;
 
         if (id) {
           const patchRes = await fetch(`${baseUrl}/api/expenses/${id}`, {
@@ -70,7 +67,7 @@ export async function GET(req: NextRequest) {
             headers,
             body: JSON.stringify({ amount: 2 })
           });
-          
+
           if (!patchRes.ok) {
             errors.push(`E2E PATCH Error: Returned ${patchRes.status} - ${await patchRes.text()}`);
           }
@@ -95,10 +92,6 @@ export async function GET(req: NextRequest) {
     errors.push(`Exception during health check: ${err.message}`);
   }
 
-  // No Discord alert here on purpose: this route returns 500 below when it
-  // finds errors, and the health-cron workflow already fails on that and
-  // posts the response body (including this `errors` array) to Discord.
-  // Alerting from both sides would double-notify every 5 minutes.
   if (errors.length > 0) {
     const adminEmail = env.ADMIN_EMAIL;
 
@@ -124,7 +117,6 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Fail the GitHub Action step by returning 500
     return NextResponse.json({ success: false, environment: env.ENVIRONMENT, cache: cache.state, warnings, errors }, { status: 500 });
   }
 

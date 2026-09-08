@@ -12,8 +12,6 @@ export interface FirebaseWebConfig {
   appId?: string;
 }
 
-// Parses and sanity-checks the Firebase Web App config (from env or the
-// X-Firebase-Config header). Throws a client-safe ApiError on bad input.
 export function parseFirebaseConfig(credentials: Credentials): FirebaseWebConfig {
   if (!credentials.firebaseConfig) {
     throw new ApiError(500, "Firebase is not configured on this server.");
@@ -37,7 +35,7 @@ export function parseFirebaseConfig(credentials: Credentials): FirebaseWebConfig
 }
 
 export interface Credentials {
-  firebaseConfig: string | null; // JSON configuration string
+  firebaseConfig: string | null;
   traktClientId: string | null;
   traktClientSecret: string | null;
   traktRefreshToken: string | null;
@@ -54,7 +52,6 @@ export async function getCredentials(req?: NextRequest): Promise<Credentials> {
       reqHeaders = await headers();
     }
   } catch {
-    // Fallback if headers context is unavailable (e.g. static rendering)
     return {
       firebaseConfig: env.FIREBASE_CONFIG || null,
       traktClientId: process.env.TRAKT_CLIENT_ID || null,

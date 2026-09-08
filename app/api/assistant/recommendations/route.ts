@@ -7,16 +7,22 @@ import { reserveGeminiCall, acquireGenerationLock, isGeminiQuotaError } from "@/
 
 export const dynamic = "force-dynamic";
 
-// Calculate active recommendation date in IST (UTC+5:30) with 6 AM rollover
+const VALID_TYPES: Record<string, "movie" | "show" | "anime" | "book"> = {
+  movie: "movie",
+  show: "show",
+  anime: "anime",
+  book: "book",
+};
+
 function getActiveIstDate() {
   const nowUtc = new Date();
   const istOffset = 5.5 * 60 * 60 * 1000;
   const nowIst = new Date(nowUtc.getTime() + istOffset);
-  
+
   if (nowIst.getUTCHours() < 6) {
     nowIst.setUTCDate(nowIst.getUTCDate() - 1);
   }
-  
+
   const yyyy = nowIst.getUTCFullYear();
   const mm = String(nowIst.getUTCMonth() + 1).padStart(2, "0");
   const dd = String(nowIst.getUTCDate()).padStart(2, "0");
@@ -26,7 +32,11 @@ function getActiveIstDate() {
 export async function GET(req: NextRequest) {
   try {
     const session = await requireUser(req);
-    const type = req.nextUrl.searchParams.get("type") || "movie"; // "movie", "show", "anime", or "book"
+    const rawType = (req.nextUrl.searchParams.get("type") || "movie").toLowerCase().trim();
+    const type = VALID_TYPES[rawType];
+    if (!type) {
+      throw new ApiError(400, "Invalid type. Must be one of: movie, show, anime, book.");
+    }
 
     const dateStr = getActiveIstDate();
     const key = `${type}_${dateStr}`;
@@ -36,21 +46,6 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ recommendation: currentRec });
     }
 
-    // Fallback for users the nightly cron missed.
-    // Rate-guarded on two axes since this path (unlike the cron) can be hit
-    // concurrently and unboundedly — by multiple tabs/widgets for the same
-    // user, and by every user at once — against a tiny 20/day free-tier cap
-    // shared across the whole project:
-    //   - acquireGenerationLock: only one concurrent request per (user, type,
-    //     day) actually calls Gemini; the rest just miss this round and pick
-    //     up the saved result on their next poll.
-    //   - reserveGeminiCall: a shared daily budget across this route AND the
-    //     cron, so this fallback can't blow through whatever the cron
-    //     already spent today.
-    // Both degrade to an empty recommendation (200, recommendation: null)
-    // rather than an error — the frontend already treats that as "nothing to
-    // show yet," so no error UI and no Discord alert for an expected,
-    // handled condition.
     const gotLock = await acquireGenerationLock(session.uid, type, dateStr);
     if (!gotLock) {
       return NextResponse.json({ recommendation: null });
@@ -74,7 +69,7 @@ export async function GET(req: NextRequest) {
       const books = allItems.filter((i) => i.type === "book");
       const readList = books.filter((b) => b.status === "completed").map((b) => b.title).slice(-15);
       const planList = books.filter((b) => b.status === "plan_to_watch").map((b) => b.title).slice(-15);
-      
+
       prompt = `
 You are a premium library assistant. Based on the user's reading lists:
 Completed books: ${JSON.stringify(readList)}
@@ -132,41 +127,49 @@ Return no other text, comments or markdown blocks. Just the raw JSON object.
       const response = await model.generateContent(prompt);
       replyText = response.response.text();
     } catch (err) {
-      // Safety net: reserveGeminiCall()'s own count can still drift from
-      // Google's real usage (the cron spends against the same budget from a
-      // separate process). Degrade the same way a budget/lock miss does,
-      // instead of a raw 500 + Discord alert for an already-expected condition.
       if (isGeminiQuotaError(err)) {
         return NextResponse.json({ recommendation: null });
       }
       throw err;
     }
     const geminiResult = JSON.parse(replyText.trim());
+    const title = typeof geminiResult.title === "string" ? geminiResult.title.trim() : "";
+    const releaseYear = typeof geminiResult.releaseYear === "string" || typeof geminiResult.releaseYear === "number"
+      ? String(geminiResult.releaseYear).trim()
+      : "";
 
-    // Quick single-attempt lookup
     let coverImage: string | null = null;
     let score: string | null = null;
 
     if (type === "book") {
-      try {
-        const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(geminiResult.title)}&limit=1`);
-        if (res.ok) {
-          const data = await res.json();
-          const doc = data.docs?.[0];
-          if (doc?.cover_i) {
-            coverImage = `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`;
+      if (title) {
+        try {
+          const url = new URL("https://openlibrary.org/search.json");
+          url.searchParams.set("q", title);
+          url.searchParams.set("limit", "1");
+          const res = await fetch(url.toString());
+          if (res.ok) {
+            const data = await res.json();
+            const doc = data.docs?.[0];
+            if (doc?.cover_i && Number.isInteger(doc.cover_i)) {
+              coverImage = `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg`;
+            }
           }
+        } catch (e) {
+          console.error("OpenLibrary fallback fetch failed:", e);
         }
-      } catch (e) {
-        console.error("OpenLibrary fallback fetch failed:", e);
       }
     } else {
-      const omdbKey = process.env.NEXT_PUBLIC_IMDB_API_KEY;
-      if (omdbKey) {
+      const omdbKey = process.env.OMDB_API_KEY;
+      if (omdbKey && title) {
         try {
-          const res = await fetch(
-            `https://www.omdbapi.com/?t=${encodeURIComponent(geminiResult.title)}&y=${geminiResult.releaseYear || ""}&apikey=${omdbKey}`
-          );
+          const url = new URL("https://www.omdbapi.com/");
+          url.searchParams.set("t", title);
+          if (releaseYear) {
+            url.searchParams.set("y", releaseYear);
+          }
+          url.searchParams.set("apikey", omdbKey);
+          const res = await fetch(url.toString());
           if (res.ok) {
             const data = await res.json();
             if (data.Poster && data.Poster !== "N/A") coverImage = data.Poster;
@@ -177,9 +180,11 @@ Return no other text, comments or markdown blocks. Just the raw JSON object.
         }
       }
 
-      if (!coverImage) {
+      if (!coverImage && title) {
         try {
-          const res = await fetch(`https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(geminiResult.title)}`);
+          const url = new URL("https://api.tvmaze.com/singlesearch/shows");
+          url.searchParams.set("q", title);
+          const res = await fetch(url.toString());
           if (res.ok) {
             const data = await res.json();
             if (data.image?.medium) coverImage = data.image.medium;
@@ -192,19 +197,18 @@ Return no other text, comments or markdown blocks. Just the raw JSON object.
     }
 
     const payload: DailyRecommendation = {
-      type: type as any,
-      title: geminiResult.title,
-      releaseYear: geminiResult.releaseYear,
-      author: geminiResult.author || "",
-      synopsis: geminiResult.synopsis || "",
-      rationale: geminiResult.rationale || "",
+      type,
+      title,
+      releaseYear,
+      author: typeof geminiResult.author === "string" ? geminiResult.author : "",
+      synopsis: typeof geminiResult.synopsis === "string" ? geminiResult.synopsis : "",
+      rationale: typeof geminiResult.rationale === "string" ? geminiResult.rationale : "",
       coverImage,
       score,
       isLogged: false,
       date: dateStr,
     };
 
-    // Save to Firestore so it's cached for future loads
     await saveDailyRecommendation(session, type, dateStr, payload);
 
     return NextResponse.json({ recommendation: payload });
@@ -213,15 +217,23 @@ Return no other text, comments or markdown blocks. Just the raw JSON object.
   }
 }
 
-// POST endpoint to update the isLogged status of a recommendation
 export async function POST(req: NextRequest) {
   try {
     const session = await requireUser(req);
     const body = await req.json();
-    const { type, date, isLogged } = body;
+    const { type: rawType, date, isLogged } = body;
 
-    if (!type || !date) {
+    if (!rawType || !date) {
       throw new ApiError(400, "Missing type or date parameters.");
+    }
+
+    const type = typeof rawType === "string" ? VALID_TYPES[rawType.toLowerCase().trim()] : undefined;
+    if (!type) {
+      throw new ApiError(400, "Invalid type. Must be one of: movie, show, anime, book.");
+    }
+
+    if (typeof date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      throw new ApiError(400, "Invalid date format. Must be YYYY-MM-DD.");
     }
 
     const currentRec = await getDailyRecommendation(session, type, date);

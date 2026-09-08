@@ -3,10 +3,6 @@ import { ImageResponse } from "next/og";
 export const size = { width: 512, height: 512 };
 export const contentType = "image/png";
 
-// Android adaptive icons apply their own mask shape (circle/squircle/rounded
-// square depending on device) over the full-bleed background, cropping
-// anything outside the center ~66% "safe zone" — so the glyph is kept small
-// and centered here instead of filling the canvas like the "any" variant.
 export async function GET() {
   const cell = 130;
   const gap = 24;

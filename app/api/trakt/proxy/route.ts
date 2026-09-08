@@ -6,12 +6,9 @@ export const dynamic = "force-dynamic";
 
 const TRAKT_API = "https://api.trakt.tv";
 
-// Only the Trakt endpoints the dashboard actually uses may be relayed.
 const ALLOWED_METHODS = new Set(["GET", "POST", "DELETE"]);
 const ALLOWED_PATH_PREFIXES = ["/users/", "/sync/", "/search/", "/shows/", "/movies/"];
 
-// Resolves and validates the target URL. Prevents SSRF: a path like
-// "@evil.com/x" or "//evil.com/x" would otherwise change the request host.
 function resolveTraktUrl(path: unknown): URL {
   if (typeof path !== "string" || !path.startsWith("/")) {
     throw new ApiError(400, "'path' must be a string starting with '/'.");
@@ -32,11 +29,6 @@ function resolveTraktUrl(path: unknown): URL {
   return url;
 }
 
-// Trakt's API does not send CORS headers, so the browser can't call
-// api.trakt.tv directly (every client-side attempt fails with "Failed to
-// fetch"). This route relays those calls server-to-server, where CORS doesn't
-// apply. The caller's own Trakt access token (owned client-side, from their
-// personal OAuth flow) is passed through per-request and never stored here.
 export async function POST(req: NextRequest) {
   try {
     const { creds } = await requireUser(req);
@@ -69,8 +61,6 @@ export async function POST(req: NextRequest) {
         "Content-Type": "application/json",
         "trakt-api-version": "2",
         "trakt-api-key": creds.traktClientId,
-        // Trakt is behind Cloudflare, which blocks server-side fetches with no
-        // User-Agent as bot traffic — a browser-like UA avoids the 403 block page.
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },

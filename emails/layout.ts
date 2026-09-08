@@ -1,14 +1,10 @@
-// Document shell, body table, masthead and footer. Templates supply only
-// their own content rows.
 
 import { EMAIL_CSS, COLORS } from "./theme";
 
 export interface FooterOptions {
   ctaHref: string;
   ctaLabel: string;
-  /** Small print above the unsubscribe line. May contain inline HTML. */
   note: string;
-  /** Omitted for transactional mail, which has no subscription to leave. */
   unsubscribe?: { url: string; label: string };
 }
 
@@ -60,7 +56,6 @@ export function dateStamp(text: string): string {
   return `<span class="txt-muted font-sans" style="font-size:12px;">${text}</span>`;
 }
 
-/** Marks an email as sample data, so a preview is never mistaken for a real report. */
 export function previewBanner(): string {
   return `
           <tr><td style="background-color:${COLORS.warnBg};background-image:linear-gradient(${COLORS.warnBg},${COLORS.warnBg});border:1px solid ${COLORS.warnBorder};border-radius:8px;padding:10px 16px;">

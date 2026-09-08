@@ -129,7 +129,6 @@ Always confirm what you logged in one short line, including the year you recorde
     "What am I currently watching?",
   ];
 
-  // ── Reusable style atoms ──────────────────────────────────────────────────
   const CARD = "rounded-[10px] border border-border-subtle bg-bg-card p-6 shadow-[0_2px_10px_-2px_rgba(110,108,100,0.05)]";
   const CODE = "rounded-[5px] bg-bg-secondary px-[7px] py-0.5 font-mono text-xs break-all";
   const BTN_PRIMARY = "inline-flex items-center justify-center rounded-md border border-text-primary bg-text-primary px-4 py-2.5 text-[12.5px] font-medium text-white no-underline transition-all duration-200 hover:bg-[#2e2d27] hover:border-[#2e2d27] disabled:cursor-not-allowed disabled:opacity-40";
@@ -141,12 +140,10 @@ Always confirm what you logged in one short line, including the year you recorde
     </span>
   );
 
-
   return (
     <div className="min-h-screen bg-bg-primary">
       <div className="mx-auto flex max-w-[780px] flex-col gap-6 px-5 py-10 md:py-14">
 
-        {/* ── Header ─────────────────────────────────────────────── */}
         <div className="flex flex-wrap items-center justify-between gap-3 pb-1">
           <div className="flex items-center gap-2.5">
             <LogoMark size={20} color="var(--text-primary)" />
@@ -163,7 +160,6 @@ Always confirm what you logged in one short line, including the year you recorde
           </Link>
         </div>
 
-        {/* ── Page title ─────────────────────────────────────────── */}
         <div className="border-b border-border-subtle pb-6">
           <p className="font-mono text-[9px] font-bold uppercase tracking-[1.2px] text-text-muted mb-2">Integration guide</p>
           <h1 className="font-serif text-[28px] italic font-medium text-text-primary leading-tight mb-2">
@@ -180,7 +176,6 @@ Always confirm what you logged in one short line, including the year you recorde
           </div>
         )}
 
-        {/* ── Recommended: Public GPT ────────────────────────────── */}
         <div className={CARD}>
           <div className="mb-3 flex items-center gap-2">
             <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">Recommended</span>
@@ -204,7 +199,6 @@ Always confirm what you logged in one short line, including the year you recorde
           </a>
         </div>
 
-        {/* ── Divider ────────────────────────────────────────────── */}
         <div className="flex items-center gap-4 py-2">
           <div className="flex-1 border-t border-border-subtle" />
           <span className="font-mono text-[9px] font-bold uppercase tracking-[1.5px] text-text-muted">
@@ -213,7 +207,6 @@ Always confirm what you logged in one short line, including the year you recorde
           <div className="flex-1 border-t border-border-subtle" />
         </div>
 
-        {/* ── Step 1 ─────────────────────────────────────────────── */}
         <div className={`${CARD} flex gap-4`}>
           {renderStep(1)}
           <div className="min-w-0 flex-1">
@@ -225,7 +218,6 @@ Always confirm what you logged in one short line, including the year you recorde
           </div>
         </div>
 
-        {/* ── Step 2 ─────────────────────────────────────────────── */}
         <div className={`${CARD} flex gap-4`}>
           {renderStep(2)}
           <div className="min-w-0 flex-1 flex flex-col gap-4">
@@ -261,7 +253,6 @@ Always confirm what you logged in one short line, including the year you recorde
           </div>
         </div>
 
-        {/* ── Step 3 ─────────────────────────────────────────────── */}
         <div className={`${CARD} flex gap-4`}>
           {renderStep(3)}
           <div className="min-w-0 flex-1 flex flex-col gap-4">
@@ -272,7 +263,6 @@ Always confirm what you logged in one short line, including the year you recorde
               </p>
             </div>
 
-            {/* Option A: OAuth */}
             <div className="rounded-[8px] border border-border-subtle bg-bg-primary p-4 flex flex-col gap-3">
               <div>
                 <p className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted mb-1">Option A</p>
@@ -295,7 +285,6 @@ Always confirm what you logged in one short line, including the year you recorde
               </table>
             </div>
 
-            {/* Option B: API Key — Pro gated */}
             <div className="rounded-[8px] border border-border-subtle bg-bg-primary p-4 flex flex-col gap-3">
               <div>
                 <p className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted mb-1">Option B</p>
@@ -330,7 +319,6 @@ Always confirm what you logged in one short line, including the year you recorde
           </div>
         </div>
 
-        {/* ── Step 4 ─────────────────────────────────────────────── */}
         <div className={`${CARD} flex gap-4`}>
           {renderStep(4)}
           <div className="min-w-0 flex-1">
@@ -347,7 +335,6 @@ Always confirm what you logged in one short line, including the year you recorde
           </div>
         </div>
 
-        {/* ── Step 5 ─────────────────────────────────────────────── */}
         <div className={`${CARD} flex gap-4`}>
           {renderStep(5)}
           <div className="min-w-0 flex-1">
@@ -365,7 +352,6 @@ Always confirm what you logged in one short line, including the year you recorde
           </div>
         </div>
 
-        {/* ── Self-hosting note ──────────────────────────────────── */}
         <div className={CARD}>
           <p className="mb-1 font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">Self-hosting?</p>
           <p className="text-[13px] leading-[1.7] text-text-secondary">

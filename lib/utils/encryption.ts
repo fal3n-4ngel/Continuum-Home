@@ -2,9 +2,8 @@ import crypto from "crypto";
 import { env } from "@/lib/utils/env";
 import { notifyError } from "./error-notifier";
 
-// AES-256-GCM configuration
 const ALGORITHM = "aes-256-gcm";
-const IV_LENGTH = 12; // 96 bits for GCM
+const IV_LENGTH = 12;
 
 export class EncryptionError extends Error {
   constructor(message: string, public readonly cause?: unknown) {
@@ -20,7 +19,6 @@ export class DecryptionError extends Error {
   }
 }
 
-/** Sends real-time security alerts to Discord when cryptographic operations fail unexpectedly */
 function sendCryptoDiscordAlert(title: string, details: string, isCritical = false): void {
   notifyError({
     context: `🔐 Security: ${title}`,
@@ -30,21 +28,15 @@ function sendCryptoDiscordAlert(title: string, details: string, isCritical = fal
   });
 }
 
-/** Gets or derives a 32-byte encryption key */
-function getEncryptionKey(useFallbackOnly = false): Buffer {
-  const secret = useFallbackOnly ? null : env.ENCRYPTION_KEY;
+function getEncryptionKey(): Buffer {
+  const secret = env.ENCRYPTION_KEY;
   if (secret) {
     return crypto.createHash("sha256").update(secret).digest();
   }
 
-  const fbConfig = env.FIREBASE_CONFIG || "fallback-secret-key-phrase";
-  return crypto.createHash("sha256").update(fbConfig).digest();
+  throw new Error('ENCRYPTION_KEY environment variable is required for encryption operations');
 }
 
-/**
- * Encrypts a plain text string into a single versioned serialized string: "v1:iv:authTag:ciphertext"
- * Fails closed by throwing EncryptionError rather than falling back to plaintext.
- */
 export function encrypt(text: string): string {
   if (!text) return text;
   try {
@@ -66,15 +58,11 @@ export function encrypt(text: string): string {
   }
 }
 
-/**
- * Decrypts a versioned "v1:iv:authTag:ciphertext" or legacy "iv:authTag:ciphertext" string back to plain text.
- */
-export function decrypt(encryptedText: string, useFallbackOnly = false): string {
+export function decrypt(encryptedText: string): string {
   if (!encryptedText || typeof encryptedText !== "string") {
     return encryptedText || "";
   }
 
-  // Handle plain unencrypted strings (legacy migration safety)
   if (!encryptedText.includes(":")) {
     return encryptedText;
   }
@@ -89,7 +77,6 @@ export function decrypt(encryptedText: string, useFallbackOnly = false): string 
       [ivHex, authTagHex, ciphertextHex] = parts;
     }
   } else {
-    // Legacy unversioned "iv:authTag:ciphertext"
     const parts = encryptedText.split(":");
     if (parts.length === 3) {
       [ivHex, authTagHex, ciphertextHex] = parts;
@@ -101,7 +88,7 @@ export function decrypt(encryptedText: string, useFallbackOnly = false): string 
   }
 
   try {
-    const key = getEncryptionKey(useFallbackOnly);
+    const key = getEncryptionKey();
     const iv = Buffer.from(ivHex, "hex");
     const authTag = Buffer.from(authTagHex, "hex");
     const decipher = crypto.createDecipheriv(ALGORITHM, key, iv);
@@ -112,12 +99,9 @@ export function decrypt(encryptedText: string, useFallbackOnly = false): string 
 
     return decrypted;
   } catch (err) {
-    if (!useFallbackOnly && env.ENCRYPTION_KEY) {
-      return decrypt(encryptedText, true);
-    }
     const msg = err instanceof Error ? err.message : String(err);
     console.warn("Decryption failed:", msg);
     sendCryptoDiscordAlert("Decryption Failure", `Payload decryption failed: ${msg}`, false);
-    return encryptedText;
+    throw new DecryptionError(`Failed to decrypt sensitive data: ${msg}`, err);
   }
 }

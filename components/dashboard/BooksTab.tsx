@@ -33,7 +33,7 @@ const INPUT_CLASS = "rounded-lg border border-border-subtle bg-bg-card px-3 py-2
 const pillClass = (id: string, active: boolean) => {
   const base = "cursor-pointer rounded-md border-none px-3.5 py-1.5 text-[11px] font-semibold transition-all duration-200 flex items-center gap-1.5";
   if (!active) return `${base} bg-transparent text-text-secondary hover:text-text-primary hover:bg-bg-secondary/40`;
-  
+
   if (id === "reading") {
     return `${base} bg-[#e0f2fe] text-[#0369a1] shadow-[0_1px_2px_rgba(3,105,161,0.05)]`;
   }
@@ -68,7 +68,6 @@ export const BooksTab: React.FC<BooksTabProps> = ({
   const [titleSearch, setTitleSearch] = React.useState("");
   const [sortBy, setSortBy] = React.useState<"title" | "year_new" | "year_old">("title");
 
-  // Search & Add enhanced UX states
   const [addingMap, setAddingMap] = React.useState<Record<string, boolean>>({});
   const [justAddedMap, setJustAddedMap] = React.useState<Record<string, boolean>>({});
   const [hasSearched, setHasSearched] = React.useState(false);
@@ -215,7 +214,6 @@ export const BooksTab: React.FC<BooksTabProps> = ({
         throw new Error("Failed to log recommendation.");
       }
 
-      // Mark as logged in Firestore recommendations cache document
       await fetch("/api/assistant/recommendations", {
         method: "POST",
         headers: {
@@ -268,7 +266,6 @@ export const BooksTab: React.FC<BooksTabProps> = ({
 
   return (
     <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]"><h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">Book Library</h1>
-      {/* Book Stat Cards */}
       <div className="grid grid-cols-4 max-md:grid-cols-2 gap-4">
         <div className={`${STAT_CARD} border-t-2 border-t-accent-blue/80`}>
           <span className={LABEL_MONO}>READING NOW</span>
@@ -292,11 +289,8 @@ export const BooksTab: React.FC<BooksTabProps> = ({
         </div>
       </div>
 
-      {/* Main 2-Column Section */}
       <div className="grid grid-cols-[260px_minmax(0,1fr)] items-start gap-5 max-md:grid-cols-1">
-        {/* Left Column wrapper */}
         <div className="flex flex-col gap-5">
-          {/* Search Google Books Card */}
           <div className="rounded-card border border-border-subtle bg-bg-card p-4.5 shadow-subtle flex flex-col gap-3">
             <span className={`${LABEL_MONO} mb-1 block`}>Search Google Books</span>
             <p className="mb-3.5 text-[11px] text-text-muted">Google Books API search</p>
@@ -341,7 +335,6 @@ export const BooksTab: React.FC<BooksTabProps> = ({
               </button>
             </form>
 
-            {/* Feedback Toast */}
             {feedbackToast && (
               <div
                 className={`mt-2 flex items-center justify-between gap-2 rounded-md px-3 py-2 text-xs font-medium transition-all animate-[fadeIn_0.2s_ease] ${
@@ -364,7 +357,6 @@ export const BooksTab: React.FC<BooksTabProps> = ({
               </div>
             )}
 
-            {/* Search Results */}
             {bookResults.length > 0 && (
               <div className="mt-4 flex max-h-[300px] flex-col gap-2.5 overflow-y-auto pr-1">
                 {bookResults.map((res, i) => {
@@ -411,7 +403,6 @@ export const BooksTab: React.FC<BooksTabProps> = ({
               </div>
             )}
 
-            {/* Empty State when search returns 0 results */}
             {hasSearched && !isSearchingBooks && bookResults.length === 0 && (
               <div className="mt-4 rounded-md border border-dashed border-border-subtle p-3 text-center text-xs text-text-muted">
                 No books found for "{bookQuery}".
@@ -419,7 +410,6 @@ export const BooksTab: React.FC<BooksTabProps> = ({
             )}
           </div>
 
-          {/* AI Recommendations Panel */}
           <div className="rounded-card border border-border-subtle bg-bg-card p-4.5 shadow-subtle flex flex-col gap-3">
             <span className={`${LABEL_MONO} mb-1 block`}>🤖 AI Recommendation of the Day</span>
             <p className="text-[10px] leading-[1.4] text-text-secondary mb-1">
@@ -537,7 +527,6 @@ export const BooksTab: React.FC<BooksTabProps> = ({
           </div>
         </div>
 
-        {/* Right Column: Your Library Section */}
         <div className="rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle min-w-[280px]">
         <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-serif text-lg font-bold tracking-tight text-text-primary">Your Library</h2>
@@ -565,7 +554,6 @@ export const BooksTab: React.FC<BooksTabProps> = ({
               </button>
             )}
 
-            {/* Filter Pills */}
             <div className="flex gap-1 rounded-lg bg-bg-secondary p-[3px]">
               {(
                 [
@@ -587,7 +575,6 @@ export const BooksTab: React.FC<BooksTabProps> = ({
           </div>
         </div>
 
-        {/* Search & sort row */}
         <div className="mb-5 flex flex-wrap items-center gap-2.5">
           <div className="relative max-w-[260px] flex-1 max-md:max-w-none">
             <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-text-muted">
@@ -612,11 +599,10 @@ export const BooksTab: React.FC<BooksTabProps> = ({
           </select>
         </div>
 
-        {/* Book Covers Grid */}
         <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] max-md:grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-5 overflow-y-auto max-h-[65vh] pr-1 pb-10">
           {filteredBooks.map((item) => (
             <div key={item.id} className="group flex flex-col rounded-[14px] border border-border-subtle bg-bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
-              <div 
+              <div
                 onClick={() => onItemClick(item)}
                 className="relative aspect-[2/3] w-full overflow-hidden rounded-t-[14px] cursor-pointer"
               >
@@ -627,9 +613,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                       alt={item.title}
                       className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                     />
-                    {/* 3D Book spine shadow overlay */}
                     <div className="absolute inset-y-0 left-0 w-2.5 bg-linear-to-r from-black/25 via-black/10 to-transparent pointer-events-none" />
-                    {/* Subtle gloss overlay to simulate paper book cover sheen */}
                     <div className="absolute inset-0 bg-linear-to-tr from-white/0 via-white/5 to-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                   </>
                 ) : (
@@ -637,7 +621,6 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                     📚
                   </div>
                 )}
-                {/* Delete button absolute overlay (visible on hover) */}
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -650,9 +633,9 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                 </button>
               </div>
               <div className="flex flex-col flex-1 justify-between gap-3 p-3.5">
-                <p 
+                <p
                   onClick={() => onItemClick(item)}
-                  className="cursor-pointer line-clamp-2 min-h-[36px] font-serif text-[13px] font-bold tracking-tight text-text-primary leading-tight group-hover:text-text-primary/90 transition-colors" 
+                  className="cursor-pointer line-clamp-2 min-h-[36px] font-serif text-[13px] font-bold tracking-tight text-text-primary leading-tight group-hover:text-text-primary/90 transition-colors"
                   title={item.title}
                 >
                   {item.title}

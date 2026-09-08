@@ -1,10 +1,6 @@
 import { Redis } from "@upstash/redis";
 import { env } from "@/lib/utils";
 
-// A rotated token still constructs a client fine, then fails every command —
-// which cache.ts and cron-guard.ts swallow by design, so the cache layer can
-// disappear with no signal beyond a console warning. redisStatus() is how the
-// health cron detects that.
 export const redis =
   env.UPSTASH_REDIS_REST_URL && env.UPSTASH_REDIS_REST_TOKEN
     ? new Redis({

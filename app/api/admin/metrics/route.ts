@@ -24,12 +24,10 @@ export async function GET(req: NextRequest) {
 
     const usersSet = await redis.smembers("metrics:gpt:users_set");
     const userLastActive = await redis.hgetall("metrics:gpt:user_last_active") as Record<string, string> || {};
-    
-    // New global metrics (AI Agent only)
+
     const topAgentEndpointsRaw = await redis.zrange("metrics:agent:endpoints", 0, 9, { rev: true, withScores: true }) as string[];
     const topAgentUsersRaw = await redis.zrange("metrics:agent:users_volume", 0, 9, { rev: true, withScores: true }) as string[];
-    
-    // Format sorted sets (returns flat array: [member, score, member, score...])
+
     const uidMap = await redis.hgetall("metrics:uid_to_email") as Record<string, string> || {};
 
     const formatZset = (raw: string[], isUsers = false) => {
@@ -41,34 +39,27 @@ export async function GET(req: NextRequest) {
         return formatted;
       }
 
-      // If it's users, combine scores for same email vs uid (historical patch)
       const userScores: Record<string, number> = {};
       for (let i = 0; i < raw.length; i += 2) {
         let member = raw[i];
         const score = Number(raw[i + 1]);
-        
-        // Map UID to email if available
+
         if (uidMap[member]) {
            member = uidMap[member];
         }
-        
+
         userScores[member] = (userScores[member] || 0) + score;
       }
-      
+
       return Object.entries(userScores)
          .map(([name, calls]) => ({ name, calls }))
          .sort((a, b) => b.calls - a.calls)
          .slice(0, 10);
     };
-    
+
     const topAgentEndpoints = formatZset(topAgentEndpointsRaw, false);
     const topAgentUsers = formatZset(topAgentUsersRaw, true);
 
-    // GPT users authenticated via a long-lived refresh token/API key have no
-    // email on their session (see trackGptMetrics in lib/auth.ts), so the
-    // Redis set stores their raw Firebase uid instead. Resolve those to a
-    // real email for display via the Admin SDK; entries that are already an
-    // email (from the ID-token auth path) pass through untouched.
     const uidsToResolve = usersSet.filter((identifier) => !identifier.includes("@"));
     const uidToEmail = new Map<string, string>();
     if (uidsToResolve.length > 0) {
@@ -89,7 +80,6 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    // Deduplicate legacy split entries by mapped email (taking latest activity)
     const usersMap: Record<string, any> = {};
     for (const u of usersListRaw) {
       if (!usersMap[u.email] || (u.lastActive && usersMap[u.email].lastActive < u.lastActive)) {
@@ -102,7 +92,7 @@ export async function GET(req: NextRequest) {
     })).sort((a, b) => {
       const timeA = a.lastActive ? new Date(a.lastActive).getTime() : 0;
       const timeB = b.lastActive ? new Date(b.lastActive).getTime() : 0;
-      return timeB - timeA; // newest active first
+      return timeB - timeA;
     });
 
     const dailyUsage: { date: string; calls: number }[] = [];

@@ -64,7 +64,6 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
 
   return (
     <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]"><h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">Active Subscriptions</h1>
-      {/* Stat row */}
       <div className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 max-md:grid-cols-2 max-md:gap-2.5">
         <div className={STAT_CARD}>
           <span className={LABEL_MONO}>Monthly Burn</span>
@@ -106,7 +105,6 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
         </div>
       </div>
 
-      {/* Add Form */}
       <div className={BENTO_CARD}>
         <span className={`${LABEL_MONO} mb-3.5 block`}>Add Subscription</span>
         <form onSubmit={addSubscription} className="grid grid-cols-2 gap-[9px] md:grid-cols-[1fr_70px_1fr_1fr_1fr_auto] items-end">
@@ -139,9 +137,7 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
         </form>
       </div>
 
-      {/* List + Donut Chart */}
       <div className="grid grid-cols-[1fr_300px] items-start gap-6 max-md:grid-cols-1">
-        {/* Subscriptions list */}
         <div className={BENTO_CARD}>
           <span className={`${LABEL_MONO} mb-4 block`}>
             Active Subscriptions
@@ -190,8 +186,6 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                         className="group relative flex h-[38px] w-[38px] shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-[9px] border border-border-subtle bg-bg-card text-[17px] transition-colors hover:border-border-hover"
                       >
                         {(() => {
-                          // Explicit user-set icon wins over the auto-detected
-                          // brand logo, so an edit always visibly applies.
                           if (sub.icon) return <span>{sub.icon}</span>;
                           const logoUrl = getSubLogoUrl(sub.name);
                           if (logoUrl) {
@@ -232,7 +226,6 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
           </div>
         </div>
 
-        {/* Donut Chart */}
         {subscriptions.length > 0 && (() => {
           const COLORS = ["#b3666b", "#e39282", "#6366f1", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#14b8a6"];
           const monthlyAmounts = subscriptions.map((s) => (s.billingCycle === "yearly" ? s.cost / 12 : s.cost));

@@ -85,15 +85,12 @@ describe("announcement email template", () => {
     expect(real.html).not.toContain("ANNOUNCEMENT PREVIEW");
   });
 
-  // Author newlines must survive; the body is rendered with pre-wrap.
   it("preserves newlines in author content", () => {
     expect(buildAnnouncementEmail(base).html).toContain("Line one\nLine two");
     expect(buildAnnouncementEmail(base).html).toContain("white-space: pre-wrap");
   });
 });
 
-// The bug this whole module exists to prevent: the admin preview silently
-// drifting from what the crons actually send.
 describe("preview/production parity", () => {
   it("renders the unsubscribe footer in previews too", () => {
     expect(buildPortfolioEmail(samplePortfolio(APP, UNSUB)).html).toContain("Unsubscribe from portfolio updates");

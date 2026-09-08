@@ -8,7 +8,7 @@ export interface ExpenseEntry {
   title: string;
   amount: number;
   category?: string;
-  date?: string; // YYYY-MM-DD
+  date?: string;
   notes?: string;
 }
 
@@ -53,16 +53,8 @@ export interface SyncEntry {
 
 export type SyncSource = "anilist" | "trakt" | "letterboxd" | "manual" | string;
 
-/* ─── Firestore REST transport ───
- * All reads/writes go through the Firestore REST API authenticated with the
- * caller's own Firebase ID token (never an unauthenticated SDK instance), so
- * the per-user Firestore security rules are enforced by the database itself —
- * the API server holds no privileged credentials that could bypass them. */
-
 const FIRESTORE_HOST = "https://firestore.googleapis.com/v1";
 
-// Document ids appear in REST paths and backtick-quoted field masks; restrict
-// them so neither can be broken out of. Covers Firestore auto-ids and UUIDs.
 const DOC_ID_RE = /^[A-Za-z0-9_-]{1,128}$/;
 
 export function assertDocId(id: string, what: string): string {
@@ -101,9 +93,6 @@ async function fsFetch<T = unknown>(session: Session, url: string, init?: Reques
   throw new ApiError(502, "Database request failed.");
 }
 
-/* ─── Firestore value encoding ─── */
-
-// Mirrors the Firestore REST API's discriminated "Value" wire format.
 type FirestoreValue =
   | { nullValue: null }
   | { stringValue: string }
@@ -168,8 +157,6 @@ function idFromName(name: string): string {
   return name.split("/").pop() || name;
 }
 
-// Runs a single-collection equality query scoped to the user. The userId
-// filter also satisfies the security-rule ownership check for list queries.
 async function runOwnedQuery(session: Session, collectionId: string): Promise<{ id: string; data: Record<string, unknown> }[]> {
   const body = {
     structuredQuery: {
@@ -194,16 +181,10 @@ async function runOwnedQuery(session: Session, collectionId: string): Promise<{ 
     .map((row) => ({ id: idFromName(row.document.name), data: fromFields(row.document.fields) }));
 }
 
-/* ─── Expenses ─── */
-
 const EXPENSE_CACHE_TTL = 3_600_000;
 const WATCHLIST_CACHE_TTL = 3_600_000;
 const BATCH_CONCURRENCY = 3;
 
-// Cache keys include the project id: uids are only unique within a Firebase
-// project, and callers may bring their own project via X-Firebase-Config —
-// without the project scope, a foreign project's uid could collide with (and
-// poison or leak) another user's cached data.
 function expenseCacheKey(session: Session): string {
   return `expenses:${session.config.projectId}:${session.uid}`;
 }
@@ -212,8 +193,6 @@ export function watchlistCacheKey(session: Session): string {
   return `watchlist:${session.config.projectId}:${session.uid}`;
 }
 
-// Shared by listExpenses and getCategories so a categories lookup doesn't
-// re-scan the whole collection on top of the list fetch that just happened.
 async function getRawExpenses(session: Session): Promise<ExpenseRecord[]> {
   const cacheKey = expenseCacheKey(session);
   const cached = await cacheGet<ExpenseRecord[]>(cacheKey);
@@ -226,7 +205,7 @@ async function getRawExpenses(session: Session): Promise<ExpenseRecord[]> {
     const notes = decrypt(data.notes as string || "");
     const amountStr = typeof data.amount === "string" ? decrypt(data.amount) : String(data.amount ?? "");
     const amountParsed = amountStr ? parseFloat(amountStr) : null;
-    
+
     return {
       id,
       title: title || "Untitled",
@@ -246,7 +225,6 @@ export async function listExpenses(
   session: Session,
   filters?: { q?: string; category?: string; from?: string; to?: string }
 ): Promise<ExpenseRecord[]> {
-  // Copy so in-place sort() below never mutates the cached array.
   let records = [...(await getRawExpenses(session))];
 
   if (filters?.q) {
@@ -271,7 +249,6 @@ export async function listExpenses(
     records = records.filter((r) => r.date && r.date <= filters.to!);
   }
 
-  // Sort by date descending, then by createdAt descending
   records.sort((a, b) => {
     const dateA = a.date || "";
     const dateB = b.date || "";
@@ -299,7 +276,7 @@ export async function getCategories(session: Session): Promise<{ id: string; nam
 
 export async function createExpense(session: Session, entry: ExpenseEntry) {
   const docData = {
-    userId: session.uid, // Partition by User UID; rules require it to match the token
+    userId: session.uid,
     title: encrypt(entry.title),
     amount: encrypt(String(entry.amount)),
     category: entry.category ? encrypt(entry.category) : null,
@@ -363,9 +340,6 @@ export async function updateExpense(session: Session, id: string, entry: Partial
   if (entry.notes !== undefined) updateData.notes = entry.notes ? encrypt(entry.notes) : null;
 
   const params = new URLSearchParams();
-  // The mask never includes userId, so ownership can't be reassigned; the
-  // exists precondition turns a patch of a missing doc into a 404 instead of
-  // an implicit create.
   for (const field of Object.keys(updateData)) params.append("updateMask.fieldPaths", field);
   params.append("currentDocument.exists", "true");
 
@@ -389,17 +363,6 @@ export async function archiveExpense(session: Session, id: string) {
   return { id };
 }
 
-/* ─── Watchlist ───
- * One doc per user (watchlists/{userId}), items keyed by id in a nested map
- * field — a personal watchlist is naturally bounded (low thousands of titles),
- * so it fits Firestore's 1MiB document cap comfortably. Writes go through
- * documents:commit with a field mask per changed item, so ANY number of
- * adds/updates in one call still costs exactly 1 Firestore write. */
-
-// Commits a masked merge into the user's watchlist doc. `patches` maps item id
-// to either its changed fields or null (= delete the item). `wholeItemIds`
-// marks brand-new items whose entire map should be replaced; other items are
-// masked per-field so partial patches don't wipe sibling fields.
 export async function writeWatchlistItems(
   session: Session,
   patches: Record<string, Record<string, unknown> | null>,
@@ -411,7 +374,7 @@ export async function writeWatchlistItems(
   for (const [id, patch] of Object.entries(patches)) {
     assertDocId(id, "watchlist item");
     if (patch === null) {
-      fieldPaths.push(`items.\`${id}\``); // masked but absent from fields → deleted
+      fieldPaths.push(`items.\`${id}\``);
     } else if (wholeItemIds?.has(id)) {
       fieldPaths.push(`items.\`${id}\``);
       items[id] = patch;
@@ -444,10 +407,6 @@ export async function writeWatchlistItems(
   });
 }
 
-// One-time lazy migration from the old per-item "watchlist" collection
-// (pre-redesign) into the new single-doc shape, so existing data isn't
-// stranded. Old docs are left in place untouched (not deleted) as a safety
-// net; this only runs when a user's new watchlists/{userId} doc doesn't exist.
 async function migrateLegacyWatchlist(session: Session): Promise<Record<string, WatchlistItem>> {
   const rows = await runOwnedQuery(session, "watchlist");
   if (rows.length === 0) return {};
@@ -497,16 +456,12 @@ export async function getRawWatchlist(session: Session): Promise<Record<string, 
 
 export async function listWatchlist(session: Session): Promise<WatchlistItem[]> {
   const itemsMap = await getRawWatchlist(session);
-  // Items added before createdAt existed have no such field in Firestore —
-  // updatedAt is the closest available proxy for when they first appeared.
   const items = Object.entries(itemsMap)
     .map(([id, data]) => ({
       ...data,
       id,
       createdAt: typeof data.createdAt === "number" ? data.createdAt : data.updatedAt,
     }))
-    // Guard against malformed/partial docs (e.g. missing `title`) so
-    // consumers can rely on the required WatchlistItem fields being present.
     .filter((item) => typeof item.title === "string" && item.title.length > 0);
   items.sort((a, b) => b.updatedAt - a.updatedAt);
   return items;
@@ -537,11 +492,6 @@ export async function updateWatchlistItem(
   return { id };
 }
 
-// Syncs an external library (AniList, Trakt, ...) into the user's watchlist.
-// Reads once, diffs against what's already stored (skipping entries whose
-// tracked fields didn't change), and commits every add/update in a single
-// masked write — a full library sync costs exactly 1 Firestore write no matter
-// how many titles changed.
 function normalizeTitle(title: string): string {
   if (!title) return "";
   return title.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -621,7 +571,7 @@ export async function bulkSyncWatchlist(
       const id = randomUUID();
       const totalEp = entry.totalEpisodes !== undefined && entry.totalEpisodes !== null ? Number(entry.totalEpisodes) : null;
       const prog = entry.progress !== undefined && entry.progress !== null ? Number(entry.progress) : 0;
-      
+
       let finalStatus = entry.status;
       if (totalEp && totalEp > 0 && prog >= totalEp) {
         finalStatus = "completed";
@@ -697,7 +647,7 @@ export interface SubscriptionEntry {
 
 export async function createSubscription(session: Session, entry: SubscriptionEntry) {
   const docData = {
-    userId: session.uid, // Partition by User UID; rules require it to match the token
+    userId: session.uid,
     name: entry.name,
     cost: entry.cost,
     billingCycle: entry.billingCycle,
@@ -729,7 +679,7 @@ export async function deleteSubscription(session: Session, id: string) {
 export async function updateSubscription(session: Session, id: string, updates: Partial<SubscriptionRecord>) {
   assertDocId(id, "subscription");
   const docData = { ...updates };
-  
+
   const params = new URLSearchParams();
   Object.keys(updates).forEach((k) => {
     params.append("updateMask.fieldPaths", k);
@@ -811,16 +761,9 @@ export interface PortfolioRecord {
   valuationHistory?: Record<string, number>;
 }
 
-
-
 const PORTFOLIO_CACHE_TTL = 3_600_000;
 function portfolioCacheKey(session: Session): string { return `portfolio:${session.config.projectId}:${session.uid}`; }
 
-// Portfolio holdings are as sensitive as expense records (exact amounts,
-// invested capital, buy/sell prices), so they're encrypted at rest the same
-// way — encrypt() on write, decrypt() on read. decrypt()/decryptNumber() both
-// pass raw, pre-encryption values through unchanged, so older un-migrated
-// documents keep reading correctly until the admin migration re-saves them.
 function decryptNumber(raw: unknown): number | undefined {
   if (raw === undefined || raw === null) return undefined;
   const parsed = typeof raw === "string" ? parseFloat(decrypt(raw)) : Number(raw);
@@ -985,25 +928,10 @@ export interface DashboardSettings {
   salaryDay: number;
   monthlySalary?: number;
   additionalIncome?: number;
-  // Display-only symbol prefixed onto amounts — doesn't convert or affect
-  // stored numeric values, purely cosmetic.
   currency?: string;
-  // Keyed by pay-cycle start date (YYYY-MM-DD) — the actual "cash on hand"
-  // amount the user confirmed during the Financial Health reconciliation
-  // check, so it survives reloads instead of resetting every visit.
   reconciliations?: Record<string, number>;
-  // Keyed by the logged payday itself (YYYY-MM-DD) — lets pay-cycle math
-  // snap to an actual salary date + amount instead of assuming a fixed
-  // day-of-month, since many paydays are business-day rules ("last working
-  // day before the 25th") that shift month to month.
   salaryLog?: Record<string, { date: string; amount: number }>;
-  // Gates pro-only surfaces (currently the Financial Health tab). Read-only
-  // through the API — deliberately absent from validateSettingsPatch so a
-  // client can't self-grant it; set it directly in Firestore instead.
   isPro?: boolean;
-  // Per-category opt-out for the cron-sent emails. Missing keys mean
-  // "subscribed" — see adminGetEmailSubscriptions in firebase-admin.ts,
-  // which is what the crons actually check before sending.
   emailSubscriptions?: {
     expenses: boolean;
     portfolio: boolean;
@@ -1094,7 +1022,7 @@ export interface DailyRecommendation {
   date: string;
 }
 
-const RECOMMENDATIONS_CACHE_TTL = 3_600_000; // 1 hour in ms
+const RECOMMENDATIONS_CACHE_TTL = 3_600_000;
 function recommendationCacheKey(session: Session, type: string, date: string): string {
   return `recommendation:${session.config.projectId}:${session.uid}:${type}:${date}`;
 }
@@ -1130,8 +1058,7 @@ export async function saveDailyRecommendation(
   recommendation: DailyRecommendation
 ): Promise<void> {
   const cacheKey = recommendationCacheKey(session, type, date);
-  
-  // Add expireAt: now + 90 days as a Firestore Timestamp
+
   const expireAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
   const docData = {
     ...recommendation,
@@ -1151,7 +1078,6 @@ export async function saveDailyRecommendation(
   await cacheSet(cacheKey, docData as unknown as DailyRecommendation, RECOMMENDATIONS_CACHE_TTL);
 }
 
-/* ─── Financial Health AI Analytics Cache ─── */
 export interface HealthAnalyticsReport {
   trendStatus: string;
   trendSeverity: "good" | "neutral" | "warning";
@@ -1165,7 +1091,7 @@ export interface HealthAnalyticsReport {
   updatedAt: number;
 }
 
-const HEALTH_ANALYTICS_CACHE_TTL = 3_600_000; // 1 hour in ms
+const HEALTH_ANALYTICS_CACHE_TTL = 3_600_000;
 
 function healthAnalyticsCacheKey(session: Session): string {
   return `health_analytics:${session.config.projectId}:${session.uid}`;

@@ -79,7 +79,7 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <style>{`@keyframes fadeInScale { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }`}</style>
-        
+
         <div className="flex items-center justify-between border-b border-border-subtle pb-3.5">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle bg-bg-primary text-text-primary">

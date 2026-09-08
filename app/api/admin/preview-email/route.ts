@@ -15,8 +15,6 @@ function isPreviewType(value: string): value is PreviewType {
   return (PREVIEW_TYPES as readonly string[]).includes(value);
 }
 
-// Previews render a real unsubscribe link so the admin sees the exact footer
-// users get. It points at the admin's own preferences, not a stranger's.
 function render(type: PreviewType, appUrl: string, unsubscribeUrl: string) {
   switch (type) {
     case "portfolio":

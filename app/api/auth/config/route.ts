@@ -13,13 +13,10 @@ export async function GET(req: NextRequest) {
     const domainFromHost = host ? host.split(":")[0] : null;
     const isLocalhost = domainFromHost === "localhost" || domainFromHost === "127.0.0.1";
 
-    // When hosted (e.g. continuum-home.vercel.app), use current host as authDomain
-    // so Firebase Auth runs same-origin via Next.js rewrites in next.config.ts.
     const authDomain = !isLocalhost && domainFromHost
       ? domainFromHost
       : (config.authDomain || `${config.projectId}.firebaseapp.com`);
 
-    // Return public Web SDK configuration fields
     const publicConfig = {
       apiKey: config.apiKey,
       authDomain,
