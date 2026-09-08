@@ -6,7 +6,8 @@
     "jose": "5.10.0",
     "jwks-rsa": {
       "jose": "5.10.0"
-    }
+    },
+    "uuid": "^11.1.1"
   },
   "scripts": {
     "dev": "next dev",
@@ -20,12 +21,11 @@
     "@flags-sdk/vercel": "^1.4.5",
     "@google/generative-ai": "^0.24.1",
     "@upstash/redis": "^1.38.0",
-    "@vercel/flags": "^3.1.1",
     "firebase": "^12.16.0",
     "firebase-admin": "^14.2.0",
     "flags": "^4.2.1",
     "lucide-react": "^1.25.0",
-    "next": "^16.3.0",
+    "next": "^16.3.4",
     "papaparse": "^5.7.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -49,6 +49,6 @@
     "tailwindcss": "^4",
     "ts-morph": "^28.0.0",
     "typescript": "^5",
-    "vitest": "^4.1.10"
+    "vitest": "^4.1.11"
   }
 }
