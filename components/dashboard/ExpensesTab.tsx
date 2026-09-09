@@ -2,7 +2,7 @@ import React from "react";
 import { createPortal } from "react-dom";
 import Papa from "papaparse";
 import { Expense, Subscription } from "@/types";
-import { downloadCsv, getAuthHeaders } from "@/lib/utils";
+import { downloadCsv, getAuthHeaders, resolvePayCycle, toLocalDateStr } from "@/lib/utils";
 
 import { useExpensesStore } from "@/lib/stores/expenses-store";
 import { useUiStore } from "@/lib/stores/ui-store";
@@ -128,7 +128,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     currency, setCurrency, expenseTab, setExpenseTab, activeChart, setActiveChart, triggerConfirm
   } = useUiStore();
   const {
-    timeFilter, setTimeFilter, salaryDay, setSalaryDay,
+    timeFilter, setTimeFilter, salaryDay, setSalaryDay, salaryLog,
     expenseTitle, setExpenseTitle, expenseAmount, setExpenseAmount,
     expenseCategory, setExpenseCategory, newCategoryInput, setNewCategoryInput,
     customCategories, setCustomCategories, expenseDate, setExpenseDate,
@@ -136,7 +136,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     ledgerCategoryFilter, setLedgerCategoryFilter, ledgerMinAmount, setLedgerMinAmount,
     ledgerMaxAmount, setLedgerMaxAmount, ledgerStartDate, setLedgerStartDate, ledgerEndDate, setLedgerEndDate,
     ledgerSortField, setLedgerSortField,
-    ledgerSortDir, setLedgerSortDir, isFetchingExpenses, expensesLoaded,
+    ledgerSortDir, setLedgerSortDir, isFetchingExpenses, setIsFetchingExpenses, expensesLoaded, setExpensesLoaded,
     subscriptions, expenses, setExpenses, setIsAddingExpense, setSubscriptions
   } = useExpensesStore();
   const { user } = useAuthStore();
@@ -144,7 +144,39 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
   const getHeaders = React.useCallback(() => getAuthHeaders(user?.idToken), [user]);
 
   const fetchExpenses = React.useCallback(async () => {
-  }, []);
+    setIsFetchingExpenses(true);
+    try {
+      const res = await fetch("/api/expenses", { headers: getHeaders() });
+      if (res.ok) setExpenses(await res.json());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsFetchingExpenses(false);
+      setExpensesLoaded(true);
+    }
+  }, [getHeaders, setIsFetchingExpenses, setExpenses, setExpensesLoaded]);
+
+  const handleTimeFilterChange = (val: "7" | "30" | "90" | "salary" | "all") => {
+    setTimeFilter(val);
+    if (user) {
+      fetch("/api/settings", {
+        method: "PATCH",
+        headers: getHeaders(),
+        body: JSON.stringify({ timeFilter: val }),
+      }).catch((err) => console.error(err));
+    }
+  };
+
+  const handleSalaryDayChange = (day: number) => {
+    setSalaryDay(day);
+    if (user) {
+      fetch("/api/settings", {
+        method: "PATCH",
+        headers: getHeaders(),
+        body: JSON.stringify({ salaryDay: day }),
+      }).catch((err) => console.error(err));
+    }
+  };
 
   const [currentPage, setCurrentPage] = React.useState(1);
   const pageSize = 15;
@@ -345,16 +377,13 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     });
   }, [subscriptions, expenses]);
 
+  const currentPayCycle = React.useMemo(() => {
+    return resolvePayCycle(salaryDay, salaryLog);
+  }, [salaryDay, salaryLog]);
+
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [expenseSearch, ledgerCategoryFilter, ledgerMinAmount, ledgerMaxAmount, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
-
-  const toLocalDateStr = (d: Date) => {
-    const yStr = d.getFullYear();
-    const mStr = String(d.getMonth() + 1).padStart(2, "0");
-    const dStr = String(d.getDate()).padStart(2, "0");
-    return `${yStr}-${mStr}-${dStr}`;
-  };
+  }, [timeFilter, salaryDay, currentPayCycle, expenseSearch, ledgerCategoryFilter, ledgerMinAmount, ledgerMaxAmount, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
 
   const allCategories = React.useMemo(() => {
     const s = new Set<string>();
@@ -367,6 +396,19 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
 
   const filteredExpensesBase = React.useMemo(() => {
     let list = [...expenses];
+
+    if (timeFilter !== "all") {
+      const now = new Date();
+      if (timeFilter === "salary") {
+        const { startStr, endStr } = currentPayCycle;
+        list = list.filter((e) => e.date && e.date.slice(0, 10) >= startStr && e.date.slice(0, 10) <= endStr);
+      } else {
+        const days = parseInt(timeFilter, 10);
+        const cutoff = toLocalDateStr(new Date(now.getTime() - days * 86400000));
+        list = list.filter((e) => e.date && e.date.slice(0, 10) >= cutoff);
+      }
+    }
+
     if (expenseSearch) {
       const q = expenseSearch.toLowerCase();
       list = list.filter((e) => (e.title && e.title.toLowerCase().includes(q)) || (e.notes && e.notes.toLowerCase().includes(q)));
@@ -376,10 +418,23 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     if (ledgerStartDate) list = list.filter((e) => e.date && e.date.slice(0, 10) >= ledgerStartDate);
     if (ledgerEndDate) list = list.filter((e) => e.date && e.date.slice(0, 10) <= ledgerEndDate);
     return list;
-  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerStartDate, ledgerEndDate]);
+  }, [expenses, timeFilter, currentPayCycle, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerStartDate, ledgerEndDate]);
 
   const filteredExpenses = React.useMemo(() => {
     let list = [...expenses];
+
+    if (timeFilter !== "all") {
+      const now = new Date();
+      if (timeFilter === "salary") {
+        const { startStr, endStr } = currentPayCycle;
+        list = list.filter((e) => e.date && e.date.slice(0, 10) >= startStr && e.date.slice(0, 10) <= endStr);
+      } else {
+        const days = parseInt(timeFilter, 10);
+        const cutoff = toLocalDateStr(new Date(now.getTime() - days * 86400000));
+        list = list.filter((e) => e.date && e.date.slice(0, 10) >= cutoff);
+      }
+    }
+
     if (expenseSearch) {
       const q = expenseSearch.toLowerCase();
       list = list.filter((e) => (e.title && e.title.toLowerCase().includes(q)) || (e.notes && e.notes.toLowerCase().includes(q)));
@@ -405,7 +460,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       }
     });
     return list;
-  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
+  }, [expenses, timeFilter, currentPayCycle, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
 
   const totalSpent = React.useMemo(() => filteredExpensesBase.reduce((sum, e) => sum + (e.amount || 0), 0), [filteredExpensesBase]);
 
@@ -416,7 +471,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       breakdown[cat] = (breakdown[cat] || 0) + (e.amount || 0);
     });
     return Object.fromEntries(Object.entries(breakdown).sort(([, a], [, b]) => b - a));
-  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
+  }, [filteredExpenses]);
 
   const chartCatBreakdown = React.useMemo(() => {
     const breakdown: Record<string, number> = {};
@@ -433,7 +488,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       if (e.date) map[e.date] = (map[e.date] || 0) + (e.amount || 0);
     });
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-10);
-  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
+  }, [filteredExpenses]);
 
   const largestItem = React.useMemo(() => {
     if (filteredExpensesBase.length === 0) return null;
@@ -584,7 +639,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                 <span className="font-mono text-[11px] text-text-muted uppercase">Payday</span>
                 <select
                   value={salaryDay}
-                  onChange={(e) => setSalaryDay(parseInt(e.target.value, 10))}
+                  onChange={(e) => handleSalaryDayChange(parseInt(e.target.value, 10))}
                   className={`${INPUT_CLASS} px-2 py-1 text-xs`}
                 >
                   {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
@@ -599,7 +654,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
 
             <select
               value={timeFilter}
-              onChange={(e) => setTimeFilter(e.target.value as any)}
+              onChange={(e) => handleTimeFilterChange(e.target.value as any)}
               className={`${INPUT_CLASS} px-2 py-1 text-xs`}
             >
               <option value="7">Last 7 days</option>
@@ -618,7 +673,9 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
             <div className={`${STAT_CARD} !bg-[var(--accent-blue)] !border-none`}>
               <span className={`${LABEL_MONO} !text-[#1A1A1A]/70`}>Total Spent</span>
               <span className={STAT_VALUE}>{currency}{totalSpent.toLocaleString()}</span>
-              <span className={`${STAT_SUBTEXT} !text-[#1A1A1A]/70`}>{timeFilter === "all" ? "All time" : `Last ${timeFilter} days`}</span>
+              <span className={`${STAT_SUBTEXT} !text-[#1A1A1A]/70`}>
+                {timeFilter === "all" ? "All time" : timeFilter === "salary" ? `Cycle (${currentPayCycle.startStr} – ${currentPayCycle.endStr})` : `Last ${timeFilter} days`}
+              </span>
             </div>
             <div className={`${STAT_CARD} !bg-[var(--accent-yellow)] !border-none`}>
               <span className={`${LABEL_MONO} !text-[#1A1A1A]/70`}>Charges Logged</span>
@@ -778,7 +835,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
               <div className={BENTO_CARD}>
                 <span className={`${LABEL_MONO} mb-3.5 block`}>Log Transaction</span>
                 <form onSubmit={addExpense} className="flex flex-col gap-[9px]">
-                  <input type="text" value={expenseTitle} onChange={(e) => setExpenseTitle(e.target.value)} placeholder="Description" required className={INPUT_CLASS} />
+                  <input id="transaction-desc-input" type="text" value={expenseTitle} onChange={(e) => setExpenseTitle(e.target.value)} placeholder="Description" required className={INPUT_CLASS} />
                   <input type="number" value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} placeholder={`Amount (${currency})`} required className={INPUT_CLASS} />
 
                   <select value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} required className={`${INPUT_CLASS} w-full cursor-pointer`}>

@@ -13,6 +13,8 @@ interface ExpensesState {
   setTimeFilter: (f: "7" | "30" | "90" | "salary" | "all") => void;
   salaryDay: number;
   setSalaryDay: (d: number) => void;
+  salaryLog: Record<string, { date: string; amount: number }>;
+  setSalaryLog: (s: Record<string, { date: string; amount: number }>) => void;
 
   expenseTitle: string;
   setExpenseTitle: (s: string) => void;
@@ -67,7 +69,7 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
   expensesLoaded: false,
   setExpensesLoaded: (loaded) => set({ expensesLoaded: loaded }),
 
-  timeFilter: "all",
+  timeFilter: (typeof window !== "undefined" && (window.localStorage.getItem("phub_time_filter") as any)) || "all",
   setTimeFilter: (timeFilter) => {
     if (typeof window !== "undefined") window.localStorage.setItem("phub_time_filter", timeFilter);
     set({ timeFilter });
@@ -76,6 +78,8 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
   setSalaryDay: (salaryDay) => {
     set({ salaryDay });
   },
+  salaryLog: {},
+  setSalaryLog: (salaryLog) => set({ salaryLog }),
 
   expenseTitle: "",
   setExpenseTitle: (expenseTitle) => set({ expenseTitle }),

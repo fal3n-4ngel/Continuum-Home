@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, RotateCcw, Sparkles } from "lucide-react";
+import { Send, RotateCcw, Sparkles, Bot } from "lucide-react";
 
 interface KirokuTabProps {
   idToken?: string;
@@ -15,6 +15,7 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -80,16 +81,21 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
       }
 
       const parts: React.ReactNode[] = [];
-      const boldRegex = /\*\*([^*]+)\*\*/g;
+      const tokenRegex = /(\*\*[^*]+\*\*|`[^`]+`)/g;
       let lastIndex = 0;
       let match;
 
-      while ((match = boldRegex.exec(cleanLine)) !== null) {
+      while ((match = tokenRegex.exec(cleanLine)) !== null) {
         if (match.index > lastIndex) {
           parts.push(cleanLine.substring(lastIndex, match.index));
         }
-        parts.push(<strong key={match.index} className="font-bold text-text-primary">{match[1]}</strong>);
-        lastIndex = boldRegex.lastIndex;
+        const token = match[0];
+        if (token.startsWith("**") && token.endsWith("**")) {
+          parts.push(<strong key={match.index} className="font-semibold text-text-primary">{token.slice(2, -2)}</strong>);
+        } else if (token.startsWith("`") && token.endsWith("`")) {
+          parts.push(<code key={match.index} className="rounded bg-bg-secondary/70 px-1.5 py-0.5 font-mono text-[12px] text-text-primary">{token.slice(1, -1)}</code>);
+        }
+        lastIndex = tokenRegex.lastIndex;
       }
 
       if (lastIndex < cleanLine.length) {
@@ -105,51 +111,81 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
       }
 
       return (
-        <p key={index} className="min-h-[1em] mt-1 text-[14px] leading-relaxed">
+        <p key={index} className="min-h-[1em] mt-1 text-[14px] leading-relaxed first:mt-0">
           {parts}
         </p>
       );
     });
   };
 
+  const suggestedPrompts = [
+    { label: "Spent 450 on lunch today", icon: "💸" },
+    { label: "Add Dune 2 to my watchlist", icon: "🎬" },
+    { label: "Show my expenses this week", icon: "📊" },
+    { label: "List my completed watchlist", icon: "🍿" },
+  ];
+
   return (
-    <div className="flex flex-col gap-5 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full max-w-5xl mx-auto">
+    <div className="flex flex-col gap-4 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full max-w-4xl mx-auto">
       <div className="flex items-center justify-between">
-        <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2 flex items-center gap-3">
-          Kiroku Assistant
-        </h1>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border border-border-subtle bg-bg-card shadow-xs">
+            <Bot className="h-5 w-5 text-text-primary" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="font-serif text-2xl italic font-medium tracking-tight text-text-primary">
+                Kiroku Assistant
+              </h1>
+              <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Online
+              </span>
+            </div>
+            <p className="text-[12px] text-text-secondary">
+              Natural language intelligence for your ledger, watchlist, and subscriptions
+            </p>
+          </div>
+        </div>
         <button
+          type="button"
           onClick={handleReset}
           title="Clear Chat History"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border-subtle bg-bg-card hover:bg-bg-primary text-text-secondary hover:text-text-primary transition-colors cursor-pointer text-xs font-medium uppercase tracking-wider"
+          className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card px-3 py-1.5 text-xs font-medium text-text-secondary transition-all hover:border-border-hover hover:bg-bg-primary hover:text-text-primary cursor-pointer active:scale-95 shadow-xs"
         >
-          <RotateCcw className="h-3.5 w-3.5" /> Reset
+          <RotateCcw className="h-3.5 w-3.5" />
+          <span>Clear</span>
         </button>
       </div>
 
-      <div className="flex flex-col h-[calc(100vh-200px)] w-full bg-bg-card border border-border-subtle rounded-2xl shadow-sm overflow-hidden">
-
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col gap-5 bg-transparent custom-scrollbar">
-
+      <div className="flex flex-col h-[calc(100dvh-230px)] min-h-[500px] w-full bg-bg-card border border-border-subtle rounded-2xl shadow-subtle overflow-hidden">
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex flex-col gap-4 bg-transparent custom-scrollbar">
           {history.length === 0 && (
-            <div className="rounded-xl border border-border-subtle bg-bg-primary/50 p-6 shadow-sm text-[14px] leading-relaxed text-text-secondary flex flex-col gap-4 mx-auto max-w-2xl w-full mt-4 mb-4">
-              <div className="flex items-center gap-2 text-text-primary">
-                <Sparkles className="h-5 w-5 text-yellow-500" />
-                <span className="font-serif font-bold text-lg">Suggested prompts</span>
+            <div className="flex flex-col items-center text-center my-auto py-6 px-4 max-w-lg mx-auto animate-[fadeIn_0.3s_ease-out]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border-subtle bg-bg-primary shadow-xs mb-3 text-text-primary">
+                <Sparkles className="h-6 w-6 text-amber-600 dark:text-amber-400" />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-[11.5px]">
-                <div className="bg-bg-card border border-border-subtle p-3 rounded-lg hover:border-text-primary/30 transition-colors cursor-pointer" onClick={() => setInput("spent 450 on lunch today")}>
-                  &quot;spent 450 on lunch today&quot;
-                </div>
-                <div className="bg-bg-card border border-border-subtle p-3 rounded-lg hover:border-text-primary/30 transition-colors cursor-pointer" onClick={() => setInput("add Dune 2 to my plan to watch list")}>
-                  &quot;add Dune 2 to my plan to watch list&quot;
-                </div>
-                <div className="bg-bg-card border border-border-subtle p-3 rounded-lg hover:border-text-primary/30 transition-colors cursor-pointer" onClick={() => setInput("list my watchlist completed items")}>
-                  &quot;list my watchlist completed items&quot;
-                </div>
-                <div className="bg-bg-card border border-border-subtle p-3 rounded-lg hover:border-text-primary/30 transition-colors cursor-pointer" onClick={() => setInput("show me my expenses this week")}>
-                  &quot;show me my expenses this week&quot;
-                </div>
+              <h2 className="font-serif text-xl italic font-semibold text-text-primary mb-1">
+                How can I help today?
+              </h2>
+              <p className="text-[13px] text-text-secondary leading-relaxed mb-6 max-w-sm">
+                Ask questions about your finances, track a new expense, add to your watchlist, or analyze subscriptions.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2 w-full">
+                {suggestedPrompts.map((prompt, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setInput(prompt.label);
+                      inputRef.current?.focus();
+                    }}
+                    className="flex items-center gap-2 rounded-full border border-border-subtle bg-bg-primary/80 px-3.5 py-2 text-[12.5px] font-medium text-text-secondary transition-all hover:border-text-primary/40 hover:bg-bg-primary hover:text-text-primary hover:scale-[1.02] active:scale-95 cursor-pointer shadow-xs text-left"
+                  >
+                    <span>{prompt.icon}</span>
+                    <span>&ldquo;{prompt.label}&rdquo;</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}
@@ -165,23 +201,35 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
                   : "justify-start"
               }`}
             >
-              <div
-                className={`max-w-[85%] md:max-w-[70%] px-5 py-3 text-[14.5px] leading-relaxed shadow-sm ${
-                  msg.sender === "user"
-                    ? "bg-text-primary text-bg-primary rounded-[22px] rounded-br-[6px]"
-                    : msg.sender === "system"
-                    ? "bg-red-50 border border-red-200 text-red-700 text-center font-medium text-[12px] py-2 px-4 rounded-xl w-full max-w-md mx-auto"
-                    : "bg-[#f4f2ea] border border-[#e8e4d8] text-text-primary rounded-[22px] rounded-bl-[6px]"
-                }`}
-              >
-                {msg.sender === "user" || msg.sender === "system" ? msg.text : renderMarkdown(msg.text)}
-              </div>
+              {msg.sender === "assistant" ? (
+                <div className="flex items-start gap-3 max-w-[88%] sm:max-w-[80%] md:max-w-[72%]">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-primary shadow-xs mt-0.5">
+                    <Bot className="h-4 w-4" />
+                  </div>
+                  <div className="rounded-2xl rounded-tl-sm border border-border-subtle/80 bg-bg-primary/70 px-4.5 py-3 text-[14px] leading-relaxed text-text-primary shadow-xs">
+                    {renderMarkdown(msg.text)}
+                  </div>
+                </div>
+              ) : msg.sender === "user" ? (
+                <div className="flex items-start justify-end gap-2 max-w-[88%] sm:max-w-[80%] md:max-w-[72%] ml-auto">
+                  <div className="rounded-2xl rounded-tr-sm bg-text-primary px-4.5 py-3 text-[14px] leading-relaxed text-white shadow-xs">
+                    <p className="whitespace-pre-wrap">{msg.text}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="mx-auto my-1 max-w-md rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-2 text-center text-[12px] font-medium text-red-700 dark:text-red-400">
+                  {msg.text}
+                </div>
+              )}
             </div>
           ))}
 
           {loading && (
-            <div className="flex justify-start">
-              <div className="bg-[#f4f2ea] border border-[#e8e4d8] rounded-[22px] rounded-bl-[6px] px-5 py-4 shadow-sm flex items-center gap-2">
+            <div className="flex items-start gap-3 max-w-[80%]">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-primary shadow-xs mt-0.5">
+                <Bot className="h-4 w-4" />
+              </div>
+              <div className="rounded-2xl rounded-tl-sm border border-border-subtle/80 bg-bg-primary/70 px-4.5 py-3 text-text-secondary shadow-xs flex items-center gap-1.5">
                 <span className="h-2 w-2 rounded-full bg-text-secondary/60 animate-bounce" style={{ animationDelay: '0ms' }} />
                 <span className="h-2 w-2 rounded-full bg-text-secondary/60 animate-bounce" style={{ animationDelay: '150ms' }} />
                 <span className="h-2 w-2 rounded-full bg-text-secondary/60 animate-bounce" style={{ animationDelay: '300ms' }} />
@@ -190,9 +238,10 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
           )}
         </div>
 
-        <div className="p-4 md:p-6 border-t border-border-subtle bg-bg-card/50 backdrop-blur-sm">
-          <form onSubmit={handleSend} className="relative flex items-center max-w-4xl mx-auto">
+        <div className="p-3 sm:p-4 border-t border-border-subtle bg-bg-card/80 backdrop-blur-md">
+          <form onSubmit={handleSend} className="relative flex items-center max-w-3xl mx-auto rounded-full border border-border-subtle bg-bg-primary p-1.5 pl-5 pr-1.5 focus-within:border-border-hover focus-within:ring-2 focus-within:ring-text-primary/10 transition-all shadow-inner">
             <input
+              ref={inputRef}
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -202,19 +251,21 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
                   ? "Sign in to query assistant..."
                   : "Message Kiroku..."
               }
-              className="w-full rounded-full border border-border-subtle px-6 py-4 pr-16 text-[15px] bg-bg-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/10 focus:border-text-primary/30 disabled:opacity-50 transition-all shadow-inner"
+              className="flex-1 bg-transparent border-none text-[14px] text-text-primary placeholder:text-text-muted outline-none disabled:opacity-50 py-2"
             />
             <button
               type="submit"
               disabled={loading || !input.trim() || !idToken}
-              className="absolute right-2 top-1/2 -translate-y-1/2  h-12 w-12 rounded-full bg-text-primary text-white flex items-center justify-center hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed transition-all cursor-pointer shadow-md"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-text-primary text-white shadow-xs transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:cursor-not-allowed cursor-pointer"
               aria-label="Send message"
             >
-              <Send className="h-24 w-24 z-1000 scale-175" />
+              <Send className="h-4 w-4" />
             </button>
           </form>
-          <div className="text-center mt-3">
-            <span className="text-[10px] text-text-muted font-mono tracking-wider uppercase">Kiroku can make mistakes. Verify important data.</span>
+          <div className="text-center mt-2.5">
+            <span className="text-[10px] text-text-muted font-mono tracking-wider uppercase">
+              Kiroku can make mistakes. Verify important data.
+            </span>
           </div>
         </div>
       </div>

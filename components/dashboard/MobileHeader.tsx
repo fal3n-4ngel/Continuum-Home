@@ -26,12 +26,6 @@ interface MobileHeaderProps {
   disconnectTrakt: () => void;
 }
 
-const mobileNavLinkClass = (active: boolean) =>
-  `relative flex min-h-[44px] flex-1 cursor-pointer flex-col items-center justify-center gap-[3px] px-1.5 pt-2 pb-1.5 text-[10px] font-medium no-underline transition-colors duration-150 ${
-    active
-      ? "font-bold text-text-primary after:absolute after:top-0 after:left-1/2 after:h-0.5 after:w-7 after:-translate-x-1/2 after:rounded-b-[3px] after:bg-text-primary after:content-['']"
-      : "text-text-muted"
-  }`;
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({
   activeTab,
@@ -48,6 +42,8 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   disconnectAnilist,
   disconnectTrakt,
 }) => {
+  const isAdmin = Boolean(user && user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com"));
+
   return (
     <>
       <header className="sticky top-0 z-[100] hidden min-h-[52px] items-center justify-between border-b border-border-subtle bg-bg-card px-4 max-md:flex">
@@ -109,21 +105,6 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
           </a>
-          {user && user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL) && (
-            <a
-              onClick={() => setActiveTab("admin")}
-              title="Admin Panel"
-              className={`flex h-7 w-7 items-center justify-center rounded-full border border-border-subtle cursor-pointer transition-colors ${
-                activeTab === "admin"
-                  ? "bg-text-primary text-bg-card"
-                  : "bg-bg-primary text-text-secondary hover:text-text-primary"
-              }`}
-            >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
-              </svg>
-            </a>
-          )}
           {user && (
             <img
               src={isSafeImageUrl(user.photoURL) ? user.photoURL : undefined}
@@ -147,34 +128,135 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         </div>
       </header>
 
-      <nav className="fixed right-0 bottom-0 left-0 z-[1000] hidden min-h-[60px] items-stretch justify-around border-t border-border-subtle bg-bg-card pb-[env(safe-area-inset-bottom)] max-md:flex">
-        <div onClick={() => setActiveTab("expenses")} className={mobileNavLinkClass(activeTab === "expenses")}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
-          <span>Ledger</span>
-        </div>
-        {isProUser && (
-          <div onClick={() => setActiveTab("financial")} className={mobileNavLinkClass(activeTab === "financial")}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            <span>Health</span>
-          </div>
-        )}
-        {showInvestmentsTab && (
-          <div onClick={() => setActiveTab("investments")} className={mobileNavLinkClass(activeTab === "investments")}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <span>Invest</span>
-          </div>
-        )}
-        <div onClick={() => setActiveTab("media")} className={mobileNavLinkClass(activeTab === "media")}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
-          <span>Library</span>
-        </div>
-        <div onClick={() => setActiveTab("reports")} className={mobileNavLinkClass(activeTab === "reports")}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          <span>Reports</span>
-        </div>
-        <div onClick={() => setActiveTab("agent")} className={mobileNavLinkClass(activeTab === "agent")}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>
-          <span>Agent</span>
+      <nav
+        aria-label="Mobile Navigation"
+        className="fixed bottom-6 left-0 right-0 z-[1000] hidden max-md:flex items-center justify-center px-4 pointer-events-none pb-[env(safe-area-inset-bottom)]"
+      >
+        <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card/95 p-2 shadow-[0_14px_40px_rgba(0,0,0,0.12),0_2px_10px_rgba(0,0,0,0.05)] backdrop-blur-2xl">
+          <button
+            type="button"
+            onClick={() => setActiveTab("expenses")}
+            aria-label="Ledger"
+            className={
+              activeTab === "expenses"
+                ? "flex items-center gap-2.5 rounded-full bg-[#eae5db] !px-4.5 !py-2.5 text-[13.5px] font-semibold text-text-primary shadow-xs transition-all duration-200 cursor-pointer dark:bg-white/15"
+                : "flex h-11 w-11 !p-0 items-center justify-center rounded-full text-text-secondary transition-all duration-200 hover:text-text-primary hover:bg-black/5 active:scale-95 cursor-pointer dark:text-text-secondary dark:hover:bg-white/5"
+            }
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === "expenses" ? "2.2" : "1.85"} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <rect x="2" y="5" width="20" height="14" rx="3" />
+              <line x1="2" y1="10" x2="22" y2="10" />
+            </svg>
+            {activeTab === "expenses" && <span>Ledger</span>}
+          </button>
+
+          {isProUser && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("financial")}
+              aria-label="Health"
+              className={
+                activeTab === "financial"
+                  ? "flex items-center gap-2.5 rounded-full bg-[#eae5db] !px-4.5 !py-2.5 text-[13.5px] font-semibold text-text-primary shadow-xs transition-all duration-200 cursor-pointer dark:bg-white/15"
+                  : "flex h-11 w-11 !p-0 items-center justify-center rounded-full text-text-secondary transition-all duration-200 hover:text-text-primary hover:bg-black/5 active:scale-95 cursor-pointer dark:text-text-secondary dark:hover:bg-white/5"
+              }
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === "financial" ? "2.2" : "1.85"} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+              </svg>
+              {activeTab === "financial" && <span>Health</span>}
+            </button>
+          )}
+
+          {showInvestmentsTab && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("investments")}
+              aria-label="Invest"
+              className={
+                activeTab === "investments"
+                  ? "flex items-center gap-2.5 rounded-full bg-[#eae5db] !px-4.5 !py-2.5 text-[13.5px] font-semibold text-text-primary shadow-xs transition-all duration-200 cursor-pointer dark:bg-white/15"
+                  : "flex h-11 w-11 !p-0 items-center justify-center rounded-full text-text-secondary transition-all duration-200 hover:text-text-primary hover:bg-black/5 active:scale-95 cursor-pointer dark:text-text-secondary dark:hover:bg-white/5"
+              }
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === "investments" ? "2.2" : "1.85"} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                <line x1="12" y1="2" x2="12" y2="22" />
+                <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
+              </svg>
+              {activeTab === "investments" && <span>Invest</span>}
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("media")}
+            aria-label="Library"
+            className={
+              activeTab === "media"
+                ? "flex items-center gap-2.5 rounded-full bg-[#eae5db] !px-4.5 !py-2.5 text-[13.5px] font-semibold text-text-primary shadow-xs transition-all duration-200 cursor-pointer dark:bg-white/15"
+                : "flex h-11 w-11 !p-0 items-center justify-center rounded-full text-text-secondary transition-all duration-200 hover:text-text-primary hover:bg-black/5 active:scale-95 cursor-pointer dark:text-text-secondary dark:hover:bg-white/5"
+            }
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === "media" ? "2.2" : "1.85"} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <polygon points="23 7 16 12 23 17 23 7" />
+              <rect x="1" y="5" width="15" height="14" rx="3" />
+            </svg>
+            {activeTab === "media" && <span>Library</span>}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("reports")}
+            aria-label="Reports"
+            className={
+              activeTab === "reports"
+                ? "flex items-center gap-2.5 rounded-full bg-[#eae5db] !px-4.5 !py-2.5 text-[13.5px] font-semibold text-text-primary shadow-xs transition-all duration-200 cursor-pointer dark:bg-white/15"
+                : "flex h-11 w-11 !p-0 items-center justify-center rounded-full text-text-secondary transition-all duration-200 hover:text-text-primary hover:bg-black/5 active:scale-95 cursor-pointer dark:text-text-secondary dark:hover:bg-white/5"
+            }
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === "reports" ? "2.2" : "1.85"} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            {activeTab === "reports" && <span>Reports</span>}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab("agent")}
+            aria-label="Agent"
+            className={
+              activeTab === "agent"
+                ? "flex items-center gap-2.5 rounded-full bg-[#eae5db] !px-4.5 !py-2.5 text-[13.5px] font-semibold text-text-primary shadow-xs transition-all duration-200 cursor-pointer dark:bg-white/15"
+                : "flex h-11 w-11 !p-0 items-center justify-center rounded-full text-text-secondary transition-all duration-200 hover:text-text-primary hover:bg-black/5 active:scale-95 cursor-pointer dark:text-text-secondary dark:hover:bg-white/5"
+            }
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === "agent" ? "2.2" : "1.85"} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+              <path d="M12 8V4H8" />
+              <rect x="4" y="8" width="16" height="12" rx="3" />
+              <path d="M2 14h2M20 14h2M15 13v2M9 13v2" />
+            </svg>
+            {activeTab === "agent" && <span>Agent</span>}
+          </button>
+
+          {isAdmin && (
+            <button
+              type="button"
+              onClick={() => setActiveTab("admin")}
+              aria-label="Admin"
+              className={
+                activeTab === "admin"
+                  ? "flex items-center gap-2.5 rounded-full bg-[#eae5db] !px-4.5 !py-2.5 text-[13.5px] font-semibold text-text-primary shadow-xs transition-all duration-200 cursor-pointer dark:bg-white/15"
+                  : "flex h-11 w-11 !p-0 items-center justify-center rounded-full text-text-secondary transition-all duration-200 hover:text-text-primary hover:bg-black/5 active:scale-95 cursor-pointer dark:text-text-secondary dark:hover:bg-white/5"
+              }
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={activeTab === "admin" ? "2.2" : "1.85"} strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+              </svg>
+              {activeTab === "admin" && <span>Admin</span>}
+            </button>
+          )}
         </div>
       </nav>
     </>

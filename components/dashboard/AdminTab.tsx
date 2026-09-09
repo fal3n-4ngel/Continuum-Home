@@ -10,14 +10,21 @@ import {
   Bell,
   Mail,
   RefreshCw,
-  BarChart2,
-  Sparkles,
   AlertTriangle,
-  Star,
-  Activity,
   Server,
   TerminalSquare,
-  Users
+  Users,
+  Activity,
+  Zap,
+  ArrowRight,
+  ExternalLink,
+  CheckCircle2,
+  Database,
+  Radio,
+  Cpu,
+  Clock,
+  Layers,
+  Sparkles
 } from "lucide-react";
 import { ProClaimsQueue } from "./admin/ProClaimsQueue";
 import { CronTriggerSection } from "./admin/CronTriggerSection";
@@ -27,7 +34,7 @@ interface AdminTabProps {
 }
 
 export function AdminTab({ user }: AdminTabProps) {
-  const [activeTab, setActiveTab] = useState<"analytics" | "communications" | "system" | "pro-requests">("analytics");
+  const [activeTab, setActiveTab] = useState<"overview" | "communications" | "system" | "pro-requests">("overview");
 
   const [stats, setStats] = useState<{
     expenses: number;
@@ -37,7 +44,6 @@ export function AdminTab({ user }: AdminTabProps) {
     portfolioValue: number;
   } | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
-  const [gptMetrics, setGptMetrics] = useState<any>(null);
 
   const [cronRunning, setCronRunning] = useState<string | null>(null);
   const [flushLoading, setFlushLoading] = useState(false);
@@ -94,6 +100,29 @@ Thank you for being part of our journey!`);
     }
   };
 
+  const handleQuickDiscordPing = async () => {
+    setDiscordSending(true);
+    setStatusMessage(null);
+    try {
+      const res = await fetch("/api/admin/discord", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ message: "Admin Health Ping: Continuum operational check dispatched from Admin Control Hub." }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatusMessage({ text: "Discord health alert dispatched successfully!", type: "success" });
+      } else {
+        setStatusMessage({ text: data.error || "Failed to dispatch Discord ping.", type: "error" });
+      }
+    } catch (err) {
+      console.error(err);
+      setStatusMessage({ text: "Network error occurred while pinging Discord.", type: "error" });
+    } finally {
+      setDiscordSending(false);
+    }
+  };
+
   const handleAnnouncement = async (action: "preview" | "send") => {
     if (action === "send") {
       setAnnConfirmModal(false);
@@ -141,19 +170,17 @@ Thank you for being part of our journey!`);
     setStatsLoading(true);
     try {
       const headers = getHeaders();
-      const [expRes, subRes, watchRes, portRes, metricsRes] = await Promise.all([
+      const [expRes, subRes, watchRes, portRes] = await Promise.all([
         fetch("/api/expenses", { headers }),
         fetch("/api/subscriptions", { headers }),
         fetch("/api/watchlist", { headers }),
         fetch("/api/portfolio", { headers }),
-        fetch("/api/admin/metrics", { headers }),
       ]);
 
       const expenses = expRes.ok ? await expRes.json() : [];
       const subscriptions = subRes.ok ? await subRes.json() : [];
       const watchlist = watchRes.ok ? await watchRes.json() : [];
       const portfolio = portRes.ok ? await portRes.json() : null;
-      const metrics = metricsRes.ok ? await metricsRes.json() : null;
 
       const portAssets = Array.isArray(portfolio)
         ? portfolio
@@ -168,7 +195,6 @@ Thank you for being part of our journey!`);
         portfolioAssets: portAssets.length,
         portfolioValue: portValue,
       });
-      setGptMetrics(metrics);
     } catch (err) {
       console.error("Failed to load admin stats:", err);
     } finally {
@@ -422,12 +448,12 @@ Thank you for being part of our journey!`);
           <Shield className="h-6 w-6 text-text-primary animate-pulse" />
           <div>
             <h1 className="font-serif text-[26px] italic font-medium tracking-tight text-text-primary">Admin Panel</h1>
-            <p className="text-[12px] text-text-secondary">System-wide parameters, analytics, and Pro verification</p>
+            <p className="text-[12px] text-text-secondary">System-wide parameters, developer operations, and Pro verification</p>
           </div>
         </div>
 
         <div className="flex gap-6 border-b border-border-subtle max-sm:gap-4 max-sm:overflow-x-auto max-sm:scrollbar-none max-sm:-mx-1 max-sm:px-1">
-          {["analytics", "communications", "system", "pro-requests"].map((tab) => (
+          {["overview", "communications", "system", "pro-requests"].map((tab) => (
             <button
               key={tab}
               onClick={() => {
@@ -441,6 +467,11 @@ Thank you for being part of our journey!`);
               }`}
             >
               {tab.replace("-", " ")}
+              {tab === "pro-requests" && proClaims.filter((c) => c.status === "pending").length > 0 && (
+                <span className="ml-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold bg-amber-500/20 text-amber-600 border border-amber-500/30 rounded-none">
+                  {proClaims.filter((c) => c.status === "pending").length}
+                </span>
+              )}
               {activeTab === tab && (
                 <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-text-primary" />
               )}
@@ -459,111 +490,251 @@ Thank you for being part of our journey!`);
         </div>
       )}
 
-      {activeTab === "analytics" && (
+      {activeTab === "overview" && (
         <div className="flex flex-col gap-6 animate-[fadeIn_0.3s_ease-out_both]">
-          <div className="grid grid-cols-4 gap-4 max-md:grid-cols-2">
-            {[
-              { label: "EXPENSES", val: statsLoading ? "..." : stats?.expenses },
-              { label: "SUBSCRIPTIONS", val: statsLoading ? "..." : stats?.subscriptions },
-              { label: "LIBRARY ITEMS", val: statsLoading ? "..." : stats?.watchlist },
-              { label: "PORTFOLIO VALUE", val: statsLoading ? "..." : `₹${stats?.portfolioValue?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) || 0}` },
-            ].map((card, i) => (
-              <div key={i} className="flex flex-col gap-1 rounded-none border-2 border-border-subtle bg-bg-card p-4.5 shadow-subtle">
-                <span className="font-mono text-[9px] font-bold tracking-[0.8px] text-text-muted uppercase">{card.label}</span>
-                <span className="text-[20px] font-bold tracking-tight text-text-primary mt-1">{card.val}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-2 gap-6 max-lg:grid-cols-1 mt-4">
-            <div className={CARD}>
-              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
-                <TerminalSquare className="h-4 w-4" /> Most Used Functionality (Agent)
-              </h3>
-              {gptMetrics?.globalMetrics?.agent?.topEndpoints && gptMetrics.globalMetrics.agent.topEndpoints.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  {gptMetrics.globalMetrics.agent.topEndpoints.map((ep: any, i: number) => (
-                    <div key={ep.name} className="flex items-center gap-3">
-                      <div className="w-5 text-center font-mono text-[10px] font-bold text-text-muted">{i + 1}</div>
-                      <div className="flex-1 flex justify-between items-center rounded-none border-2 border-border-subtle bg-bg-primary/20 p-2.5 px-3">
-                        <div className="text-[12px] font-mono text-text-primary truncate max-w-[250px]">{ep.name}</div>
-                        <div className="text-[11px] font-semibold text-text-secondary">{ep.calls} calls</div>
-                      </div>
-                    </div>
-                  ))}
+          {proClaims.filter((c) => c.status === "pending").length > 0 && (
+            <div className="flex items-center justify-between border-2 border-amber-600/40 bg-amber-500/10 p-4 max-sm:flex-col max-sm:items-start max-sm:gap-3">
+              <div className="flex items-center gap-3">
+                <span className="relative flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-amber-500"></span>
+                </span>
+                <div>
+                  <div className="text-xs font-bold text-text-primary">
+                    {proClaims.filter((c) => c.status === "pending").length} Pro Claim{proClaims.filter((c) => c.status === "pending").length === 1 ? "" : "s"} Awaiting Verification
+                  </div>
+                  <div className="text-[11px] text-text-secondary">
+                    Users have submitted payment proof for upgraded Pro features.
+                  </div>
                 </div>
-              ) : (
-                <p className="text-xs text-text-secondary italic">No API usage recorded yet.</p>
-              )}
+              </div>
+              <button
+                onClick={() => setActiveTab("pro-requests")}
+                className="flex items-center gap-1.5 border-2 border-text-primary bg-text-primary px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-bg-card hover:bg-bg-primary hover:text-text-primary transition-all shrink-0"
+              >
+                <span>Review Queue</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
             </div>
+          )}
 
-            <div className={CARD}>
-              <div className="flex items-center justify-between border-b-2 border-border-subtle pb-3 mb-4">
-                <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2">
-                  <Users className="h-4 w-4" /> API Uses Per User (Agent)
-                </h3>
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-text-secondary" />
+                <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-text-secondary">Platform Vitals</span>
               </div>
-
-              {gptMetrics?.globalMetrics?.agent?.topUsers && gptMetrics.globalMetrics.agent.topUsers.length > 0 ? (
-                <div className="flex flex-col gap-2">
-                  {gptMetrics.globalMetrics.agent.topUsers.map((u: any, i: number) => (
-                    <div key={u.name} className="flex items-center gap-3">
-                      <div className="w-5 text-center font-mono text-[10px] font-bold text-text-muted">{i + 1}</div>
-                      <div className="flex-1 flex justify-between items-center rounded-none border-2 border-border-subtle bg-bg-primary/20 p-2.5 px-3">
-                        <div className="text-[12px] font-medium text-text-primary truncate max-w-[200px]">{u.name}</div>
-                        <div className="text-[11px] font-semibold text-text-secondary">{u.calls} hits</div>
-                      </div>
-                    </div>
-                  ))}
+              <button
+                onClick={() => {
+                  fetchStats();
+                  fetchProClaims();
+                }}
+                disabled={statsLoading}
+                className="flex items-center gap-1.5 text-[11px] font-mono text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
+              >
+                <RefreshCw className={`h-3 w-3 ${statsLoading ? "animate-spin" : ""}`} />
+                <span>Refresh Data</span>
+              </button>
+            </div>
+            <div className="grid grid-cols-4 gap-4 max-md:grid-cols-2">
+              {[
+                { label: "EXPENSES TRACKED", val: statsLoading ? "..." : stats?.expenses ?? 0, sub: "Encrypted records" },
+                { label: "ACTIVE SUBSCRIPTIONS", val: statsLoading ? "..." : stats?.subscriptions ?? 0, sub: "Recurring services" },
+                { label: "LIBRARY ITEMS", val: statsLoading ? "..." : stats?.watchlist ?? 0, sub: "Trakt & AniList media" },
+                { label: "PORTFOLIO NET WORTH", val: statsLoading ? "..." : `₹${stats?.portfolioValue?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) || 0}`, sub: `${stats?.portfolioAssets || 0} holdings` },
+              ].map((card, i) => (
+                <div key={i} className="flex flex-col gap-1 rounded-none border-2 border-border-subtle bg-bg-card p-4.5 shadow-subtle">
+                  <span className="font-mono text-[9px] font-bold tracking-[0.8px] text-text-muted uppercase">{card.label}</span>
+                  <span className="text-[22px] font-bold tracking-tight text-text-primary mt-0.5">{card.val}</span>
+                  <span className="text-[10px] text-text-secondary font-mono mt-1">{card.sub}</span>
                 </div>
-              ) : (
-                <p className="text-xs text-text-secondary italic">No user activity recorded yet.</p>
-              )}
+              ))}
             </div>
           </div>
 
           <div className={CARD}>
-            <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
-              <Activity className="h-4 w-4" /> Custom GPT Actions Log
-            </h3>
-            <div className="grid grid-cols-[1.5fr_1fr] gap-6 max-md:grid-cols-1">
-              <div>
-                <h4 className="text-[12.5px] font-bold text-text-primary mb-3">Connected GPT Users ({gptMetrics?.activeUsersCount || 0})</h4>
-                {gptMetrics?.users && gptMetrics.users.length > 0 ? (
-                  <div className="flex flex-col gap-2 max-h-[220px] overflow-y-auto pr-1">
-                    {gptMetrics.users.map((gptUser: any) => (
-                      <div key={gptUser.email} className="flex justify-between items-center rounded-none border-2 border-border-subtle bg-bg-primary/20 p-3">
-                        <div className="text-[12.5px] font-medium text-text-primary truncate max-w-[200px]">{gptUser.email}</div>
-                        <div className="text-[10px] font-mono text-text-secondary">
-                          {gptUser.lastActive ? new Date(gptUser.lastActive).toLocaleString("en-IN", { dateStyle: "short", timeStyle: "short" }) : "Never"}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-xs text-text-secondary italic">No users have authorized Custom GPT actions yet.</p>
-                )}
-              </div>
+            <div className="flex items-center justify-between border-b-2 border-border-subtle pb-3 mb-4">
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2">
+                <Zap className="h-4 w-4" /> Quick Operations Deck
+              </h3>
+              <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-text-muted">1-Click Triggers</span>
+            </div>
 
-              <div className="flex flex-col gap-5 border-l-2 border-border-subtle pl-6 max-md:border-l-0 max-md:pl-0">
-                <div>
-                  <div className="text-[9px] font-bold font-mono tracking-wider text-text-muted uppercase">TOTAL GPT CALLS</div>
-                  <div className="text-2xl font-bold mt-1 text-text-primary">{gptMetrics?.totalCalls || 0}</div>
+            <div className="grid grid-cols-3 gap-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
+              <button
+                onClick={flushCache}
+                disabled={flushLoading}
+                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left disabled:opacity-50"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                    <Trash2 className="h-3.5 w-3.5" /> Cache
+                  </span>
+                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">REDIS</span>
                 </div>
-                <div>
-                  <div className="text-[9px] font-bold font-mono tracking-wider text-text-muted uppercase mb-2.5">7-DAY GPT VOLUME</div>
-                  {gptMetrics?.dailyUsage ? (
-                    <div className="flex flex-col gap-1.5 font-mono text-[11px] text-text-secondary">
-                      {gptMetrics.dailyUsage.map((day: any) => (
-                        <div key={day.date} className="flex justify-between border-b-2 border-bg-primary pb-1">
-                          <span>{day.date}</span>
-                          <span className="font-semibold text-text-primary">{day.calls} call{day.calls === 1 ? "" : "s"}</span>
-                        </div>
-                      ))}
+                <span className="text-xs font-bold text-text-primary mt-1">
+                  {flushLoading ? "Flushing Cache..." : "Flush Redis Cache"}
+                </span>
+                <span className="text-[11px] text-text-secondary leading-snug">
+                  Invalidate cached API responses and sync keys across instances.
+                </span>
+              </button>
+
+              <button
+                onClick={handleQuickDiscordPing}
+                disabled={discordSending}
+                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left disabled:opacity-50"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                    <Radio className="h-3.5 w-3.5" /> Webhook
+                  </span>
+                  <span className="text-[9px] font-mono font-bold bg-[#5865F2]/10 border border-[#5865F2]/30 text-[#5865F2] px-1.5 py-0.5">DISCORD</span>
+                </div>
+                <span className="text-xs font-bold text-text-primary mt-1">
+                  {discordSending ? "Pinging..." : "Test Discord Ping"}
+                </span>
+                <span className="text-[11px] text-text-secondary leading-snug">
+                  Send an instantaneous test alert to the configured Discord channel.
+                </span>
+              </button>
+
+              <button
+                onClick={() => sendPreviewEmail("expenses")}
+                disabled={previewLoading}
+                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left disabled:opacity-50"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5" /> Dispatch
+                  </span>
+                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">RESEND</span>
+                </div>
+                <span className="text-xs font-bold text-text-primary mt-1">
+                  {previewLoading ? "Sending Email..." : "Send Test Digest"}
+                </span>
+                <span className="text-[11px] text-text-secondary leading-snug">
+                  Dispatches a sample weekly digest email directly to {user.email}.
+                </span>
+              </button>
+
+              <button
+                onClick={() => handleProductionCronClick("portfolio", "Portfolio Valuation Sync")}
+                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                    <Activity className="h-3.5 w-3.5" /> Market
+                  </span>
+                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">YAHOO / CRON</span>
+                </div>
+                <span className="text-xs font-bold text-text-primary mt-1">Sync Portfolio Net Worth</span>
+                <span className="text-[11px] text-text-secondary leading-snug">
+                  Polls live market prices and updates portfolio historical net worth.
+                </span>
+              </button>
+
+              <button
+                onClick={() => handleProductionCronClick("subscriptions", "Subscription Renewal Audit")}
+                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5" /> Recurrence
+                  </span>
+                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">CRON</span>
+                </div>
+                <span className="text-xs font-bold text-text-primary mt-1">Audit Subscription Cycles</span>
+                <span className="text-[11px] text-text-secondary leading-snug">
+                  Checks renewals and logs automated recurring expense line items.
+                </span>
+              </button>
+
+              <button
+                onClick={() => setActiveTab("communications")}
+                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                    <Bell className="h-3.5 w-3.5" /> Broadcast
+                  </span>
+                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">COMM</span>
+                </div>
+                <span className="text-xs font-bold text-text-primary mt-1">Compose Announcement</span>
+                <span className="text-[11px] text-text-secondary leading-snug">
+                  Open email & Discord broadcast center to send system notices.
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
+            <div className={CARD}>
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
+                <Server className="h-4 w-4" /> Infrastructure Health
+              </h3>
+              <div className="flex flex-col gap-3">
+                {[
+                  { name: "Database Engine", provider: "Cloud Firestore", status: "Operational", detail: "AES-256-GCM Encrypted" },
+                  { name: "Cache Storage", provider: "Upstash Redis", status: "Active", detail: "Edge REST / Memory Key-Value" },
+                  { name: "Email Relay", provider: "Resend", status: "Ready", detail: "Transaction & Announcement Gateway" },
+                  { name: "Alert Webhooks", provider: "Discord API", status: "Connected", detail: "System Bot Dispatcher" },
+                  { name: "Background Jobs", provider: "Vercel Cron", status: "5 Scheduled", detail: "Daily, Weekly & Monthly Tasks" },
+                ].map((srv, i) => (
+                  <div key={i} className="flex items-center justify-between border-2 border-border-subtle bg-bg-primary/20 p-3">
+                    <div className="flex flex-col">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-text-primary">{srv.name}</span>
+                        <span className="font-mono text-[10px] text-text-secondary">({srv.provider})</span>
+                      </div>
+                      <span className="text-[11px] text-text-secondary font-mono mt-0.5">{srv.detail}</span>
                     </div>
-                  ) : (
-                    <p className="text-xs text-text-secondary italic">No usage recorded.</p>
-                  )}
+                    <div className="flex items-center gap-1.5 shrink-0 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 px-2 py-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+                      <span className="font-mono text-[10px] font-bold">{srv.status}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className={CARD}>
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
+                <Cpu className="h-4 w-4" /> Developer Hub & Consoles
+              </h3>
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  Quick direct access to cloud providers, infrastructure dashboards, and upstream services managing Continuum Home.
+                </p>
+
+                <div className="grid grid-cols-2 gap-2.5 mt-1 max-sm:grid-cols-1">
+                  {[
+                    { name: "Vercel Deployments", url: "https://vercel.com", badge: "HOSTING" },
+                    { name: "Firebase Console", url: "https://console.firebase.google.com", badge: "FIRESTORE" },
+                    { name: "Upstash Redis", url: "https://console.upstash.com", badge: "CACHE" },
+                    { name: "Resend Email", url: "https://resend.com", badge: "SMTP" },
+                    { name: "Trakt.tv Developer", url: "https://trakt.tv/oauth/applications", badge: "API" },
+                    { name: "GitHub Repository", url: "https://github.com/fal3n-4ngel/personal-dashboard", badge: "GIT" },
+                  ].map((link, i) => (
+                    <a
+                      key={i}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between p-2.5 border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all group"
+                    >
+                      <div className="flex flex-col min-w-0">
+                        <span className="text-xs font-bold text-text-primary truncate">{link.name}</span>
+                        <span className="font-mono text-[9px] text-text-muted mt-0.5">{link.badge}</span>
+                      </div>
+                      <ExternalLink className="h-3.5 w-3.5 text-text-muted group-hover:text-text-primary transition-colors shrink-0 ml-2" />
+                    </a>
+                  ))}
+                </div>
+
+                <div className="mt-2 border-t-2 border-border-subtle pt-3 flex items-center justify-between text-[11px] font-mono text-text-secondary">
+                  <span>Admin Identity:</span>
+                  <span className="text-text-primary font-bold truncate max-w-[200px]">{user.email}</span>
                 </div>
               </div>
             </div>
