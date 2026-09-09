@@ -23,7 +23,7 @@ interface IntegrationsTabProps {
 }
 
 const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
-const BTN_PRIMARY = "rounded-md border border-text-primary bg-text-primary text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27] disabled:opacity-60";
+const BTN_PRIMARY = "rounded-md border border-text-primary bg-text-primary text-[13px] font-semibold text-bg-primary transition-all duration-200 hover:opacity-90 disabled:opacity-60";
 const BTN_SECONDARY = "rounded-md border border-border-subtle bg-transparent text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary";
 
 export const IntegrationsTab = ({

@@ -178,7 +178,7 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
             <button
               type="submit"
               disabled={isSaving}
-              className="flex items-center gap-1.5 rounded-lg bg-text-primary px-4 py-2 text-[13px] font-semibold text-white shadow-xs hover:bg-[#2e2d27] transition-all cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg bg-text-primary px-4 py-2 text-[13px] font-semibold text-bg-primary shadow-xs hover:opacity-90 transition-all cursor-pointer disabled:opacity-50"
             >
               {isSaving ? (
                 <>

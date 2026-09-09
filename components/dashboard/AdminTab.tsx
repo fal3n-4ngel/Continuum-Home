@@ -483,8 +483,8 @@ Thank you for being part of our journey!`);
       {statusMessage && (
         <div className={`rounded-none border px-4 py-3 text-xs animate-[heroFadeUp_0.3s_ease-out_both] ${
           statusMessage.type === "success"
-            ? "border-[#bbf7d0] bg-[#f0fdf4]/80 text-[#166534]"
-            : "border-[#fecaca] bg-[#fef2f2]/80 text-[#991b1b]"
+            ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+            : "border-rose-500/30 bg-rose-500/10 text-rose-600 dark:text-rose-400"
         }`}>
           {statusMessage.text}
         </div>
@@ -518,39 +518,7 @@ Thank you for being part of our journey!`);
             </div>
           )}
 
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Layers className="h-4 w-4 text-text-secondary" />
-                <span className="font-mono text-[11px] font-bold uppercase tracking-wider text-text-secondary">Platform Vitals</span>
-              </div>
-              <button
-                onClick={() => {
-                  fetchStats();
-                  fetchProClaims();
-                }}
-                disabled={statsLoading}
-                className="flex items-center gap-1.5 text-[11px] font-mono text-text-secondary hover:text-text-primary transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className={`h-3 w-3 ${statsLoading ? "animate-spin" : ""}`} />
-                <span>Refresh Data</span>
-              </button>
-            </div>
-            <div className="grid grid-cols-4 gap-4 max-md:grid-cols-2">
-              {[
-                { label: "EXPENSES TRACKED", val: statsLoading ? "..." : stats?.expenses ?? 0, sub: "Encrypted records" },
-                { label: "ACTIVE SUBSCRIPTIONS", val: statsLoading ? "..." : stats?.subscriptions ?? 0, sub: "Recurring services" },
-                { label: "LIBRARY ITEMS", val: statsLoading ? "..." : stats?.watchlist ?? 0, sub: "Trakt & AniList media" },
-                { label: "PORTFOLIO NET WORTH", val: statsLoading ? "..." : `₹${stats?.portfolioValue?.toLocaleString('en-IN', { maximumFractionDigits: 0 }) || 0}`, sub: `${stats?.portfolioAssets || 0} holdings` },
-              ].map((card, i) => (
-                <div key={i} className="flex flex-col gap-1 rounded-none border-2 border-border-subtle bg-bg-card p-4.5 shadow-subtle">
-                  <span className="font-mono text-[9px] font-bold tracking-[0.8px] text-text-muted uppercase">{card.label}</span>
-                  <span className="text-[22px] font-bold tracking-tight text-text-primary mt-0.5">{card.val}</span>
-                  <span className="text-[10px] text-text-secondary font-mono mt-1">{card.sub}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+          
 
           <div className={CARD}>
             <div className="flex items-center justify-between border-b-2 border-border-subtle pb-3 mb-4">
@@ -849,7 +817,7 @@ Thank you for being part of our journey!`);
                   <button
                     disabled={annSending !== null || !annSubject.trim() || !annTitle.trim() || !annContent.trim()}
                     onClick={() => setAnnConfirmModal(true)}
-                    className="rounded-none border-2 border-text-primary bg-text-primary px-4 py-2 text-xs font-bold uppercase tracking-wide text-bg-card transition-all hover:bg-[#2e2d27] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="rounded-none border-2 border-text-primary bg-text-primary px-4 py-2 text-xs font-bold uppercase tracking-wide text-bg-card transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {annSending === "send" ? "Broadcasting..." : "Broadcast to All Users"}
                   </button>
@@ -901,7 +869,7 @@ Thank you for being part of our journey!`);
                 <button
                   disabled={flushLoading}
                   onClick={flushCache}
-                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-none border-2 border-text-primary bg-text-primary text-xs font-semibold text-bg-card py-2.5 transition-all hover:bg-[#2e2d27] disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-none border-2 border-border-subtle bg-bg-primary/40 hover:bg-bg-primary hover:border-text-primary text-xs font-semibold text-text-primary py-2.5 transition-all disabled:opacity-50"
                 >
                   <Trash2 className="h-3.5 w-3.5" /> {flushLoading ? "Flushing Cache..." : "Flush Redis Cache"}
                 </button>
@@ -909,7 +877,7 @@ Thank you for being part of our journey!`);
                 <button
                   disabled={migrationLoading}
                   onClick={runEncryptionMigration}
-                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-none border-2 border-border-subtle bg-transparent text-xs font-semibold text-text-primary py-2.5 transition-all hover:bg-bg-primary disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-none border-2 border-border-subtle bg-transparent text-xs font-semibold text-text-primary py-2.5 transition-all hover:bg-bg-primary hover:border-text-primary disabled:opacity-50"
                 >
                   <Shield className="h-3.5 w-3.5" /> {migrationLoading ? "Encrypting Records..." : "Encrypt All Users' Data"}
                 </button>
@@ -963,31 +931,31 @@ Thank you for being part of our journey!`);
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-4">
-              <div className="shrink-0 rounded-none bg-[#fef2f2] border-2 border-[#fecaca] p-2.5">
-                <AlertTriangle className="h-5 w-5 text-[#dc2626]" />
+              <div className="shrink-0 rounded-none bg-rose-500/10 border-2 border-rose-500/30 p-2.5">
+                <AlertTriangle className="h-5 w-5 text-rose-500 dark:text-rose-400" />
               </div>
               <div>
                 <h2 className="font-serif text-xl font-medium italic text-text-primary">Production Trigger</h2>
                 <p className="text-xs text-text-secondary mt-1 leading-relaxed">
-                  This will fire <strong className="text-text-primary">{confirmModal.title}</strong> for <strong className="text-[#dc2626]">every registered user</strong> on the platform. Real emails will be sent.
+                  This will fire <strong className="text-text-primary">{confirmModal.title}</strong> for <strong className="text-rose-500 dark:text-rose-400">every registered user</strong> on the platform. Real emails will be sent.
                 </p>
               </div>
             </div>
 
-            <div className="rounded-none bg-[#fef2f2] border-2 border-[#fecaca] px-4 py-3 text-xs text-[#991b1b] font-semibold">
+            <div className="rounded-none bg-rose-500/10 border-2 border-rose-500/30 px-4 py-3 text-xs text-rose-600 dark:text-rose-400 font-semibold">
               ⚠️ Are you sure you want to proceed? This cannot be undone.
             </div>
 
             <div className="flex gap-3 mt-1">
               <button
                 onClick={() => setConfirmModal(null)}
-                className="flex-1 rounded-none border-2 border-border-subtle bg-transparent py-2 text-xs font-semibold text-text-primary transition-all hover:bg-bg-primary"
+                className="flex-1 rounded-none border-2 border-border-subtle bg-transparent py-2 text-xs font-semibold text-text-primary transition-all hover:bg-bg-primary hover:border-text-primary"
               >
                 Cancel
               </button>
               <button
                 onClick={confirmAndRun}
-                className="flex-1 rounded-none border-2 border-[#dc2626] bg-[#dc2626] py-2 text-xs font-bold uppercase tracking-wide text-white transition-all hover:bg-[#b91c1c]"
+                className="flex-1 rounded-none border-2 border-rose-600 bg-rose-600 py-2 text-xs font-bold uppercase tracking-wide text-white transition-all hover:bg-rose-700"
               >
                 Yes, Run Cron
               </button>
@@ -1007,31 +975,31 @@ Thank you for being part of our journey!`);
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-4">
-              <div className="shrink-0 rounded-none bg-[#fef2f2] border-2 border-[#fecaca] p-2.5">
-                <AlertTriangle className="h-5 w-5 text-[#dc2626]" />
+              <div className="shrink-0 rounded-none bg-rose-500/10 border-2 border-rose-500/30 p-2.5">
+                <AlertTriangle className="h-5 w-5 text-rose-500 dark:text-rose-400" />
               </div>
               <div>
                 <h2 className="font-serif text-xl font-medium italic text-text-primary">Broadcast Announcement</h2>
                 <p className="text-xs text-text-secondary mt-1 leading-relaxed">
-                  This will dispatch emails to <strong className="text-[#dc2626]">every registered user</strong> on the platform.
+                  This will dispatch emails to <strong className="text-rose-500 dark:text-rose-400">every registered user</strong> on the platform.
                 </p>
               </div>
             </div>
 
-            <div className="rounded-none bg-[#fef2f2] border-2 border-[#fecaca] px-4 py-3 text-xs text-[#991b1b] font-semibold">
+            <div className="rounded-none bg-rose-500/10 border-2 border-rose-500/30 px-4 py-3 text-xs text-rose-600 dark:text-rose-400 font-semibold">
               ⚠️ Are you sure you want to broadcast? This will email all active users.
             </div>
 
             <div className="flex gap-3 mt-1">
               <button
                 onClick={() => setAnnConfirmModal(false)}
-                className="flex-1 rounded-none border-2 border-border-subtle bg-transparent py-2 text-xs font-semibold text-text-primary transition-all hover:bg-bg-primary"
+                className="flex-1 rounded-none border-2 border-border-subtle bg-transparent py-2 text-xs font-semibold text-text-primary transition-all hover:bg-bg-primary hover:border-text-primary"
               >
                 Cancel
               </button>
               <button
                 onClick={() => handleAnnouncement("send")}
-                className="flex-1 rounded-none border-2 border-[#dc2626] bg-[#dc2626] py-2 text-xs font-bold uppercase tracking-wide text-white transition-all hover:bg-[#b91c1c]"
+                className="flex-1 rounded-none border-2 border-rose-600 bg-rose-600 py-2 text-xs font-bold uppercase tracking-wide text-white transition-all hover:bg-rose-700"
               >
                 Yes, Send Broadcast
               </button>

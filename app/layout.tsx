@@ -112,6 +112,11 @@ export default function RootLayout({
       <head>
         <link rel="author" href="/humans.txt" />
         <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem("continuum_theme")||"continuum";if(t==="monolith-dark"||t==="obsidian")t="obsidian-noir";var valid=["continuum","continuum-dark","obsidian-noir","amoled-pure","github-dark","dracula","botanical-matcha","espresso-crema","nordic-linen","tuscan-terracotta"];if(valid.indexOf(t)===-1){t="continuum";}document.documentElement.setAttribute("data-theme",t);var darkThemes=["continuum-dark","obsidian-noir","amoled-pure","github-dark","dracula"];if(darkThemes.indexOf(t)!==-1){document.documentElement.classList.add("dark");}else{document.documentElement.classList.remove("dark");}}catch(e){}})();`,
+          }}
+        />
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />

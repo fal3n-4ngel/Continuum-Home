@@ -3,6 +3,8 @@ import { FirebaseUser, AniListUser, TraktUser } from "@/types";
 import { isSafeImageUrl } from "@/lib/utils";
 import { AUTHOR, SITE_NAME } from "@/lib/utils";
 import { LogoMark } from "@/components/Logo";
+import { Sun, Moon } from "lucide-react";
+import { useTheme } from "@/lib/theme/use-theme";
 
 interface SidebarProps {
   activeTab: string;
@@ -79,6 +81,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setWatchlist,
   setExpensesLoaded,
 }) => {
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <aside className="fixed top-0 bottom-0 left-0 z-[100] flex w-[250px] flex-col justify-between border-r border-border-subtle bg-bg-sidebar px-4 py-6 max-md:hidden min-[769px]:max-[1100px]:w-[210px]">
       <div className="mb-6 flex items-center gap-2.5 px-2">
@@ -318,6 +322,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <p className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-semibold text-text-primary">{user.displayName || "User"}</p>
               <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] text-text-muted">{user.email}</p>
             </div>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              title={theme.type === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={theme.type === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className={`${sidebarActionBtnClass} p-1.5`}
+            >
+              {theme.type === "dark" ? (
+                <Sun size={14} className="text-amber-400 dark:text-amber-300 stroke-[2.2]" />
+              ) : (
+                <Moon size={14} className="text-text-secondary stroke-[2.2]" />
+              )}
+            </button>
             <button
               onClick={() => {
                 triggerConfirm("Sign Out", "Are you sure you want to sign out?", async () => {

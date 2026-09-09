@@ -27,7 +27,7 @@ const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle 
 const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
 const STAT_VALUE = "text-[28px] font-bold tracking-[-0.5px] text-text-primary";
 const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
-const BTN_PRIMARY = "rounded-full border border-text-primary bg-text-primary text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27] active:scale-[0.98]";
+const BTN_PRIMARY = "rounded-full border border-text-primary bg-text-primary text-[13px] font-semibold text-bg-primary transition-all duration-200 hover:opacity-90 active:scale-[0.98]";
 const INPUT_CLASS = "rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
 
 const pillClass = (id: string, active: boolean) => {
@@ -43,7 +43,7 @@ const pillClass = (id: string, active: boolean) => {
   if (id === "completed") {
     return `${base} bg-[#dcfce7] text-[#15803d] shadow-[0_1px_2px_rgba(21,128,61,0.05)]`;
   }
-  return `${base} bg-white text-text-primary shadow-sm`;
+  return `${base} bg-bg-card text-text-primary border border-border-subtle shadow-xs`;
 };
 
 export const BooksTab: React.FC<BooksTabProps> = ({
@@ -385,7 +385,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                           type="button"
                           onClick={() => handleAddBookClick(res)}
                           disabled={isAdding}
-                          className="shrink-0 cursor-pointer rounded-md border-none bg-text-primary px-2.5 py-1 text-[9.5px] font-bold text-white hover:bg-[#2e2d27] active:scale-95 disabled:opacity-60 flex items-center gap-1"
+                          className="shrink-0 cursor-pointer rounded-md border-none bg-text-primary px-2.5 py-1 text-[9.5px] font-bold text-bg-primary hover:opacity-90 active:scale-95 disabled:opacity-60 flex items-center gap-1"
                         >
                           {isAdding ? (
                             <>
@@ -423,7 +423,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
               </div>
             ) : rec ? (
               <div className="flex flex-col gap-3">
-                <div className="rounded-lg border border-border-subtle bg-[#fcfbfa] p-3.5 flex flex-col gap-3">
+                <div className="rounded-lg border border-border-subtle bg-bg-secondary/40 p-3.5 flex flex-col gap-3">
                   <div className="flex gap-3">
                     {rec.coverImage ? (
                       <img src={rec.coverImage} alt={rec.title} className="h-[76px] w-[52px] shrink-0 rounded object-cover shadow-sm border border-border-subtle" />
@@ -459,7 +459,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                 </div>
 
                 {isLogged ? (
-                  <div className="flex items-center justify-center gap-1.5 rounded-md bg-emerald-50 border border-emerald-200 text-emerald-800 text-[11px] font-semibold py-2">
+                  <div className="flex items-center justify-center gap-1.5 rounded-md bg-emerald-500/15 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold py-2">
                     <span>✓</span> Added to your library
                   </div>
                 ) : (
@@ -483,7 +483,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                             type="button"
                             onClick={() => logRecommendation("completed")}
                             disabled={logActionLoading}
-                            className="rounded bg-text-primary text-[10px] font-bold text-white py-1.5 hover:bg-[#2e2d27] disabled:opacity-50 text-center"
+                            className="rounded bg-text-primary text-[10px] font-bold text-bg-primary py-1.5 hover:opacity-90 disabled:opacity-50 text-center"
                           >
                             {logActionLoading ? "Saving..." : "Log"}
                           </button>
@@ -502,7 +502,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                           type="button"
                           onClick={() => setShowRatingSelector(true)}
                           disabled={logActionLoading}
-                          className="rounded-md border border-text-primary bg-text-primary text-[11px] font-semibold text-white py-2 hover:bg-[#2e2d27] cursor-pointer disabled:opacity-50 animate-[fadeIn_0.2s_ease]"
+                          className="rounded-md border border-text-primary bg-text-primary text-[11px] font-semibold text-bg-primary py-2 hover:opacity-90 cursor-pointer disabled:opacity-50 animate-[fadeIn_0.2s_ease]"
                         >
                           Completed
                         </button>
@@ -591,7 +591,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as any)}
-            className="cursor-pointer rounded-md border border-border-subtle bg-white px-3 py-1.5 text-[11px] max-md:flex-1"
+            className="cursor-pointer rounded-md border border-border-subtle bg-bg-card text-text-primary px-3 py-1.5 text-[11px] max-md:flex-1"
           >
             <option value="title">Sort: Title A–Z</option>
             <option value="year_new">Sort: Newest Year</option>
@@ -626,7 +626,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                     e.stopPropagation();
                     deleteWatchItem(item.id);
                   }}
-                  className="absolute top-2 right-2 z-10 flex cursor-pointer items-center justify-center rounded-md border border-border-subtle bg-white/95 p-1.5 text-text-muted shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#fdf2f2] hover:text-[#b3666b] hover:border-[#fde2e2] active:scale-95"
+                  className="absolute top-2 right-2 z-10 flex cursor-pointer items-center justify-center rounded-md border border-border-subtle bg-bg-card/95 p-1.5 text-text-muted shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#fdf2f2] hover:text-[#b3666b] hover:border-[#fde2e2] active:scale-95"
                   title="Remove book"
                 >
                   <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />

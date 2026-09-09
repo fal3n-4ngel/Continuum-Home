@@ -63,9 +63,9 @@ const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-te
 const STAT_VALUE = "text-[28px] font-bold tracking-[-0.5px] text-text-primary";
 const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
 const BENTO_CARD = "rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-subtle";
-const BTN_PRIMARY = "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all duration-200 hover:bg-[#2e2d27] disabled:opacity-60";
-const BTN_SECONDARY = "cursor-pointer rounded-full border border-border-subtle bg-white px-4 py-2 text-xs font-semibold text-text-primary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:border-border-hover disabled:opacity-50";
-const INPUT_CLASS = "w-full rounded-full border border-border-subtle bg-white px-3.5 py-2 text-xs font-medium text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus shadow-2xs";
+const BTN_PRIMARY = "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-xs font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 disabled:opacity-60";
+const BTN_SECONDARY = "cursor-pointer rounded-full border border-border-subtle bg-bg-card px-4 py-2 text-xs font-semibold text-text-primary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:border-border-hover disabled:opacity-50";
+const INPUT_CLASS = "w-full rounded-full border border-border-subtle bg-bg-card px-3.5 py-2 text-xs font-medium text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus shadow-2xs";
 const LEDGER_TH = "border-b border-border-subtle bg-bg-card px-3.5 py-3.5 font-mono text-[10px] font-bold tracking-[0.8px] text-text-secondary uppercase";
 const LEDGER_TD = "border-b border-border-subtle px-3.5 py-4 align-middle text-[13px] text-text-primary";
 
@@ -578,11 +578,11 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
 
         <div className={`${BENTO_CARD} border-t-2 border-t-[#2e7d32]/70`}>
           <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-4">
-            <div className="flex items-center gap-1 rounded-full bg-[#EAE5DC]/60 p-1 border border-border-subtle/40 shadow-2xs">
+            <div className="flex items-center gap-1 rounded-full bg-bg-secondary p-1 border border-border-subtle/40 shadow-2xs">
               <button
                 onClick={() => setActiveGuideTab("allocations")}
                 className={`px-3.5 py-1 text-xs font-semibold rounded-full border-none cursor-pointer transition-all duration-200 ${
-                  activeGuideTab === "allocations" ? "bg-white text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold" : "bg-transparent text-text-secondary hover:text-text-primary"
+                  activeGuideTab === "allocations" ? "bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold" : "bg-transparent text-text-secondary hover:text-text-primary"
                 }`}
               >
                 Target Allocation
@@ -590,7 +590,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
               <button
                 onClick={() => setActiveGuideTab("classes")}
                 className={`px-3.5 py-1 text-xs font-semibold rounded-full border-none cursor-pointer transition-all duration-200 ${
-                  activeGuideTab === "classes" ? "bg-white text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold" : "bg-transparent text-text-secondary hover:text-text-primary"
+                  activeGuideTab === "classes" ? "bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold" : "bg-transparent text-text-secondary hover:text-text-primary"
                 }`}
               >
                 Asset Classes
@@ -598,7 +598,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
               <button
                 onClick={() => setActiveGuideTab("advice")}
                 className={`px-3.5 py-1 text-xs font-semibold rounded-full border-none cursor-pointer transition-all duration-200 ${
-                  activeGuideTab === "advice" ? "bg-white text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold" : "bg-transparent text-text-secondary hover:text-text-primary"
+                  activeGuideTab === "advice" ? "bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold" : "bg-transparent text-text-secondary hover:text-text-primary"
                 }`}
               >
                 Advisor Coach
@@ -610,13 +610,13 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
             <div className="flex flex-col gap-3">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-bold text-text-primary">Compare Risk Profile:</span>
-                <div className="flex items-center gap-1 rounded-full bg-[#EAE5DC]/60 p-0.5 border border-border-subtle/40 shadow-2xs">
+                <div className="flex items-center gap-1 rounded-full bg-bg-secondary p-0.5 border border-border-subtle/40 shadow-2xs">
                   {(["conservative", "balanced", "aggressive"] as const).map((profile) => (
                     <button
                       key={profile}
                       onClick={() => setSelectedRiskProfile(profile)}
                       className={`cursor-pointer rounded-full px-2.5 py-0.5 text-[9.5px] font-bold border-none capitalize transition-all ${
-                        selectedRiskProfile === profile ? "bg-white text-text-primary shadow-2xs" : "bg-transparent text-text-muted hover:text-text-primary"
+                        selectedRiskProfile === profile ? "bg-bg-card text-text-primary shadow-2xs" : "bg-transparent text-text-muted hover:text-text-primary"
                       }`}
                     >
                       {profile}

@@ -97,9 +97,9 @@ const STAT_VALUE = "text-[24px] font-bold tracking-[-0.5px] text-text-primary";
 const STAT_SUBTEXT = "text-[11px] text-text-muted";
 const BENTO_CARD = "rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col justify-between";
 const BTN_PRIMARY =
-  "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all duration-200 hover:bg-[#2e2d27] disabled:opacity-60";
+  "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-xs font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 disabled:opacity-60";
 const BTN_SECONDARY =
-  "cursor-pointer rounded-full border border-border-subtle bg-white px-4 py-2 text-xs font-semibold text-text-primary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:border-border-hover";
+  "cursor-pointer rounded-full border border-border-subtle bg-bg-card px-4 py-2 text-xs font-semibold text-text-primary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:border-border-hover";
 
 const fmtDate = (s: string) => {
   const d = new Date(`${s}T00:00:00`);
@@ -281,7 +281,7 @@ const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
             type="button"
             onClick={() => fetchAnalytics(true)}
             disabled={loading || refreshing}
-            className="cursor-pointer rounded-md border border-border-subtle bg-white px-3 py-1.5 text-[11.5px] font-semibold text-text-primary shadow-2xs transition-all hover:bg-bg-primary hover:border-border-hover disabled:opacity-50 flex items-center gap-1.5"
+            className="cursor-pointer rounded-md border border-border-subtle bg-bg-card px-3 py-1.5 text-[11.5px] font-semibold text-text-primary shadow-2xs transition-all hover:bg-bg-primary hover:border-border-hover disabled:opacity-50 flex items-center gap-1.5"
           >
             <RotateCw size={12} className={refreshing ? "animate-spin" : ""} />
             <span>{refreshing ? "Updating..." : "Refresh Analytics"}</span>
@@ -620,7 +620,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                   onClick={() => handleTargetSavingsChange(amount)}
                   className={`cursor-pointer rounded-full border-none px-3.5 py-1 text-xs font-semibold transition-all duration-200 ${
                     isActive
-                      ? "bg-white text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
+                      ? "bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
                       : "bg-transparent text-text-secondary hover:text-text-primary"
                   }`}
                 >
@@ -638,7 +638,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
               value={targetSavingsGoal || ""}
               onChange={(e) => handleTargetSavingsChange(parseFloat(e.target.value) || 0)}
               placeholder="Target Goal"
-              className="w-full rounded-full border border-border-subtle bg-white py-1 pr-3 pl-7 text-xs font-bold text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus shadow-2xs"
+              className="w-full rounded-full border border-border-subtle bg-bg-card py-1 pr-3 pl-7 text-xs font-bold text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus shadow-2xs"
             />
           </div>
         </div>
@@ -883,13 +883,13 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         <div className={`${BENTO_CARD} border-t-2 border-t-[#e39282]/80`}>
           <div>
             <div className="flex items-center justify-between border-b border-border-subtle pb-3">
-              <div className="flex items-center gap-1 rounded-full bg-[#EAE5DC]/60 p-1 border border-border-subtle/40 shadow-2xs">
+              <div className="flex items-center gap-1 rounded-full bg-bg-secondary p-1 border border-border-subtle/40 shadow-2xs">
                 <button
                   type="button"
                   onClick={() => setRightTab("reconcile")}
                   className={`flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer ${
                     rightTab === "reconcile"
-                      ? "bg-white text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
+                      ? "bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
                       : "bg-transparent text-text-secondary hover:text-text-primary"
                   }`}
                 >
@@ -900,7 +900,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                   onClick={() => setRightTab("income")}
                   className={`flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer ${
                     rightTab === "income"
-                      ? "bg-white text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
+                      ? "bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
                       : "bg-transparent text-text-secondary hover:text-text-primary"
                   }`}
                 >
@@ -933,7 +933,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                         ) : (
                           <button
                             onClick={() => handleLogGap(discrepancy)}
-                            className="cursor-pointer self-start rounded-md border border-rose-300/60 bg-white/60 px-2 py-1 text-[10px] font-semibold text-rose-800 transition-colors hover:bg-white"
+                            className="cursor-pointer self-start rounded-md border border-rose-300/60 bg-bg-card/60 px-2 py-1 text-[10px] font-semibold text-rose-800 transition-colors hover:bg-bg-card"
                           >
                             Log {currency}{discrepancy.toLocaleString("en-IN", { maximumFractionDigits: 0 })} as unaccounted expense
                           </button>
@@ -950,7 +950,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                         ) : (
                           <button
                             onClick={() => handleLogGap(discrepancy)}
-                            className="cursor-pointer self-start rounded-md border border-blue-300/60 bg-white/60 px-2 py-1 text-[10px] font-semibold text-blue-800 transition-colors hover:bg-white"
+                            className="cursor-pointer self-start rounded-md border border-blue-300/60 bg-bg-card/60 px-2 py-1 text-[10px] font-semibold text-blue-800 transition-colors hover:bg-bg-card"
                           >
                             Log {currency}{Math.abs(discrepancy).toLocaleString("en-IN", { maximumFractionDigits: 0 })} as unaccounted income
                           </button>

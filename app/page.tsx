@@ -25,6 +25,7 @@ import type { SyncEntry } from "@/lib/firebase";
 import { useExpensesStore } from "@/lib/stores/expenses-store";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { motion, AnimatePresence } from "framer-motion";
 
 import LandingPage from "@/components/landing/LandingPage";
 import dynamic from "next/dynamic";
@@ -1949,269 +1950,282 @@ export default function Dashboard() {
         setExpensesLoaded={setExpensesLoaded}
       />
 
-      <main className="ml-[250px] flex w-full max-w-[1680px] flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(102px+env(safe-area-inset-bottom))]">
+      <main className="ml-[250px] flex w-full max-w-[1680px] min-w-0 flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:overflow-x-hidden max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(102px+env(safe-area-inset-bottom))]">
 
-        {activeTab === "expenses" && (
-          <>
-            <ExpensesTab />
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeTab}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.16, ease: "easeOut" }}
+            className="flex w-full flex-col gap-7 min-w-0"
+          >
+            {activeTab === "expenses" && (
+              <>
+                <ExpensesTab />
 
-            {expenseTab === "subscriptions" && (
-              <SubscriptionsTab
-                subscriptions={subscriptions}
-                currency={currency}
-                subName={subName}
-                setSubName={setSubName}
-                subIcon={subIcon}
-                setSubIcon={setSubIcon}
-                subCost={subCost}
-                setSubCost={setSubCost}
-                subCycle={subCycle}
-                setSubCycle={setSubCycle}
-                subNextDate={subNextDate}
-                setSubNextDate={setSubNextDate}
-                isAddingSub={isAddingSub}
-                addSubscription={addSubscription}
-                deleteSubscription={deleteSubscription}
-                updateSubscriptionIcon={updateSubscriptionIcon}
-                isFetchingSubscriptions={isFetchingSubscriptions}
-              />
+                {expenseTab === "subscriptions" && (
+                  <SubscriptionsTab
+                    subscriptions={subscriptions}
+                    currency={currency}
+                    subName={subName}
+                    setSubName={setSubName}
+                    subIcon={subIcon}
+                    setSubIcon={setSubIcon}
+                    subCost={subCost}
+                    setSubCost={setSubCost}
+                    subCycle={subCycle}
+                    setSubCycle={setSubCycle}
+                    subNextDate={subNextDate}
+                    setSubNextDate={setSubNextDate}
+                    isAddingSub={isAddingSub}
+                    addSubscription={addSubscription}
+                    deleteSubscription={deleteSubscription}
+                    updateSubscriptionIcon={updateSubscriptionIcon}
+                    isFetchingSubscriptions={isFetchingSubscriptions}
+                  />
+                )}
+              </>
             )}
-          </>
-        )}
 
-        {activeTab === "media" && (
-          <>
-          <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">My Library</h1>
-            <div className="mb-8 flex gap-6 border-b border-border-subtle max-sm:gap-4 max-sm:overflow-x-auto max-sm:scrollbar-none">
+            {activeTab === "media" && (
+              <>
+                <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">My Library</h1>
+                <div className="mb-8 flex gap-6 border-b border-border-subtle max-sm:gap-4 max-sm:overflow-x-auto max-sm:scrollbar-none">
+                  <button
+                    onClick={() => setMediaSubTab("watchlist")}
+                    className={`relative pb-3 text-[13px] font-medium transition-all ${
+                      mediaSubTab === "watchlist"
+                        ? "text-text-primary"
+                        : "text-text-muted hover:text-text-primary"
+                    }`}
+                  >
+                    Cine
+                    {mediaSubTab === "watchlist" && (
+                      <span className="absolute bottom-0 left-0 right-0 h-px bg-text-primary" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setMediaSubTab("books")}
+                    className={`relative pb-3 text-[13px] font-medium transition-all ${
+                      mediaSubTab === "books"
+                        ? "text-text-primary"
+                        : "text-text-muted hover:text-text-primary"
+                    }`}
+                  >
+                    Books
+                    {mediaSubTab === "books" && (
+                      <span className="absolute bottom-0 left-0 right-0 h-px bg-text-primary" />
+                    )}
+                  </button>
+                  <button
+                    onClick={() => setMediaSubTab("integrations")}
+                    className={`relative pb-3 text-[13px] font-medium transition-all ${
+                      mediaSubTab === "integrations"
+                        ? "text-text-primary"
+                        : "text-text-muted hover:text-text-primary"
+                    }`}
+                  >
+                    Integrations
+                    {mediaSubTab === "integrations" && (
+                      <span className="absolute bottom-0 left-0 right-0 h-px bg-text-primary" />
+                    )}
+                  </button>
+                </div>
 
-              <button
-                onClick={() => setMediaSubTab("watchlist")}
-                className={`relative pb-3 text-[13px] font-medium transition-all ${
-                  mediaSubTab === "watchlist"
-                    ? "text-text-primary"
-                    : "text-text-muted hover:text-text-primary"
-                }`}
-              >
-                Cine
                 {mediaSubTab === "watchlist" && (
-                  <span className="absolute bottom-0 left-0 right-0 h-px bg-text-primary" />
+                  <WatchlistTab
+                    watchlist={watchlist}
+                    watchlistFilter={watchlistFilter}
+                    setWatchlistFilter={setWatchlistFilter}
+                    mediaQuery={mediaQuery}
+                    setMediaQuery={setMediaQuery}
+                    mediaType={mediaType}
+                    setMediaType={setMediaType}
+                    searchMedia={searchMedia}
+                    isSearchingMedia={isSearchingMedia}
+                    searchResults={searchResults}
+                    addToWatchlist={addToWatchlist}
+                    updateWatchItem={updateWatchItem}
+                    deleteWatchItem={deleteWatchItem}
+                    isFetchingWatchlist={isFetchingWatchlist}
+                    showLetterboxdModal={showLetterboxdModal}
+                    setShowLetterboxdModal={setShowLetterboxdModal}
+                    letterboxdUsername={letterboxdUsername}
+                    setLetterboxdUsername={setLetterboxdUsername}
+                    handleLetterboxdImport={handleLetterboxdImport}
+                    isImportingLetterboxd={isImportingLetterboxd}
+                    disconnectLetterboxd={disconnectLetterboxd}
+                    anilistUser={anilistUser}
+                    connectAnilist={connectAnilist}
+                    disconnectAnilist={disconnectAnilist}
+                    syncAnilist={syncAnilist}
+                    isSyncingAnilist={isSyncingAnilist}
+                    traktUser={traktUser}
+                    connectTrakt={connectTrakt}
+                    disconnectTrakt={disconnectTrakt}
+                    syncTrakt={syncTrakt}
+                    isSyncingTrakt={isSyncingTrakt}
+                    enrichMissingPosters={enrichMissingPosters}
+                    isEnrichingPosters={isEnrichingPosters}
+                    onItemClick={(item) => setSelectedMediaItem(item)}
+                    idToken={user?.idToken}
+                    openDataCorrection={() => setIsDataCorrectionOpen(true)}
+                  />
                 )}
-              </button>
-              <button
-                onClick={() => setMediaSubTab("books")}
-                className={`relative pb-3 text-[13px] font-medium transition-all ${
-                  mediaSubTab === "books"
-                    ? "text-text-primary"
-                    : "text-text-muted hover:text-text-primary"
-                }`}
-              >
-                Books
+
                 {mediaSubTab === "books" && (
-                  <span className="absolute bottom-0 left-0 right-0 h-px bg-text-primary" />
+                  <BooksTab
+                    watchlist={watchlist}
+                    bookQuery={bookQuery}
+                    setBookQuery={setBookQuery}
+                    searchBooks={searchBooks}
+                    isSearchingBooks={isSearchingBooks}
+                    bookResults={bookResults}
+                    addBook={addBook}
+                    bookFilter={bookFilter}
+                    setBookFilter={setBookFilter}
+                    updateWatchItem={updateWatchItem}
+                    deleteWatchItem={deleteWatchItem}
+                    isFetchingWatchlist={isFetchingWatchlist}
+                    enrichMissingBookCovers={enrichMissingBookCovers}
+                    isEnrichingBookCovers={isEnrichingBookCovers}
+                    onItemClick={setSelectedMediaItem}
+                    idToken={user?.idToken}
+                  />
                 )}
-              </button>
-              <button
-                onClick={() => setMediaSubTab("integrations")}
-                className={`relative pb-3 text-[13px] font-medium transition-all ${
-                  mediaSubTab === "integrations"
-                    ? "text-text-primary"
-                    : "text-text-muted hover:text-text-primary"
-                }`}
-              >
-                Integrations
+
                 {mediaSubTab === "integrations" && (
-                  <span className="absolute bottom-0 left-0 right-0 h-px bg-text-primary" />
+                  <IntegrationsTab
+                    watchlist={watchlist}
+                    showLetterboxdModal={showLetterboxdModal}
+                    setShowLetterboxdModal={setShowLetterboxdModal}
+                    letterboxdUsername={letterboxdUsername}
+                    setLetterboxdUsername={setLetterboxdUsername}
+                    handleLetterboxdImport={handleLetterboxdImport}
+                    isImportingLetterboxd={isImportingLetterboxd}
+                    disconnectLetterboxd={disconnectLetterboxd}
+                    anilistUser={anilistUser}
+                    connectAnilist={connectAnilist}
+                    disconnectAnilist={disconnectAnilist}
+                    syncAnilist={syncAnilist}
+                    isSyncingAnilist={isSyncingAnilist}
+                    traktUser={traktUser}
+                    connectTrakt={connectTrakt}
+                    disconnectTrakt={disconnectTrakt}
+                    syncTrakt={syncTrakt}
+                    isSyncingTrakt={isSyncingTrakt}
+                  />
                 )}
-              </button>
-            </div>
+              </>
+            )}
 
-            {mediaSubTab === "watchlist" && (
-              <WatchlistTab
+            {activeTab === "investments" && (
+              <InvestmentsTab
+                investments={investments}
+                currency={currency}
+                invName={invName}
+                setInvName={handleInvNameChange}
+                invCategory={invCategory}
+                setInvCategory={setInvCategory}
+                invQuantity={invQuantity}
+                setInvQuantity={setInvQuantity}
+                invBuyPrice={invBuyPrice}
+                setInvBuyPrice={setInvBuyPrice}
+                invAmount={invAmount}
+                setInvAmount={setInvAmount}
+                invNotes={invNotes}
+                setInvNotes={setInvNotes}
+                invInterestRate={invInterestRate}
+                setInvInterestRate={setInvInterestRate}
+                invStartDate={invStartDate}
+                setInvStartDate={setInvStartDate}
+                invMaturityDate={invMaturityDate}
+                setInvMaturityDate={setInvMaturityDate}
+                invCompounding={invCompounding}
+                setInvCompounding={setInvCompounding}
+                invSipDay={invSipDay}
+                setInvSipDay={setInvSipDay}
+                isAddingAsset={isAddingAsset}
+                addInvestment={addInvestment}
+                deleteInvestment={deleteInvestment}
+                sellInvestment={sellInvestment}
+                isUpdatingPrices={isUpdatingPrices}
+                updateMarketPrices={updateMarketPrices}
+                isFetchingInvestments={isFetchingInvestments}
+                invSuggestions={invSuggestions}
+                setInvSuggestions={setInvSuggestions}
+                selectSuggestion={selectSuggestion}
+              />
+            )}
+
+            {activeTab === "financial" && isProUser && (
+              <FinancialHealthTab
+                currency={currency}
+                expenses={expenses}
+                investments={investments}
+                showInvestmentsTab={showInvestmentsTab}
+                salaryDay={salaryDay}
+                monthlySalary={monthlySalary}
+                setMonthlySalary={setMonthlySalary}
+                additionalIncome={additionalIncome}
+                setAdditionalIncome={setAdditionalIncome}
+                payCycle={payCycle}
+                savedReconciliation={reconciliations[payCycle.startStr]}
+                setReconciliation={setReconciliation}
+                salaryLog={salaryLog}
+                setSalaryLogEntry={setSalaryLogEntry}
+                cycleHistory={cycleHistory}
+                cycleAverages={cycleAverages}
+                reconciliations={reconciliations}
+                logUnaccountedGap={logUnaccountedGap}
+                getHeaders={getHeaders}
+              />
+            )}
+
+            {activeTab === "reports" && (
+              <ReportsTab
+                expenses={expenses}
                 watchlist={watchlist}
-                watchlistFilter={watchlistFilter}
-                setWatchlistFilter={setWatchlistFilter}
-                mediaQuery={mediaQuery}
-                setMediaQuery={setMediaQuery}
-                mediaType={mediaType}
-                setMediaType={setMediaType}
-                searchMedia={searchMedia}
-                isSearchingMedia={isSearchingMedia}
-                searchResults={searchResults}
-                addToWatchlist={addToWatchlist}
-                updateWatchItem={updateWatchItem}
-                deleteWatchItem={deleteWatchItem}
-                isFetchingWatchlist={isFetchingWatchlist}
-                showLetterboxdModal={showLetterboxdModal}
-                setShowLetterboxdModal={setShowLetterboxdModal}
-                letterboxdUsername={letterboxdUsername}
-                setLetterboxdUsername={setLetterboxdUsername}
-                handleLetterboxdImport={handleLetterboxdImport}
-                isImportingLetterboxd={isImportingLetterboxd}
-                disconnectLetterboxd={disconnectLetterboxd}
-                anilistUser={anilistUser}
-                connectAnilist={connectAnilist}
-                disconnectAnilist={disconnectAnilist}
-                syncAnilist={syncAnilist}
-                isSyncingAnilist={isSyncingAnilist}
-                traktUser={traktUser}
-                connectTrakt={connectTrakt}
-                disconnectTrakt={disconnectTrakt}
-                syncTrakt={syncTrakt}
-                isSyncingTrakt={isSyncingTrakt}
-                enrichMissingPosters={enrichMissingPosters}
-                isEnrichingPosters={isEnrichingPosters}
-                onItemClick={(item) => setSelectedMediaItem(item)}
+                investments={investments}
+                currency={currency}
+                salaryDay={salaryDay}
+                salaryLog={salaryLog}
+                isProUser={isProUser}
+                cycleHistory={cycleHistory}
+                reconciliations={reconciliations}
+              />
+            )}
+
+            {activeTab === "agent" && (
+              <KirokuTab
                 idToken={user?.idToken}
-                openDataCorrection={() => setIsDataCorrectionOpen(true)}
+                onOpenUpgrade={() => setShowClaimPro(true)}
               />
             )}
 
-            {mediaSubTab === "books" && (
-              <BooksTab
-                watchlist={watchlist}
-                bookQuery={bookQuery}
-                setBookQuery={setBookQuery}
-                searchBooks={searchBooks}
-                isSearchingBooks={isSearchingBooks}
-                bookResults={bookResults}
-                addBook={addBook}
-                bookFilter={bookFilter}
-                setBookFilter={setBookFilter}
-                updateWatchItem={updateWatchItem}
-                deleteWatchItem={deleteWatchItem}
-                isFetchingWatchlist={isFetchingWatchlist}
-                enrichMissingBookCovers={enrichMissingBookCovers}
-                isEnrichingBookCovers={isEnrichingBookCovers}
-                onItemClick={setSelectedMediaItem}
-                idToken={user?.idToken}
+            {activeTab === "settings" && (
+              <SettingsTab
+                emailSubscriptions={emailSubscriptions}
+                setEmailSubscriptions={setEmailSubscriptions}
+                currency={currency}
+                setCurrency={setCurrency}
+                salaryDay={salaryDay}
+                setSalaryDay={setSalaryDay}
+                monthlySalary={monthlySalary}
+                setMonthlySalary={setMonthlySalary}
+                additionalIncome={additionalIncome}
+                setAdditionalIncome={setAdditionalIncome}
+                onDeleteAccount={() => setIsDeleteAccountModalOpen(true)}
               />
             )}
 
-            {mediaSubTab === "integrations" && (
-              <IntegrationsTab
-                watchlist={watchlist}
-                showLetterboxdModal={showLetterboxdModal}
-                setShowLetterboxdModal={setShowLetterboxdModal}
-                letterboxdUsername={letterboxdUsername}
-                setLetterboxdUsername={setLetterboxdUsername}
-                handleLetterboxdImport={handleLetterboxdImport}
-                isImportingLetterboxd={isImportingLetterboxd}
-                disconnectLetterboxd={disconnectLetterboxd}
-                anilistUser={anilistUser}
-                connectAnilist={connectAnilist}
-                disconnectAnilist={disconnectAnilist}
-                syncAnilist={syncAnilist}
-                isSyncingAnilist={isSyncingAnilist}
-                traktUser={traktUser}
-                connectTrakt={connectTrakt}
-                disconnectTrakt={disconnectTrakt}
-                syncTrakt={syncTrakt}
-                isSyncingTrakt={isSyncingTrakt}
-              />
+            {activeTab === "admin" && user && user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com") && (
+              <AdminTab user={user} />
             )}
-          </>
-        )}
-
-        {activeTab === "investments" && (
-          <InvestmentsTab
-            investments={investments}
-            currency={currency}
-            invName={invName}
-            setInvName={handleInvNameChange}
-            invCategory={invCategory}
-            setInvCategory={setInvCategory}
-            invQuantity={invQuantity}
-            setInvQuantity={setInvQuantity}
-            invBuyPrice={invBuyPrice}
-            setInvBuyPrice={setInvBuyPrice}
-            invAmount={invAmount}
-            setInvAmount={setInvAmount}
-            invNotes={invNotes}
-            setInvNotes={setInvNotes}
-            invInterestRate={invInterestRate}
-            setInvInterestRate={setInvInterestRate}
-            invStartDate={invStartDate}
-            setInvStartDate={setInvStartDate}
-            invMaturityDate={invMaturityDate}
-            setInvMaturityDate={setInvMaturityDate}
-            invCompounding={invCompounding}
-            setInvCompounding={setInvCompounding}
-            invSipDay={invSipDay}
-            setInvSipDay={setInvSipDay}
-            isAddingAsset={isAddingAsset}
-            addInvestment={addInvestment}
-            deleteInvestment={deleteInvestment}
-            sellInvestment={sellInvestment}
-            isUpdatingPrices={isUpdatingPrices}
-            updateMarketPrices={updateMarketPrices}
-            isFetchingInvestments={isFetchingInvestments}
-            invSuggestions={invSuggestions}
-            setInvSuggestions={setInvSuggestions}
-            selectSuggestion={selectSuggestion}
-          />
-        )}
-
-        {activeTab === "financial" && isProUser && (
-          <FinancialHealthTab
-            currency={currency}
-            expenses={expenses}
-            investments={investments}
-            showInvestmentsTab={showInvestmentsTab}
-            salaryDay={salaryDay}
-            monthlySalary={monthlySalary}
-            setMonthlySalary={setMonthlySalary}
-            additionalIncome={additionalIncome}
-            setAdditionalIncome={setAdditionalIncome}
-            payCycle={payCycle}
-            savedReconciliation={reconciliations[payCycle.startStr]}
-            setReconciliation={setReconciliation}
-            salaryLog={salaryLog}
-            setSalaryLogEntry={setSalaryLogEntry}
-            cycleHistory={cycleHistory}
-            cycleAverages={cycleAverages}
-            reconciliations={reconciliations}
-            logUnaccountedGap={logUnaccountedGap}
-            getHeaders={getHeaders}
-          />
-        )}
-
-        {activeTab === "reports" && (
-          <ReportsTab
-            expenses={expenses}
-            watchlist={watchlist}
-            investments={investments}
-            currency={currency}
-            salaryDay={salaryDay}
-            salaryLog={salaryLog}
-            isProUser={isProUser}
-            cycleHistory={cycleHistory}
-            reconciliations={reconciliations}
-          />
-        )}
-
-        {activeTab === "agent" && (
-          <KirokuTab idToken={user?.idToken} />
-        )}
-
-        {activeTab === "settings" && (
-          <SettingsTab
-            emailSubscriptions={emailSubscriptions}
-            setEmailSubscriptions={setEmailSubscriptions}
-            currency={currency}
-            setCurrency={setCurrency}
-            salaryDay={salaryDay}
-            setSalaryDay={setSalaryDay}
-            monthlySalary={monthlySalary}
-            setMonthlySalary={setMonthlySalary}
-            additionalIncome={additionalIncome}
-            setAdditionalIncome={setAdditionalIncome}
-            onDeleteAccount={() => setIsDeleteAccountModalOpen(true)}
-          />
-        )}
-
-        {activeTab === "admin" && user && user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com") && (
-          <AdminTab user={user} />
-        )}
+          </motion.div>
+        </AnimatePresence>
       </main>
 
       <ConfirmModal confirmDlg={confirmDlg} setConfirmDlg={setConfirmDlg} />
