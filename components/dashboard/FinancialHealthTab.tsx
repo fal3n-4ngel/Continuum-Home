@@ -596,7 +596,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
 
   const deficitToTarget = isBehindTarget ? Math.abs(spendablePoolForTarget) : 0;
 
-  if (isProUser) {
+  if (!isProUser) {
     return (
       <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full">
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border-subtle pb-4">
@@ -794,14 +794,14 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             Target-driven daily spending limits, pay-cycle pace, cash reconciliation, and liquidity runway.
           </p>
         </div>
-        <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-[#EAE5DC]/60 px-3 py-1 rounded-full border border-border-subtle/50 shadow-2xs">
+        <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-full border border-border-subtle/50 shadow-2xs">
           Cycle {fmtDate(payCycle.startStr)} – {fmtDate(payCycle.endStr)}
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-subtle border-t-2 border-t-[#2e7d32]/70 bg-bg-card p-4 shadow-subtle">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-subtle bg-bg-card p-4 shadow-subtle">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#2e7d32]/20 bg-[#E6F4EA] text-[#2e7d32] shadow-2xs">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-bg-secondary text-text-secondary shadow-2xs">
             <PiggyBank size={18} />
           </div>
           <div>
@@ -811,7 +811,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1 rounded-full bg-[#EAE5DC]/60 p-1 border border-border-subtle/40 shadow-2xs">
+          <div className="flex items-center gap-1 rounded-full bg-bg-secondary p-1 border border-border-subtle/40 shadow-2xs">
             {[0, 0.1, 0.2, 0.3].map((pct) => {
               const amount = Math.round(payCycle.totalIncome * pct);
               const isActive = targetSavingsGoal === amount || (pct === 0 && targetSavingsGoal === 0);
@@ -859,10 +859,10 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           <span className={STAT_SUBTEXT}>Salary + additional this cycle</span>
         </div>
 
-        <div className={`${STAT_CARD} border-t-2 border-t-[#e39282]/80`}>
+        <div className={`${STAT_CARD} border-t-2 border-t-border-subtle`}>
           <div>
             <span className={LABEL_MONO}>SPENT SO FAR</span>
-            <div className={STAT_VALUE} style={{ color: "#e39282" }}>
+            <div className={STAT_VALUE}>
               {currency}
               {payCycle.spentSoFar.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </div>
@@ -872,17 +872,17 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           </span>
         </div>
 
-        <div className={`${STAT_CARD} border-t-2 ${isBehindTarget || todaySpent > grossDailyLimit ? "border-t-[#e39282]/80" : "border-t-[#2e7d32]/70"}`}>
+        <div className={`${STAT_CARD} border-t-2 border-t-border-subtle`}>
           <div>
             <div className="flex items-center justify-between gap-1">
               <span className={LABEL_MONO}>SAFE TODAY</span>
               <span
                 className={`font-mono text-[9.5px] font-semibold px-2 py-0.5 rounded-full border ${
                   isBehindTarget
-                    ? "text-[#c05621] bg-[#FDF6F0] border-[#fbd38d]/60"
+                    ? "text-text-muted bg-bg-secondary border-border-subtle"
                     : todaySpent > grossDailyLimit
-                    ? "text-[#c05621] bg-[#FDF6F0] border-[#fbd38d]/60"
-                    : "text-[#2e7d32] bg-[#E6F4EA] border-[#a3e635]/40"
+                    ? "text-text-muted bg-bg-secondary border-border-subtle"
+                    : "text-text-secondary bg-bg-secondary border-border-subtle"
                 }`}
               >
                 {isBehindTarget
@@ -894,7 +894,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             </div>
             <div
               className={STAT_VALUE}
-              style={{ color: isBehindTarget || todaySpent > grossDailyLimit ? "#e39282" : "#2e7d32" }}
             >
               {currency}
               {Math.floor(safeToday).toLocaleString("en-IN")}
@@ -909,17 +908,17 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           </span>
         </div>
 
-        <div className={`${STAT_CARD} border-t-2 ${isBehindTarget || thisWeekSpent > grossWeekLimit ? "border-t-[#e39282]/80" : "border-t-[#2e7d32]/70"}`}>
+        <div className={`${STAT_CARD} border-t-2 border-t-border-subtle`}>
           <div>
             <div className="flex items-center justify-between gap-1">
               <span className={LABEL_MONO}>SAFE THIS WEEK</span>
               <span
                 className={`font-mono text-[9.5px] font-semibold px-2 py-0.5 rounded-full border ${
                   isBehindTarget
-                    ? "text-[#c05621] bg-[#FDF6F0] border-[#fbd38d]/60"
+                    ? "text-text-muted bg-bg-secondary border-border-subtle"
                     : thisWeekSpent > grossWeekLimit
-                    ? "text-[#c05621] bg-[#FDF6F0] border-[#fbd38d]/60"
-                    : "text-[#2e7d32] bg-[#E6F4EA] border-[#a3e635]/40"
+                    ? "text-text-muted bg-bg-secondary border-border-subtle"
+                    : "text-text-secondary bg-bg-secondary border-border-subtle"
                 }`}
               >
                 {isBehindTarget
@@ -931,7 +930,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             </div>
             <div
               className={STAT_VALUE}
-              style={{ color: isBehindTarget || thisWeekSpent > grossWeekLimit ? "#e39282" : "#2e7d32" }}
             >
               {currency}
               {Math.floor(safeWeek).toLocaleString("en-IN")}
@@ -946,10 +944,10 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           </span>
         </div>
 
-        <div className={`${STAT_CARD} border-t-2 border-t-[#b3666b]/80`}>
+        <div className={`${STAT_CARD} border-t-2 border-t-border-subtle`}>
           <div>
             <span className={LABEL_MONO}>EXPECTED SAVINGS Predicted</span>
-            <div className={STAT_VALUE} style={{ color: payCycle.expectedSavings >= 0 ? "#2e7d32" : "#b3666b" }}>
+            <div className={STAT_VALUE}>
               {payCycle.expectedSavings >= 0 ? "+" : ""}
               {currency}
               {payCycle.expectedSavings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
