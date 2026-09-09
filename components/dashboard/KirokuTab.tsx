@@ -1,20 +1,86 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Send, RotateCcw, Sparkles } from "lucide-react";
+import {
+  ArrowUp,
+  RotateCcw,
+  Copy,
+  Check,
+  Volume2,
+  VolumeX,
+  Mic,
+  Coffee,
+  Film,
+  PieChart,
+  CalendarClock
+} from "lucide-react";
+import { useAuthStore } from "@/lib/stores/auth-store";
 
 interface KirokuTabProps {
   idToken?: string;
+  onOpenUpgrade?: () => void;
 }
 
-export function KirokuTab({ idToken }: KirokuTabProps) {
-  const [messages, setMessages] = useState<{ sender: "user" | "assistant" | "system"; text: string }[]>([
-    { sender: "assistant", text: "Hello! I'm Kiroku, your dashboard's built-in assistant. How can I help you manage your expenses, watchlist, subscriptions, or notes today?" }
-  ]);
+interface ChatMessage {
+  id: string;
+  sender: "user" | "assistant" | "system";
+  text: string;
+  timestamp: string;
+}
+
+const KirokuSeal = ({ className = "h-7 w-7" }: { className?: string }) => (
+  <div
+    className={`inline-flex items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-primary font-serif italic text-xs font-semibold select-none shadow-2xs ${className}`}
+    aria-label="Kiroku"
+  >
+    記
+  </div>
+);
+
+const SUGGESTED_PROMPTS = [
+  {
+    icon: Coffee,
+    label: "Log Expense",
+    text: "Spent ₹450 on lunch with friends today",
+  },
+  {
+    icon: Film,
+    label: "Watchlist",
+    text: "Add Dune: Part Two to my watchlist",
+  },
+  {
+    icon: PieChart,
+    label: "Monthly Outflows",
+    text: "Show my highest spending category this month",
+  },
+  {
+    icon: CalendarClock,
+    label: "Subscriptions",
+    text: "Which subscriptions renew in the next 7 days?",
+  },
+];
+
+export function KirokuTab({ idToken, onOpenUpgrade }: KirokuTabProps) {
+  const { user, isProUser } = useAuthStore();
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+
   const scrollRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const firstName = user?.displayName?.trim()?.split(" ")[0] || "there";
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 17) return "Good Afternoon";
+    return "Good Evening";
+  };
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -22,22 +88,41 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
     }
   }, [messages, loading]);
 
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
   const handleReset = () => {
-    setMessages([
-      { sender: "assistant", text: "Chat history cleared. How can I help you manage your dashboard data now?" }
-    ]);
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+    }
+    setMessages([]);
     setHistory([]);
+    setSpeakingId(null);
   };
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim() || loading || !idToken) return;
+  const handleSend = async (messageText?: string) => {
+    const textToSend = (messageText || input).trim();
+    if (!textToSend || loading || !idToken) return;
 
-    const userMsg = input.trim();
+    const userMessage: ChatMessage = {
+      id: `u-${Date.now()}`,
+      sender: "user",
+      text: textToSend,
+      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+    };
+
     setInput("");
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
     setLoading(true);
 
-    setMessages((prev) => [...prev, { sender: "user", text: userMsg }]);
+    setMessages((prev) => [...prev, userMessage]);
 
     try {
       const res = await fetch("/api/assistant/chat", {
@@ -47,25 +132,112 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
           Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
-          message: userMsg,
+          message: textToSend,
           history,
         }),
       });
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || "Failed to communicate with AI.");
+        throw new Error(data.error || "Failed to communicate with Kiroku.");
       }
 
-      setMessages((prev) => [...prev, { sender: "assistant", text: data.reply }]);
-      setHistory(data.history);
+      const assistantMessage: ChatMessage = {
+        id: `a-${Date.now()}`,
+        sender: "assistant",
+        text: data.reply,
+        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+      setHistory(data.history || []);
     } catch (err: any) {
       setMessages((prev) => [
         ...prev,
-        { sender: "system", text: err.message || "Something went wrong. Please check your credentials." }
+        {
+          id: `s-${Date.now()}`,
+          sender: "system",
+          text: err.message || "Something went wrong. Please check your connection.",
+          timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        },
       ]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  const handleInputResize = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setInput(e.target.value);
+    e.target.style.height = "auto";
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+  };
+
+  const handleCopy = (id: string, text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleToggleSpeak = (id: string, text: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    if (speakingId === id) {
+      window.speechSynthesis.cancel();
+      setSpeakingId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    const cleanText = text.replace(/[*#`_~]/g, "");
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+    utterance.onend = () => setSpeakingId(null);
+    utterance.onerror = () => setSpeakingId(null);
+    setSpeakingId(id);
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const handleToggleVoice = () => {
+    if (typeof window === "undefined") return;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Speech recognition is not supported in this browser.");
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = "en-US";
+
+      recognition.onstart = () => setIsListening(true);
+      recognition.onend = () => setIsListening(false);
+      recognition.onerror = () => setIsListening(false);
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript) {
+          setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        }
+      };
+
+      recognition.start();
+    } catch {
+      setIsListening(false);
     }
   };
 
@@ -80,16 +252,32 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
       }
 
       const parts: React.ReactNode[] = [];
-      const boldRegex = /\*\*([^*]+)\*\*/g;
+      const tokenRegex = /(\*\*[^*]+\*\*|`[^`]+`)/g;
       let lastIndex = 0;
       let match;
 
-      while ((match = boldRegex.exec(cleanLine)) !== null) {
+      while ((match = tokenRegex.exec(cleanLine)) !== null) {
         if (match.index > lastIndex) {
           parts.push(cleanLine.substring(lastIndex, match.index));
         }
-        parts.push(<strong key={match.index} className="font-bold text-text-primary">{match[1]}</strong>);
-        lastIndex = boldRegex.lastIndex;
+        const token = match[0];
+        if (token.startsWith("**") && token.endsWith("**")) {
+          parts.push(
+            <strong key={match.index} className="font-semibold text-text-primary">
+              {token.slice(2, -2)}
+            </strong>
+          );
+        } else if (token.startsWith("`") && token.endsWith("`")) {
+          parts.push(
+            <code
+              key={match.index}
+              className="rounded bg-bg-secondary px-1.5 py-0.5 font-mono text-[12px] text-text-primary"
+            >
+              {token.slice(1, -1)}
+            </code>
+          );
+        }
+        lastIndex = tokenRegex.lastIndex;
       }
 
       if (lastIndex < cleanLine.length) {
@@ -98,14 +286,15 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
 
       if (isBullet) {
         return (
-          <li key={index} className="list-disc ml-5 mt-1 pl-1 text-[14px] leading-relaxed text-text-secondary">
-            {parts}
+          <li key={index} className="flex items-start gap-2 mt-1 text-[13.5px] sm:text-[14px] leading-relaxed text-text-primary">
+            <span className="text-text-muted mt-1 leading-none select-none">•</span>
+            <span className="flex-1">{parts}</span>
           </li>
         );
       }
 
       return (
-        <p key={index} className="min-h-[1em] mt-1 text-[14px] leading-relaxed">
+        <p key={index} className="min-h-[1em] mt-1.5 text-[13.5px] sm:text-[14px] leading-relaxed text-text-primary first:mt-0">
           {parts}
         </p>
       );
@@ -113,110 +302,221 @@ export function KirokuTab({ idToken }: KirokuTabProps) {
   };
 
   return (
-    <div className="flex flex-col gap-5 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full max-w-5xl mx-auto">
-      <div className="flex items-center justify-between">
-        <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2 flex items-center gap-3">
-          Kiroku Assistant
-        </h1>
-        <button
-          onClick={handleReset}
-          title="Clear Chat History"
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border-subtle bg-bg-card hover:bg-bg-primary text-text-secondary hover:text-text-primary transition-colors cursor-pointer text-xs font-medium uppercase tracking-wider"
-        >
-          <RotateCcw className="h-3.5 w-3.5" /> Reset
-        </button>
-      </div>
-
-      <div className="flex flex-col h-[calc(100vh-200px)] w-full bg-bg-card border border-border-subtle rounded-2xl shadow-sm overflow-hidden">
-
-        <div ref={scrollRef} className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col gap-5 bg-transparent custom-scrollbar">
-
-          {history.length === 0 && (
-            <div className="rounded-xl border border-border-subtle bg-bg-primary/50 p-6 shadow-sm text-[14px] leading-relaxed text-text-secondary flex flex-col gap-4 mx-auto max-w-2xl w-full mt-4 mb-4">
-              <div className="flex items-center gap-2 text-text-primary">
-                <Sparkles className="h-5 w-5 text-yellow-500" />
-                <span className="font-serif font-bold text-lg">Suggested prompts</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 font-mono text-[11.5px]">
-                <div className="bg-bg-card border border-border-subtle p-3 rounded-lg hover:border-text-primary/30 transition-colors cursor-pointer" onClick={() => setInput("spent 450 on lunch today")}>
-                  &quot;spent 450 on lunch today&quot;
-                </div>
-                <div className="bg-bg-card border border-border-subtle p-3 rounded-lg hover:border-text-primary/30 transition-colors cursor-pointer" onClick={() => setInput("add Dune 2 to my plan to watch list")}>
-                  &quot;add Dune 2 to my plan to watch list&quot;
-                </div>
-                <div className="bg-bg-card border border-border-subtle p-3 rounded-lg hover:border-text-primary/30 transition-colors cursor-pointer" onClick={() => setInput("list my watchlist completed items")}>
-                  &quot;list my watchlist completed items&quot;
-                </div>
-                <div className="bg-bg-card border border-border-subtle p-3 rounded-lg hover:border-text-primary/30 transition-colors cursor-pointer" onClick={() => setInput("show me my expenses this week")}>
-                  &quot;show me my expenses this week&quot;
-                </div>
-              </div>
+    <div className="flex flex-col gap-3.5 w-full  mx-auto animate-[fadeIn_0.3s_ease_forwards]">
+      <div className="flex items-center justify-between px-1">
+        <div className="flex items-center gap-2.5">
+          <KirokuSeal className="h-8 w-8 text-[13px]" />
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="font-serif text-2xl sm:text-3xl italic font-medium tracking-wide text-text-primary leading-none">
+                Kiroku
+              </h1>
+              <span className="font-serif text-xs italic text-text-muted font-normal">
+                記録 • Assistant
+              </span>
             </div>
-          )}
-
-          {messages.map((msg, i) => (
-            <div
-              key={i}
-              className={`flex ${
-                msg.sender === "user"
-                  ? "justify-end"
-                  : msg.sender === "system"
-                  ? "justify-center"
-                  : "justify-start"
-              }`}
-            >
-              <div
-                className={`max-w-[85%] md:max-w-[70%] px-5 py-3 text-[14.5px] leading-relaxed shadow-sm ${
-                  msg.sender === "user"
-                    ? "bg-text-primary text-bg-primary rounded-[22px] rounded-br-[6px]"
-                    : msg.sender === "system"
-                    ? "bg-red-50 border border-red-200 text-red-700 text-center font-medium text-[12px] py-2 px-4 rounded-xl w-full max-w-md mx-auto"
-                    : "bg-[#f4f2ea] border border-[#e8e4d8] text-text-primary rounded-[22px] rounded-bl-[6px]"
-                }`}
-              >
-                {msg.sender === "user" || msg.sender === "system" ? msg.text : renderMarkdown(msg.text)}
-              </div>
-            </div>
-          ))}
-
-          {loading && (
-            <div className="flex justify-start">
-              <div className="bg-[#f4f2ea] border border-[#e8e4d8] rounded-[22px] rounded-bl-[6px] px-5 py-4 shadow-sm flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-text-secondary/60 animate-bounce" style={{ animationDelay: '0ms' }} />
-                <span className="h-2 w-2 rounded-full bg-text-secondary/60 animate-bounce" style={{ animationDelay: '150ms' }} />
-                <span className="h-2 w-2 rounded-full bg-text-secondary/60 animate-bounce" style={{ animationDelay: '300ms' }} />
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className="p-4 md:p-6 border-t border-border-subtle bg-bg-card/50 backdrop-blur-sm">
-          <form onSubmit={handleSend} className="relative flex items-center max-w-4xl mx-auto">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              disabled={loading || !idToken}
-              placeholder={
-                !idToken
-                  ? "Sign in to query assistant..."
-                  : "Message Kiroku..."
-              }
-              className="w-full rounded-full border border-border-subtle px-6 py-4 pr-16 text-[15px] bg-bg-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-text-primary/10 focus:border-text-primary/30 disabled:opacity-50 transition-all shadow-inner"
-            />
-            <button
-              type="submit"
-              disabled={loading || !input.trim() || !idToken}
-              className="absolute right-2 top-1/2 -translate-y-1/2  h-12 w-12 rounded-full bg-text-primary text-white flex items-center justify-center hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed transition-all cursor-pointer shadow-md"
-              aria-label="Send message"
-            >
-              <Send className="h-24 w-24 z-1000 scale-175" />
-            </button>
-          </form>
-          <div className="text-center mt-3">
-            <span className="text-[10px] text-text-muted font-mono tracking-wider uppercase">Kiroku can make mistakes. Verify important data.</span>
           </div>
         </div>
+
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleReset}
+            title="Clear Chat History"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border-subtle bg-bg-card hover:bg-bg-primary text-text-secondary hover:text-text-primary transition-colors cursor-pointer text-xs font-medium"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            <span>Reset</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="relative flex flex-col h-[calc(100dvh-155px)] min-h-[540px] max-md:h-[calc(100dvh-185px)] max-md:min-h-[420px] w-full rounded-2xl border border-border-subtle bg-bg-card shadow-subtle overflow-hidden">
+        <main
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex flex-col gap-5 custom-scrollbar"
+        >
+          {messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center my-auto py-10 px-4 text-center max-w-4xl mx-auto animate-[fadeIn_0.3s_ease] w-full">
+              <div className="mb-3.5 flex items-center justify-center">
+                <KirokuSeal className="h-12 w-12 text-base" />
+              </div>
+
+              <h2 className="font-serif text-2xl sm:text-3xl italic font-normal tracking-tight text-text-primary mb-1.5">
+                {getGreeting()}, {firstName}
+              </h2>
+
+              <p className="text-[13px] text-text-secondary leading-relaxed mb-8 max-w-md">
+                Natural language intelligence for your ledger, watchlist, and subscriptions.
+              </p>
+
+              <div className="grid grid-cols-4 max-xl:grid-cols-2 max-sm:grid-cols-1 gap-3 w-full">
+                {SUGGESTED_PROMPTS.map((prompt, idx) => {
+                  const Icon = prompt.icon;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleSend(prompt.text)}
+                      className="flex flex-col items-start gap-1 p-3 rounded-xl border border-border-subtle bg-bg-primary/40 hover:bg-bg-primary hover:border-text-primary/30 transition-all text-left cursor-pointer shadow-2xs group"
+                    >
+                      <div className="flex items-center gap-1.5 font-mono text-[10px] font-semibold text-text-muted group-hover:text-text-primary transition-colors">
+                        <Icon className="h-3.5 w-3.5 shrink-0" />
+                        <span>{prompt.label}</span>
+                      </div>
+                      <span className="text-[12px] font-medium text-text-secondary group-hover:text-text-primary line-clamp-2 leading-snug transition-colors">
+                        &ldquo;{prompt.text}&rdquo;
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-5 max-w-5xl w-full mx-auto pb-2">
+              {messages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex w-full ${
+                    msg.sender === "user"
+                      ? "justify-end"
+                      : msg.sender === "system"
+                      ? "justify-center"
+                      : "justify-start"
+                  }`}
+                >
+                  {msg.sender === "user" ? (
+                    <div className="max-w-[75%] max-sm:max-w-[85%] px-4.5 py-2.5 rounded-2xl rounded-br-xs bg-text-primary text-bg-primary shadow-xs">
+                      <p className="text-[13.5px] sm:text-[14px] leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                      <div className="text-[10px] text-bg-primary/60 text-right mt-1 font-mono">
+                        {msg.timestamp}
+                      </div>
+                    </div>
+                  ) : msg.sender === "system" ? (
+                    <div className="max-w-md rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-center text-xs font-medium text-rose-600 dark:text-rose-400">
+                      {msg.text}
+                    </div>
+                  ) : (
+                    <div className="flex items-start gap-3 max-w-[85%] max-sm:max-w-[90%]">
+                      <KirokuSeal className="h-7 w-7 text-xs shrink-0 mt-0.5" />
+                      <div className="flex flex-col gap-1.5 min-w-0">
+                        <div className="rounded-2xl rounded-tl-xs border border-border-subtle/80 bg-bg-primary/60 px-5 py-3.5 text-text-primary shadow-xs">
+                          {renderMarkdown(msg.text)}
+                        </div>
+
+                        <div className="flex items-center gap-2 text-[11px] text-text-muted px-1 font-mono">
+                          <span>{msg.timestamp}</span>
+                          <span>•</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(msg.id, msg.text)}
+                            className="flex items-center gap-1 hover:text-text-primary transition-colors cursor-pointer"
+                          >
+                            {copiedId === msg.id ? (
+                              <>
+                                <Check className="h-3 w-3 text-emerald-600" />
+                                <span className="text-emerald-600">Copied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="h-3 w-3" />
+                                <span>Copy</span>
+                              </>
+                            )}
+                          </button>
+                          <span>•</span>
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSpeak(msg.id, msg.text)}
+                            className="flex items-center gap-1 hover:text-text-primary transition-colors cursor-pointer"
+                          >
+                            {speakingId === msg.id ? (
+                              <>
+                                <VolumeX className="h-3 w-3 text-rose-500 animate-pulse" />
+                                <span className="text-rose-500">Stop</span>
+                              </>
+                            ) : (
+                              <>
+                                <Volume2 className="h-3 w-3" />
+                                <span>Speak</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {loading && (
+                <div className="flex items-start gap-3 max-w-[85%]">
+                  <KirokuSeal className="h-7 w-7 text-xs shrink-0 mt-0.5" />
+                  <div className="rounded-2xl rounded-tl-xs border border-border-subtle/80 bg-bg-primary/60 px-4 py-3 text-text-muted flex items-center gap-2 shadow-xs">
+                    <span className="h-1.5 w-1.5 rounded-full bg-text-secondary/60 animate-bounce" style={{ animationDelay: "0ms" }} />
+                    <span className="h-1.5 w-1.5 rounded-full bg-text-secondary/60 animate-bounce" style={{ animationDelay: "150ms" }} />
+                    <span className="h-1.5 w-1.5 rounded-full bg-text-secondary/60 animate-bounce" style={{ animationDelay: "300ms" }} />
+                    <span className="text-xs font-serif italic text-text-muted ml-1">Thinking…</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </main>
+
+        <footer className="border-t border-border-subtle bg-bg-card/90 backdrop-blur-md p-3 sm:p-4">
+          <div className="max-w-5xl mx-auto flex flex-col gap-1.5">
+            <div className="relative flex items-center gap-2 rounded-2xl sm:rounded-full border border-border-subtle bg-bg-primary px-3.5 py-1.5 focus-within:border-border-hover focus-within:ring-1 focus-within:ring-text-primary/10 transition-all shadow-inner">
+              <textarea
+                ref={textareaRef}
+                rows={1}
+                value={input}
+                onChange={handleInputResize}
+                onKeyDown={handleKeyDown}
+                disabled={loading || !idToken}
+                placeholder={!idToken ? "Sign in to query Kiroku..." : "Ask Kiroku about expenses, watchlist, subscriptions..."}
+                className="flex-1 min-w-0 bg-transparent border-none text-[13.5px] sm:text-[14px] text-text-primary placeholder:text-text-muted outline-none resize-none px-1 py-1 leading-relaxed max-h-[120px]"
+              />
+
+              <div className="flex items-center gap-1.5 shrink-0 self-end pb-0.5">
+                <button
+                  type="button"
+                  onClick={handleToggleVoice}
+                  title={isListening ? "Listening... click to stop" : "Voice input"}
+                  className={`shrink-0 flex h-8 w-8 min-w-[32px] min-h-[32px] aspect-square items-center justify-center rounded-full transition-all cursor-pointer ${
+                    isListening
+                      ? "bg-rose-500/20 text-rose-600 animate-pulse"
+                      : "text-text-secondary hover:bg-bg-secondary hover:text-text-primary"
+                  }`}
+                >
+                  <Mic className="h-4 w-4 shrink-0" />
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleSend()}
+                  disabled={loading || !input.trim() || !idToken}
+                  aria-label="Send message"
+                  className={`shrink-0 flex h-8 w-8 min-w-[32px] min-h-[32px] aspect-square items-center justify-center rounded-full transition-all ${
+                    !input.trim() || loading || !idToken
+                      ? "bg-bg-secondary text-text-muted cursor-not-allowed opacity-50"
+                      : "bg-text-primary text-bg-primary shadow-xs hover:opacity-90 active:scale-95 cursor-pointer"
+                  }`}
+                >
+                  {loading ? (
+                    <span className="h-3 w-3 shrink-0 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                  ) : (
+                    <ArrowUp className="h-4 w-4 shrink-0" strokeWidth={2.5} />
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between px-2 text-[10.5px] text-text-muted font-mono">
+              <span className="truncate">Kiroku • 自然言語アシスタント</span>
+            </div>
+          </div>
+        </footer>
       </div>
     </div>
   );

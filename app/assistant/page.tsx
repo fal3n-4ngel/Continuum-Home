@@ -191,7 +191,7 @@ Always confirm what you logged in one short line, including the year you recorde
           </p>
           <a
             href="https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-dashboard-public"
-            target="_blank"Continuum-Home
+            target="_blank"
             rel="noopener noreferrer"
             className={BTN_PRIMARY}
           >

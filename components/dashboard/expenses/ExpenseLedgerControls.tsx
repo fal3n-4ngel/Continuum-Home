@@ -50,35 +50,37 @@ export const ExpenseLedgerControls: React.FC<ExpenseLedgerControlsProps> = ({
         placeholder="Search..."
         value={expenseSearch}
         onChange={(e) => setExpenseSearch(e.target.value)}
-        className={`${INPUT_CLASS} w-[120px] px-2 py-1 text-[11px]`}
+        className={`${INPUT_CLASS} w-[115px] shrink-0 px-2 py-1 text-[11px]`}
       />
       <select
         value={ledgerCategoryFilter}
         onChange={(e) => setLedgerCategoryFilter(e.target.value)}
-        className={`${INPUT_CLASS} cursor-pointer px-2 py-1 text-[11px]`}
+        className={`${INPUT_CLASS} shrink-0 cursor-pointer px-2 py-1 text-[11px]`}
       >
         <option value="">All Categories</option>
         {allCategories.map((c) => (
           <option key={c} value={c}>{c}</option>
         ))}
       </select>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 shrink-0">
         <input
           type="date"
+          lang="en-CA"
           value={ledgerStartDate}
           onChange={(e) => setLedgerStartDate(e.target.value)}
           title="From date"
           aria-label="From date"
-          className={`${INPUT_CLASS} cursor-pointer px-2 py-1 text-[11px]`}
+          className={`${INPUT_CLASS} w-[124px] cursor-pointer px-1.5 py-1 text-[11px]`}
         />
         <span className="text-[11px] text-text-secondary">to</span>
         <input
           type="date"
+          lang="en-CA"
           value={ledgerEndDate}
           onChange={(e) => setLedgerEndDate(e.target.value)}
           title="To date"
           aria-label="To date"
-          className={`${INPUT_CLASS} cursor-pointer px-2 py-1 text-[11px]`}
+          className={`${INPUT_CLASS} w-[124px] cursor-pointer px-1.5 py-1 text-[11px]`}
         />
         {(ledgerStartDate || ledgerEndDate) && (
           <button
@@ -100,16 +102,16 @@ export const ExpenseLedgerControls: React.FC<ExpenseLedgerControlsProps> = ({
         placeholder={`Min (${currency})`}
         value={ledgerMinAmount}
         onChange={(e) => setLedgerMinAmount(e.target.value)}
-        className={`${INPUT_CLASS} w-[70px] px-2 py-1 text-[11px]`}
+        className={`${INPUT_CLASS} w-[84px] shrink-0 px-2 py-1 text-[11px]`}
       />
       <input
         type="number"
         placeholder={`Max (${currency})`}
         value={ledgerMaxAmount}
         onChange={(e) => setLedgerMaxAmount(e.target.value)}
-        className={`${INPUT_CLASS} w-[70px] px-2 py-1 text-[11px]`}
+        className={`${INPUT_CLASS} w-[84px] shrink-0 px-2 py-1 text-[11px]`}
       />
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1 shrink-0">
         <select
           value={ledgerSortField}
           onChange={(e) => setLedgerSortField(e.target.value as typeof ledgerSortField)}

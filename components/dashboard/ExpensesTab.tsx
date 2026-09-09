@@ -2,25 +2,27 @@ import React from "react";
 import { createPortal } from "react-dom";
 import Papa from "papaparse";
 import { Expense, Subscription } from "@/types";
-import { downloadCsv, getAuthHeaders } from "@/lib/utils";
+import { downloadCsv, getAuthHeaders, resolvePayCycle, toLocalDateStr } from "@/lib/utils";
 
 import { useExpensesStore } from "@/lib/stores/expenses-store";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { useTheme } from "@/lib/theme/use-theme";
 
 import { ExpenseRow } from "./expenses/ExpenseRow";
 import { ExpenseLedgerControls } from "./expenses/ExpenseLedgerControls";
 import { EditExpenseModal } from "./expenses/EditExpenseModal";
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-interface ExpensesTabProps {}
+interface ExpensesTabProps {
+  className?: string;
+}
 
 const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
 const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
 const STAT_VALUE = "text-[28px] font-bold tracking-[-0.5px] text-text-primary";
 const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
 const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
-const BTN_PRIMARY = "rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27]";
+const BTN_PRIMARY = "rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-semibold text-bg-primary transition-all duration-200 hover:opacity-90";
 const BTN_SECONDARY = "rounded-md border border-border-subtle bg-transparent text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary disabled:cursor-not-allowed disabled:opacity-50";
 const INPUT_CLASS = "rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
 const LEDGER_TH = "border-b border-border-subtle bg-bg-card px-3 py-2.5 font-mono text-[11px] font-semibold tracking-[0.5px] text-text-muted uppercase";
@@ -62,13 +64,13 @@ const normalizeCsvDate = (dateStr: string): string => {
 };
 
 const tabPillClass = (active: boolean) =>
-  `cursor-pointer rounded-md border-none px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
-    active ? "bg-white text-text-primary shadow-[0_1px_3px_rgba(0,0,0,0.06)]" : "bg-transparent text-text-secondary"
+  `cursor-pointer rounded-md px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
+    active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
   }`;
 
 const chartPillClass = (active: boolean) =>
-  `cursor-pointer rounded-md border-none px-3 py-[5px] text-[11px] font-semibold transition-all duration-200 ${
-    active ? "bg-white text-text-primary shadow-[0_1px_3px_rgba(0,0,0,0.05)]" : "bg-transparent text-text-secondary"
+  `cursor-pointer rounded-md px-3 py-[5px] text-[11px] font-semibold transition-all duration-200 ${
+    active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
   }`;
 
 const advanceBillingDate = (dateStr: string, cycle: "monthly" | "yearly"): string => {
@@ -128,7 +130,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     currency, setCurrency, expenseTab, setExpenseTab, activeChart, setActiveChart, triggerConfirm
   } = useUiStore();
   const {
-    timeFilter, setTimeFilter, salaryDay, setSalaryDay,
+    timeFilter, setTimeFilter, salaryDay, setSalaryDay, salaryLog,
     expenseTitle, setExpenseTitle, expenseAmount, setExpenseAmount,
     expenseCategory, setExpenseCategory, newCategoryInput, setNewCategoryInput,
     customCategories, setCustomCategories, expenseDate, setExpenseDate,
@@ -136,15 +138,49 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     ledgerCategoryFilter, setLedgerCategoryFilter, ledgerMinAmount, setLedgerMinAmount,
     ledgerMaxAmount, setLedgerMaxAmount, ledgerStartDate, setLedgerStartDate, ledgerEndDate, setLedgerEndDate,
     ledgerSortField, setLedgerSortField,
-    ledgerSortDir, setLedgerSortDir, isFetchingExpenses, expensesLoaded,
+    ledgerSortDir, setLedgerSortDir, isFetchingExpenses, setIsFetchingExpenses, expensesLoaded, setExpensesLoaded,
     subscriptions, expenses, setExpenses, setIsAddingExpense, setSubscriptions
   } = useExpensesStore();
   const { user } = useAuthStore();
+  const { theme } = useTheme();
+  const isDark = theme.type === "dark";
 
   const getHeaders = React.useCallback(() => getAuthHeaders(user?.idToken), [user]);
 
   const fetchExpenses = React.useCallback(async () => {
-  }, []);
+    setIsFetchingExpenses(true);
+    try {
+      const res = await fetch("/api/expenses", { headers: getHeaders() });
+      if (res.ok) setExpenses(await res.json());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsFetchingExpenses(false);
+      setExpensesLoaded(true);
+    }
+  }, [getHeaders, setIsFetchingExpenses, setExpenses, setExpensesLoaded]);
+
+  const handleTimeFilterChange = (val: "7" | "30" | "90" | "salary" | "all") => {
+    setTimeFilter(val);
+    if (user) {
+      fetch("/api/settings", {
+        method: "PATCH",
+        headers: getHeaders(),
+        body: JSON.stringify({ timeFilter: val }),
+      }).catch((err) => console.error(err));
+    }
+  };
+
+  const handleSalaryDayChange = (day: number) => {
+    setSalaryDay(day);
+    if (user) {
+      fetch("/api/settings", {
+        method: "PATCH",
+        headers: getHeaders(),
+        body: JSON.stringify({ salaryDay: day }),
+      }).catch((err) => console.error(err));
+    }
+  };
 
   const [currentPage, setCurrentPage] = React.useState(1);
   const pageSize = 15;
@@ -345,16 +381,13 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     });
   }, [subscriptions, expenses]);
 
+  const currentPayCycle = React.useMemo(() => {
+    return resolvePayCycle(salaryDay, salaryLog);
+  }, [salaryDay, salaryLog]);
+
   React.useEffect(() => {
     setCurrentPage(1);
-  }, [expenseSearch, ledgerCategoryFilter, ledgerMinAmount, ledgerMaxAmount, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
-
-  const toLocalDateStr = (d: Date) => {
-    const yStr = d.getFullYear();
-    const mStr = String(d.getMonth() + 1).padStart(2, "0");
-    const dStr = String(d.getDate()).padStart(2, "0");
-    return `${yStr}-${mStr}-${dStr}`;
-  };
+  }, [timeFilter, salaryDay, currentPayCycle, expenseSearch, ledgerCategoryFilter, ledgerMinAmount, ledgerMaxAmount, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
 
   const allCategories = React.useMemo(() => {
     const s = new Set<string>();
@@ -367,6 +400,19 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
 
   const filteredExpensesBase = React.useMemo(() => {
     let list = [...expenses];
+
+    if (timeFilter !== "all") {
+      const now = new Date();
+      if (timeFilter === "salary") {
+        const { startStr, endStr } = currentPayCycle;
+        list = list.filter((e) => e.date && e.date.slice(0, 10) >= startStr && e.date.slice(0, 10) <= endStr);
+      } else {
+        const days = parseInt(timeFilter, 10);
+        const cutoff = toLocalDateStr(new Date(now.getTime() - days * 86400000));
+        list = list.filter((e) => e.date && e.date.slice(0, 10) >= cutoff);
+      }
+    }
+
     if (expenseSearch) {
       const q = expenseSearch.toLowerCase();
       list = list.filter((e) => (e.title && e.title.toLowerCase().includes(q)) || (e.notes && e.notes.toLowerCase().includes(q)));
@@ -376,10 +422,23 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     if (ledgerStartDate) list = list.filter((e) => e.date && e.date.slice(0, 10) >= ledgerStartDate);
     if (ledgerEndDate) list = list.filter((e) => e.date && e.date.slice(0, 10) <= ledgerEndDate);
     return list;
-  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerStartDate, ledgerEndDate]);
+  }, [expenses, timeFilter, currentPayCycle, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerStartDate, ledgerEndDate]);
 
   const filteredExpenses = React.useMemo(() => {
     let list = [...expenses];
+
+    if (timeFilter !== "all") {
+      const now = new Date();
+      if (timeFilter === "salary") {
+        const { startStr, endStr } = currentPayCycle;
+        list = list.filter((e) => e.date && e.date.slice(0, 10) >= startStr && e.date.slice(0, 10) <= endStr);
+      } else {
+        const days = parseInt(timeFilter, 10);
+        const cutoff = toLocalDateStr(new Date(now.getTime() - days * 86400000));
+        list = list.filter((e) => e.date && e.date.slice(0, 10) >= cutoff);
+      }
+    }
+
     if (expenseSearch) {
       const q = expenseSearch.toLowerCase();
       list = list.filter((e) => (e.title && e.title.toLowerCase().includes(q)) || (e.notes && e.notes.toLowerCase().includes(q)));
@@ -405,7 +464,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       }
     });
     return list;
-  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
+  }, [expenses, timeFilter, currentPayCycle, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
 
   const totalSpent = React.useMemo(() => filteredExpensesBase.reduce((sum, e) => sum + (e.amount || 0), 0), [filteredExpensesBase]);
 
@@ -416,7 +475,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       breakdown[cat] = (breakdown[cat] || 0) + (e.amount || 0);
     });
     return Object.fromEntries(Object.entries(breakdown).sort(([, a], [, b]) => b - a));
-  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
+  }, [filteredExpenses]);
 
   const chartCatBreakdown = React.useMemo(() => {
     const breakdown: Record<string, number> = {};
@@ -433,7 +492,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       if (e.date) map[e.date] = (map[e.date] || 0) + (e.amount || 0);
     });
     return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-10);
-  }, [expenses, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
+  }, [filteredExpenses]);
 
   const largestItem = React.useMemo(() => {
     if (filteredExpensesBase.length === 0) return null;
@@ -584,7 +643,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                 <span className="font-mono text-[11px] text-text-muted uppercase">Payday</span>
                 <select
                   value={salaryDay}
-                  onChange={(e) => setSalaryDay(parseInt(e.target.value, 10))}
+                  onChange={(e) => handleSalaryDayChange(parseInt(e.target.value, 10))}
                   className={`${INPUT_CLASS} px-2 py-1 text-xs`}
                 >
                   {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
@@ -599,7 +658,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
 
             <select
               value={timeFilter}
-              onChange={(e) => setTimeFilter(e.target.value as any)}
+              onChange={(e) => handleTimeFilterChange(e.target.value as any)}
               className={`${INPUT_CLASS} px-2 py-1 text-xs`}
             >
               <option value="7">Last 7 days</option>
@@ -615,22 +674,24 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       {expenseTab === "ledger" && (
         <div className="flex flex-col gap-7 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]"> <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">Expenses Ledger</h1>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 max-md:grid-cols-2 max-md:gap-2.5">
-            <div className={`${STAT_CARD} !bg-[var(--accent-blue)] !border-none`}>
-              <span className={`${LABEL_MONO} !text-[#1A1A1A]/70`}>Total Spent</span>
+            <div className={`${STAT_CARD} border-t-2 border-t-accent-blue`}>
+              <span className={LABEL_MONO}>Total Spent</span>
               <span className={STAT_VALUE}>{currency}{totalSpent.toLocaleString()}</span>
-              <span className={`${STAT_SUBTEXT} !text-[#1A1A1A]/70`}>{timeFilter === "all" ? "All time" : `Last ${timeFilter} days`}</span>
+              <span className={STAT_SUBTEXT}>
+                {timeFilter === "all" ? "All time" : timeFilter === "salary" ? `Cycle (${currentPayCycle.startStr} – ${currentPayCycle.endStr})` : `Last ${timeFilter} days`}
+              </span>
             </div>
-            <div className={`${STAT_CARD} !bg-[var(--accent-yellow)] !border-none`}>
-              <span className={`${LABEL_MONO} !text-[#1A1A1A]/70`}>Charges Logged</span>
-              <span className={STAT_VALUE} style={{ color: "#1A1A1A" }}>{filteredExpenses.length}</span>
-              <span className={`${STAT_SUBTEXT} !text-[#1A1A1A]/70`}>Transactions</span>
+            <div className={`${STAT_CARD} border-t-2 border-t-accent-yellow`}>
+              <span className={LABEL_MONO}>Charges Logged</span>
+              <span className={STAT_VALUE}>{filteredExpenses.length}</span>
+              <span className={STAT_SUBTEXT}>Transactions</span>
             </div>
-            <div className={STAT_CARD}>
+            <div className={`${STAT_CARD} border-t-2 border-t-accent-flame`}>
               <span className={LABEL_MONO}>Largest Charge</span>
-              <span className={`${STAT_VALUE} overflow-hidden text-ellipsis whitespace-nowrap`} style={{ color: "#e39282" }}>{currency}{largestCharge.toLocaleString()}</span>
+              <span className={`${STAT_VALUE} overflow-hidden text-ellipsis whitespace-nowrap text-accent-flame`}>{currency}{largestCharge.toLocaleString()}</span>
               <span className={`${STAT_SUBTEXT} overflow-hidden text-ellipsis whitespace-nowrap`}>{largestItem?.title || "—"}</span>
             </div>
-            <div className={STAT_CARD}>
+            <div className={`${STAT_CARD} border-t-2 border-t-border-hover`}>
               <span className={LABEL_MONO}>Top Category</span>
               <span className={`${STAT_VALUE} mt-2 overflow-hidden text-ellipsis whitespace-nowrap text-[22px]`}>{topCategory}</span>
               <span className={STAT_SUBTEXT}>Highest share</span>
@@ -655,7 +716,9 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                 {Object.entries(chartCatBreakdown).slice(0, 8).map(([cat, total], idx) => {
                   const maxAmt = Math.max(...Object.values(chartCatBreakdown), 1);
                   const pct = (total / maxAmt) * 100;
-                  const colors = ["#b3666b", "#e39282", "#1c1b18", "#6e6c64", "#d1b89a", "#eae8e0", "#9c9a92", "#c4c2ba"];
+                  const colors = isDark
+                    ? ["#b3666b", "#e39282", "#e5e0d8", "#a8a29e", "#d1b89a", "#f4f0ea", "#9c9a92", "#c4c2ba"]
+                    : ["#b3666b", "#e39282", "#1c1b18", "#6e6c64", "#d1b89a", "#eae8e0", "#9c9a92", "#c4c2ba"];
                   const isSelected = ledgerCategoryFilter === cat;
                   const isInactive = ledgerCategoryFilter !== "" && !isSelected;
                   return (
@@ -670,14 +733,15 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                       </span>
                       <div
                         className={`flex h-[200px] w-8 items-end rounded-t-md bg-bg-secondary transition-all duration-200 ${
-                          isSelected ? "ring-2 ring-text-primary ring-offset-1" : ""
+                          isSelected ? "ring-2 ring-text-primary ring-offset-1 ring-offset-bg-card" : ""
                         }`}
                       >
                         <div
                           className="w-full rounded-t-md transition-all duration-500 ease-in-out"
                           style={{
                             height: `${pct}%`,
-                            backgroundColor: isInactive ? "#d4d2c9" : colors[idx % colors.length],
+                            backgroundColor: colors[idx % colors.length],
+                            opacity: isInactive ? 0.25 : 1,
                           }}
                         ></div>
                       </div>
@@ -694,7 +758,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                 })}
                 {Object.keys(chartCatBreakdown).length === 0 && <p className="self-center text-[13px] text-text-muted">No transactions to plot.</p>}
               </div>
-            ): (
+            ) : (
               <div className="flex h-[260px] items-end justify-start gap-4 overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2">
                 {dailyTrend.map(([date, total]) => {
                   const maxAmt = Math.max(...dailyTrend.map(d => d[1]), 1);
@@ -705,7 +769,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                     <div key={date} className="flex min-w-[60px] max-w-[90px] flex-1 shrink-0 flex-col items-center gap-1.5">
                       <span className="text-[11px] font-semibold text-text-secondary">{currency}{total.toLocaleString()}</span>
                       <div className="flex h-[200px] w-8 items-end rounded-t-md bg-bg-secondary">
-                        <div className="w-full rounded-t-md bg-[#3b82f6] transition-[height] duration-500 ease-in-out" style={{ height: `${pct}%` }}></div>
+                        <div className="w-full rounded-t-md bg-accent-blue transition-[height] duration-500 ease-in-out" style={{ height: `${pct}%` }}></div>
                       </div>
                       <span className="w-full text-center font-mono text-[9px] text-text-muted">{dateFormatted}</span>
                     </div>
@@ -726,12 +790,12 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                   const parts = sub.nextBillingDate ? sub.nextBillingDate.split("-") : [];
                   const dueStr = parts.length === 3 ? new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).toLocaleDateString("en-IN", { month: "short", day: "numeric" }) : sub.nextBillingDate;
                   return (
-                    <div key={sub.id} className="flex items-center justify-between rounded-lg border border-border-subtle bg-bg-primary/20 p-3.5  hover:border-border-hover transition-all duration-200">
+                    <div key={sub.id} className="flex items-center justify-between rounded-lg border border-border-subtle bg-bg-primary/20 p-3.5 hover:border-border-hover transition-all duration-200">
                       <div className="flex items-center gap-3">
                         <span className="text-xl">{sub.icon || "💳"}</span>
                         <div>
                           <div className="text-[13px] font-semibold text-text-primary">{sub.name}</div>
-                          <div className="text-[11px] text-[#b3666b] font-medium mt-0.5">Due {dueStr}</div>
+                          <div className="text-[11px] text-accent-terracotta font-medium mt-0.5">Due {dueStr}</div>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -747,7 +811,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                               setPendingSubToPay(sub);
                               setShowLogModal(true);
                             }}
-                            className="flex h-7 w-7 items-center justify-center rounded-md border-none bg-emerald-50 text-emerald-700 cursor-pointer hover:bg-emerald-100 transition-all font-semibold active:scale-95"
+                            className="flex h-7 w-7 items-center justify-center rounded-md border-none bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 cursor-pointer hover:bg-emerald-500/25 transition-all font-semibold active:scale-95"
                             title="Mark as Paid"
                           >
                             ✓
@@ -759,7 +823,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                                 updateSubscription(sub.id, { nextBillingDate: nextDate });
                               }
                             }}
-                            className="flex h-7 w-7 items-center justify-center rounded-md border-none bg-rose-50 text-rose-700 cursor-pointer hover:bg-rose-100 transition-all font-semibold active:scale-95"
+                            className="flex h-7 w-7 items-center justify-center rounded-md border-none bg-rose-500/15 text-rose-600 dark:text-rose-400 cursor-pointer hover:bg-rose-500/25 transition-all font-semibold active:scale-95"
                             title="Decline / Skip Cycle"
                           >
                             ✕
@@ -778,7 +842,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
               <div className={BENTO_CARD}>
                 <span className={`${LABEL_MONO} mb-3.5 block`}>Log Transaction</span>
                 <form onSubmit={addExpense} className="flex flex-col gap-[9px]">
-                  <input type="text" value={expenseTitle} onChange={(e) => setExpenseTitle(e.target.value)} placeholder="Description" required className={INPUT_CLASS} />
+                  <input id="transaction-desc-input" type="text" value={expenseTitle} onChange={(e) => setExpenseTitle(e.target.value)} placeholder="Description" required className={INPUT_CLASS} />
                   <input type="number" value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} placeholder={`Amount (${currency})`} required className={INPUT_CLASS} />
 
                   <select value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} required className={`${INPUT_CLASS} w-full cursor-pointer`}>
@@ -796,7 +860,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                         onClick={() => setExpenseCategory(c)}
                         className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold transition-all cursor-pointer ${
                           expenseCategory === c
-                            ? "border-text-primary bg-text-primary text-white"
+                            ? "border-text-primary bg-text-primary text-bg-primary"
                             : "border-border-subtle bg-bg-secondary/60 text-text-secondary hover:border-border-hover hover:bg-bg-secondary"
                         }`}
                       >
@@ -829,7 +893,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                     </button>
                   </div>
 
-                  <input type="date" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} className={INPUT_CLASS} />
+                  <input type="date" lang="en-CA" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} className={INPUT_CLASS} />
                   <input type="text" value={expenseNotes} onChange={(e) => setExpenseNotes(e.target.value)} placeholder="Notes" className={INPUT_CLASS} />
                   <button type="submit" disabled={isAddingExpense} className={`${BTN_PRIMARY} mt-1`}>{isAddingExpense ? "Logging..." : "Log Item"}</button>
                 </form>

@@ -55,20 +55,20 @@ export const ProClaimsQueue: React.FC<ProClaimsQueueProps> = ({
           {proClaims.map((claim) => (
             <div
               key={claim.id}
-              className={`flex items-start justify-between gap-4 rounded-none border p-3.5 transition-colors ${
+              className={`flex items-start justify-between gap-4 rounded-none border-2 p-3.5 transition-colors ${
                 claim.status === "pending"
-                  ? "border-amber-200 bg-amber-50/20"
+                  ? "border-amber-500/30 bg-amber-500/10"
                   : claim.status === "approved"
-                  ? "border-[#bbf7d0] bg-[#f0fdf4]/20"
-                  : "border-[#fecaca] bg-[#fef2f2]/20"
+                  ? "border-emerald-500/30 bg-emerald-500/10"
+                  : "border-rose-500/30 bg-rose-500/10"
               }`}
             >
               <div className="min-w-0 flex flex-col gap-1">
                 <div className="flex items-center gap-2">
-                  <span className={`inline-flex items-center gap-1 rounded-none px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide ${
-                    claim.status === "pending" ? "bg-amber-100 text-amber-700"
-                    : claim.status === "approved" ? "bg-[#dcfce7] text-[#166534]"
-                    : "bg-[#fee2e2] text-[#991b1b]"
+                  <span className={`inline-flex items-center gap-1 rounded-none px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide border ${
+                    claim.status === "pending" ? "bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/30"
+                    : claim.status === "approved" ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                    : "bg-rose-500/20 text-rose-600 dark:text-rose-400 border-rose-500/30"
                   }`}>
                     {claim.status}
                   </span>
@@ -95,14 +95,14 @@ export const ProClaimsQueue: React.FC<ProClaimsQueueProps> = ({
                   <button
                     disabled={proActionLoading === claim.id}
                     onClick={() => handleProAction(claim.id, "approve")}
-                    className="rounded-none border-2 border-[#16a34a] bg-[#16a34a] px-2.5 py-1 text-[10.5px] font-semibold text-white transition-all hover:bg-[#15803d] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="rounded-none border border-emerald-600 bg-emerald-600 px-2.5 py-1 text-[10.5px] font-semibold text-white transition-all hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {proActionLoading === claim.id ? "…" : "Approve"}
                   </button>
                   <button
                     disabled={proActionLoading === claim.id}
                     onClick={() => handleProAction(claim.id, "deny")}
-                    className="rounded-none border-2 border-[#dc2626] bg-transparent px-2.5 py-1 text-[10.5px] font-semibold text-[#dc2626] transition-all hover:bg-[#dc2626] hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="rounded-none border border-rose-500/40 bg-rose-500/10 px-2.5 py-1 text-[10.5px] font-semibold text-rose-600 dark:text-rose-400 transition-all hover:bg-rose-600 hover:text-white disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {proActionLoading === claim.id ? "…" : "Deny"}
                   </button>

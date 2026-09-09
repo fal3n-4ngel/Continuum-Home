@@ -45,7 +45,7 @@ const CARD_HEADER = "flex items-center justify-between gap-2 border-b border-bor
 const CARD_BODY = "flex flex-col gap-3 p-5";
 const LABEL_MONO = "font-mono text-[10px] font-bold tracking-[0.8px] text-text-secondary uppercase";
 const INPUT_CLASS = "w-full rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
-const BTN_PRIMARY = "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[12px] font-semibold text-white transition-all duration-150 hover:border-[#2e2d27] hover:bg-[#2e2d27] disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.98]";
+const BTN_PRIMARY = "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[12px] font-semibold text-bg-primary transition-all duration-150 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 active:scale-[0.98]";
 const PILL = "cursor-pointer rounded-md border border-border-subtle bg-bg-card px-2.5 py-1 text-[10.5px] font-medium text-text-secondary transition-all duration-150 hover:border-border-hover hover:text-text-primary";
 const LEDGER_TH = "border-b border-border-subtle px-3 py-2 text-left font-mono text-[9.5px] font-bold tracking-[0.4px] text-text-secondary uppercase";
 const LEDGER_TD = "border-b border-border-subtle px-3 py-2.5 text-[11px] text-text-primary align-middle";
@@ -144,11 +144,11 @@ const ExpenseReportCard: React.FC<{ expenses: Expense[]; currency: string; salar
         <div className="grid grid-cols-2 gap-2.5">
           <div>
             <label className="mb-1 block text-[10px] text-text-muted uppercase font-semibold">From</label>
-            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
+            <input type="date" lang="en-CA" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
           </div>
           <div>
             <label className="mb-1 block text-[10px] text-text-muted uppercase font-semibold">To</label>
-            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
+            <input type="date" lang="en-CA" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
           </div>
         </div>
         <div>
@@ -553,11 +553,11 @@ const MediaReportCard: React.FC<{ title: string; icon: React.ReactNode; type: Me
         <div className="grid grid-cols-2 gap-2.5 border-t border-border-subtle pt-2.5">
           <div>
             <label className="mb-1 block text-[10px] text-text-muted uppercase font-semibold">Added From</label>
-            <input type="date" value={addedFrom} onChange={(e) => setAddedFrom(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
+            <input type="date" lang="en-CA" value={addedFrom} onChange={(e) => setAddedFrom(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
           </div>
           <div>
             <label className="mb-1 block text-[10px] text-text-muted uppercase font-semibold">Added To</label>
-            <input type="date" value={addedTo} onChange={(e) => setAddedTo(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
+            <input type="date" lang="en-CA" value={addedTo} onChange={(e) => setAddedTo(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
           </div>
         </div>
 

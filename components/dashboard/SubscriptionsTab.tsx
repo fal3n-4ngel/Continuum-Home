@@ -27,7 +27,7 @@ const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-te
 const STAT_VALUE = "text-[28px] font-bold tracking-[-0.5px] text-text-primary";
 const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
 const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
-const BTN_PRIMARY = "rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-medium text-white transition-all duration-200 hover:border-[#2e2d27] hover:bg-[#2e2d27]";
+const BTN_PRIMARY = "rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-semibold text-bg-primary transition-all duration-200 hover:opacity-90";
 const INPUT_CLASS = "rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
 
 export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
@@ -129,7 +129,7 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
           </div>
           <div className="col-span-1 md:col-span-1 flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold text-text-secondary uppercase md:hidden">Next Due</span>
-            <input type="date" value={subNextDate} onChange={(e) => setSubNextDate(e.target.value)} required className={`${INPUT_CLASS} w-full`} />
+            <input type="date" lang="en-CA" value={subNextDate} onChange={(e) => setSubNextDate(e.target.value)} required className={`${INPUT_CLASS} w-full`} />
           </div>
           <button type="submit" disabled={isAddingSub} className={`${BTN_PRIMARY} col-span-2 md:col-span-1 whitespace-nowrap w-full`}>
             {isAddingSub ? "Adding..." : "+ Add"}

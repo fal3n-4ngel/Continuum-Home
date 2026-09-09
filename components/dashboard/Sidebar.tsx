@@ -3,6 +3,8 @@ import { FirebaseUser, AniListUser, TraktUser } from "@/types";
 import { isSafeImageUrl } from "@/lib/utils";
 import { AUTHOR, SITE_NAME } from "@/lib/utils";
 import { LogoMark } from "@/components/Logo";
+import { Sun, Moon } from "lucide-react";
+import { useTheme } from "@/lib/theme/use-theme";
 
 interface SidebarProps {
   activeTab: string;
@@ -79,6 +81,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setWatchlist,
   setExpensesLoaded,
 }) => {
+  const { theme, toggleTheme } = useTheme();
+
   return (
     <aside className="fixed top-0 bottom-0 left-0 z-[100] flex w-[250px] flex-col justify-between border-r border-border-subtle bg-bg-sidebar px-4 py-6 max-md:hidden min-[769px]:max-[1100px]:w-[210px]">
       <div className="mb-6 flex items-center gap-2.5 px-2">
@@ -93,12 +97,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
           <span>Expenses &amp; Subs</span>
         </div>
-        {isProUser && (
-          <div onClick={() => setActiveTab("financial")} className={navLinkClass(activeTab === "financial")}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            <span>Financial Health</span>
-          </div>
-        )}
+        <div onClick={() => setActiveTab("financial")} className={navLinkClass(activeTab === "financial")}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <span>Financial Health</span>
+          {!isProUser && (
+            <span className="ml-auto inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-1.5 py-[0.5px] font-mono text-[8.5px] font-semibold text-text-muted tracking-wider uppercase">
+              PRO
+            </span>
+          )}
+        </div>
         {showInvestmentsTab && (
           <div onClick={() => setActiveTab("investments")} className={navLinkClass(activeTab === "investments")}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
@@ -285,10 +292,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
-            <span
-              className="inline-flex shrink-0 items-center rounded-full border px-1.5 py-[1px] text-[9px] font-bold tracking-wider"
-              style={{ borderColor: "rgba(139,92,246,0.6)", color: "#7c3aed" }}
-            >PRO</span>
+            <span className="inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-1.5 py-[1px] font-mono text-[9px] font-semibold text-text-muted tracking-wider uppercase">
+              PRO
+            </span>
             <span>Upgrade to Pro</span>
           </button>
         )}
@@ -298,10 +304,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-text-muted">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
-            <span
-              className="inline-flex shrink-0 items-center rounded-full border px-1.5 py-[1px] text-[9px] font-bold tracking-wider"
-              style={{ borderColor: "rgba(139,92,246,0.6)", color: "#7c3aed" }}
-            >PRO</span>
+            <span className="inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-1.5 py-[1px] font-mono text-[9px] font-semibold text-text-muted tracking-wider uppercase">
+              PRO
+            </span>
           </div>
         )}
 
@@ -318,6 +323,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
               <p className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-semibold text-text-primary">{user.displayName || "User"}</p>
               <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] text-text-muted">{user.email}</p>
             </div>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              title={theme.type === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              aria-label={theme.type === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              className={`${sidebarActionBtnClass} p-1.5`}
+            >
+              {theme.type === "dark" ? (
+                <Sun size={14} className="text-amber-400 dark:text-amber-300 stroke-[2.2]" />
+              ) : (
+                <Moon size={14} className="text-text-secondary stroke-[2.2]" />
+              )}
+            </button>
             <button
               onClick={() => {
                 triggerConfirm("Sign Out", "Are you sure you want to sign out?", async () => {

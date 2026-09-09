@@ -21,6 +21,7 @@ import {
   Settings2,
   RotateCw,
   Lightbulb,
+  HeartPulse,
 } from "lucide-react";
 import { InvestmentAsset } from "@/types";
 import { getEffectiveAmount } from "@/lib/finance";
@@ -88,6 +89,8 @@ interface FinancialHealthTabProps {
   reconciliations: Record<string, number>;
   logUnaccountedGap: (amount: number) => void;
   getHeaders?: () => Record<string, string>;
+  isProUser?: boolean;
+  onClaimPro?: () => void;
 }
 
 const STAT_CARD =
@@ -97,14 +100,23 @@ const STAT_VALUE = "text-[24px] font-bold tracking-[-0.5px] text-text-primary";
 const STAT_SUBTEXT = "text-[11px] text-text-muted";
 const BENTO_CARD = "rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col justify-between";
 const BTN_PRIMARY =
-  "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all duration-200 hover:bg-[#2e2d27] disabled:opacity-60";
+  "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-xs font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 disabled:opacity-60";
 const BTN_SECONDARY =
-  "cursor-pointer rounded-full border border-border-subtle bg-white px-4 py-2 text-xs font-semibold text-text-primary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:border-border-hover";
+  "cursor-pointer rounded-full border border-border-subtle bg-bg-card px-4 py-2 text-xs font-semibold text-text-primary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:border-border-hover";
 
 const fmtDate = (s: string) => {
   const d = new Date(`${s}T00:00:00`);
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 };
+
+const HealthSeal = ({ className = "h-8 w-8" }: { className?: string }) => (
+  <div
+    className={`inline-flex items-center justify-center rounded-full border border-border-subtle bg-bg-secondary text-text-primary select-none shadow-2xs ${className}`}
+    aria-label="Financial Health"
+  >
+    <HeartPulse size={14} />
+  </div>
+);
 
 const LIQUIDITY_WEIGHTS: Record<string, number> = {
   cash: 1.0,
@@ -281,7 +293,7 @@ const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
             type="button"
             onClick={() => fetchAnalytics(true)}
             disabled={loading || refreshing}
-            className="cursor-pointer rounded-md border border-border-subtle bg-white px-3 py-1.5 text-[11.5px] font-semibold text-text-primary shadow-2xs transition-all hover:bg-bg-primary hover:border-border-hover disabled:opacity-50 flex items-center gap-1.5"
+            className="cursor-pointer rounded-md border border-border-subtle bg-bg-card px-3 py-1.5 text-[11.5px] font-semibold text-text-primary shadow-2xs transition-all hover:bg-bg-primary hover:border-border-hover disabled:opacity-50 flex items-center gap-1.5"
           >
             <RotateCw size={12} className={refreshing ? "animate-spin" : ""} />
             <span>{refreshing ? "Updating..." : "Refresh Analytics"}</span>
@@ -426,6 +438,8 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   reconciliations,
   logUnaccountedGap,
   getHeaders,
+  isProUser = false,
+  onClaimPro,
 }) => {
   const [reconcileAnswer, setReconcileAnswer] = useState<"yes" | "no" | null>(null);
   const [actualAmount, setActualAmount] = useState("");
@@ -582,6 +596,195 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
 
   const deficitToTarget = isBehindTarget ? Math.abs(spendablePoolForTarget) : 0;
 
+  if (!isProUser) {
+    return (
+      <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full">
+        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border-subtle pb-4">
+          <div className="flex items-center gap-3">
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="font-serif text-3xl italic font-normal tracking-wide text-text-primary">
+                  Financial Health
+                </h1>
+                <span className="inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-text-muted uppercase">
+                  Pro
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-text-secondary">
+                Target-driven daily spending limits, pay-cycle pace, cash reconciliation, and liquidity runway.
+              </p>
+            </div>
+          </div>
+          <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-full border border-border-subtle/50 shadow-2xs">
+            Cycle {fmtDate(payCycle.startStr)} – {fmtDate(payCycle.endStr)}
+          </span>
+        </div>
+
+        <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 sm:p-7 shadow-subtle flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative overflow-hidden">
+          <div className="flex flex-col gap-2 max-w-2xl">
+            <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[1.2px] text-text-muted">
+              Supporter Feature
+            </span>
+            <h2 className="font-serif text-2xl italic font-normal tracking-tight text-text-primary">
+              Adaptive Pay-Cycles &amp; Liquidity Intelligence
+            </h2>
+            <p className="text-[13px] leading-relaxed text-text-secondary">
+              Gain automated daily safe-spending limits, cash-on-hand reconciliations, weighted emergency runway analytics, and private Gemini AI advisory tailored to your salary schedule.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={onClaimPro}
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-text-primary bg-text-primary px-6 py-2.5 text-xs font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 active:scale-95"
+            >
+              <span>Unlock with Pro</span>
+              <span className="text-xs">→</span>
+            </button>
+            <a
+              href="https://github.com/fal3n-4ngel/Continuum-Home#readme"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-border-subtle bg-bg-secondary px-5 py-2.5 text-xs font-medium text-text-secondary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover"
+            >
+              <span>Self-Host Free</span>
+              <span className="font-mono text-[10px]">↗</span>
+            </a>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-primary text-text-primary">
+                  <CalendarCheck size={18} />
+                </div>
+                <div>
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-muted">
+                    Cycle Tracking
+                  </span>
+                  <h3 className="font-serif text-lg font-medium text-text-primary">
+                    Adaptive Daily Spend Limits
+                  </h3>
+                </div>
+              </div>
+              <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+                Pace Calibration
+              </span>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Dynamically calculates your safe daily allowance based on elapsed days, committed subscriptions, and your target savings percentage.
+            </p>
+            <div className="rounded-xl border border-border-subtle bg-bg-primary/50 p-3 flex items-center justify-between text-xs">
+              <span className="text-text-muted">Today&apos;s Safe Allowance</span>
+              <span className="font-mono font-semibold text-text-primary">{currency}1,450 / day</span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-primary text-text-primary">
+                  <Wallet size={18} />
+                </div>
+                <div>
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-muted">
+                    Balance Audit
+                  </span>
+                  <h3 className="font-serif text-lg font-medium text-text-primary">
+                    Cash-on-Hand Reconciliation
+                  </h3>
+                </div>
+              </div>
+              <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+                Leak Detection
+              </span>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Verify your physical bank balance against projected net cash at payday. Automatically records unaccounted gaps into your ledger.
+            </p>
+            <div className="rounded-xl border border-border-subtle bg-bg-primary/50 p-3 flex items-center justify-between text-xs">
+              <span className="text-text-muted">Cycle Audit Status</span>
+              <span className="font-mono font-semibold text-[#2e7d32]">Balanced · 0% Unaccounted</span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-primary text-text-primary">
+                  <ShieldCheck size={18} />
+                </div>
+                <div>
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-muted">
+                    Safety Buffer
+                  </span>
+                  <h3 className="font-serif text-lg font-medium text-text-primary">
+                    Emergency Liquidity Runway
+                  </h3>
+                </div>
+              </div>
+              <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+                Asset Weighted
+              </span>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Measures emergency runway in months, applying tiered liquidity discounts across bank deposits, mutual funds, gold, and equity holdings.
+            </p>
+            <div className="rounded-xl border border-border-subtle bg-bg-primary/50 p-3 flex items-center justify-between text-xs">
+              <span className="text-text-muted">Liquid Reserve Health</span>
+              <span className="font-mono font-semibold text-text-primary">6.4 Months Runway</span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-primary text-text-primary">
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-muted">
+                    AI Intelligence
+                  </span>
+                  <h3 className="font-serif text-lg font-medium text-text-primary">
+                    Gemini AI Fiscal Advisory
+                  </h3>
+                </div>
+              </div>
+              <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+                Zero Cloud Leak
+              </span>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Analyzes category anomalies, monthly burn trajectory, and generates actionable steps to preserve savings without touching raw ledger entries.
+            </p>
+            <div className="rounded-xl border border-border-subtle bg-bg-primary/50 p-3 flex items-center justify-between text-xs">
+              <span className="text-text-muted">Model Execution</span>
+              <span className="font-mono font-semibold text-text-primary">Gemini 2.5 Flash · Private</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border-subtle bg-bg-secondary/40 p-4 text-[11px] leading-relaxed text-text-muted flex flex-wrap items-center justify-between gap-2">
+          <span>
+            Continuum is 100% open-source under the MIT license. All Pro capabilities are permanently unlocked for self-hosted instances.
+          </span>
+          <a
+            href="https://github.com/fal3n-4ngel/Continuum-Home"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-text-secondary hover:text-text-primary underline font-medium"
+          >
+            View Repository on GitHub ↗
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full">
       <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border-subtle pb-4">
@@ -591,14 +794,14 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             Target-driven daily spending limits, pay-cycle pace, cash reconciliation, and liquidity runway.
           </p>
         </div>
-        <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-[#EAE5DC]/60 px-3 py-1 rounded-full border border-border-subtle/50 shadow-2xs">
+        <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-full border border-border-subtle/50 shadow-2xs">
           Cycle {fmtDate(payCycle.startStr)} – {fmtDate(payCycle.endStr)}
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-subtle border-t-2 border-t-[#2e7d32]/70 bg-bg-card p-4 shadow-subtle">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-subtle bg-bg-card p-4 shadow-subtle">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-[#2e7d32]/20 bg-[#E6F4EA] text-[#2e7d32] shadow-2xs">
+          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-bg-secondary text-text-secondary shadow-2xs">
             <PiggyBank size={18} />
           </div>
           <div>
@@ -608,7 +811,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1 rounded-full bg-[#EAE5DC]/60 p-1 border border-border-subtle/40 shadow-2xs">
+          <div className="flex items-center gap-1 rounded-full bg-bg-secondary p-1 border border-border-subtle/40 shadow-2xs">
             {[0, 0.1, 0.2, 0.3].map((pct) => {
               const amount = Math.round(payCycle.totalIncome * pct);
               const isActive = targetSavingsGoal === amount || (pct === 0 && targetSavingsGoal === 0);
@@ -620,7 +823,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                   onClick={() => handleTargetSavingsChange(amount)}
                   className={`cursor-pointer rounded-full border-none px-3.5 py-1 text-xs font-semibold transition-all duration-200 ${
                     isActive
-                      ? "bg-white text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
+                      ? "bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
                       : "bg-transparent text-text-secondary hover:text-text-primary"
                   }`}
                 >
@@ -638,7 +841,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
               value={targetSavingsGoal || ""}
               onChange={(e) => handleTargetSavingsChange(parseFloat(e.target.value) || 0)}
               placeholder="Target Goal"
-              className="w-full rounded-full border border-border-subtle bg-white py-1 pr-3 pl-7 text-xs font-bold text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus shadow-2xs"
+              className="w-full rounded-full border border-border-subtle bg-bg-card py-1 pr-3 pl-7 text-xs font-bold text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus shadow-2xs"
             />
           </div>
         </div>
@@ -656,10 +859,10 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           <span className={STAT_SUBTEXT}>Salary + additional this cycle</span>
         </div>
 
-        <div className={`${STAT_CARD} border-t-2 border-t-[#e39282]/80`}>
+        <div className={`${STAT_CARD} border-t-2 border-t-border-subtle`}>
           <div>
             <span className={LABEL_MONO}>SPENT SO FAR</span>
-            <div className={STAT_VALUE} style={{ color: "#e39282" }}>
+            <div className={STAT_VALUE}>
               {currency}
               {payCycle.spentSoFar.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </div>
@@ -669,17 +872,17 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           </span>
         </div>
 
-        <div className={`${STAT_CARD} border-t-2 ${isBehindTarget || todaySpent > grossDailyLimit ? "border-t-[#e39282]/80" : "border-t-[#2e7d32]/70"}`}>
+        <div className={`${STAT_CARD} border-t-2 border-t-border-subtle`}>
           <div>
             <div className="flex items-center justify-between gap-1">
               <span className={LABEL_MONO}>SAFE TODAY</span>
               <span
                 className={`font-mono text-[9.5px] font-semibold px-2 py-0.5 rounded-full border ${
                   isBehindTarget
-                    ? "text-[#c05621] bg-[#FDF6F0] border-[#fbd38d]/60"
+                    ? "text-text-muted bg-bg-secondary border-border-subtle"
                     : todaySpent > grossDailyLimit
-                    ? "text-[#c05621] bg-[#FDF6F0] border-[#fbd38d]/60"
-                    : "text-[#2e7d32] bg-[#E6F4EA] border-[#a3e635]/40"
+                    ? "text-text-muted bg-bg-secondary border-border-subtle"
+                    : "text-text-secondary bg-bg-secondary border-border-subtle"
                 }`}
               >
                 {isBehindTarget
@@ -691,7 +894,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             </div>
             <div
               className={STAT_VALUE}
-              style={{ color: isBehindTarget || todaySpent > grossDailyLimit ? "#e39282" : "#2e7d32" }}
             >
               {currency}
               {Math.floor(safeToday).toLocaleString("en-IN")}
@@ -706,17 +908,17 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           </span>
         </div>
 
-        <div className={`${STAT_CARD} border-t-2 ${isBehindTarget || thisWeekSpent > grossWeekLimit ? "border-t-[#e39282]/80" : "border-t-[#2e7d32]/70"}`}>
+        <div className={`${STAT_CARD} border-t-2 border-t-border-subtle`}>
           <div>
             <div className="flex items-center justify-between gap-1">
               <span className={LABEL_MONO}>SAFE THIS WEEK</span>
               <span
                 className={`font-mono text-[9.5px] font-semibold px-2 py-0.5 rounded-full border ${
                   isBehindTarget
-                    ? "text-[#c05621] bg-[#FDF6F0] border-[#fbd38d]/60"
+                    ? "text-text-muted bg-bg-secondary border-border-subtle"
                     : thisWeekSpent > grossWeekLimit
-                    ? "text-[#c05621] bg-[#FDF6F0] border-[#fbd38d]/60"
-                    : "text-[#2e7d32] bg-[#E6F4EA] border-[#a3e635]/40"
+                    ? "text-text-muted bg-bg-secondary border-border-subtle"
+                    : "text-text-secondary bg-bg-secondary border-border-subtle"
                 }`}
               >
                 {isBehindTarget
@@ -728,7 +930,6 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             </div>
             <div
               className={STAT_VALUE}
-              style={{ color: isBehindTarget || thisWeekSpent > grossWeekLimit ? "#e39282" : "#2e7d32" }}
             >
               {currency}
               {Math.floor(safeWeek).toLocaleString("en-IN")}
@@ -743,10 +944,10 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           </span>
         </div>
 
-        <div className={`${STAT_CARD} border-t-2 border-t-[#b3666b]/80`}>
+        <div className={`${STAT_CARD} border-t-2 border-t-border-subtle`}>
           <div>
             <span className={LABEL_MONO}>EXPECTED SAVINGS Predicted</span>
-            <div className={STAT_VALUE} style={{ color: payCycle.expectedSavings >= 0 ? "#2e7d32" : "#b3666b" }}>
+            <div className={STAT_VALUE}>
               {payCycle.expectedSavings >= 0 ? "+" : ""}
               {currency}
               {payCycle.expectedSavings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
@@ -883,13 +1084,13 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         <div className={`${BENTO_CARD} border-t-2 border-t-[#e39282]/80`}>
           <div>
             <div className="flex items-center justify-between border-b border-border-subtle pb-3">
-              <div className="flex items-center gap-1 rounded-full bg-[#EAE5DC]/60 p-1 border border-border-subtle/40 shadow-2xs">
+              <div className="flex items-center gap-1 rounded-full bg-bg-secondary p-1 border border-border-subtle/40 shadow-2xs">
                 <button
                   type="button"
                   onClick={() => setRightTab("reconcile")}
                   className={`flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer ${
                     rightTab === "reconcile"
-                      ? "bg-white text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
+                      ? "bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
                       : "bg-transparent text-text-secondary hover:text-text-primary"
                   }`}
                 >
@@ -900,7 +1101,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                   onClick={() => setRightTab("income")}
                   className={`flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer ${
                     rightTab === "income"
-                      ? "bg-white text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
+                      ? "bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
                       : "bg-transparent text-text-secondary hover:text-text-primary"
                   }`}
                 >
@@ -933,7 +1134,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                         ) : (
                           <button
                             onClick={() => handleLogGap(discrepancy)}
-                            className="cursor-pointer self-start rounded-md border border-rose-300/60 bg-white/60 px-2 py-1 text-[10px] font-semibold text-rose-800 transition-colors hover:bg-white"
+                            className="cursor-pointer self-start rounded-md border border-rose-300/60 bg-bg-card/60 px-2 py-1 text-[10px] font-semibold text-rose-800 transition-colors hover:bg-bg-card"
                           >
                             Log {currency}{discrepancy.toLocaleString("en-IN", { maximumFractionDigits: 0 })} as unaccounted expense
                           </button>
@@ -950,7 +1151,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                         ) : (
                           <button
                             onClick={() => handleLogGap(discrepancy)}
-                            className="cursor-pointer self-start rounded-md border border-blue-300/60 bg-white/60 px-2 py-1 text-[10px] font-semibold text-blue-800 transition-colors hover:bg-white"
+                            className="cursor-pointer self-start rounded-md border border-blue-300/60 bg-bg-card/60 px-2 py-1 text-[10px] font-semibold text-blue-800 transition-colors hover:bg-bg-card"
                           >
                             Log {currency}{Math.abs(discrepancy).toLocaleString("en-IN", { maximumFractionDigits: 0 })} as unaccounted income
                           </button>
@@ -1088,6 +1289,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                       <div className="grid grid-cols-2 gap-2">
                         <input
                           type="date"
+                          lang="en-CA"
                           value={paydayDate}
                           onChange={(e) => setPaydayDate(e.target.value)}
                           className="rounded-md border border-border-subtle bg-bg-card p-2 text-xs text-text-primary outline-none"
