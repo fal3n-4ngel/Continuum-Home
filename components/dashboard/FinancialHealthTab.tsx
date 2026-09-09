@@ -21,6 +21,7 @@ import {
   Settings2,
   RotateCw,
   Lightbulb,
+  HeartPulse,
 } from "lucide-react";
 import { InvestmentAsset } from "@/types";
 import { getEffectiveAmount } from "@/lib/finance";
@@ -107,6 +108,15 @@ const fmtDate = (s: string) => {
   const d = new Date(`${s}T00:00:00`);
   return d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
 };
+
+const HealthSeal = ({ className = "h-8 w-8" }: { className?: string }) => (
+  <div
+    className={`inline-flex items-center justify-center rounded-full border border-border-subtle bg-bg-secondary text-text-primary select-none shadow-2xs ${className}`}
+    aria-label="Financial Health"
+  >
+    <HeartPulse size={14} />
+  </div>
+);
 
 const LIQUIDITY_WEIGHTS: Record<string, number> = {
   cash: 1.0,
@@ -586,97 +596,190 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
 
   const deficitToTarget = isBehindTarget ? Math.abs(spendablePoolForTarget) : 0;
 
-  if (!isProUser) {
+  if (isProUser) {
     return (
-      <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full relative">
+      <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full">
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border-subtle pb-4">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">
-                Financial Health
-              </h1>
-              <span
-                className="inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 font-mono text-[9px] font-bold tracking-wider"
-                style={{ borderColor: "rgba(139,92,246,0.6)", color: "#7c3aed" }}
-              >
-                PRO
-              </span>
-            </div>
-            <p className="mt-1 text-sm text-text-muted">
-              Target-driven daily spending limits, pay-cycle pace, cash reconciliation, and liquidity runway.
-            </p>
-          </div>
-        </div>
-
-        <div className="relative overflow-hidden rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-subtle sm:p-10">
-          <div className="mx-auto max-w-xl flex flex-col items-center gap-5 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-600 shadow-2xs">
-              <Shield className="h-6 w-6" />
-            </div>
-
+          <div className="flex items-center gap-3">
             <div>
-              <span className="font-mono text-[10px] font-bold tracking-[1.5px] text-purple-600 uppercase">
-                Supporter &amp; Pro Feature
-              </span>
-              <h2 className="mt-1.5 font-serif text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl">
-                Unlock Financial Health
-              </h2>
-              <p className="mt-2.5 text-xs leading-relaxed text-text-secondary sm:text-sm">
-                Gain real-time clarity over your monthly pay cycles, daily adaptive spending limits, cash-on-hand reconciliations, and Gemini AI spend analytics.
+              <div className="flex items-center gap-2">
+                <h1 className="font-serif text-3xl italic font-normal tracking-wide text-text-primary">
+                  Financial Health
+                </h1>
+                <span className="inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-text-muted uppercase">
+                  Pro
+                </span>
+              </div>
+              <p className="mt-1 text-sm text-text-secondary">
+                Target-driven daily spending limits, pay-cycle pace, cash reconciliation, and liquidity runway.
               </p>
             </div>
+          </div>
+          <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-full border border-border-subtle/50 shadow-2xs">
+            Cycle {fmtDate(payCycle.startStr)} – {fmtDate(payCycle.endStr)}
+          </span>
+        </div>
 
-            <div className="grid w-full grid-cols-1 gap-3 text-left sm:grid-cols-2 my-1">
-              <div className="rounded-xl border border-border-subtle bg-bg-primary/60 p-4">
-                <div className="flex items-center gap-2 text-text-primary">
-                  <Calendar className="h-4 w-4 text-purple-600 shrink-0" />
-                  <span className="text-xs font-semibold">Pay-Cycle Pace &amp; Limits</span>
-                </div>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-text-secondary">
-                  Dynamic daily and weekly safe spending allowances calibrated to your income and payday.
-                </p>
-              </div>
+        <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 sm:p-7 shadow-subtle flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative overflow-hidden">
+          <div className="flex flex-col gap-2 max-w-2xl">
+            <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[1.2px] text-text-muted">
+              Supporter Feature
+            </span>
+            <h2 className="font-serif text-2xl italic font-normal tracking-tight text-text-primary">
+              Adaptive Pay-Cycles &amp; Liquidity Intelligence
+            </h2>
+            <p className="text-[13px] leading-relaxed text-text-secondary">
+              Gain automated daily safe-spending limits, cash-on-hand reconciliations, weighted emergency runway analytics, and private Gemini AI advisory tailored to your salary schedule.
+            </p>
+          </div>
 
-              <div className="rounded-xl border border-border-subtle bg-bg-primary/60 p-4">
-                <div className="flex items-center gap-2 text-text-primary">
-                  <Wallet className="h-4 w-4 text-purple-600 shrink-0" />
-                  <span className="text-xs font-semibold">Cash Reconciliation</span>
-                </div>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-text-secondary">
-                  Reconcile projected cash-on-hand against bank balances and automatically detect unaccounted leaks.
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-border-subtle bg-bg-primary/60 p-4">
-                <div className="flex items-center gap-2 text-text-primary">
-                  <ShieldCheck className="h-4 w-4 text-purple-600 shrink-0" />
-                  <span className="text-xs font-semibold">Liquidity Runway Score</span>
-                </div>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-text-secondary">
-                  Weighted emergency reserves across cash, mutual funds, gold, and equity portfolios.
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-border-subtle bg-bg-primary/60 p-4">
-                <div className="flex items-center gap-2 text-text-primary">
-                  <Sparkles className="h-4 w-4 text-purple-600 shrink-0" />
-                  <span className="text-xs font-semibold">Gemini AI Fiscal Advisory</span>
-                </div>
-                <p className="mt-1 text-[11.5px] leading-relaxed text-text-secondary">
-                  Deep spending anomaly detection, burn projections, and actionable monthly savings strategies.
-                </p>
-              </div>
-            </div>
-
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               type="button"
               onClick={onClaimPro}
-              className="mt-1 inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-purple-600 bg-purple-600 px-7 py-2.5 text-xs font-bold text-white shadow-xs transition-all duration-200 hover:bg-purple-700 hover:shadow-subtle active:scale-95"
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-text-primary bg-text-primary px-6 py-2.5 text-xs font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 active:scale-95"
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>Get Continuum Pro →</span>
+              <span>Unlock with Pro</span>
+              <span className="text-xs">→</span>
             </button>
+            <a
+              href="https://github.com/fal3n-4ngel/Continuum-Home#readme"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-border-subtle bg-bg-secondary px-5 py-2.5 text-xs font-medium text-text-secondary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover"
+            >
+              <span>Self-Host Free</span>
+              <span className="font-mono text-[10px]">↗</span>
+            </a>
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-primary text-text-primary">
+                  <CalendarCheck size={18} />
+                </div>
+                <div>
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-muted">
+                    Cycle Tracking
+                  </span>
+                  <h3 className="font-serif text-lg font-medium text-text-primary">
+                    Adaptive Daily Spend Limits
+                  </h3>
+                </div>
+              </div>
+              <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+                Pace Calibration
+              </span>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Dynamically calculates your safe daily allowance based on elapsed days, committed subscriptions, and your target savings percentage.
+            </p>
+            <div className="rounded-xl border border-border-subtle bg-bg-primary/50 p-3 flex items-center justify-between text-xs">
+              <span className="text-text-muted">Today&apos;s Safe Allowance</span>
+              <span className="font-mono font-semibold text-text-primary">{currency}1,450 / day</span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-primary text-text-primary">
+                  <Wallet size={18} />
+                </div>
+                <div>
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-muted">
+                    Balance Audit
+                  </span>
+                  <h3 className="font-serif text-lg font-medium text-text-primary">
+                    Cash-on-Hand Reconciliation
+                  </h3>
+                </div>
+              </div>
+              <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+                Leak Detection
+              </span>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Verify your physical bank balance against projected net cash at payday. Automatically records unaccounted gaps into your ledger.
+            </p>
+            <div className="rounded-xl border border-border-subtle bg-bg-primary/50 p-3 flex items-center justify-between text-xs">
+              <span className="text-text-muted">Cycle Audit Status</span>
+              <span className="font-mono font-semibold text-[#2e7d32]">Balanced · 0% Unaccounted</span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-primary text-text-primary">
+                  <ShieldCheck size={18} />
+                </div>
+                <div>
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-muted">
+                    Safety Buffer
+                  </span>
+                  <h3 className="font-serif text-lg font-medium text-text-primary">
+                    Emergency Liquidity Runway
+                  </h3>
+                </div>
+              </div>
+              <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+                Asset Weighted
+              </span>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Measures emergency runway in months, applying tiered liquidity discounts across bank deposits, mutual funds, gold, and equity holdings.
+            </p>
+            <div className="rounded-xl border border-border-subtle bg-bg-primary/50 p-3 flex items-center justify-between text-xs">
+              <span className="text-text-muted">Liquid Reserve Health</span>
+              <span className="font-mono font-semibold text-text-primary">6.4 Months Runway</span>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-primary text-text-primary">
+                  <Sparkles size={18} />
+                </div>
+                <div>
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-muted">
+                    AI Intelligence
+                  </span>
+                  <h3 className="font-serif text-lg font-medium text-text-primary">
+                    Gemini AI Fiscal Advisory
+                  </h3>
+                </div>
+              </div>
+              <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+                Zero Cloud Leak
+              </span>
+            </div>
+            <p className="text-xs text-text-secondary leading-relaxed">
+              Analyzes category anomalies, monthly burn trajectory, and generates actionable steps to preserve savings without touching raw ledger entries.
+            </p>
+            <div className="rounded-xl border border-border-subtle bg-bg-primary/50 p-3 flex items-center justify-between text-xs">
+              <span className="text-text-muted">Model Execution</span>
+              <span className="font-mono font-semibold text-text-primary">Gemini 2.5 Flash · Private</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-xl border border-border-subtle bg-bg-secondary/40 p-4 text-[11px] leading-relaxed text-text-muted flex flex-wrap items-center justify-between gap-2">
+          <span>
+            Continuum is 100% open-source under the MIT license. All Pro capabilities are permanently unlocked for self-hosted instances.
+          </span>
+          <a
+            href="https://github.com/fal3n-4ngel/Continuum-Home"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-text-secondary hover:text-text-primary underline font-medium"
+          >
+            View Repository on GitHub ↗
+          </a>
         </div>
       </div>
     );

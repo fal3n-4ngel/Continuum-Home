@@ -101,10 +101,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           <span>Financial Health</span>
           {!isProUser && (
-            <span
-              className="ml-auto inline-flex shrink-0 items-center rounded-full border px-1.5 py-[0.5px] text-[8.5px] font-bold tracking-wider"
-              style={{ borderColor: "rgba(139,92,246,0.6)", color: "#7c3aed" }}
-            >
+            <span className="ml-auto inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-1.5 py-[0.5px] font-mono text-[8.5px] font-semibold text-text-muted tracking-wider uppercase">
               PRO
             </span>
           )}
@@ -295,10 +292,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
-            <span
-              className="inline-flex shrink-0 items-center rounded-full border px-1.5 py-[1px] text-[9px] font-bold tracking-wider"
-              style={{ borderColor: "rgba(139,92,246,0.6)", color: "#7c3aed" }}
-            >PRO</span>
+            <span className="inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-1.5 py-[1px] font-mono text-[9px] font-semibold text-text-muted tracking-wider uppercase">
+              PRO
+            </span>
             <span>Upgrade to Pro</span>
           </button>
         )}
@@ -308,10 +304,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-text-muted">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
             </svg>
-            <span
-              className="inline-flex shrink-0 items-center rounded-full border px-1.5 py-[1px] text-[9px] font-bold tracking-wider"
-              style={{ borderColor: "rgba(139,92,246,0.6)", color: "#7c3aed" }}
-            >PRO</span>
+            <span className="inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-1.5 py-[1px] font-mono text-[9px] font-semibold text-text-muted tracking-wider uppercase">
+              PRO
+            </span>
           </div>
         )}
 
