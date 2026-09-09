@@ -144,11 +144,11 @@ const ExpenseReportCard: React.FC<{ expenses: Expense[]; currency: string; salar
         <div className="grid grid-cols-2 gap-2.5">
           <div>
             <label className="mb-1 block text-[10px] text-text-muted uppercase font-semibold">From</label>
-            <input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
+            <input type="date" lang="en-CA" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
           </div>
           <div>
             <label className="mb-1 block text-[10px] text-text-muted uppercase font-semibold">To</label>
-            <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
+            <input type="date" lang="en-CA" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
           </div>
         </div>
         <div>
@@ -553,11 +553,11 @@ const MediaReportCard: React.FC<{ title: string; icon: React.ReactNode; type: Me
         <div className="grid grid-cols-2 gap-2.5 border-t border-border-subtle pt-2.5">
           <div>
             <label className="mb-1 block text-[10px] text-text-muted uppercase font-semibold">Added From</label>
-            <input type="date" value={addedFrom} onChange={(e) => setAddedFrom(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
+            <input type="date" lang="en-CA" value={addedFrom} onChange={(e) => setAddedFrom(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
           </div>
           <div>
             <label className="mb-1 block text-[10px] text-text-muted uppercase font-semibold">Added To</label>
-            <input type="date" value={addedTo} onChange={(e) => setAddedTo(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
+            <input type="date" lang="en-CA" value={addedTo} onChange={(e) => setAddedTo(e.target.value)} className={`${INPUT_CLASS} text-xs`} />
           </div>
         </div>
 

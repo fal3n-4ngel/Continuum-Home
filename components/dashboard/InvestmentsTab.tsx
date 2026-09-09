@@ -832,6 +832,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                     <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">Start Date</span>
                     <input
                       type="date"
+                      lang="en-CA"
                       value={invStartDate}
                       onChange={(e) => setInvStartDate(e.target.value)}
                       required
@@ -842,6 +843,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                     <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">Maturity Date</span>
                     <input
                       type="date"
+                      lang="en-CA"
                       value={invMaturityDate}
                       onChange={(e) => setInvMaturityDate(e.target.value)}
                       min={invStartDate || undefined}
@@ -915,6 +917,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                       <span className="text-[10px] font-semibold text-text-secondary uppercase px-0.5">SIP Start Date</span>
                       <input
                         type="date"
+                        lang="en-CA"
                         value={invStartDate}
                         onChange={(e) => setInvStartDate(e.target.value)}
                         className={INPUT_CLASS}

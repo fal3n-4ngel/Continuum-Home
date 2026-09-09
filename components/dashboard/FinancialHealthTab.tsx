@@ -1289,6 +1289,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                       <div className="grid grid-cols-2 gap-2">
                         <input
                           type="date"
+                          lang="en-CA"
                           value={paydayDate}
                           onChange={(e) => setPaydayDate(e.target.value)}
                           className="rounded-md border border-border-subtle bg-bg-card p-2 text-xs text-text-primary outline-none"

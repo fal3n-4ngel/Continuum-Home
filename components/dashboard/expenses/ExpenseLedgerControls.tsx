@@ -65,6 +65,7 @@ export const ExpenseLedgerControls: React.FC<ExpenseLedgerControlsProps> = ({
       <div className="flex items-center gap-1 shrink-0">
         <input
           type="date"
+          lang="en-CA"
           value={ledgerStartDate}
           onChange={(e) => setLedgerStartDate(e.target.value)}
           title="From date"
@@ -74,6 +75,7 @@ export const ExpenseLedgerControls: React.FC<ExpenseLedgerControlsProps> = ({
         <span className="text-[11px] text-text-secondary">to</span>
         <input
           type="date"
+          lang="en-CA"
           value={ledgerEndDate}
           onChange={(e) => setLedgerEndDate(e.target.value)}
           title="To date"

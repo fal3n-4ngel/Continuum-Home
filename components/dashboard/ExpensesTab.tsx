@@ -893,7 +893,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                     </button>
                   </div>
 
-                  <input type="date" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} className={INPUT_CLASS} />
+                  <input type="date" lang="en-CA" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} className={INPUT_CLASS} />
                   <input type="text" value={expenseNotes} onChange={(e) => setExpenseNotes(e.target.value)} placeholder="Notes" className={INPUT_CLASS} />
                   <button type="submit" disabled={isAddingExpense} className={`${BTN_PRIMARY} mt-1`}>{isAddingExpense ? "Logging..." : "Log Item"}</button>
                 </form>

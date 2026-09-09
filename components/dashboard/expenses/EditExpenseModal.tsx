@@ -144,6 +144,7 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
               <label className="mb-1 block text-[11px] font-medium text-text-muted">Date</label>
               <input
                 type="date"
+                lang="en-CA"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 className="w-full rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all focus:border-border-hover focus:shadow-focus"

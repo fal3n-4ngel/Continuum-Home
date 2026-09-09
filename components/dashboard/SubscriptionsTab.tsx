@@ -129,7 +129,7 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
           </div>
           <div className="col-span-1 md:col-span-1 flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold text-text-secondary uppercase md:hidden">Next Due</span>
-            <input type="date" value={subNextDate} onChange={(e) => setSubNextDate(e.target.value)} required className={`${INPUT_CLASS} w-full`} />
+            <input type="date" lang="en-CA" value={subNextDate} onChange={(e) => setSubNextDate(e.target.value)} required className={`${INPUT_CLASS} w-full`} />
           </div>
           <button type="submit" disabled={isAddingSub} className={`${BTN_PRIMARY} col-span-2 md:col-span-1 whitespace-nowrap w-full`}>
             {isAddingSub ? "Adding..." : "+ Add"}
