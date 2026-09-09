@@ -88,6 +88,8 @@ interface FinancialHealthTabProps {
   reconciliations: Record<string, number>;
   logUnaccountedGap: (amount: number) => void;
   getHeaders?: () => Record<string, string>;
+  isProUser?: boolean;
+  onClaimPro?: () => void;
 }
 
 const STAT_CARD =
@@ -426,6 +428,8 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   reconciliations,
   logUnaccountedGap,
   getHeaders,
+  isProUser = false,
+  onClaimPro,
 }) => {
   const [reconcileAnswer, setReconcileAnswer] = useState<"yes" | "no" | null>(null);
   const [actualAmount, setActualAmount] = useState("");
@@ -581,6 +585,102 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   const safeWeek = Math.max(0, grossWeekLimit - thisWeekSpent);
 
   const deficitToTarget = isBehindTarget ? Math.abs(spendablePoolForTarget) : 0;
+
+  if (!isProUser) {
+    return (
+      <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full relative">
+        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border-subtle pb-4">
+          <div>
+            <div className="flex items-center gap-2.5">
+              <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">
+                Financial Health
+              </h1>
+              <span
+                className="inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 font-mono text-[9px] font-bold tracking-wider"
+                style={{ borderColor: "rgba(139,92,246,0.6)", color: "#7c3aed" }}
+              >
+                PRO
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-text-muted">
+              Target-driven daily spending limits, pay-cycle pace, cash reconciliation, and liquidity runway.
+            </p>
+          </div>
+        </div>
+
+        <div className="relative overflow-hidden rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-subtle sm:p-10">
+          <div className="mx-auto max-w-xl flex flex-col items-center gap-5 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full border border-purple-500/30 bg-purple-500/10 text-purple-600 shadow-2xs">
+              <Shield className="h-6 w-6" />
+            </div>
+
+            <div>
+              <span className="font-mono text-[10px] font-bold tracking-[1.5px] text-purple-600 uppercase">
+                Supporter &amp; Pro Feature
+              </span>
+              <h2 className="mt-1.5 font-serif text-2xl font-semibold tracking-tight text-text-primary sm:text-3xl">
+                Unlock Financial Health
+              </h2>
+              <p className="mt-2.5 text-xs leading-relaxed text-text-secondary sm:text-sm">
+                Gain real-time clarity over your monthly pay cycles, daily adaptive spending limits, cash-on-hand reconciliations, and Gemini AI spend analytics.
+              </p>
+            </div>
+
+            <div className="grid w-full grid-cols-1 gap-3 text-left sm:grid-cols-2 my-1">
+              <div className="rounded-xl border border-border-subtle bg-bg-primary/60 p-4">
+                <div className="flex items-center gap-2 text-text-primary">
+                  <Calendar className="h-4 w-4 text-purple-600 shrink-0" />
+                  <span className="text-xs font-semibold">Pay-Cycle Pace &amp; Limits</span>
+                </div>
+                <p className="mt-1 text-[11.5px] leading-relaxed text-text-secondary">
+                  Dynamic daily and weekly safe spending allowances calibrated to your income and payday.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-border-subtle bg-bg-primary/60 p-4">
+                <div className="flex items-center gap-2 text-text-primary">
+                  <Wallet className="h-4 w-4 text-purple-600 shrink-0" />
+                  <span className="text-xs font-semibold">Cash Reconciliation</span>
+                </div>
+                <p className="mt-1 text-[11.5px] leading-relaxed text-text-secondary">
+                  Reconcile projected cash-on-hand against bank balances and automatically detect unaccounted leaks.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-border-subtle bg-bg-primary/60 p-4">
+                <div className="flex items-center gap-2 text-text-primary">
+                  <ShieldCheck className="h-4 w-4 text-purple-600 shrink-0" />
+                  <span className="text-xs font-semibold">Liquidity Runway Score</span>
+                </div>
+                <p className="mt-1 text-[11.5px] leading-relaxed text-text-secondary">
+                  Weighted emergency reserves across cash, mutual funds, gold, and equity portfolios.
+                </p>
+              </div>
+
+              <div className="rounded-xl border border-border-subtle bg-bg-primary/60 p-4">
+                <div className="flex items-center gap-2 text-text-primary">
+                  <Sparkles className="h-4 w-4 text-purple-600 shrink-0" />
+                  <span className="text-xs font-semibold">Gemini AI Fiscal Advisory</span>
+                </div>
+                <p className="mt-1 text-[11.5px] leading-relaxed text-text-secondary">
+                  Deep spending anomaly detection, burn projections, and actionable monthly savings strategies.
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={onClaimPro}
+              className="mt-1 inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-purple-600 bg-purple-600 px-7 py-2.5 text-xs font-bold text-white shadow-xs transition-all duration-200 hover:bg-purple-700 hover:shadow-subtle active:scale-95"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>Get Continuum Pro →</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards] w-full">

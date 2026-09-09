@@ -86,19 +86,19 @@ function ChatDemo() {
         {example.user}
       </div>
       {phase === "typing" && (
-        <div className="flex animate-[bubbleIn_0.28s_cubic-bezier(0.16,1,0.3,1)_both] items-center gap-1 self-start rounded-[15px] rounded-bl-[4px] border border-[#e5e3db] bg-white px-[15px] py-[13px] shadow-sm">
-          <span className="h-[5px] w-[5px] animate-[chatDotBounce_1s_infinite_ease-in-out_both] rounded-full bg-[#9c9a92]" />
-          <span className="h-[5px] w-[5px] animate-[chatDotBounce_1s_infinite_ease-in-out_both] rounded-full bg-[#9c9a92] [animation-delay:0.15s]" />
-          <span className="h-[5px] w-[5px] animate-[chatDotBounce_1s_infinite_ease-in-out_both] rounded-full bg-[#9c9a92] [animation-delay:0.3s]" />
+        <div className="flex animate-[bubbleIn_0.28s_cubic-bezier(0.16,1,0.3,1)_both] items-center gap-1 self-start rounded-[15px] rounded-bl-[4px] border border-border-subtle bg-bg-secondary px-[15px] py-[13px] shadow-sm">
+          <span className="h-[5px] w-[5px] animate-[chatDotBounce_1s_infinite_ease-in-out_both] rounded-full bg-text-muted" />
+          <span className="h-[5px] w-[5px] animate-[chatDotBounce_1s_infinite_ease-in-out_both] rounded-full bg-text-muted [animation-delay:0.15s]" />
+          <span className="h-[5px] w-[5px] animate-[chatDotBounce_1s_infinite_ease-in-out_both] rounded-full bg-text-muted [animation-delay:0.3s]" />
         </div>
       )}
       {phase === "reply" && (
         <div
-          className="max-w-[85%] animate-[bubbleIn_0.28s_cubic-bezier(0.16,1,0.3,1)_both] self-start rounded-[15px] rounded-bl-[4px] border border-[#bbf7d0] bg-[#f0fdf4] px-[15px] py-[11px] text-[12.5px] leading-[1.5] text-[#14532d] shadow-sm"
+          className="max-w-[85%] animate-[bubbleIn_0.28s_cubic-bezier(0.16,1,0.3,1)_both] self-start rounded-[15px] rounded-bl-[4px] border border-[#bbf7d0] dark:border-emerald-800/40 bg-[#f0fdf4] dark:bg-emerald-950/40 px-[15px] py-[11px] text-[12.5px] leading-[1.5] text-[#14532d] dark:text-emerald-300 shadow-sm"
           key={`a-${exampleIndex}`}
         >
           <div className="font-bold flex items-center gap-1.5">{example.replyMain}</div>
-          <div className="mt-[3px] text-[11px] text-[#15803d] opacity-85">
+          <div className="mt-[3px] text-[11px] text-[#15803d] dark:text-emerald-400 opacity-85">
             {example.replyDetail}
           </div>
         </div>
@@ -113,10 +113,10 @@ function LiveClockStrip() {
     <div className="mt-1 flex max-[900px]:flex-wrap max-[900px]:gap-y-4">
       {CLOCK_ZONES.map((z, idx) => (
         <div
-          className={`flex flex-col gap-[3px] border-l border-[#e5e3db] px-7 first:border-l-0 first:pl-0 max-[900px]:flex-[1_1_40%] max-[900px]:border-l-0 max-[900px]:pr-5 max-[900px]:pl-0 ${idx === 1 ? "max-[900px]:!border-l max-[900px]:!border-[#e5e3db] max-[900px]:!pl-5" : ""}`}
+          className={`flex flex-col gap-[3px] border-l border-border-subtle px-7 first:border-l-0 first:pl-0 max-[900px]:flex-[1_1_40%] max-[900px]:border-l-0 max-[900px]:pr-5 max-[900px]:pl-0 ${idx === 1 ? "max-[900px]:!border-l max-[900px]:!border-border-subtle max-[900px]:!pl-5" : ""}`}
           key={z.zone}
         >
-          <span className="font-mono text-[17px] font-semibold tracking-[0.5px] text-[#1c1b18] [font-variant-numeric:tabular-nums]">
+          <span className="font-mono text-[17px] font-semibold tracking-[0.5px] text-text-primary [font-variant-numeric:tabular-nums]">
             {now
               ? new Intl.DateTimeFormat("en-GB", {
                   timeZone: z.zone,
@@ -127,10 +127,10 @@ function LiveClockStrip() {
                 }).format(now)
               : "--:--:--"}
           </span>
-          <span className="text-xs font-semibold text-[#6e6c64]">
+          <span className="text-xs font-semibold text-text-secondary">
             {z.label}
           </span>
-          <span className="font-mono text-[9.5px] tracking-[0.8px] text-[#b0aea6] uppercase">
+          <span className="font-mono text-[9.5px] tracking-[0.8px] text-text-muted uppercase">
             {z.region}
           </span>
         </div>
@@ -168,15 +168,15 @@ const SERIF_ITALIC_STYLE: React.CSSProperties = {
   fontFamily: "'Playfair Display', Georgia, serif",
 };
 const HERO_CTA_PRIMARY =
-  "flex cursor-pointer items-center gap-2 rounded-full border-none bg-text-primary px-7 py-[13px] text-sm font-semibold text-white no-underline transition-all duration-200 hover:-translate-y-px hover:bg-[#2e2d27] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50";
+  "flex cursor-pointer items-center gap-2 rounded-full border-none bg-text-primary px-7 py-[13px] text-sm font-semibold text-bg-card no-underline transition-all duration-200 hover:-translate-y-px hover:opacity-90 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50";
 const STEP_DESC = "text-[13px] leading-[1.55] text-text-secondary";
 
 const DIAGRAM_NODE =
-  "flex items-center gap-3 rounded-xl border border-[#e2e0d8] bg-white px-3.5 py-3 shadow-[0_2px_8px_rgba(28,27,24,0.04)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#1c1b18] hover:shadow-[0_6px_18px_-4px_rgba(28,27,24,0.1)]";
+  "flex items-center gap-3 rounded-xl border border-border-subtle bg-bg-card px-3.5 py-3 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-border-hover";
 const NODE_ICON =
   "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-[14px] shadow-xs";
 const FEATURE_NUM =
-  "block font-mono text-[10.5px] font-bold tracking-[1px] text-[#8a8880] uppercase";
+  "block font-mono text-[10.5px] font-bold tracking-[1px] text-text-muted uppercase";
 const BROWSER_DOT = "h-2.5 w-2.5 rounded-full";
 const FOOTER_LINK_ITEM =
   "inline-flex cursor-pointer items-center gap-1 text-[13px] text-text-secondary no-underline transition-colors duration-150 hover:text-text-primary";
@@ -513,13 +513,13 @@ export default function LandingPage({
           <span className="inline-flex items-center gap-1.5 rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-4 py-1.5 text-[12px] font-semibold text-[#1d4ed8]">
             🤖 AI Endpoints (ChatGPT &amp; Claude)
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e5e3db] bg-white px-4 py-1.5 text-[12px] font-medium text-[#1c1b18]">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card px-4 py-1.5 text-[12px] font-medium text-text-primary">
             💸 Expense &amp; Subscription Ledger
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e5e3db] bg-white px-4 py-1.5 text-[12px] font-medium text-[#1c1b18]">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card px-4 py-1.5 text-[12px] font-medium text-text-primary">
             📈 Investments &amp; Live Quotes
           </span>
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#e5e3db] bg-white px-4 py-1.5 text-[12px] font-medium text-[#1c1b18]">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card px-4 py-1.5 text-[12px] font-medium text-text-primary">
             🎬 Media &amp; Book Library
           </span>
         </div>
@@ -533,24 +533,24 @@ export default function LandingPage({
           className="max-[768px]:px-2 max-[768px]:py-[10px]"
           id="dg-container"
         >
-          <div className="relative overflow-hidden rounded-2xl border border-[#e2e0d8] bg-white p-8 shadow-[0_8px_30px_rgba(28,27,24,0.05)] [background-image:radial-gradient(#e5e3db_1px,transparent_1px)] [background-size:24px_24px]">
+          <div className="relative overflow-hidden rounded-2xl border border-border-subtle bg-bg-card p-8 shadow-subtle [background-image:radial-gradient(var(--border-subtle)_1px,transparent_1px)] [background-size:24px_24px]">
 
-            <div className="mb-6 flex items-center justify-between border-b border-[#e8e6de] pb-4 max-[480px]:flex-col max-[480px]:items-start max-[480px]:gap-2">
+            <div className="mb-6 flex items-center justify-between border-b border-border-subtle pb-4 max-[480px]:flex-col max-[480px]:items-start max-[480px]:gap-2">
               <div className="flex items-center gap-2 text-left">
                 <span className="flex h-2 w-2 rounded-full bg-[#22c55e] animate-pulse" />
-                <span className="font-mono text-[11px] font-bold tracking-wider text-[#6e6c64] uppercase">
+                <span className="font-mono text-[11px] font-bold tracking-wider text-text-secondary uppercase">
                   SYSTEM ARCHITECTURE FLOW
                 </span>
               </div>
-              <div className="flex items-center gap-2 text-xs font-mono text-[#9c9a92]">
+              <div className="flex items-center gap-2 text-xs font-mono text-text-muted">
                 <span>REST / OpenAPI 3.1</span>
                 <span>·</span>
-                <span className="rounded bg-[#f4f3ec] px-2 py-0.5 font-bold text-[#1c1b18]">AES-256 ENCRYPTED</span>
+                <span className="rounded bg-bg-secondary px-2 py-0.5 font-bold text-text-primary">AES-256 ENCRYPTED</span>
               </div>
             </div>
 
             <div className="block max-[768px]:hidden">
-              <div className="mb-4 grid grid-cols-[230px_240px_140px_240px] justify-between text-left border-b border-[#f4f3ec] pb-2">
+              <div className="mb-4 grid grid-cols-[230px_240px_140px_240px] justify-between text-left border-b border-border-subtle pb-2">
                 <span className={FEATURE_NUM}>1. INCOMING DATA</span>
                 <span className={FEATURE_NUM}>2. CONTINUUM ENGINE</span>
                 <span className={`${FEATURE_NUM} text-center`}>3. API HUB</span>
@@ -772,16 +772,16 @@ export default function LandingPage({
 
       <section
         id="ai"
-        className="border-t border-b border-[#e5e3db] bg-[#eae8e0] px-6 py-[80px]"
+        className="border-t border-b border-border-subtle bg-bg-secondary px-6 py-[80px]"
       >
         <div className="mx-auto grid max-w-[1100px] grid-cols-[1.1fr_1fr] items-center gap-[50px] max-[900px]:grid-cols-1 max-[900px]:gap-10">
           <div>
-            <span className={`${HERO_BADGE} mb-5 bg-[#f4f3ec]`}>
+            <span className={`${HERO_BADGE} mb-5 bg-bg-card`}>
               🤖 OpenAPI 3.1 &amp; AI Agents
             </span>
             <h2 className={`${HERO_TITLE} mb-4 text-left text-[38px] max-[480px]:text-[28px]`}>
 
-              <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
+              <span className="font-normal italic text-text-secondary" style={SERIF_ITALIC_STYLE}>
                 Your data, your AI agent.
               </span>
             </h2>
@@ -790,19 +790,19 @@ export default function LandingPage({
             </p>
 
             <ul className="mb-7 flex list-none flex-col gap-3 p-0">
-              <li className="flex items-start gap-3 text-sm leading-[1.5] text-[#1c1b18]">
+              <li className="flex items-start gap-3 text-sm leading-[1.5] text-text-primary">
                 <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#10b981] text-[11px] text-white">
                   ✓
                 </span>
                 Works natively with custom ChatGPT Actions (Custom GPTs)
               </li>
-              <li className="flex items-start gap-3 text-sm leading-[1.5] text-[#1c1b18]">
+              <li className="flex items-start gap-3 text-sm leading-[1.5] text-text-primary">
                 <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#10b981] text-[11px] text-white">
                   ✓
                 </span>
                 Log expenses, add movies to watchlists, or ask for portfolio totals via natural language
               </li>
-              <li className="flex items-start gap-3 text-sm leading-[1.5] text-[#1c1b18]">
+              <li className="flex items-start gap-3 text-sm leading-[1.5] text-text-primary">
                 <span className="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#10b981] text-[11px] text-white">
                   ✓
                 </span>
@@ -815,21 +815,21 @@ export default function LandingPage({
             </a>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-[#e5e3db] bg-white shadow-[0_20px_40px_-15px_rgba(110,108,100,0.14)]">
-            <div className="flex h-9 items-center justify-between border-b border-[#e5e3db] bg-[#f4f3ec] px-4">
+          <div className="overflow-hidden rounded-2xl border border-border-subtle bg-bg-card shadow-subtle">
+            <div className="flex h-9 items-center justify-between border-b border-border-subtle bg-bg-primary/50 px-4">
               <div className="flex items-center gap-1.5">
                 <div className={`${BROWSER_DOT} bg-[#ff5f56]`} />
                 <div className={`${BROWSER_DOT} bg-[#ffbd2e]`} />
                 <div className={`${BROWSER_DOT} bg-[#27c93f]`} />
               </div>
-              <span className="font-mono text-[10.5px] font-semibold tracking-wider text-[#9c9a92] uppercase">
+              <span className="font-mono text-[10.5px] font-semibold tracking-wider text-text-muted uppercase">
                 ChatGPT · Continuum Action API
               </span>
-              <span className="rounded bg-[#e5e3db] px-1.5 py-0.5 font-mono text-[9px] text-[#6e6c64]">
+              <span className="rounded bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] text-text-secondary">
                 v1.2
               </span>
             </div>
-            <div className="flex h-[310px] items-end gap-3 bg-[#f4f3ec] p-5">
+            <div className="flex h-[310px] items-end gap-3 bg-bg-card p-5">
               <ChatDemo />
             </div>
           </div>
@@ -1492,42 +1492,42 @@ export default function LandingPage({
         </div>
       </section>
 
-      <section className="border-t border-b border-[#e5e1d8] bg-[#f4f1ea] px-6 py-[80px]">
+      <section className="border-t border-b border-border-subtle bg-bg-secondary px-6 py-[80px]">
         <div className="mx-auto max-w-[1100px] text-center">
-          <span className={`${HERO_BADGE} bg-[#eae6dc] border-[#d4cebf] text-[#55534c]`}>Universal Access</span>
+          <span className={`${HERO_BADGE} bg-bg-card`}>Universal Access</span>
           <h2 className={`${HERO_TITLE} mb-10 text-[38px] max-[480px]:text-[28px]`}>
             Built for everyone.
             <br />
-            <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
+            <span className="font-normal italic text-text-secondary" style={SERIF_ITALIC_STYLE}>
               Simple for daily use. Powerful when you need it.
             </span>
           </h2>
 
           <div className="grid grid-cols-4 gap-5 text-left max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
-            <div className="flex h-full flex-col items-start rounded-2xl border border-[#e5e1d8] bg-white p-6 shadow-[0_4px_16px_rgba(28,27,24,0.03)] transition-all duration-200 hover:-translate-y-0.5">
-              <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-xl bg-[#f7f4ee] text-xl">✨</div>
-              <h4 className="mb-1.5 text-base font-bold text-[#1c1b18]">For Everyday Users</h4>
+            <div className="flex h-full flex-col items-start rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-border-hover">
+              <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-xl bg-bg-secondary text-xl">✨</div>
+              <h4 className="mb-1.5 text-base font-bold text-text-primary">For Everyday Users</h4>
               <p className={STEP_DESC}>
                 Instant zero-setup access. Track daily expenses, watchlists, and books with zero technical hassle.
               </p>
             </div>
-            <div className="flex h-full flex-col items-start rounded-2xl border border-[#e5e1d8] bg-white p-6 shadow-[0_4px_16px_rgba(28,27,24,0.03)] transition-all duration-200 hover:-translate-y-0.5">
-              <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-xl bg-[#f7f4ee] text-xl">👩‍💻</div>
-              <h4 className="mb-1.5 text-base font-bold text-[#1c1b18]">For Developers</h4>
+            <div className="flex h-full flex-col items-start rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-border-hover">
+              <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-xl bg-bg-secondary text-xl">👩‍💻</div>
+              <h4 className="mb-1.5 text-base font-bold text-text-primary">For Developers</h4>
               <p className={STEP_DESC}>
                 Fork the repo, deploy to Vercel in ~5 minutes. Full environment control with zero server maintenance.
               </p>
             </div>
-            <div className="flex h-full flex-col items-start rounded-2xl border border-[#e5e1d8] bg-white p-6 shadow-[0_4px_16px_rgba(28,27,24,0.03)] transition-all duration-200 hover:-translate-y-0.5">
-              <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-xl bg-[#f7f4ee] text-xl">🔒</div>
-              <h4 className="mb-1.5 text-base font-bold text-[#1c1b18]">For Privacy Conscious</h4>
+            <div className="flex h-full flex-col items-start rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-border-hover">
+              <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-xl bg-bg-secondary text-xl">🔒</div>
+              <h4 className="mb-1.5 text-base font-bold text-text-primary">For Privacy Conscious</h4>
               <p className={STEP_DESC}>
                 Own your Firebase database. Sensitive financial data encrypted at rest with AES-256 GCM.
               </p>
             </div>
-            <div className="flex h-full flex-col items-start rounded-2xl border border-[#e5e1d8] bg-white p-6 shadow-[0_4px_16px_rgba(28,27,24,0.03)] transition-all duration-200 hover:-translate-y-0.5">
-              <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-xl bg-[#f7f4ee] text-xl">🤖</div>
-              <h4 className="mb-1.5 text-base font-bold text-[#1c1b18]">For AI Users</h4>
+            <div className="flex h-full flex-col items-start rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-border-hover">
+              <div className="mb-3.5 flex h-10 w-10 items-center justify-center rounded-xl bg-bg-secondary text-xl">🤖</div>
+              <h4 className="mb-1.5 text-base font-bold text-text-primary">For AI Users</h4>
               <p className={STEP_DESC}>
                 Give ChatGPT Custom Actions or local LLMs a structured, OpenAPI-authenticated interface to your data.
               </p>
@@ -1538,31 +1538,31 @@ export default function LandingPage({
 
       <section
         id="setup"
-        className="bg-[#faf8f5] px-6 py-[80px]"
+        className="bg-bg-primary px-6 py-[80px]"
       >
         <div className="mx-auto grid max-w-[1100px] grid-cols-[1fr_1.05fr] items-start gap-[50px] max-[900px]:grid-cols-1 max-[900px]:gap-10">
           <div>
             <div className="mb-6 flex items-center gap-2">
-              <span className="inline-flex items-center rounded-full border border-[#dcd6c8] bg-[#eee8dd] px-3.5 py-1 font-mono text-[10px] font-bold tracking-[1.5px] text-[#55534c] uppercase">
+              <span className="inline-flex items-center rounded-full border border-border-subtle bg-bg-secondary px-3.5 py-1 font-mono text-[10px] font-bold tracking-[1.5px] text-text-secondary uppercase">
                 Developer First
               </span>
-              <span className="inline-flex items-center rounded-full border border-[#10b981]/30 bg-[#10b981]/15 px-3.5 py-1 font-mono text-[10px] font-bold tracking-[1px] text-[#047857]">
+              <span className="inline-flex items-center rounded-full border border-[#10b981]/30 bg-[#10b981]/15 px-3.5 py-1 font-mono text-[10px] font-bold tracking-[1px] text-[#047857] dark:text-[#34d399]">
                 ~5 min deployment
               </span>
             </div>
             <h2 className={`${HERO_TITLE} mb-8 text-left text-[38px] max-[480px]:text-[28px]`}>
               If you can clone a repo,
               <br />
-              <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
+              <span className="font-normal italic text-text-secondary" style={SERIF_ITALIC_STYLE}>
                 you can self-host this.
               </span>
             </h2>
             <div className="mb-6 flex items-start gap-4">
-              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1c1b18] text-[11px] font-bold text-white">
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-text-primary text-[11px] font-bold text-bg-card">
                 1
               </span>
               <div>
-                <h4 className="mb-1 text-[15px] font-bold text-[#1c1b18]">
+                <h4 className="mb-1 text-[15px] font-bold text-text-primary">
                   Fork &amp; Deploy to Vercel
                 </h4>
                 <p className={STEP_DESC}>
@@ -1571,11 +1571,11 @@ export default function LandingPage({
               </div>
             </div>
             <div className="mb-6 flex items-start gap-4">
-              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1c1b18] text-[11px] font-bold text-white">
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-text-primary text-[11px] font-bold text-bg-card">
                 2
               </span>
               <div>
-                <h4 className="mb-1 text-[15px] font-bold text-[#1c1b18]">
+                <h4 className="mb-1 text-[15px] font-bold text-text-primary">
                   Connect Firebase Project
                 </h4>
                 <p className={STEP_DESC}>
@@ -1584,11 +1584,11 @@ export default function LandingPage({
               </div>
             </div>
             <div className="flex items-start gap-4">
-              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#1c1b18] text-[11px] font-bold text-white">
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-text-primary text-[11px] font-bold text-bg-card">
                 3
               </span>
               <div>
-                <h4 className="mb-1 text-[15px] font-bold text-[#1c1b18]">
+                <h4 className="mb-1 text-[15px] font-bold text-text-primary">
                   Connect Optional API Keys
                 </h4>
                 <p className={STEP_DESC}>
@@ -1598,28 +1598,28 @@ export default function LandingPage({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-[#e5e1d8] bg-white p-7 shadow-[0_12px_32px_-8px_rgba(28,27,24,0.06)]">
-            <div className="flex items-center justify-between border-b border-[#f4f0ea] pb-3 mb-4">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#9c9a92]">Deployment Workflow</span>
-              <span className="rounded bg-[#f7f4ee] px-2 py-0.5 font-mono text-[9px] text-[#6e6c64]">VERCEL + FIREBASE</span>
+          <div className="rounded-2xl border border-border-subtle bg-bg-card p-7 shadow-subtle">
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-4">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">Deployment Workflow</span>
+              <span className="rounded bg-bg-secondary px-2 py-0.5 font-mono text-[9px] text-text-secondary">VERCEL + FIREBASE</span>
             </div>
             <div className="flex flex-col gap-3 font-mono text-xs">
-              <div className="flex items-center gap-3 rounded-lg border border-[#e5e1d8] bg-[#f7f4ee] p-3">
-                <span className="font-bold text-[#1c1b18]">git clone</span>
-                <span className="text-[#6e6c64] text-[11px] truncate">https://github.com/fal3n-4ngel/Continuum-Home</span>
+              <div className="flex items-center gap-3 rounded-lg border border-border-subtle bg-bg-secondary p-3">
+                <span className="font-bold text-text-primary">git clone</span>
+                <span className="text-text-secondary text-[11px] truncate">https://github.com/fal3n-4ngel/Continuum-Home</span>
               </div>
-              <div className="flex items-center justify-center text-[#9c9a92] text-[11px]">↓</div>
-              <div className="flex items-center justify-between rounded-lg border border-[#e5e1d8] bg-[#f7f4ee] p-3">
-                <span className="font-bold text-[#1c1b18]">Vercel Deploy</span>
-                <span className="rounded bg-[#dcfce7] px-2 py-0.5 text-[10px] font-bold text-[#15803d]">BUILD SUCCESSFUL</span>
+              <div className="flex items-center justify-center text-text-muted text-[11px]">↓</div>
+              <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-bg-secondary p-3">
+                <span className="font-bold text-text-primary">Vercel Deploy</span>
+                <span className="rounded bg-[#dcfce7] dark:bg-emerald-950/40 px-2 py-0.5 text-[10px] font-bold text-[#15803d] dark:text-emerald-400">BUILD SUCCESSFUL</span>
               </div>
-              <div className="flex items-center justify-center text-[#9c9a92] text-[11px]">↓</div>
-              <div className="flex items-center justify-between rounded-lg border border-[#e5e1d8] bg-[#f7f4ee] p-3">
-                <span className="font-bold text-[#1c1b18]">Firebase Rules</span>
-                <span className="rounded bg-[#dbeafe] px-2 py-0.5 text-[10px] font-bold text-[#1d4ed8]">ISOLATION VERIFIED</span>
+              <div className="flex items-center justify-center text-text-muted text-[11px]">↓</div>
+              <div className="flex items-center justify-between rounded-lg border border-border-subtle bg-bg-secondary p-3">
+                <span className="font-bold text-text-primary">Firebase Rules</span>
+                <span className="rounded bg-[#dbeafe] dark:bg-blue-950/40 px-2 py-0.5 text-[10px] font-bold text-[#1d4ed8] dark:text-blue-400">ISOLATION VERIFIED</span>
               </div>
-              <div className="flex items-center justify-center text-[#9c9a92] text-[11px]">↓</div>
-              <div className="rounded-lg border border-[#bbf7d0] bg-[#f0fdf4] p-3 text-center font-semibold text-[#14532d]">
+              <div className="flex items-center justify-center text-text-muted text-[11px]">↓</div>
+              <div className="rounded-lg border border-[#bbf7d0] dark:border-emerald-800/40 bg-[#f0fdf4] dark:bg-emerald-950/40 p-3 text-center font-semibold text-[#14532d] dark:text-emerald-300">
                 🎉 Ready at your-custom-domain.vercel.app
               </div>
             </div>
@@ -1629,63 +1629,63 @@ export default function LandingPage({
 
       <section
         id="pricing"
-        className="border-t border-b border-[#e5e1d8] bg-[#f4f1ea] px-6 py-[80px] text-center"
+        className="border-t border-b border-border-subtle bg-bg-secondary px-6 py-[80px] text-center"
       >
         <div className="mx-auto max-w-[1100px]">
-          <span className={`${HERO_BADGE} bg-[#eae6dc] border-[#d4cebf] text-[#55534c]`}>Transparent Positioning</span>
+          <span className={`${HERO_BADGE} bg-bg-card`}>Transparent Positioning</span>
           <h2 className={`${HERO_TITLE} mb-3 text-[42px] max-[480px]:text-[30px]`}>
             Pick your setup.
             <br />
-            <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
+            <span className="font-normal italic text-text-secondary" style={SERIF_ITALIC_STYLE}>
               All are welcome.
             </span>
           </h2>
-          <p className="mx-auto mb-0 max-w-[580px] text-base leading-[1.6] text-[#6e6c64]">
+          <p className="mx-auto mb-0 max-w-[580px] text-base leading-[1.6] text-text-secondary">
             Zero feature gates on self-hosting. Use the hosted instance for free, self-deploy for full privacy, or support ongoing open-source development.
           </p>
 
           <div className="mt-10 grid grid-cols-3 gap-5 text-left max-[900px]:mx-auto max-[900px]:max-w-[480px] max-[900px]:grid-cols-1">
-            <div className="relative flex flex-col rounded-2xl border border-[#e5e1d8] bg-white p-7 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-subtle">
-              <span className="mb-4 inline-block self-start rounded-full bg-[#f7f4ee] border border-[#e5e1d8] px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-[#6e6c64] uppercase">
+            <div className="relative flex flex-col rounded-2xl border border-border-subtle bg-bg-card p-7 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-subtle">
+              <span className="mb-4 inline-block self-start rounded-full bg-bg-secondary border border-border-subtle px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-text-secondary uppercase">
                 Free Cloud Hosted
               </span>
-              <p className="mb-1 text-xl font-bold tracking-tight text-[#1c1b18]">
+              <p className="mb-1 text-xl font-bold tracking-tight text-text-primary">
                 Free Cloud
               </p>
-              <p className="mb-1 text-[36px] leading-none font-extrabold tracking-tight text-[#1c1b18]">
+              <p className="mb-1 text-[36px] leading-none font-extrabold tracking-tight text-text-primary">
                 $0{" "}
-                <span className="text-[13px] font-normal tracking-normal text-[#9c9a92]">
+                <span className="text-[13px] font-normal tracking-normal text-text-muted">
                   / forever
                 </span>
               </p>
-              <p className="mt-3 flex-1 text-[13px] leading-[1.6] text-[#6e6c64]">
+              <p className="mt-3 flex-1 text-[13px] leading-[1.6] text-text-secondary">
                 Sign in instantly to use the shared hosted instance. Access core tracking modules with zero server setup.
               </p>
-              <div className="my-5 h-px bg-[#e5e1d8]" />
+              <div className="my-5 h-px bg-border-subtle" />
               <ul className="mb-6 flex list-none flex-col gap-2.5 p-0">
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> Instant access, zero setup
                 </li>
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> Expense ledger &amp; subscriptions
                 </li>
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> Watchlists &amp; Book library
                 </li>
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> AES-256 DB Encryption
                 </li>
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> Custom GPT &amp; AI Agent API
                 </li>
               </ul>
               {authError && (
-                <div className="mb-3 rounded-lg border border-[#fecaca] bg-[#fef2f2] px-3 py-2 text-xs text-[#dc2626]">
+                <div className="mb-3 rounded-lg border border-[#fecaca] dark:border-rose-900/50 bg-[#fef2f2] dark:bg-rose-950/40 px-3 py-2 text-xs text-[#dc2626] dark:text-rose-400">
                   {authError}
                 </div>
               )}
               <button
-                className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-[#1c1b18] bg-transparent px-5 py-2.5 text-[13px] font-semibold text-[#1c1b18] no-underline transition-all duration-200 enabled:hover:bg-[#1c1b18] enabled:hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border border-border-subtle bg-bg-secondary px-5 py-2.5 text-[13px] font-semibold text-text-primary no-underline transition-all duration-200 hover:border-border-hover hover:bg-bg-primary disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={onLogin}
                 disabled={!firebaseAuthReady}
               >
@@ -1693,37 +1693,37 @@ export default function LandingPage({
               </button>
             </div>
 
-            <div className="relative flex flex-col rounded-2xl border-2 border-[#1c1b18] bg-white p-7 shadow-[0_8px_24px_-4px_rgba(28,27,24,0.12)] transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5">
-              <span className="mb-4 inline-block self-start rounded-full bg-[#1c1b18] px-2.5 py-1 font-mono text-[9.5px] font-bold tracking-wider text-white uppercase">
+            <div className="relative flex flex-col rounded-2xl border-2 border-text-primary bg-bg-card p-7 shadow-subtle transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5">
+              <span className="mb-4 inline-block self-start rounded-full bg-text-primary px-2.5 py-1 font-mono text-[9.5px] font-bold tracking-wider text-bg-card uppercase">
                 Recommended · Developer
               </span>
-              <p className="mb-1 text-xl font-bold tracking-tight text-[#1c1b18]">
+              <p className="mb-1 text-xl font-bold tracking-tight text-text-primary">
                 Self-Hostable
               </p>
-              <p className="mb-1 text-[36px] leading-none font-extrabold tracking-tight text-[#1c1b18]">
+              <p className="mb-1 text-[36px] leading-none font-extrabold tracking-tight text-text-primary">
                 $0{" "}
-                <span className="text-[13px] font-normal tracking-normal text-[#9c9a92]">
+                <span className="text-[13px] font-normal tracking-normal text-text-muted">
                   forever
                 </span>
               </p>
-              <p className="mt-3 flex-1 text-[13px] leading-[1.6] text-[#6e6c64]">
+              <p className="mt-3 flex-1 text-[13px] leading-[1.6] text-text-secondary">
                 Deploy to Vercel + Firebase in ~5 minutes. 100% free with all features fully unlocked in your private database.
               </p>
-              <div className="my-5 h-px bg-[#e5e1d8]" />
+              <div className="my-5 h-px bg-border-subtle" />
               <ul className="mb-6 flex list-none flex-col gap-2.5 p-0">
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> <strong>100% features unlocked</strong>
                 </li>
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> Private Firebase &amp; full data ownership
                 </li>
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> Financial Health Pay-Cycles &amp; AI Chat
                 </li>
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> MIT Licensed open source
                 </li>
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> Zero rate limits or resource sharing
                 </li>
               </ul>
@@ -1731,51 +1731,51 @@ export default function LandingPage({
                 href="https://github.com/fal3n-4ngel/Continuum-Home#readme"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-[#1c1b18] bg-[#1c1b18] px-5 py-2.5 text-[13px] font-semibold text-white no-underline transition-all duration-200 enabled:hover:bg-[#2e2d27]"
+                className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border border-text-primary bg-text-primary px-5 py-2.5 text-[13px] font-semibold text-bg-card no-underline transition-all duration-200 hover:opacity-90"
               >
                 View Self-Host Guide →
               </a>
             </div>
 
-            <div className="relative flex flex-col rounded-2xl border border-[#e5e1d8] bg-white p-7 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-subtle">
-              <span className="mb-4 inline-block self-start rounded-full bg-[#f7f4ee] border border-[#e5e1d8] px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-[#6e6c64] uppercase">
+            <div className="relative flex flex-col rounded-2xl border border-border-subtle bg-bg-card p-7 transition-[box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:shadow-subtle">
+              <span className="mb-4 inline-block self-start rounded-full bg-bg-secondary border border-border-subtle px-2.5 py-1 font-mono text-[9.5px] font-semibold tracking-wider text-text-secondary uppercase">
                 Open Source Supporter
               </span>
-              <p className="mb-1 text-xl font-bold tracking-tight text-[#1c1b18]">
+              <p className="mb-1 text-xl font-bold tracking-tight text-text-primary">
                 Supporter Tier
               </p>
-              <p className="mb-1 text-[36px] leading-none font-extrabold tracking-tight text-[#1c1b18]">
+              <p className="mb-1 text-[36px] leading-none font-extrabold tracking-tight text-text-primary">
                 $1{" "}
-                <span className="text-[13px] font-normal tracking-normal text-[#9c9a92]">
+                <span className="text-[13px] font-normal tracking-normal text-text-muted">
                   / month
                 </span>
               </p>
-              <p className="text-[12px] text-[#6e6c64] mt-1 mb-1">
+              <p className="text-[12px] text-text-secondary mt-1 mb-1">
                 or $25 lifetime support payment
               </p>
-              <p className="mt-3 flex-1 text-[13px] leading-[1.6] text-[#6e6c64]">
+              <p className="mt-3 flex-1 text-[13px] leading-[1.6] text-text-secondary">
                 Support development of Continuum while unlocking hosted Financial Health tools and early feature previews.
               </p>
-              <div className="my-5 h-px bg-[#e5e1d8]" />
+              <div className="my-5 h-px bg-border-subtle" />
               <ul className="mb-6 flex list-none flex-col gap-2.5 p-0">
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> Everything in Free Cloud
                 </li>
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> <strong>Financial Health Tab</strong> (Pay-cycles)
                 </li>
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> <strong>Kiroku AI Assistant</strong>
                 </li>
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> Supporter profile badge &amp; highlight
                 </li>
-                <li className="flex items-start gap-2 text-[12.5px] text-[#1c1b18]">
+                <li className="flex items-start gap-2 text-[12.5px] text-text-primary">
                   <span className={FI_YES}>✓</span> Direct feedback &amp; feature priority
                 </li>
               </ul>
               <button
-                className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border-[1.5px] border-[#1c1b18] bg-transparent px-5 py-2.5 text-[13px] font-semibold text-[#1c1b18] no-underline transition-all duration-200 enabled:hover:bg-[#1c1b18] enabled:hover:text-white"
+                className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-full border border-border-subtle bg-bg-secondary px-5 py-2.5 text-[13px] font-semibold text-text-primary no-underline transition-all duration-200 hover:border-border-hover hover:bg-bg-primary"
                 onClick={onLogin}
                 disabled={!firebaseAuthReady}
               >
@@ -1786,14 +1786,14 @@ export default function LandingPage({
         </div>
       </section>
 
-      <section className="bg-[#faf8f5] px-6 py-[80px] max-[480px]:py-[50px]">
+      <section className="border-t border-border-subtle bg-bg-primary px-6 py-[80px] max-[480px]:py-[50px]">
         <div className="mx-auto grid max-w-[1100px] grid-cols-[1.1fr_1fr] gap-[50px] max-[900px]:grid-cols-1 max-[900px]:gap-8">
           <div>
-            <span className={`${HERO_BADGE} bg-[#eee8dd] border-[#dcd6c8] text-[#55534c]`}>Frequently asked</span>
+            <span className={`${HERO_BADGE} bg-bg-secondary border-border-subtle text-text-secondary`}>Frequently asked</span>
             <h2 className={`${HERO_TITLE} mb-4 text-left text-[38px] max-[480px]:text-[28px]`}>
               Questions,
               <br />
-              <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
+              <span className="font-normal italic text-text-secondary" style={SERIF_ITALIC_STYLE}>
                 answered.
               </span>
             </h2>
@@ -1811,21 +1811,21 @@ export default function LandingPage({
             </a>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-[#e5e1d8] bg-white shadow-[0_12px_32px_-8px_rgba(28,27,24,0.06)]">
+          <div className="overflow-hidden rounded-2xl border border-border-subtle bg-bg-card shadow-[0_12px_32px_-8px_rgba(28,27,24,0.06)]">
             {FAQ_ITEMS.map((item, idx) => (
               <details
                 key={item.question}
                 className={`group px-6 py-4.5 max-[480px]:px-4 ${
-                  idx !== FAQ_ITEMS.length - 1 ? "border-b border-[#e5e1d8]" : ""
+                  idx !== FAQ_ITEMS.length - 1 ? "border-b border-border-subtle" : ""
                 }`}
               >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[14px] font-semibold text-[#1c1b18] marker:content-none [&::-webkit-details-marker]:hidden">
+                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[14px] font-semibold text-text-primary marker:content-none [&::-webkit-details-marker]:hidden">
                   {item.question}
-                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-[#e5e1d8] text-[13px] text-[#6e6c64] transition-transform duration-200 group-open:rotate-45">
+                  <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border-subtle text-[13px] text-text-muted transition-transform duration-200 group-open:rotate-45">
                     +
                   </span>
                 </summary>
-                <p className="mt-2.5 max-w-[440px] text-[13px] leading-[1.65] text-[#6e6c64]">
+                <p className="mt-2.5 max-w-[440px] text-[13px] leading-[1.65] text-text-secondary">
                   {item.answer}
                 </p>
               </details>
@@ -1860,16 +1860,16 @@ export default function LandingPage({
                 <BentoLogo size={18} color="var(--text-primary)" />
                 {SITE_NAME}
               </a>
-              <p className="max-w-[300px] text-[13px] leading-[1.65] text-[#6e6c64]">
+              <p className="max-w-[300px] text-[13px] leading-[1.65] text-text-secondary">
                 A self-hostable personal dashboard and OpenAPI layer for daily expenses, media watchlists, book reading, and investments.
               </p>
-              <p className="text-xs text-[#9c9a92]">
+              <p className="text-xs text-text-muted">
                 Built by{" "}
                 <a
                   href={AUTHOR.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#6e6c64] no-underline hover:text-[#1c1b18]"
+                  className="text-text-secondary no-underline hover:text-text-primary"
                 >
                   {AUTHOR.name}
                 </a>{" "}
@@ -1878,7 +1878,7 @@ export default function LandingPage({
                   href={AUTHOR.github}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-[#6e6c64] no-underline hover:text-[#1c1b18]"
+                  className="text-text-secondary no-underline hover:text-text-primary"
                 >
                   @{AUTHOR.githubHandle}
                 </a>
@@ -1963,7 +1963,7 @@ export default function LandingPage({
             </div>
           </div>
 
-          <div className="border-b border-[#e5e3db] py-5">
+          <div className="border-b border-border-subtle py-5">
             <span className={`${FOOTER_COL_LABEL} mb-0`}>
               Wherever you&apos;re tracking from
             </span>
@@ -1971,30 +1971,30 @@ export default function LandingPage({
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 py-5 max-[900px]:flex-col max-[900px]:items-start">
-            <div className="flex flex-wrap items-center gap-2 font-mono text-[10.5px] tracking-[0.6px] text-[#9c9a92] uppercase">
+            <div className="flex flex-wrap items-center gap-2 font-mono text-[10.5px] tracking-[0.6px] text-text-muted uppercase">
               <span>© {new Date().getFullYear()} Continuum</span>
-              <span className="text-[#d1cfc7]">·</span>
+              <span className="text-border-subtle">·</span>
               <span>MIT LICENSED</span>
-              <span className="text-[#d1cfc7]">·</span>
+              <span className="text-border-subtle">·</span>
               <a
                 href={AUTHOR.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#9c9a92] no-underline hover:text-[#1c1b18]"
+                className="text-text-muted no-underline hover:text-text-primary"
               >
                 Adithya Krishnan
               </a>
-              <span className="text-[#d1cfc7]">·</span>
+              <span className="text-border-subtle">·</span>
               <a
                 href={AUTHOR.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#9c9a92] no-underline hover:text-[#1c1b18]"
+                className="text-text-muted no-underline hover:text-text-primary"
               >
                 @fal3n-4ngel
               </a>
             </div>
-            <div className="flex items-center gap-1.5 font-mono text-[10.5px] tracking-[0.6px] text-[#9c9a92] uppercase">
+            <div className="flex items-center gap-1.5 font-mono text-[10.5px] tracking-[0.6px] text-text-muted uppercase">
               <div className="h-1.5 w-1.5 rounded-full bg-[#22c55e] shadow-[0_0_0_3px_rgba(34,197,94,0.15)]" />
               <span>All systems operational</span>
             </div>
@@ -2002,34 +2002,34 @@ export default function LandingPage({
         </div>
 
         <div
-          className="relative h-[120px] overflow-hidden border-t border-[#e5e3db] bg-[#fafaf8] max-[900px]:h-[90px] [background-image:radial-gradient(#e5e3db_1.5px,transparent_1.5px)] [background-size:18px_18px] [mask-image:linear-gradient(to_bottom,transparent,black_40px)] [-webkit-mask-image:linear-gradient(to_bottom,transparent,black_40px)]"
+          className="relative h-[120px] overflow-hidden border-t border-border-subtle bg-bg-secondary max-[900px]:h-[90px] [background-image:radial-gradient(var(--border-subtle)_1.5px,transparent_1.5px)] [background-size:18px_18px] [mask-image:linear-gradient(to_bottom,transparent,black_40px)] [-webkit-mask-image:linear-gradient(to_bottom,transparent,black_40px)]"
           aria-hidden="true"
         >
           <div
-            className="absolute right-0 left-0 h-px opacity-60 [background:repeating-linear-gradient(to_right,#c4c2ba_0,#c4c2ba_4px,transparent_4px,transparent_10px)]"
+            className="absolute right-0 left-0 h-px opacity-60 [background:repeating-linear-gradient(to_right,var(--border-subtle)_0,var(--border-subtle)_4px,transparent_4px,transparent_10px)]"
             style={{ top: "28%" }}
           />
           <div
-            className="absolute right-0 left-0 h-px opacity-60 [background:repeating-linear-gradient(to_right,#c4c2ba_0,#c4c2ba_4px,transparent_4px,transparent_10px)]"
+            className="absolute right-0 left-0 h-px opacity-60 [background:repeating-linear-gradient(to_right,var(--border-subtle)_0,var(--border-subtle)_4px,transparent_4px,transparent_10px)]"
             style={{ top: "62%" }}
           />
           <div
-            className="absolute h-[5px] w-[5px] rounded-full bg-[#b0aea6]"
+            className="absolute h-[5px] w-[5px] rounded-full bg-border-subtle"
             style={{ top: "28%", left: "14%" }}
           />
           <div
-            className="absolute h-[5px] w-[5px] rounded-full bg-[#b0aea6]"
+            className="absolute h-[5px] w-[5px] rounded-full bg-border-subtle"
             style={{ top: "62%", left: "38%" }}
           />
           <div
-            className="absolute h-[5px] w-[5px] rounded-full bg-[#b0aea6]"
+            className="absolute h-[5px] w-[5px] rounded-full bg-border-subtle"
             style={{ top: "28%", left: "72%" }}
           />
           <div className="absolute bottom-[-70px] left-[-30px] rotate-[12deg] opacity-[0.045]">
-            <BentoLogo size={130} color="#1c1b18" />
+            <BentoLogo size={130} color="var(--text-primary)" />
           </div>
           <div className="absolute -right-10 -bottom-[50px] rotate-[-8deg] opacity-[0.06]">
-            <BentoLogo size={260} color="#1c1b18" />
+            <BentoLogo size={260} color="var(--text-primary)" />
           </div>
         </div>
       </footer>
@@ -2038,11 +2038,11 @@ export default function LandingPage({
         href="https://github.com/fal3n-4ngel/Continuum-Home"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-[990] flex items-center gap-2.5 rounded-full border border-[#d6d3c9] bg-white px-4 py-2 text-xs font-bold text-[#1c1b18] shadow-[0_8px_24px_rgba(28,27,24,0.12)] transition-all duration-200 hover:-translate-y-0.5 hover:border-[#1c1b18] hover:shadow-[0_12px_28px_rgba(28,27,24,0.18)] max-[600px]:hidden"
+        className="fixed bottom-6 right-6 z-[990] flex items-center gap-2.5 rounded-full border border-border-subtle bg-bg-card px-4 py-2 text-xs font-bold text-text-primary shadow-subtle transition-all duration-200 hover:-translate-y-0.5 hover:border-border-hover max-[600px]:hidden"
       >
         <span className="text-yellow-500 text-sm">⭐️</span>
         <span>Star on GitHub</span>
-        <span className="rounded bg-[#f4f1ea] px-1.5 py-0.2 font-mono text-[10px] text-[#6e6c64]">↗</span>
+        <span className="rounded bg-bg-secondary px-1.5 py-0.2 font-mono text-[10px] text-text-secondary">↗</span>
       </a>
     </div>
   );

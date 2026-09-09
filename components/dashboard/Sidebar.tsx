@@ -97,12 +97,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
           <span>Expenses &amp; Subs</span>
         </div>
-        {isProUser && (
-          <div onClick={() => setActiveTab("financial")} className={navLinkClass(activeTab === "financial")}>
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-            <span>Financial Health</span>
-          </div>
-        )}
+        <div onClick={() => setActiveTab("financial")} className={navLinkClass(activeTab === "financial")}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+          <span>Financial Health</span>
+          {!isProUser && (
+            <span
+              className="ml-auto inline-flex shrink-0 items-center rounded-full border px-1.5 py-[0.5px] text-[8.5px] font-bold tracking-wider"
+              style={{ borderColor: "rgba(139,92,246,0.6)", color: "#7c3aed" }}
+            >
+              PRO
+            </span>
+          )}
+        </div>
         {showInvestmentsTab && (
           <div onClick={() => setActiveTab("investments")} className={navLinkClass(activeTab === "investments")}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>

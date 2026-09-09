@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { Mail, Wallet, TrendingUp, RefreshCw, Coins, CalendarClock, Banknote, Trash2, Palette, Check } from "lucide-react";
+import { Mail, Wallet, TrendingUp, RefreshCw, Coins, CalendarClock, Banknote, Trash2, Palette, Check, Shield, ExternalLink } from "lucide-react";
 import { useTheme } from "@/lib/theme/use-theme";
+import { AUTHOR } from "@/lib/utils";
 
 export interface EmailSubscriptions {
   expenses: boolean;
@@ -22,6 +23,8 @@ interface SettingsTabProps {
   additionalIncome: number;
   setAdditionalIncome: (v: number) => void;
   onDeleteAccount?: () => void;
+  isAdmin?: boolean;
+  onOpenAdmin?: () => void;
 }
 
 type SettingsSubTab = "appearance" | "general" | "notifications" | "account";
@@ -84,6 +87,8 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   additionalIncome,
   setAdditionalIncome,
   onDeleteAccount,
+  isAdmin,
+  onOpenAdmin,
 }) => {
   const { themeId, setTheme, themes } = useTheme();
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>("appearance");
@@ -388,6 +393,69 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
 
       {activeSubTab === "account" && (
         <div className="flex flex-col gap-6 animate-[fadeIn_0.3s_ease_forwards]">
+          {isAdmin && onOpenAdmin && (
+            <div className={`${BENTO_CARD} border-t-2 border-t-accent-blue`}>
+              <div className={CARD_HEADER}>
+                <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-blue/15 text-accent-blue border border-border-subtle shadow-2xs">
+                    <Shield size={14} />
+                  </div>
+                  Admin Control Panel
+                </h2>
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5">
+                <div className="space-y-1">
+                  <p className="text-[13px] font-semibold text-text-primary">System &amp; Data Operations</p>
+                  <p className="text-[11.5px] leading-relaxed text-text-muted max-w-md">
+                    Access cron jobs, server metrics, cache flush operations, user Pro requests, and discord alert webhooks.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={onOpenAdmin}
+                  className="shrink-0 rounded-full border border-border-subtle bg-bg-primary px-4 py-2 text-xs font-semibold text-text-primary shadow-xs transition-all duration-200 hover:border-border-hover active:scale-95 cursor-pointer"
+                >
+                  Open Admin
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className={BENTO_CARD}>
+            <div className={CARD_HEADER}>
+              <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
+                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-text-primary/10 text-text-primary border border-border-subtle shadow-2xs">
+                  <ExternalLink size={14} />
+                </div>
+                Resources &amp; Support
+              </h2>
+            </div>
+            <div className="flex flex-col divide-y divide-border-subtle">
+              <a
+                href={AUTHOR.coffeeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between p-5 hover:bg-bg-primary/50 transition-colors"
+              >
+                <div>
+                  <p className="text-[13px] font-semibold text-text-primary">Support Continuum</p>
+                  <p className="text-[11.5px] leading-relaxed text-text-muted">Tip or buy a coffee to support continuous development.</p>
+                </div>
+                <ExternalLink size={14} className="text-text-muted shrink-0 ml-4" />
+              </a>
+              <a
+                href="/assistant"
+                className="flex items-center justify-between p-5 hover:bg-bg-primary/50 transition-colors"
+              >
+                <div>
+                  <p className="text-[13px] font-semibold text-text-primary">AI Assistant Integration</p>
+                  <p className="text-[11.5px] leading-relaxed text-text-muted">Configure your API keys and model parameters for Kiroku.</p>
+                </div>
+                <ExternalLink size={14} className="text-text-muted shrink-0 ml-4" />
+              </a>
+            </div>
+          </div>
+
           <div className={`${BENTO_CARD} border-t-2 border-t-[#b3666b]`}>
             <div className={CARD_HEADER}>
               <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-[#b3666b]">

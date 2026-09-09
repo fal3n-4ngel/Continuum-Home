@@ -901,9 +901,6 @@ export default function Dashboard() {
             idToken,
           };
           setUser(u);
-          if (u.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com") || u.email === "adiadithyakrishnan@gmail.com") {
-            setIsProUser(true);
-          }
         } else if (typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("embedded") === "true" || localStorage.getItem("phub_embedded_token"))) {
           const token = localStorage.getItem("phub_embedded_token") || "embedded_token";
           setUser({
@@ -1056,7 +1053,7 @@ export default function Dashboard() {
             subscriptions: data.emailSubscriptions.subscriptions !== false,
           });
         }
-        setIsProUser(data.isPro === true || user?.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com") || user?.email === "adiadithyakrishnan@gmail.com");
+        setIsProUser(data.isPro === true);
       }
     } catch (err) {
       console.error(err);
@@ -2160,7 +2157,7 @@ export default function Dashboard() {
               />
             )}
 
-            {activeTab === "financial" && isProUser && (
+            {activeTab === "financial" && (
               <FinancialHealthTab
                 currency={currency}
                 expenses={expenses}
@@ -2181,6 +2178,8 @@ export default function Dashboard() {
                 reconciliations={reconciliations}
                 logUnaccountedGap={logUnaccountedGap}
                 getHeaders={getHeaders}
+                isProUser={isProUser}
+                onClaimPro={() => setShowClaimPro(true)}
               />
             )}
 
@@ -2218,6 +2217,8 @@ export default function Dashboard() {
                 additionalIncome={additionalIncome}
                 setAdditionalIncome={setAdditionalIncome}
                 onDeleteAccount={() => setIsDeleteAccountModalOpen(true)}
+                isAdmin={Boolean(user && user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com"))}
+                onOpenAdmin={() => setActiveTab("admin")}
               />
             )}
 

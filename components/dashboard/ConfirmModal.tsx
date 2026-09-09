@@ -65,8 +65,11 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({ confirmDlg, setConfi
             </button>
           )}
           <button
-            className="rounded-lg px-[18px] py-2 text-[13px] font-semibold text-white transition-all active:scale-95 cursor-pointer hover:opacity-90"
-            style={{ backgroundColor: confirmBtnBg }}
+            className="rounded-lg px-[18px] py-2 text-[13px] font-semibold transition-all active:scale-95 cursor-pointer hover:opacity-90 shadow-2xs"
+            style={{
+              backgroundColor: confirmBtnBg,
+              color: tone === "danger" || tone === "success" ? "#ffffff" : "var(--bg-card)",
+            }}
             onClick={confirmDlg.onConfirm}
           >
             {confirmDlg.confirmText || (isAlert ? "OK" : "Confirm")}
