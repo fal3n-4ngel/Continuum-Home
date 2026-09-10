@@ -1076,18 +1076,21 @@ export default function Dashboard() {
   };
 
   const setSalaryDay = (d: number) => {
+    if (d === salaryDay) return;
     setSalaryDayState(d);
     useExpensesStore.getState().setSalaryDay(d);
     patchSettings({ salaryDay: d });
   };
 
   const setMonthlySalary = (val: number) => {
+    if (val === monthlySalary) return;
     setMonthlySalaryState(val);
     localStorage.setItem("phub_monthly_salary", String(val));
     patchSettings({ monthlySalary: val });
   };
 
   const setAdditionalIncome = (val: number) => {
+    if (val === additionalIncome) return;
     setAdditionalIncomeState(val);
     localStorage.setItem("phub_additional_income", String(val));
     patchSettings({ additionalIncome: val });

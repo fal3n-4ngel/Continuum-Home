@@ -47,6 +47,7 @@ export function useTheme() {
     setMounted(true);
     let initial = DEFAULT_THEME_ID;
     try {
+      const docAttr = typeof document !== 'undefined' ? document.documentElement.getAttribute('data-theme') : null;
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         if (stored === 'continuum-paper' || stored === 'paper-classic') {
@@ -56,6 +57,14 @@ export function useTheme() {
         } else if (THEMES.some((t) => t.id === stored)) {
           initial = stored;
         }
+      } else if (docAttr && THEMES.some((t) => t.id === docAttr)) {
+        initial = docAttr;
+      } else {
+        const prefersDark =
+          typeof window !== 'undefined' &&
+          window.matchMedia &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches;
+        initial = prefersDark ? 'continuum-dark' : DEFAULT_THEME_ID;
       }
     } catch {}
     setThemeIdState(initial);

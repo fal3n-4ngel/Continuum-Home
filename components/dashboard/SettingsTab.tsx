@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Mail, Wallet, TrendingUp, RefreshCw, Coins, CalendarClock, Banknote, Trash2, Palette, Check, Shield, ExternalLink } from "lucide-react";
 import { useTheme } from "@/lib/theme/use-theme";
 import { AUTHOR } from "@/lib/utils";
@@ -93,6 +93,17 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const { themeId, setTheme, themes } = useTheme();
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>("appearance");
   const [themeFilter, setThemeFilter] = useState<"all" | "light" | "dark">("all");
+
+  const [salaryDraft, setSalaryDraft] = useState<string>(monthlySalary ? String(monthlySalary) : "");
+  const [additionalIncomeDraft, setAdditionalIncomeDraft] = useState<string>(additionalIncome ? String(additionalIncome) : "");
+
+  useEffect(() => {
+    setSalaryDraft(monthlySalary ? String(monthlySalary) : "");
+  }, [monthlySalary]);
+
+  useEffect(() => {
+    setAdditionalIncomeDraft(additionalIncome ? String(additionalIncome) : "");
+  }, [additionalIncome]);
 
   const toggleEmail = (key: keyof EmailSubscriptions) => {
     setEmailSubscriptions({ ...emailSubscriptions, [key]: !emailSubscriptions[key] });
@@ -325,8 +336,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       type="number"
                       min="0"
                       placeholder="0"
-                      value={monthlySalary || ""}
-                      onChange={(e) => setMonthlySalary(Math.max(0, parseFloat(e.target.value) || 0))}
+                      value={salaryDraft}
+                      onChange={(e) => setSalaryDraft(e.target.value)}
+                      onBlur={(e) => {
+                        const val = Math.max(0, parseFloat(e.target.value) || 0);
+                        setSalaryDraft(String(val) || "");
+                        setMonthlySalary(val);
+                      }}
                       className={`${SELECT_CLASS} pl-7`}
                     />
                   </div>
@@ -339,8 +355,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                       type="number"
                       min="0"
                       placeholder="0"
-                      value={additionalIncome || ""}
-                      onChange={(e) => setAdditionalIncome(Math.max(0, parseFloat(e.target.value) || 0))}
+                      value={additionalIncomeDraft}
+                      onChange={(e) => setAdditionalIncomeDraft(e.target.value)}
+                      onBlur={(e) => {
+                        const val = Math.max(0, parseFloat(e.target.value) || 0);
+                        setAdditionalIncomeDraft(String(val) || "");
+                        setAdditionalIncome(val);
+                      }}
                       className={`${SELECT_CLASS} pl-7`}
                     />
                   </div>
