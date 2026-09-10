@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { POST as portfolioPOST } from "@/app/api/cron/portfolio/route";
-import { POST as subscriptionsPOST } from "@/app/api/cron/subscriptions/route";
-import { POST as expensesPOST } from "@/app/api/cron/expenses/route";
+import { POST as portfolioPOST } from "@/app/api/(ops)/cron/portfolio/route";
+import { POST as subscriptionsPOST } from "@/app/api/(ops)/cron/subscriptions/route";
+import { POST as expensesPOST } from "@/app/api/(ops)/cron/expenses/route";
 import { NextRequest } from "next/server";
 
 describe("Cron Endpoints Integration Tests", () => {

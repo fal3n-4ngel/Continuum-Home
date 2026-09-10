@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { GET } from "@/app/api/assistant/health-analytics/route";
+import { GET } from "@/app/api/(ai)/assistant/health-analytics/route";
 import { NextRequest } from "next/server";
 import * as auth from "@/lib/auth";
 import * as firebase from "@/lib/firebase";

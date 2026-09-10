@@ -3,7 +3,7 @@ import { WatchlistItem, SearchResult, AniListUser, TraktUser } from "@/types";
 
 interface MediaState {
   watchlist: WatchlistItem[];
-  setWatchlist: (watchlist: WatchlistItem[]) => void;
+  setWatchlist: (watchlist: WatchlistItem[] | ((prev: WatchlistItem[]) => WatchlistItem[])) => void;
   isFetchingWatchlist: boolean;
   setIsFetchingWatchlist: (is: boolean) => void;
   watchlistLoaded: boolean;
@@ -48,7 +48,10 @@ interface MediaState {
 
 export const useMediaStore = create<MediaState>((set) => ({
   watchlist: [],
-  setWatchlist: (watchlist) => set({ watchlist }),
+  setWatchlist: (watchlist) =>
+    set((state) => ({
+      watchlist: typeof watchlist === "function" ? watchlist(state.watchlist) : watchlist,
+    })),
   isFetchingWatchlist: false,
   setIsFetchingWatchlist: (isFetchingWatchlist) => set({ isFetchingWatchlist }),
   watchlistLoaded: false,

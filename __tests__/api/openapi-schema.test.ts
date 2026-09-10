@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { GET } from "@/app/api/openapi.json/route";
+import { GET } from "@/app/api/(ai)/openapi.json/route";
 
 describe("openapi portfolio schema parity", () => {
   it("matches the validator contract", async () => {

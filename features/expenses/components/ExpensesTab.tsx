@@ -1,0 +1,1141 @@
+import React from "react";
+import { createPortal } from "react-dom";
+import Papa from "papaparse";
+import { Expense, Subscription } from "@/types";
+import { downloadCsv, getAuthHeaders, resolvePayCycle, toLocalDateStr } from "@/lib/utils";
+
+import { useExpensesStore } from "@/lib/stores/expenses-store";
+import { useUiStore } from "@/lib/stores/ui-store";
+import { useAuthStore } from "@/lib/stores/auth-store";
+import { useTheme } from "@/lib/theme/use-theme";
+
+import { ExpenseRow } from "./ExpenseRow";
+import { ExpenseLedgerControls } from "./ExpenseLedgerControls";
+import { EditExpenseModal } from "./EditExpenseModal";
+
+interface ExpensesTabProps {
+  className?: string;
+}
+
+const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
+const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
+const STAT_VALUE = "text-[28px] font-bold tracking-[-0.5px] text-text-primary";
+const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
+const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
+const BTN_PRIMARY = "rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-semibold text-bg-primary transition-all duration-200 hover:opacity-90";
+const BTN_SECONDARY = "rounded-md border border-border-subtle bg-transparent text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary disabled:cursor-not-allowed disabled:opacity-50";
+const INPUT_CLASS = "rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
+const LEDGER_TH = "border-b border-border-subtle bg-bg-card px-3 py-2.5 font-mono text-[11px] font-semibold tracking-[0.5px] text-text-muted uppercase";
+const LEDGER_TD = "border-b border-border-subtle px-3 py-3 align-middle text-[13px] text-text-primary";
+
+const normalizeCsvDate = (dateStr: string): string => {
+  const clean = dateStr.trim();
+  if (!clean) return "";
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(clean)) return clean;
+
+  const dmy = clean.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+  if (dmy) {
+    const d = dmy[1].padStart(2, "0");
+    const m = dmy[2].padStart(2, "0");
+    const y = dmy[3];
+    return `${y}-${m}-${d}`;
+  }
+
+  const ymd = clean.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);
+  if (ymd) {
+    const y = ymd[1];
+    const m = ymd[2].padStart(2, "0");
+    const d = ymd[3].padStart(2, "0");
+    return `${y}-${m}-${d}`;
+  }
+
+  try {
+    const d = new Date(clean);
+    if (!isNaN(d.getTime())) {
+      const yStr = d.getFullYear();
+      const mStr = String(d.getMonth() + 1).padStart(2, "0");
+      const dStr = String(d.getDate()).padStart(2, "0");
+      return `${yStr}-${mStr}-${dStr}`;
+    }
+  } catch {}
+
+  return "";
+};
+
+const tabPillClass = (active: boolean) =>
+  `cursor-pointer rounded-md px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
+    active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
+  }`;
+
+const chartPillClass = (active: boolean) =>
+  `cursor-pointer rounded-md px-3 py-[5px] text-[11px] font-semibold transition-all duration-200 ${
+    active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
+  }`;
+
+const advanceBillingDate = (dateStr: string, cycle: "monthly" | "yearly"): string => {
+  const parts = dateStr.split("-");
+  if (parts.length !== 3) return dateStr;
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+
+  const d = new Date(year, month - 1, day);
+  if (cycle === "monthly") {
+    d.setMonth(d.getMonth() + 1);
+  } else {
+    d.setFullYear(d.getFullYear() + 1);
+  }
+
+  const yStr = d.getFullYear();
+  const mStr = String(d.getMonth() + 1).padStart(2, "0");
+  const dStr = String(d.getDate()).padStart(2, "0");
+  return `${yStr}-${mStr}-${dStr}`;
+};
+
+const isSubscriptionPaidInLedger = (sub: Subscription, expenses: Expense[]) => {
+  if (!sub.nextBillingDate || !expenses) return false;
+  const parts = sub.nextBillingDate.split("-").map(Number);
+  if (parts.length !== 3) return false;
+  const sYear = parts[0];
+  const sMonth = parts[1];
+
+  return expenses.some((exp) => {
+    if (!exp.date) return false;
+    const expParts = exp.date.split("-").map(Number);
+    if (expParts.length !== 3) return false;
+    const eYear = expParts[0];
+    const eMonth = expParts[1];
+
+    const sameMonth = eYear === sYear && eMonth === sMonth;
+    const sameYear = eYear === sYear;
+
+    const dateMatch = sub.billingCycle === "monthly" ? sameMonth : sameYear;
+    if (!dateMatch) return false;
+
+    const expTitle = exp.title.toLowerCase().trim();
+    const subName = sub.name.toLowerCase().trim();
+    const nameMatch = expTitle.includes(subName) || subName.includes(expTitle) ||
+                      (subName.includes("rent") && expTitle.includes("rent"));
+
+    const amtMatch = Math.abs((exp.amount || 0) - sub.cost) < (sub.cost * 0.1) || (exp.amount || 0) === sub.cost;
+
+    return nameMatch && amtMatch;
+  });
+};
+
+export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
+  "use no memo";
+  const {
+    currency, setCurrency, expenseTab, setExpenseTab, activeChart, setActiveChart, triggerConfirm
+  } = useUiStore();
+  const {
+    timeFilter, setTimeFilter, salaryDay, setSalaryDay, salaryLog,
+    expenseTitle, setExpenseTitle, expenseAmount, setExpenseAmount,
+    expenseCategory, setExpenseCategory, newCategoryInput, setNewCategoryInput,
+    customCategories, setCustomCategories, expenseDate, setExpenseDate,
+    expenseNotes, setExpenseNotes, isAddingExpense, expenseSearch, setExpenseSearch,
+    ledgerCategoryFilter, setLedgerCategoryFilter, ledgerMinAmount, setLedgerMinAmount,
+    ledgerMaxAmount, setLedgerMaxAmount, ledgerStartDate, setLedgerStartDate, ledgerEndDate, setLedgerEndDate,
+    ledgerSortField, setLedgerSortField,
+    ledgerSortDir, setLedgerSortDir, isFetchingExpenses, setIsFetchingExpenses, expensesLoaded, setExpensesLoaded,
+    subscriptions, expenses, setExpenses, setIsAddingExpense, setSubscriptions
+  } = useExpensesStore();
+  const { user } = useAuthStore();
+  const { theme } = useTheme();
+  const isDark = theme.type === "dark";
+
+  const getHeaders = React.useCallback(() => getAuthHeaders(user?.idToken), [user]);
+
+  const fetchExpenses = React.useCallback(async () => {
+    setIsFetchingExpenses(true);
+    try {
+      const res = await fetch("/api/expenses", { headers: getHeaders() });
+      if (res.ok) setExpenses(await res.json());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsFetchingExpenses(false);
+      setExpensesLoaded(true);
+    }
+  }, [getHeaders, setIsFetchingExpenses, setExpenses, setExpensesLoaded]);
+
+  const handleTimeFilterChange = (val: "7" | "30" | "90" | "salary" | "all") => {
+    setTimeFilter(val);
+    if (user) {
+      fetch("/api/settings", {
+        method: "PATCH",
+        headers: getHeaders(),
+        body: JSON.stringify({ timeFilter: val }),
+      }).catch((err) => console.error(err));
+    }
+  };
+
+  const handleSalaryDayChange = (day: number) => {
+    setSalaryDay(day);
+    if (user) {
+      fetch("/api/settings", {
+        method: "PATCH",
+        headers: getHeaders(),
+        body: JSON.stringify({ salaryDay: day }),
+      }).catch((err) => console.error(err));
+    }
+  };
+
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const pageSize = 15;
+
+  const [editingExpense, setEditingExpense] = React.useState<Expense | null>(null);
+
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const [showLogModal, setShowLogModal] = React.useState(false);
+  const [pendingSubToPay, setPendingSubToPay] = React.useState<Subscription | null>(null);
+
+  const [showImportResultModal, setShowImportResultModal] = React.useState(false);
+  const [importResultText, setImportResultText] = React.useState("");
+  const [isImporting, setIsImporting] = React.useState(false);
+
+  const getLocalDateStr = () => {
+    const d = new Date();
+    const yStr = d.getFullYear();
+    const mStr = String(d.getMonth() + 1).padStart(2, "0");
+    const dStr = String(d.getDate()).padStart(2, "0");
+    return `${yStr}-${mStr}-${dStr}`;
+  };
+
+  const handleExportCsv = () => {
+    const headers = ["Description", "Category", "Date", "Amount", "Notes"];
+    const rows = filteredExpenses.map((exp) => [
+      exp.title,
+      exp.category || "",
+      exp.date || "",
+      exp.amount,
+      exp.notes || "",
+    ]);
+
+    const today = new Date();
+    const stamp = `${today.getFullYear()}${(today.getMonth() + 1).toString().padStart(2, "0")}${today.getDate().toString().padStart(2, "0")}`;
+    downloadCsv(`ledger_export_${stamp}.csv`, headers, rows);
+  };
+
+  const handleImportCsv = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const inputEl = e.target;
+    setIsImporting(true);
+
+    Papa.parse<Record<string, any>>(file, {
+      header: true,
+      skipEmptyLines: "greedy",
+      transformHeader: (header) => header.trim(),
+      complete: async (results) => {
+        try {
+          if (!results.data || results.data.length === 0) {
+            throw new Error("CSV file is empty or contains no data rows");
+          }
+
+          const fields = results.meta.fields || (results.data[0] ? Object.keys(results.data[0]) : []);
+          if (fields.length === 0) {
+            throw new Error("CSV file must contain a header row and at least one data row");
+          }
+
+          let titleField = fields.find((f) => {
+            const l = f.toLowerCase();
+            return l.includes("title") || l.includes("description") || l.includes("desc") || l.includes("name") || l.includes("item");
+          });
+          let amountField = fields.find((f) => {
+            const l = f.toLowerCase();
+            return l.includes("amount") || l.includes("cost") || l.includes("price") || l.includes("value") || l.includes("amt");
+          });
+          let categoryField = fields.find((f) => {
+            const l = f.toLowerCase();
+            return l.includes("category") || l.includes("type") || l.includes("cat");
+          });
+          let dateField = fields.find((f) => {
+            const l = f.toLowerCase();
+            return l.includes("date") || l.includes("time") || l.includes("created");
+          });
+          let notesField = fields.find((f) => {
+            const l = f.toLowerCase();
+            return l.includes("notes") || l.includes("note") || l.includes("memo");
+          });
+
+          if (!titleField) titleField = fields[0];
+          if (!amountField) amountField = fields.length > 1 ? fields[1] : fields[0];
+          if (!categoryField) categoryField = fields.length > 2 ? fields[2] : undefined;
+          if (!dateField) dateField = fields.length > 3 ? fields[3] : undefined;
+          if (!notesField) notesField = fields.length > 4 ? fields[4] : undefined;
+
+          const entries: any[] = [];
+
+          for (const row of results.data) {
+            const title = titleField ? String(row[titleField] ?? "").trim() : "";
+            const rawAmount = amountField ? String(row[amountField] ?? "") : "0";
+            const amtStr = rawAmount.replace(/[^\d\.]/g, "") || "0";
+            const amount = parseFloat(amtStr);
+
+            if (!title || isNaN(amount) || amount <= 0) continue;
+
+            const category = categoryField && row[categoryField] ? String(row[categoryField]).trim() : "Other";
+
+            let date = dateField && row[dateField] ? String(row[dateField]).trim() : "";
+            date = normalizeCsvDate(date) || getLocalDateStr();
+
+            const notes = notesField && row[notesField] ? String(row[notesField]).trim() : "";
+
+            entries.push({
+              title,
+              amount,
+              category: category || "Other",
+              date,
+              notes: notes || null,
+            });
+          }
+
+          if (entries.length === 0) {
+            throw new Error("No valid transactions found in the CSV. Make sure a description and a positive amount are provided.");
+          }
+
+          const added = await importExpensesBatch(entries);
+          setImportResultText(`Successfully imported ${added} transactions into your ledger!`);
+          setShowImportResultModal(true);
+        } catch (err: any) {
+          console.error(err);
+          setImportResultText(`Import Failed: ${err.message || "An unexpected error occurred during CSV parsing."}`);
+          setShowImportResultModal(true);
+        } finally {
+          setIsImporting(false);
+          inputEl.value = "";
+        }
+      },
+      error: (err) => {
+        console.error(err);
+        setImportResultText(`Import Failed: ${err.message || "An unexpected error occurred during CSV parsing."}`);
+        setShowImportResultModal(true);
+        setIsImporting(false);
+        inputEl.value = "";
+      },
+    });
+  };
+
+  const upcomingSubscriptions = React.useMemo(() => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    sevenDaysFromNow.setHours(23, 59, 59, 999);
+
+    const parseDateOnly = (dateStr: string) => {
+      const parts = dateStr.split("-");
+      if (parts.length !== 3) return new Date();
+      return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+    };
+
+    return (subscriptions || []).filter((sub) => {
+      if (!sub.nextBillingDate) return false;
+      const dueDate = parseDateOnly(sub.nextBillingDate);
+
+      if (isSubscriptionPaidInLedger(sub, expenses)) {
+        return false;
+      }
+
+      return dueDate >= now && dueDate <= sevenDaysFromNow;
+    }).sort((a, b) => {
+      const aDate = a.nextBillingDate ? parseDateOnly(a.nextBillingDate).getTime() : 0;
+      const bDate = b.nextBillingDate ? parseDateOnly(b.nextBillingDate).getTime() : 0;
+      return aDate - bDate;
+    });
+  }, [subscriptions, expenses]);
+
+  const updateSubscription = async (id: string, updates: Partial<Subscription>) => {
+    setSubscriptions(subscriptions.map((s) => (s.id === id ? { ...s, ...updates } : s)));
+    try {
+      await fetch(`/api/subscriptions/${id}`, { method: "PATCH", headers: getHeaders(), body: JSON.stringify(updates) });
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  React.useEffect(() => {
+    if (!subscriptions || !expenses || !updateSubscription) return;
+
+    const d = new Date();
+    const yStr = d.getFullYear();
+    const mStr = String(d.getMonth() + 1).padStart(2, "0");
+    const dStr = String(d.getDate()).padStart(2, "0");
+    const todayStr = `${yStr}-${mStr}-${dStr}`;
+
+    subscriptions.forEach((sub) => {
+      if (!sub.nextBillingDate) return;
+
+      if (sub.nextBillingDate <= todayStr) {
+        if (isSubscriptionPaidInLedger(sub, expenses)) {
+          const nextDate = advanceBillingDate(sub.nextBillingDate, sub.billingCycle);
+          updateSubscription(sub.id, { nextBillingDate: nextDate });
+        }
+      }
+    });
+  }, [subscriptions, expenses]);
+
+  const currentPayCycle = React.useMemo(() => {
+    return resolvePayCycle(salaryDay, salaryLog);
+  }, [salaryDay, salaryLog]);
+
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [timeFilter, salaryDay, currentPayCycle, expenseSearch, ledgerCategoryFilter, ledgerMinAmount, ledgerMaxAmount, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
+
+  const allCategories = React.useMemo(() => {
+    const s = new Set<string>();
+    expenses.forEach((e) => {
+      if (e.category) s.add(e.category);
+    });
+    customCategories.forEach((c) => s.add(c));
+    return Array.from(s).sort();
+  }, [expenses, customCategories]);
+
+  const filteredExpensesBase = React.useMemo(() => {
+    let list = [...expenses];
+
+    if (timeFilter !== "all") {
+      const now = new Date();
+      if (timeFilter === "salary") {
+        const { startStr, endStr } = currentPayCycle;
+        list = list.filter((e) => e.date && e.date.slice(0, 10) >= startStr && e.date.slice(0, 10) <= endStr);
+      } else {
+        const days = parseInt(timeFilter, 10);
+        const cutoff = toLocalDateStr(new Date(now.getTime() - days * 86400000));
+        list = list.filter((e) => e.date && e.date.slice(0, 10) >= cutoff);
+      }
+    }
+
+    if (expenseSearch) {
+      const q = expenseSearch.toLowerCase();
+      list = list.filter((e) => (e.title && e.title.toLowerCase().includes(q)) || (e.notes && e.notes.toLowerCase().includes(q)));
+    }
+    if (ledgerMinAmount) list = list.filter((e) => (e.amount || 0) >= parseFloat(ledgerMinAmount));
+    if (ledgerMaxAmount) list = list.filter((e) => (e.amount || 0) <= parseFloat(ledgerMaxAmount));
+    if (ledgerStartDate) list = list.filter((e) => e.date && e.date.slice(0, 10) >= ledgerStartDate);
+    if (ledgerEndDate) list = list.filter((e) => e.date && e.date.slice(0, 10) <= ledgerEndDate);
+    return list;
+  }, [expenses, timeFilter, currentPayCycle, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerStartDate, ledgerEndDate]);
+
+  const filteredExpenses = React.useMemo(() => {
+    let list = [...expenses];
+
+    if (timeFilter !== "all") {
+      const now = new Date();
+      if (timeFilter === "salary") {
+        const { startStr, endStr } = currentPayCycle;
+        list = list.filter((e) => e.date && e.date.slice(0, 10) >= startStr && e.date.slice(0, 10) <= endStr);
+      } else {
+        const days = parseInt(timeFilter, 10);
+        const cutoff = toLocalDateStr(new Date(now.getTime() - days * 86400000));
+        list = list.filter((e) => e.date && e.date.slice(0, 10) >= cutoff);
+      }
+    }
+
+    if (expenseSearch) {
+      const q = expenseSearch.toLowerCase();
+      list = list.filter((e) => (e.title && e.title.toLowerCase().includes(q)) || (e.notes && e.notes.toLowerCase().includes(q)));
+    }
+    if (ledgerMinAmount) list = list.filter((e) => (e.amount || 0) >= parseFloat(ledgerMinAmount));
+    if (ledgerMaxAmount) list = list.filter((e) => (e.amount || 0) <= parseFloat(ledgerMaxAmount));
+    if (ledgerCategoryFilter) {
+      list = list.filter((e) => e.category === ledgerCategoryFilter);
+    }
+    if (ledgerStartDate) {
+      list = list.filter((e) => e.date && e.date.slice(0, 10) >= ledgerStartDate);
+    }
+    if (ledgerEndDate) {
+      list = list.filter((e) => e.date && e.date.slice(0, 10) <= ledgerEndDate);
+    }
+    const dir = ledgerSortDir === "asc" ? 1 : -1;
+    list = [...list].sort((a, b) => {
+      switch (ledgerSortField) {
+        case "amount": return ((a.amount || 0) - (b.amount || 0)) * dir;
+        case "title": return (a.title || "").localeCompare(b.title || "") * dir;
+        case "category": return (a.category || "").localeCompare(b.category || "") * dir;
+        case "date": default: return (a.date || "").localeCompare(b.date || "") * dir;
+      }
+    });
+    return list;
+  }, [expenses, timeFilter, currentPayCycle, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
+
+  const totalSpent = React.useMemo(() => filteredExpensesBase.reduce((sum, e) => sum + (e.amount || 0), 0), [filteredExpensesBase]);
+
+  const catBreakdown = React.useMemo(() => {
+    const breakdown: Record<string, number> = {};
+    filteredExpenses.forEach((e) => {
+      const cat = e.category || "Uncategorized";
+      breakdown[cat] = (breakdown[cat] || 0) + (e.amount || 0);
+    });
+    return Object.fromEntries(Object.entries(breakdown).sort(([, a], [, b]) => b - a));
+  }, [filteredExpenses]);
+
+  const chartCatBreakdown = React.useMemo(() => {
+    const breakdown: Record<string, number> = {};
+    filteredExpensesBase.forEach((e) => {
+      const cat = e.category || "Uncategorized";
+      breakdown[cat] = (breakdown[cat] || 0) + (e.amount || 0);
+    });
+    return Object.fromEntries(Object.entries(breakdown).sort(([, a], [, b]) => b - a));
+  }, [filteredExpensesBase]);
+
+  const dailyTrend = React.useMemo(() => {
+    const map: Record<string, number> = {};
+    filteredExpenses.forEach((e) => {
+      if (e.date) map[e.date] = (map[e.date] || 0) + (e.amount || 0);
+    });
+    return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-10);
+  }, [filteredExpenses]);
+
+  const largestItem = React.useMemo(() => {
+    if (filteredExpensesBase.length === 0) return null;
+    return filteredExpensesBase.reduce((max, e) => ((e.amount || 0) > (max.amount || 0) ? e : max), filteredExpensesBase[0]);
+  }, [filteredExpensesBase]);
+  const largestCharge = largestItem?.amount || 0;
+
+  const topCategory = React.useMemo(() => {
+    const entries = Object.entries(chartCatBreakdown);
+    if (entries.length === 0) return "None";
+    return entries.reduce((max, cur) => ((cur[1] as number) > (max[1] as number) ? cur : max), entries[0])[0];
+  }, [chartCatBreakdown]);
+
+  const addExpense = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!expenseTitle.trim() || !expenseAmount) return;
+    setIsAddingExpense(true);
+    try {
+      const res = await fetch("/api/expenses", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          title: expenseTitle.trim(),
+          amount: parseFloat(expenseAmount),
+          category: expenseCategory || null,
+          date: expenseDate || toLocalDateStr(new Date()),
+          notes: expenseNotes.trim() || null,
+        }),
+      });
+      if (res.ok) {
+        setExpenseTitle("");
+        setExpenseAmount("");
+        setExpenseCategory("");
+        setExpenseNotes("");
+        fetchExpenses();
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsAddingExpense(false);
+    }
+  };
+
+  const deleteExpense = async (id: string) => {
+    triggerConfirm("Archive Expense", "Are you sure you want to archive this expense?", async () => {
+      const previousList = [...expenses];
+      setExpenses(previousList.filter((e) => e.id !== id));
+      try {
+        const res = await fetch(`/api/expenses/${id}`, { method: "DELETE", headers: getHeaders() });
+        if (!res.ok) throw new Error("Failed to archive");
+      } catch (err) {
+        console.error(err);
+        setExpenses(previousList);
+      }
+    });
+  };
+
+  const updateExpense = async (id: string, updates: Partial<Expense>) => {
+    const previousList = [...expenses];
+    setExpenses(previousList.map((e) => (e.id === id ? { ...e, ...updates } : e)));
+    try {
+      const res = await fetch(`/api/expenses/${id}`, {
+        method: "PATCH",
+        headers: getHeaders(),
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) throw new Error("Failed to update");
+    } catch (err) {
+      console.error(err);
+      setExpenses(previousList);
+      throw err;
+    }
+  };
+
+  const logSubscriptionExpense = async (sub: Subscription) => {
+    try {
+      const res = await fetch("/api/expenses", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          title: `${sub.name} Payment`,
+          amount: sub.cost,
+          category: sub.name.toLowerCase().includes("rent") ? "Rent" : "Subscriptions",
+          date: toLocalDateStr(new Date()),
+          notes: `Logged automatically from subscription: ${sub.name}`,
+        }),
+      });
+      if (res.ok) fetchExpenses();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const importExpensesBatch = async (items: any[]) => {
+    const chunks = [];
+    for (let i = 0; i < items.length; i += 100) chunks.push(items.slice(i, i + 100));
+    let totalAdded = 0;
+    for (const chunk of chunks) {
+      const res = await fetch("/api/expenses", { method: "POST", headers: getHeaders(), body: JSON.stringify(chunk) });
+      if (!res.ok) throw new Error("Failed to import batch chunk");
+      const data = await res.json();
+      totalAdded += data.added || 0;
+    }
+    fetchExpenses();
+    return totalAdded;
+  };
+
+  const totalItems = filteredExpenses.length;
+  const totalPages = Math.ceil(totalItems / pageSize) || 1;
+  const paginatedExpenses = React.useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredExpenses.slice(start, start + pageSize);
+  }, [filteredExpenses, currentPage, pageSize]);
+
+  return (
+    <>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex gap-0.5 rounded-lg bg-bg-secondary p-[3px]">
+            <button onClick={() => setExpenseTab("ledger")} className={tabPillClass(expenseTab === "ledger")}>
+              Ledger
+            </button>
+            <button onClick={() => setExpenseTab("subscriptions")} className={tabPillClass(expenseTab === "subscriptions")}>
+              Subscriptions
+            </button>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="font-mono text-[11px] text-text-muted uppercase">Currency</span>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              className={`${INPUT_CLASS} px-2 py-1 text-xs`}
+            >
+              <option value="₹">INR (₹)</option>
+              <option value="$">USD ($)</option>
+              <option value="€">EUR (€)</option>
+              <option value="£">GBP (£)</option>
+              <option value="¥">JPY (¥)</option>
+            </select>
+          </div>
+        </div>
+
+        {expenseTab === "ledger" && (
+          <div className="flex items-center gap-3">
+            {timeFilter === "salary" && (
+              <div className="flex items-center gap-1.5">
+                <span className="font-mono text-[11px] text-text-muted uppercase">Payday</span>
+                <select
+                  value={salaryDay}
+                  onChange={(e) => handleSalaryDayChange(parseInt(e.target.value, 10))}
+                  className={`${INPUT_CLASS} px-2 py-1 text-xs`}
+                >
+                  {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                    <option key={day} value={day}>
+                      {day}
+                      {day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th"} of month
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <select
+              value={timeFilter}
+              onChange={(e) => handleTimeFilterChange(e.target.value as any)}
+              className={`${INPUT_CLASS} px-2 py-1 text-xs`}
+            >
+              <option value="7">Last 7 days</option>
+              <option value="30">Last 30 days</option>
+              <option value="90">Last 90 days</option>
+              <option value="salary">Current Pay Period</option>
+              <option value="all">All time</option>
+            </select>
+          </div>
+        )}
+      </div>
+
+      {expenseTab === "ledger" && (
+        <div className="flex flex-col gap-7 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]"> <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">Expenses Ledger</h1>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 max-md:grid-cols-2 max-md:gap-2.5">
+            <div className={`${STAT_CARD} border-t-2 border-t-accent-blue`}>
+              <span className={LABEL_MONO}>Total Spent</span>
+              <span className={STAT_VALUE}>{currency}{totalSpent.toLocaleString()}</span>
+              <span className={STAT_SUBTEXT}>
+                {timeFilter === "all" ? "All time" : timeFilter === "salary" ? `Cycle (${currentPayCycle.startStr} – ${currentPayCycle.endStr})` : `Last ${timeFilter} days`}
+              </span>
+            </div>
+            <div className={`${STAT_CARD} border-t-2 border-t-accent-yellow`}>
+              <span className={LABEL_MONO}>Charges Logged</span>
+              <span className={STAT_VALUE}>{filteredExpenses.length}</span>
+              <span className={STAT_SUBTEXT}>Transactions</span>
+            </div>
+            <div className={`${STAT_CARD} border-t-2 border-t-accent-flame`}>
+              <span className={LABEL_MONO}>Largest Charge</span>
+              <span className={`${STAT_VALUE} overflow-hidden text-ellipsis whitespace-nowrap text-accent-flame`}>{currency}{largestCharge.toLocaleString()}</span>
+              <span className={`${STAT_SUBTEXT} overflow-hidden text-ellipsis whitespace-nowrap`}>{largestItem?.title || "—"}</span>
+            </div>
+            <div className={`${STAT_CARD} border-t-2 border-t-border-hover`}>
+              <span className={LABEL_MONO}>Top Category</span>
+              <span className={`${STAT_VALUE} mt-2 overflow-hidden text-ellipsis whitespace-nowrap text-[22px]`}>{topCategory}</span>
+              <span className={STAT_SUBTEXT}>Highest share</span>
+            </div>
+          </div>
+
+          <div className={BENTO_CARD}>
+            <div className="mb-6 flex items-center justify-between">
+              <h3 className="text-[15px] font-semibold">Analytics</h3>
+              <div className="flex gap-1 rounded-lg bg-bg-secondary p-[3px]">
+                <button onClick={() => setActiveChart("category")} className={chartPillClass(activeChart === "category")}>
+                  Category Distribution
+                </button>
+                <button onClick={() => setActiveChart("trend")} className={chartPillClass(activeChart === "trend")}>
+                  Daily Trend
+                </button>
+              </div>
+            </div>
+
+            {activeChart === "category" ? (
+              <div className="flex h-[260px] items-end justify-start gap-4 overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2">
+                {Object.entries(chartCatBreakdown).slice(0, 8).map(([cat, total], idx) => {
+                  const maxAmt = Math.max(...Object.values(chartCatBreakdown), 1);
+                  const pct = (total / maxAmt) * 100;
+                  const colors = isDark
+                    ? ["#b3666b", "#e39282", "#e5e0d8", "#a8a29e", "#d1b89a", "#f4f0ea", "#9c9a92", "#c4c2ba"]
+                    : ["#b3666b", "#e39282", "#1c1b18", "#6e6c64", "#d1b89a", "#eae8e0", "#9c9a92", "#c4c2ba"];
+                  const isSelected = ledgerCategoryFilter === cat;
+                  const isInactive = ledgerCategoryFilter !== "" && !isSelected;
+                  return (
+                    <div
+                      key={cat}
+                      onClick={() => setLedgerCategoryFilter(isSelected ? "" : cat)}
+                      className="flex min-w-[60px] max-w-[90px] flex-1 shrink-0 cursor-pointer flex-col items-center gap-1.5"
+                      title={isSelected ? "Click to clear filter" : `Filter ledger by ${cat}`}
+                    >
+                      <span className={`text-[11px] font-semibold transition-colors duration-200 ${isInactive ? "text-text-muted" : "text-text-secondary"}`}>
+                        {currency}{(total/1000).toFixed(1)}k
+                      </span>
+                      <div
+                        className={`flex h-[200px] w-8 items-end rounded-t-md bg-bg-secondary transition-all duration-200 ${
+                          isSelected ? "ring-2 ring-text-primary ring-offset-1 ring-offset-bg-card" : ""
+                        }`}
+                      >
+                        <div
+                          className="w-full rounded-t-md transition-all duration-500 ease-in-out"
+                          style={{
+                            height: `${pct}%`,
+                            backgroundColor: colors[idx % colors.length],
+                            opacity: isInactive ? 0.25 : 1,
+                          }}
+                        ></div>
+                      </div>
+                      <span
+                        className={`w-full overflow-hidden text-ellipsis whitespace-nowrap text-center font-mono text-[9px] uppercase transition-colors duration-200 ${
+                          isSelected ? "font-bold text-text-primary" : "text-text-muted"
+                        }`}
+                        title={cat}
+                      >
+                        {cat}
+                      </span>
+                    </div>
+                  );
+                })}
+                {Object.keys(chartCatBreakdown).length === 0 && <p className="self-center text-[13px] text-text-muted">No transactions to plot.</p>}
+              </div>
+            ) : (
+              <div className="flex h-[260px] items-end justify-start gap-4 overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2">
+                {dailyTrend.map(([date, total]) => {
+                  const maxAmt = Math.max(...dailyTrend.map(d => d[1]), 1);
+                  const pct = (total / maxAmt) * 100;
+                  const dateParts = date.split("-");
+                  const dateFormatted = dateParts.length === 3 ? `${dateParts[1]}/${dateParts[2]}` : date;
+                  return (
+                    <div key={date} className="flex min-w-[60px] max-w-[90px] flex-1 shrink-0 flex-col items-center gap-1.5">
+                      <span className="text-[11px] font-semibold text-text-secondary">{currency}{total.toLocaleString()}</span>
+                      <div className="flex h-[200px] w-8 items-end rounded-t-md bg-bg-secondary">
+                        <div className="w-full rounded-t-md bg-accent-blue transition-[height] duration-500 ease-in-out" style={{ height: `${pct}%` }}></div>
+                      </div>
+                      <span className="w-full text-center font-mono text-[9px] text-text-muted">{dateFormatted}</span>
+                    </div>
+                  );
+                })}
+                {dailyTrend.length === 0 && <p className="self-center text-[13px] text-text-muted">No transaction history to plot.</p>}
+              </div>
+            )}
+          </div>
+
+          {upcomingSubscriptions.length > 0 && (
+            <div className={BENTO_CARD}>
+              <h3 className="text-sm font-semibold tracking-[-0.3px] text-text-primary mb-3 flex items-center gap-1.5">
+                <span>📅</span> Upcoming Bills (Next 7 Days)
+              </h3>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3">
+                {upcomingSubscriptions.map((sub) => {
+                  const parts = sub.nextBillingDate ? sub.nextBillingDate.split("-") : [];
+                  const dueStr = parts.length === 3 ? new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2])).toLocaleDateString("en-IN", { month: "short", day: "numeric" }) : sub.nextBillingDate;
+                  return (
+                    <div key={sub.id} className="flex items-center justify-between rounded-lg border border-border-subtle bg-bg-primary/20 p-3.5 hover:border-border-hover transition-all duration-200">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xl">{sub.icon || "💳"}</span>
+                        <div>
+                          <div className="text-[13px] font-semibold text-text-primary">{sub.name}</div>
+                          <div className="text-[11px] text-accent-terracotta font-medium mt-0.5">Due {dueStr}</div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <div className="text-[14px] font-bold text-text-primary">
+                            {currency}{sub.cost.toFixed(2)}
+                          </div>
+                          <div className="text-[10px] text-text-muted capitalize">{sub.billingCycle}</div>
+                        </div>
+                        <div className="flex items-center gap-1.5 border-l border-border-subtle/50 pl-3">
+                          <button
+                            onClick={() => {
+                              setPendingSubToPay(sub);
+                              setShowLogModal(true);
+                            }}
+                            className="flex h-7 w-7 items-center justify-center rounded-md border-none bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 cursor-pointer hover:bg-emerald-500/25 transition-all font-semibold active:scale-95"
+                            title="Mark as Paid"
+                          >
+                            ✓
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm(`Skip this billing cycle for ${sub.name}?`)) {
+                                const nextDate = advanceBillingDate(sub.nextBillingDate, sub.billingCycle);
+                                updateSubscription(sub.id, { nextBillingDate: nextDate });
+                              }
+                            }}
+                            className="flex h-7 w-7 items-center justify-center rounded-md border-none bg-rose-500/15 text-rose-600 dark:text-rose-400 cursor-pointer hover:bg-rose-500/25 transition-all font-semibold active:scale-95"
+                            title="Decline / Skip Cycle"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-[300px_1fr] gap-6 max-md:grid-cols-1">
+            <div className="flex flex-col gap-5">
+              <div className={BENTO_CARD}>
+                <span className={`${LABEL_MONO} mb-3.5 block`}>Log Transaction</span>
+                <form onSubmit={addExpense} className="flex flex-col gap-[9px]">
+                  <input id="transaction-desc-input" type="text" value={expenseTitle} onChange={(e) => setExpenseTitle(e.target.value)} placeholder="Description" required className={INPUT_CLASS} />
+                  <input type="number" value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} placeholder={`Amount (${currency})`} required className={INPUT_CLASS} />
+
+                  <select value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} required className={`${INPUT_CLASS} w-full cursor-pointer`}>
+                    <option value="">Select Category</option>
+                    {allCategories.map((cat) => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
+                  </select>
+
+                  <div className="flex flex-wrap gap-1 my-0.5">
+                    {["Food", "Groceries", "Rent", "Utilities", "Shopping", "Transport"].map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        onClick={() => setExpenseCategory(c)}
+                        className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold transition-all cursor-pointer ${
+                          expenseCategory === c
+                            ? "border-text-primary bg-text-primary text-bg-primary"
+                            : "border-border-subtle bg-bg-secondary/60 text-text-secondary hover:border-border-hover hover:bg-bg-secondary"
+                        }`}
+                      >
+                        + {c}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={newCategoryInput}
+                      onChange={(e) => setNewCategoryInput(e.target.value)}
+                      placeholder="New category..."
+                      className={`${INPUT_CLASS} flex-1 px-2 py-1.5 text-[11px]`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const trimmed = newCategoryInput.trim();
+                        if (trimmed && !customCategories.includes(trimmed)) {
+                          setCustomCategories([...customCategories, trimmed]);
+                          setExpenseCategory(trimmed);
+                          setNewCategoryInput("");
+                        }
+                      }}
+                      className="cursor-pointer rounded-md border border-border-subtle bg-bg-secondary px-3 py-1.5 text-[11px] font-semibold text-text-primary"
+                    >
+                      + Add
+                    </button>
+                  </div>
+
+                  <input type="date" lang="en-CA" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} className={INPUT_CLASS} />
+                  <input type="text" value={expenseNotes} onChange={(e) => setExpenseNotes(e.target.value)} placeholder="Notes" className={INPUT_CLASS} />
+                  <button type="submit" disabled={isAddingExpense} className={`${BTN_PRIMARY} mt-1`}>{isAddingExpense ? "Logging..." : "Log Item"}</button>
+                </form>
+              </div>
+
+              <div className={BENTO_CARD}>
+                <span className={`${LABEL_MONO} mb-3.5 block`}>Categories</span>
+                <div className="flex flex-col gap-2.5">
+                  {Object.entries(catBreakdown).map(([cat, total]) => {
+                    const pct = totalSpent > 0 ? Math.round((total / totalSpent) * 100) : 0;
+                    return (
+                      <div key={cat} className="flex flex-col gap-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="font-medium">{cat}</span>
+                          <span className="text-[11px] text-text-muted">{pct}%</span>
+                        </div>
+                        <div className="h-1 w-full overflow-hidden rounded-sm bg-bg-secondary">
+                          <div className="h-full bg-text-primary" style={{ width: `${pct}%` }}></div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {Object.keys(catBreakdown).length === 0 && <p className="text-xs text-text-muted">No expenses logged yet.</p>}
+                </div>
+              </div>
+            </div>
+
+            <div className={`${BENTO_CARD} flex flex-col`}>
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className={LABEL_MONO}>Ledger Sheet</span>
+                  <div className="flex gap-1">
+                    <button
+                      onClick={handleExportCsv}
+                      title="Export current filtered ledger list to CSV"
+                      className="cursor-pointer rounded-md border border-border-subtle bg-bg-secondary px-2.5 py-1 text-[11px] font-semibold text-text-primary hover:bg-bg-primary hover:border-border-hover transition-all flex items-center gap-1 active:scale-95"
+                    >
+                      📤 Export
+                    </button>
+                    <label
+                      title="Import expenses from CSV"
+                      className="cursor-pointer rounded-md border border-border-subtle bg-bg-secondary px-2.5 py-1 text-[11px] font-semibold text-text-primary hover:bg-bg-primary hover:border-border-hover transition-all flex items-center gap-1 active:scale-95"
+                    >
+                      {isImporting ? "⏳ Importing..." : "📥 Import"}
+                      <input
+                        type="file"
+                        accept=".csv"
+                        disabled={isImporting}
+                        onChange={handleImportCsv}
+                        className="hidden"
+                      />
+                    </label>
+                  </div>
+                </div>
+                <ExpenseLedgerControls
+                  currency={currency}
+                  expenseSearch={expenseSearch}
+                  setExpenseSearch={setExpenseSearch}
+                  ledgerCategoryFilter={ledgerCategoryFilter}
+                  setLedgerCategoryFilter={setLedgerCategoryFilter}
+                  allCategories={allCategories}
+                  ledgerMinAmount={ledgerMinAmount}
+                  setLedgerMinAmount={setLedgerMinAmount}
+                  ledgerMaxAmount={ledgerMaxAmount}
+                  setLedgerMaxAmount={setLedgerMaxAmount}
+                  ledgerStartDate={ledgerStartDate}
+                  setLedgerStartDate={setLedgerStartDate}
+                  ledgerEndDate={ledgerEndDate}
+                  setLedgerEndDate={setLedgerEndDate}
+                  ledgerSortField={ledgerSortField}
+                  setLedgerSortField={setLedgerSortField}
+                  ledgerSortDir={ledgerSortDir}
+                  setLedgerSortDir={setLedgerSortDir}
+                />
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left">
+                  <thead>
+                    <tr>
+                      <th className={LEDGER_TH}>Description</th>
+                      <th className={LEDGER_TH}>Category</th>
+                      <th className={LEDGER_TH}>Date</th>
+                      <th className={`${LEDGER_TH} text-right`}>Amount</th>
+                      <th className={`${LEDGER_TH} text-right`}>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {isFetchingExpenses && expenses.length === 0 ? (
+                      Array.from({ length: 5 }).map((_, idx) => (
+                        <tr key={idx} className="animate-pulse">
+                          <td className={LEDGER_TD}><div className="h-4 w-36 rounded bg-bg-secondary" /></td>
+                          <td className={LEDGER_TD}><div className="h-4 w-20 rounded bg-bg-secondary" /></td>
+                          <td className={LEDGER_TD}><div className="h-4 w-24 rounded bg-bg-secondary" /></td>
+                          <td className={LEDGER_TD}><div className="ml-auto h-4 w-16 rounded bg-bg-secondary" /></td>
+                          <td className={LEDGER_TD}><div className="ml-auto h-4 w-8 rounded bg-bg-secondary" /></td>
+                        </tr>
+                      ))
+                    ) : (
+                      paginatedExpenses.map((exp) => (
+                        <ExpenseRow
+                          key={exp.id}
+                          exp={exp}
+                          currency={currency}
+                          deleteExpense={deleteExpense}
+                          onEditExpense={(expItem) => setEditingExpense(expItem)}
+                        />
+                      ))
+                    )}
+                    {!isFetchingExpenses && totalItems === 0 && (
+                      <tr>
+                        <td colSpan={5} className="border-b border-border-subtle p-6 text-center text-text-muted">
+                          No transactions match your filter.
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {totalPages > 1 && (
+                <div className="mt-4 flex items-center justify-between border-t border-border-subtle pt-3.5">
+                  <span className="text-xs text-text-muted">
+                    Showing {Math.min(totalItems, (currentPage - 1) * pageSize + 1)}-{Math.min(totalItems, currentPage * pageSize)} of {totalItems} transactions
+                  </span>
+                  <div className="flex gap-1.5">
+                    <button
+                      disabled={currentPage === 1}
+                      onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                      className={`${BTN_SECONDARY} px-2.5 py-1 text-[11px]`}
+                    >
+                      Previous
+                    </button>
+                    <span className="mx-1.5 self-center text-[11px] font-semibold text-text-secondary">
+                      Page {currentPage} of {totalPages}
+                    </span>
+                    <button
+                      disabled={currentPage === totalPages}
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      className={`${BTN_SECONDARY} px-2.5 py-1 text-[11px]`}
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {mounted && showLogModal && pendingSubToPay && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs transition-opacity">
+          <div className="w-full max-w-md rounded-xl border border-border-subtle bg-bg-card p-6 shadow-2xl animate-[fadeIn_0.2s_ease-out]">
+            <h3 className="text-sm font-bold text-text-primary mb-2 flex items-center gap-2">
+              <span>💳</span> Confirm Subscription Payment
+            </h3>
+            <p className="text-xs text-text-secondary leading-relaxed mb-5">
+              You are marking <strong className="text-text-primary">{pendingSubToPay.name}</strong> ({currency}{pendingSubToPay.cost.toFixed(2)}) as paid.
+              Would you like to automatically log this as an expense in your ledger?
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  await logSubscriptionExpense(pendingSubToPay);
+                  const nextDate = advanceBillingDate(pendingSubToPay.nextBillingDate, pendingSubToPay.billingCycle);
+                  updateSubscription(pendingSubToPay.id, { nextBillingDate: nextDate });
+                  setShowLogModal(false);
+                  setPendingSubToPay(null);
+                }}
+                className={`${BTN_PRIMARY} w-full py-2.5 text-xs font-semibold`}
+              >
+                Yes, Log Expense & Mark Paid
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const nextDate = advanceBillingDate(pendingSubToPay.nextBillingDate, pendingSubToPay.billingCycle);
+                  updateSubscription(pendingSubToPay.id, { nextBillingDate: nextDate });
+                  setShowLogModal(false);
+                  setPendingSubToPay(null);
+                }}
+                className={`${BTN_SECONDARY} w-full py-2.5 text-xs font-semibold`}
+              >
+                No, Just Advance Cycle
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowLogModal(false);
+                  setPendingSubToPay(null);
+                }}
+                className="w-full py-2.5 text-xs text-text-muted hover:text-text-primary bg-transparent border-none cursor-pointer transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {mounted && showImportResultModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs transition-opacity">
+          <div className="w-full max-w-sm rounded-xl border border-border-subtle bg-bg-card p-6 shadow-2xl animate-[fadeIn_0.2s_ease-out]">
+            <h3 className="text-sm font-bold text-text-primary mb-2 flex items-center gap-2">
+              <span>📥</span> Import CSV Results
+            </h3>
+            <p className="text-xs text-text-secondary leading-relaxed mb-5">
+              {importResultText}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                setShowImportResultModal(false);
+                setImportResultText("");
+              }}
+              className={`${BTN_PRIMARY} w-full py-2.5 text-xs font-semibold`}
+            >
+              OK
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {mounted && editingExpense && (
+        <EditExpenseModal
+          isOpen={!!editingExpense}
+          expense={editingExpense}
+          currency={currency}
+          allCategories={allCategories}
+          onClose={() => setEditingExpense(null)}
+          onSave={async (id, updates) => {
+            if (updateExpense) {
+              await updateExpense(id, updates);
+            }
+            setEditingExpense(null);
+          }}
+        />
+      )}
+    </>
+  );
+};

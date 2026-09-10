@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { getCurrencySymbol } from "@/lib/utils";
-import { ConfirmState } from "@/components/dashboard/ConfirmModal";
+import { ConfirmState } from "@/components/modals";
 
 interface UiState {
   currency: string;
