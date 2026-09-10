@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import { ExpenseLedgerControls } from "@/components/dashboard/expenses/ExpenseLedgerControls";
+import { ExpenseLedgerControls } from "@/features/expenses";
 
 describe("ExpenseLedgerControls Component", () => {
   const defaultProps = {

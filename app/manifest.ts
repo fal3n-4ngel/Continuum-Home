@@ -6,7 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: SITE_NAME,
     short_name: "Continuum",
     description: SITE_DESCRIPTION,
-    start_url: "/",
+    start_url: "/dashboard",
     display: "standalone",
     background_color: "#f4f3ec",
     theme_color: "#1c1b18",
@@ -22,14 +22,14 @@ export default function manifest(): MetadataRoute.Manifest {
         name: "Expense Ledger",
         short_name: "Ledger",
         description: "Quickly open the expense ledger",
-        url: "/?tab=expenses",
+        url: "/dashboard?tab=expenses",
         icons: [{ src: "/icon-192", sizes: "192x192", type: "image/png" }]
       },
       {
         name: "Media Watchlist",
         short_name: "Watchlist",
         description: "Check your movie and TV watchlist",
-        url: "/?tab=media",
+        url: "/dashboard?tab=media",
         icons: [{ src: "/icon-192", sizes: "192x192", type: "image/png" }]
       },
 

@@ -1,7 +1,7 @@
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
-import { ConfirmModal, ConfirmState } from "@/components/dashboard/ConfirmModal";
+import { ConfirmModal, ConfirmState } from "@/components/modals";
 
 describe("ConfirmModal Component Integration Tests", () => {
   it("does not render when isOpen is false", () => {

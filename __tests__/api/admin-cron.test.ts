@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { POST } from "@/app/api/admin/cron/route";
+import { POST } from "@/app/api/(ops)/admin/cron/route";
 import { NextRequest } from "next/server";
 
 describe("API /api/admin/cron integration tests", () => {

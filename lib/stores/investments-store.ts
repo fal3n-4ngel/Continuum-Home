@@ -3,7 +3,7 @@ import { InvestmentAsset, InvestmentCategory, InvestmentQuote, FdCompounding } f
 
 interface InvestmentsState {
   investments: InvestmentAsset[];
-  setInvestments: (investments: InvestmentAsset[]) => void;
+  setInvestments: (investments: InvestmentAsset[] | ((prev: InvestmentAsset[]) => InvestmentAsset[])) => void;
   isFetchingInvestments: boolean;
   setIsFetchingInvestments: (is: boolean) => void;
 
@@ -47,7 +47,10 @@ interface InvestmentsState {
 
 export const useInvestmentsStore = create<InvestmentsState>((set) => ({
   investments: [],
-  setInvestments: (investments) => set({ investments }),
+  setInvestments: (investments) =>
+    set((state) => ({
+      investments: typeof investments === "function" ? investments(state.investments) : investments,
+    })),
   isFetchingInvestments: false,
   setIsFetchingInvestments: (isFetchingInvestments) => set({ isFetchingInvestments }),
 

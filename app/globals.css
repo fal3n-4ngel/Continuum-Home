@@ -314,6 +314,10 @@ button {
   border: none;
 }
 
+button:is([class*="h-"][class*="w-"], [class*="w-"][class*="h-"]):not([class*="p-"]):not([class*="px-"]):not([class*="py-"]) {
+  padding: 0;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(6px); }
   to { opacity: 1; transform: translateY(0); }

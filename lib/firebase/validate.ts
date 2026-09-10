@@ -266,6 +266,7 @@ export function validateSettingsPatch(body: unknown): Partial<Omit<DashboardSett
   if (b.currency !== undefined) patch.currency = asEnum(b.currency, "currency", CURRENCY_SYMBOLS, true)!;
   if (b.reconciliations !== undefined) patch.reconciliations = asReconciliationsMap(b.reconciliations, "reconciliations");
   if (b.salaryLog !== undefined) patch.salaryLog = asSalaryLogMap(b.salaryLog, "salaryLog");
+  if (b.aiOptOut !== undefined) patch.aiOptOut = asBoolean(b.aiOptOut, "aiOptOut");
   if (b.emailSubscriptions !== undefined) {
     const es = requireObject(b.emailSubscriptions, "emailSubscriptions");
     patch.emailSubscriptions = {
@@ -275,7 +276,7 @@ export function validateSettingsPatch(body: unknown): Partial<Omit<DashboardSett
     };
   }
   if (Object.keys(patch).length === 0) {
-    badRequest("Patch body must include at least one of: timeFilter, salaryDay, monthlySalary, additionalIncome, currency, reconciliations, emailSubscriptions.");
+    badRequest("Patch body must include at least one of: timeFilter, salaryDay, monthlySalary, additionalIncome, currency, reconciliations, emailSubscriptions, aiOptOut.");
   }
   return patch;
 }
