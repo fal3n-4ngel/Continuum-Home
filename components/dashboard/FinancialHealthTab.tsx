@@ -447,6 +447,16 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   const [gapLoggedFor, setGapLoggedFor] = useState<string | null>(null);
   const [rightTab, setRightTab] = useState<"reconcile" | "income">("reconcile");
   const [showMethodology, setShowMethodology] = useState(false);
+  const [salaryDraft, setSalaryDraft] = useState<string>(monthlySalary ? String(monthlySalary) : "");
+  const [additionalIncomeDraft, setAdditionalIncomeDraft] = useState<string>(additionalIncome ? String(additionalIncome) : "");
+
+  useEffect(() => {
+    setSalaryDraft(monthlySalary ? String(monthlySalary) : "");
+  }, [monthlySalary]);
+
+  useEffect(() => {
+    setAdditionalIncomeDraft(additionalIncome ? String(additionalIncome) : "");
+  }, [additionalIncome]);
 
   const loggedPayday = salaryLog[payCycle.startStr];
   const [isEditingPayday, setIsEditingPayday] = useState(false);
@@ -1316,8 +1326,13 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                       <label className="text-[10.5px] text-text-muted">Usual Salary ({currency})</label>
                       <input
                         type="number"
-                        value={monthlySalary || ""}
-                        onChange={(e) => setMonthlySalary(parseFloat(e.target.value) || 0)}
+                        value={salaryDraft}
+                        onChange={(e) => setSalaryDraft(e.target.value)}
+                        onBlur={(e) => {
+                          const val = Math.max(0, parseFloat(e.target.value) || 0);
+                          setSalaryDraft(String(val) || "");
+                          setMonthlySalary(val);
+                        }}
                         placeholder="0"
                         className="mt-1 w-full rounded-md border border-border-subtle bg-bg-card p-2 text-xs text-text-primary outline-none"
                       />
@@ -1326,8 +1341,13 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                       <label className="text-[10.5px] text-text-muted">Add. Income ({currency})</label>
                       <input
                         type="number"
-                        value={additionalIncome || ""}
-                        onChange={(e) => setAdditionalIncome(parseFloat(e.target.value) || 0)}
+                        value={additionalIncomeDraft}
+                        onChange={(e) => setAdditionalIncomeDraft(e.target.value)}
+                        onBlur={(e) => {
+                          const val = Math.max(0, parseFloat(e.target.value) || 0);
+                          setAdditionalIncomeDraft(String(val) || "");
+                          setAdditionalIncome(val);
+                        }}
                         placeholder="0"
                         className="mt-1 w-full rounded-md border border-border-subtle bg-bg-card p-2 text-xs text-text-primary outline-none"
                       />
