@@ -1,5 +1,5 @@
 import { Session } from "@/lib/auth";
-import { cacheGet, cacheSet, cacheInvalidate, encrypt, decrypt } from "@/lib/utils";
+import { cacheGet, cacheSet, cacheInvalidate, encrypt, decrypt, ApiError } from "@/lib/utils";
 import {
   assertDocId,
   docsRoot,
@@ -8,6 +8,8 @@ import {
   toFields,
   idFromName,
   runOwnedQuery,
+  userPath,
+  listSubcollectionDocs,
 } from "../client";
 
 export interface ExpenseEntry {
@@ -40,7 +42,11 @@ export async function getRawExpenses(session: Session): Promise<ExpenseRecord[]>
   const cached = await cacheGet<ExpenseRecord[]>(cacheKey);
   if (cached) return cached;
 
-  const rows = await runOwnedQuery(session, "expenses");
+  let rows = await listSubcollectionDocs(session, "expenses");
+  if (rows.length === 0) {
+    rows = await runOwnedQuery(session, "expenses");
+  }
+
   const records: ExpenseRecord[] = rows.map(({ id, data }) => {
     const title = decrypt(data.title as string || "");
     const category = decrypt(data.category as string || "");
@@ -127,7 +133,7 @@ export async function createExpense(session: Session, entry: ExpenseEntry) {
     createdAt: Date.now(),
   };
 
-  const created = await fsFetch<FirestoreDocument>(session, `${docsRoot(session)}/expenses`, {
+  const created = await fsFetch<FirestoreDocument>(session, userPath(session, "expenses"), {
     method: "POST",
     body: JSON.stringify({ fields: toFields(docData) }),
   });
@@ -185,10 +191,21 @@ export async function updateExpense(session: Session, id: string, entry: Partial
   for (const field of Object.keys(updateData)) params.append("updateMask.fieldPaths", field);
   params.append("currentDocument.exists", "true");
 
-  await fsFetch(session, `${docsRoot(session)}/expenses/${id}?${params}`, {
-    method: "PATCH",
-    body: JSON.stringify({ fields: toFields(updateData) }),
-  });
+  try {
+    await fsFetch(session, `${userPath(session, "expenses", id)}?${params}`, {
+      method: "PATCH",
+      body: JSON.stringify({ fields: toFields(updateData) }),
+    });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      await fsFetch(session, `${docsRoot(session)}/expenses/${id}?${params}`, {
+        method: "PATCH",
+        body: JSON.stringify({ fields: toFields(updateData) }),
+      });
+    } else {
+      throw err;
+    }
+  }
 
   await cacheInvalidate(expenseCacheKey(session));
   return { id };
@@ -197,9 +214,19 @@ export async function updateExpense(session: Session, id: string, entry: Partial
 export async function archiveExpense(session: Session, id: string) {
   assertDocId(id, "expense");
 
-  await fsFetch(session, `${docsRoot(session)}/expenses/${id}?currentDocument.exists=true`, {
-    method: "DELETE",
-  });
+  try {
+    await fsFetch(session, `${userPath(session, "expenses", id)}?currentDocument.exists=true`, {
+      method: "DELETE",
+    });
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) {
+      await fsFetch(session, `${docsRoot(session)}/expenses/${id}?currentDocument.exists=true`, {
+        method: "DELETE",
+      });
+    } else {
+      throw err;
+    }
+  }
 
   await cacheInvalidate(expenseCacheKey(session));
   return { id };

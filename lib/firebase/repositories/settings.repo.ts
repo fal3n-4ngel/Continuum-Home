@@ -1,6 +1,6 @@
 import { Session } from "@/lib/auth";
 import { ApiError, cacheGet, cacheSet, cacheInvalidate } from "@/lib/utils";
-import { docsRoot, fsFetch, FirestoreDocument, toFields, fromFields } from "../client";
+import { docsRoot, fsFetch, FirestoreDocument, toFields, fromFields, userPath } from "../client";
 
 export interface DashboardSettings {
   timeFilter: "7" | "30" | "90" | "salary" | "all";
@@ -35,7 +35,16 @@ export async function getSettings(session: Session): Promise<DashboardSettings |
   if (cached !== undefined) return cached;
 
   try {
-    const res = await fsFetch<FirestoreDocument>(session, `${docsRoot(session)}/settings/${session.uid}`);
+    let res: FirestoreDocument;
+    try {
+      res = await fsFetch<FirestoreDocument>(session, userPath(session, "settings", "preferences"));
+    } catch (prefErr) {
+      if (prefErr instanceof ApiError && prefErr.status === 404) {
+        res = await fsFetch<FirestoreDocument>(session, `${docsRoot(session)}/settings/${session.uid}`);
+      } else {
+        throw prefErr;
+      }
+    }
     const data = fromFields(res.fields || {});
     const reconciliationsRaw = data.reconciliations && typeof data.reconciliations === "object" ? data.reconciliations : {};
     const reconciliations: Record<string, number> = {};
@@ -88,9 +97,19 @@ export async function updateSettings(session: Session, updates: Partial<Omit<Das
   const params = new URLSearchParams();
   Object.keys(docData).forEach((k) => params.append("updateMask.fieldPaths", k));
 
-  await fsFetch(session, `${docsRoot(session)}/settings/${session.uid}?${params}`, {
-    method: "PATCH",
-    body: JSON.stringify({ fields: toFields(docData) }),
-  });
+  try {
+    await fsFetch(session, `${userPath(session, "settings", "preferences")}?${params}`, {
+      method: "PATCH",
+      body: JSON.stringify({ fields: toFields(docData) }),
+    });
+  } catch {}
+
+  try {
+    await fsFetch(session, `${docsRoot(session)}/settings/${session.uid}?${params}`, {
+      method: "PATCH",
+      body: JSON.stringify({ fields: toFields(docData) }),
+    });
+  } catch {}
+
   await cacheInvalidate(settingsCacheKey(session));
 }

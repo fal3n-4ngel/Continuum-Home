@@ -7,6 +7,7 @@ import {
   FirestoreDocument,
   toFields,
   fromFields,
+  userPath,
 } from "../client";
 
 export type FdCompounding = "monthly" | "quarterly" | "half_yearly" | "yearly";
@@ -122,7 +123,17 @@ export async function getPortfolio(session: Session): Promise<PortfolioRecord | 
   if (cached !== undefined) return cached;
 
   try {
-    const res = await fsFetch<FirestoreDocument>(session, `${docsRoot(session)}/portfolios/${session.uid}`);
+    let res: FirestoreDocument;
+    try {
+      res = await fsFetch<FirestoreDocument>(session, userPath(session, "portfolio", "summary"));
+    } catch (summaryErr) {
+      if (summaryErr instanceof ApiError && summaryErr.status === 404) {
+        res = await fsFetch<FirestoreDocument>(session, `${docsRoot(session)}/portfolios/${session.uid}`);
+      } else {
+        throw summaryErr;
+      }
+    }
+
     const data = fromFields(res.fields || {});
     const assetsRaw = Array.isArray(data.assets) ? (data.assets as Record<string, unknown>[]) : [];
     const assets: InvestmentAsset[] = assetsRaw.map(decryptAsset);
@@ -148,10 +159,20 @@ export async function updatePortfolio(session: Session, assets: InvestmentAsset[
   params.append("updateMask.fieldPaths", "assets");
   params.append("updateMask.fieldPaths", "updatedAt");
 
-  await fsFetch(session, `${docsRoot(session)}/portfolios/${session.uid}?${params}`, {
-    method: "PATCH",
-    body: JSON.stringify({ fields: toFields(docData) }),
-  });
+  try {
+    await fsFetch(session, `${userPath(session, "portfolio", "summary")}?${params}`, {
+      method: "PATCH",
+      body: JSON.stringify({ fields: toFields(docData) }),
+    });
+  } catch {}
+
+  try {
+    await fsFetch(session, `${docsRoot(session)}/portfolios/${session.uid}?${params}`, {
+      method: "PATCH",
+      body: JSON.stringify({ fields: toFields(docData) }),
+    });
+  } catch {}
+
   await cacheInvalidate(portfolioCacheKey(session));
 }
 

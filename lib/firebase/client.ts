@@ -128,3 +128,17 @@ export async function runOwnedQuery(session: Session, collectionId: string): Pro
     .filter((row): row is Required<RunQueryRow> => !!row.document)
     .map((row) => ({ id: idFromName(row.document.name), data: fromFields(row.document.fields) }));
 }
+
+export function userPath(session: Session, ...subpaths: string[]): string {
+  return `${docsRoot(session)}/users/${session.uid}${subpaths.length > 0 ? `/${subpaths.join("/")}` : ""}`;
+}
+
+export async function listSubcollectionDocs(session: Session, subcollection: string): Promise<{ id: string; data: Record<string, unknown> }[]> {
+  try {
+    const res = await fsFetch<{ documents?: FirestoreDocument[] }>(session, `${userPath(session, subcollection)}?pageSize=300`);
+    return (res.documents || []).map((doc) => ({ id: idFromName(doc.name), data: fromFields(doc.fields) }));
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return [];
+    throw err;
+  }
+}
