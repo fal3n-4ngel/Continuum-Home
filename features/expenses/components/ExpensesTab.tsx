@@ -12,6 +12,7 @@ import { useTheme } from "@/lib/theme/use-theme";
 import { ExpenseRow } from "./ExpenseRow";
 import { ExpenseLedgerControls } from "./ExpenseLedgerControls";
 import { EditExpenseModal } from "./EditExpenseModal";
+import { filterExpensesBase, filterExpenses } from "../lib/filtering";
 
 interface ExpensesTabProps {
   className?: string;
@@ -399,71 +400,30 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
   }, [expenses, customCategories]);
 
   const filteredExpensesBase = React.useMemo(() => {
-    let list = [...expenses];
-
-    if (timeFilter !== "all") {
-      const now = new Date();
-      if (timeFilter === "salary") {
-        const { startStr, endStr } = currentPayCycle;
-        list = list.filter((e) => e.date && e.date.slice(0, 10) >= startStr && e.date.slice(0, 10) <= endStr);
-      } else {
-        const days = parseInt(timeFilter, 10);
-        const cutoff = toLocalDateStr(new Date(now.getTime() - days * 86400000));
-        list = list.filter((e) => e.date && e.date.slice(0, 10) >= cutoff);
-      }
-    }
-
-    if (expenseSearch) {
-      const q = expenseSearch.toLowerCase();
-      list = list.filter((e) => (e.title && e.title.toLowerCase().includes(q)) || (e.notes && e.notes.toLowerCase().includes(q)));
-    }
-    if (ledgerMinAmount) list = list.filter((e) => (e.amount || 0) >= parseFloat(ledgerMinAmount));
-    if (ledgerMaxAmount) list = list.filter((e) => (e.amount || 0) <= parseFloat(ledgerMaxAmount));
-    if (ledgerStartDate) list = list.filter((e) => e.date && e.date.slice(0, 10) >= ledgerStartDate);
-    if (ledgerEndDate) list = list.filter((e) => e.date && e.date.slice(0, 10) <= ledgerEndDate);
-    return list;
+    return filterExpensesBase(expenses, {
+      timeFilter,
+      currentPayCycle,
+      search: expenseSearch,
+      minAmount: ledgerMinAmount,
+      maxAmount: ledgerMaxAmount,
+      startDate: ledgerStartDate,
+      endDate: ledgerEndDate,
+    });
   }, [expenses, timeFilter, currentPayCycle, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerStartDate, ledgerEndDate]);
 
   const filteredExpenses = React.useMemo(() => {
-    let list = [...expenses];
-
-    if (timeFilter !== "all") {
-      const now = new Date();
-      if (timeFilter === "salary") {
-        const { startStr, endStr } = currentPayCycle;
-        list = list.filter((e) => e.date && e.date.slice(0, 10) >= startStr && e.date.slice(0, 10) <= endStr);
-      } else {
-        const days = parseInt(timeFilter, 10);
-        const cutoff = toLocalDateStr(new Date(now.getTime() - days * 86400000));
-        list = list.filter((e) => e.date && e.date.slice(0, 10) >= cutoff);
-      }
-    }
-
-    if (expenseSearch) {
-      const q = expenseSearch.toLowerCase();
-      list = list.filter((e) => (e.title && e.title.toLowerCase().includes(q)) || (e.notes && e.notes.toLowerCase().includes(q)));
-    }
-    if (ledgerMinAmount) list = list.filter((e) => (e.amount || 0) >= parseFloat(ledgerMinAmount));
-    if (ledgerMaxAmount) list = list.filter((e) => (e.amount || 0) <= parseFloat(ledgerMaxAmount));
-    if (ledgerCategoryFilter) {
-      list = list.filter((e) => e.category === ledgerCategoryFilter);
-    }
-    if (ledgerStartDate) {
-      list = list.filter((e) => e.date && e.date.slice(0, 10) >= ledgerStartDate);
-    }
-    if (ledgerEndDate) {
-      list = list.filter((e) => e.date && e.date.slice(0, 10) <= ledgerEndDate);
-    }
-    const dir = ledgerSortDir === "asc" ? 1 : -1;
-    list = [...list].sort((a, b) => {
-      switch (ledgerSortField) {
-        case "amount": return ((a.amount || 0) - (b.amount || 0)) * dir;
-        case "title": return (a.title || "").localeCompare(b.title || "") * dir;
-        case "category": return (a.category || "").localeCompare(b.category || "") * dir;
-        case "date": default: return (a.date || "").localeCompare(b.date || "") * dir;
-      }
+    return filterExpenses(expenses, {
+      timeFilter,
+      currentPayCycle,
+      search: expenseSearch,
+      minAmount: ledgerMinAmount,
+      maxAmount: ledgerMaxAmount,
+      category: ledgerCategoryFilter,
+      startDate: ledgerStartDate,
+      endDate: ledgerEndDate,
+      sortField: ledgerSortField,
+      sortDir: ledgerSortDir,
     });
-    return list;
   }, [expenses, timeFilter, currentPayCycle, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
 
   const totalSpent = React.useMemo(() => filteredExpensesBase.reduce((sum, e) => sum + (e.amount || 0), 0), [filteredExpensesBase]);

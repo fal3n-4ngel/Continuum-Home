@@ -1,24 +1,22 @@
-name: CI Pipeline
+name: CI & Pre-Merge Verification
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, develop, "bugfix/**", "feature/**"]
   pull_request:
-    branches: [ main, master ]
-
-permissions:
-  contents: read
+    branches: [main, develop]
 
 jobs:
-  validate:
-    name: Lint, Typecheck, Test & Build
+  verify:
+    name: Lint, Typecheck, Unit Tests & E2E
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v5
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -26,37 +24,33 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run lint
+      - name: Run ESLint
         run: npm run lint
-        env:
-          # eslint-config-next/typescript does type-aware linting, which
-          # builds a full TS program graph and can exceed Node's default
-          # ~4GB old-space heap ceiling on this codebase — well within the
-          # ubuntu-latest runner's 7GB RAM, so just raise the ceiling.
-          NODE_OPTIONS: --max-old-space-size=6144
 
-      - name: TypeScript Type Check
+      - name: Run TypeScript typecheck
         run: npx tsc --noEmit
 
-      - name: Run Integration Tests
-        run: npm run test
+      - name: Run Vitest unit tests
+        run: npm test
 
-      - name: Run build
+      - name: Build Next.js application
         run: npm run build
         env:
-          # Dummy values for build validation
-          NEXT_PUBLIC_ANILIST_CLIENT_ID: "46468"
-          NEXT_PUBLIC_TRAKT_CLIENT_ID: "dummy_client_id"
-          FIREBASE_CONFIG: '{"apiKey": "dummy", "authDomain": "dummy", "projectId": "dummy", "storageBucket": "dummy", "messagingSenderId": "dummy", "appId": "dummy"}'
+          NEXT_PUBLIC_SITE_URL: http://localhost:3000
 
-  # Only alerts for pushes to the default branch — a PR author already sees
-  # their own red check, but a broken main is what actually needs chasing.
-  alert:
-    needs: validate
-    if: failure() && github.event_name == 'push'
-    uses: ./.github/workflows/discord-notify.yml
-    with:
-      title: "🚨 CI Failed on ${{ github.ref_name }}"
-      description: "`${{ github.workflow }}` failed for commit `${{ github.sha }}` by ${{ github.actor }}."
-    secrets:
-      DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run Playwright E2E tests
+        run: npx playwright test
+        env:
+          CI: true
+          PORT: 3000
+
+      - name: Upload Playwright report on failure
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14

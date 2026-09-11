@@ -19,6 +19,7 @@
 
 /scripts/*
 /scratch/*
+/test-results/*
 
 # production
 /build

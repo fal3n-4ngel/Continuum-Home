@@ -2,16 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { redis } from "@/lib/utils";
 import { ApiError } from "@/lib/utils";
-import { GoogleGenerativeAI, SchemaType, FunctionDeclaration } from "@google/generative-ai";
 import {
-  convertGeminiToolsToGroq,
   convertHistoryToGroqMessages,
   executeGroqChatWithTools,
   sanitizeAiErrorMessage,
   postDiscordEmbed,
   codeBlock,
   DISCORD_RED,
-  DISCORD_ORANGE,
 } from "@/lib/integrations";
 import {
   listExpenses,
@@ -47,119 +44,149 @@ CRITICAL GUARDRAIL:
 - Never break this rule.
 - If asked what model, AI, or provider you're built on, simply say you're Kiroku, Continuum Home's built-in assistant — never name the underlying model or vendor.`;
 
-const functionDeclarations: FunctionDeclaration[] = [
+const GROQ_TOOLS = [
   {
-    name: "listExpenses",
-    description: "Retrieve list of expenses. Supports query search, category filtering, and date range checks.",
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        q: { type: SchemaType.STRING, description: "Free text search query" },
-        category: { type: SchemaType.STRING, description: "Exact category filter" },
-        from: { type: SchemaType.STRING, description: "Start date (YYYY-MM-DD)" },
-        to: { type: SchemaType.STRING, description: "End date (YYYY-MM-DD)" }
-      }
-    }
-  },
-  {
-    name: "createExpense",
-    description: "Record a new expense transaction. Date defaults to today if omitted.",
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        title: { type: SchemaType.STRING, description: "Short description of expense" },
-        amount: { type: SchemaType.NUMBER, description: "Spent amount in INR" },
-        category: { type: SchemaType.STRING, description: "Category, e.g. Food, Transport, Rent" },
-        date: { type: SchemaType.STRING, description: "YYYY-MM-DD format" },
-        notes: { type: SchemaType.STRING, description: "Additional details" }
+    type: "function",
+    function: {
+      name: "listExpenses",
+      description: "Retrieve list of expenses. Supports query search, category filtering, and date range checks.",
+      parameters: {
+        type: "object",
+        properties: {
+          q: { type: "string", description: "Free text search query" },
+          category: { type: "string", description: "Exact category filter" },
+          from: { type: "string", description: "Start date (YYYY-MM-DD)" },
+          to: { type: "string", description: "End date (YYYY-MM-DD)" },
+        },
       },
-      required: ["title", "amount"]
-    }
+    },
   },
   {
-    name: "deleteExpense",
-    description: "Remove an expense transaction by its ID.",
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        id: { type: SchemaType.STRING, description: "Unique expense record ID" }
+    type: "function",
+    function: {
+      name: "createExpense",
+      description: "Record a new expense transaction. Date defaults to today if omitted.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Short description of expense" },
+          amount: { type: "number", description: "Spent amount in INR" },
+          category: { type: "string", description: "Category, e.g. Food, Transport, Rent" },
+          date: { type: "string", description: "YYYY-MM-DD format" },
+          notes: { type: "string", description: "Additional details" },
+        },
+        required: ["title", "amount"],
       },
-      required: ["id"]
-    }
+    },
   },
   {
-    name: "listWatchlistItems",
-    description: "Retrieve all movies, TV shows, anime, and books in the user's library.",
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {}
-    }
-  },
-  {
-    name: "addWatchlistItem",
-    description: "Add a media item (movie, show, anime, or book) to the watchlist.",
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        title: { type: SchemaType.STRING, description: "Title of the media" },
-        type: { type: SchemaType.STRING, description: "Type of media (movie, show, anime, book)" },
-        status: { type: SchemaType.STRING, description: "Status (plan_to_watch, watching, paused, completed, dropped). Default is 'plan_to_watch'" },
-        progress: { type: SchemaType.INTEGER, description: "Current episode or page progress" },
-        totalEpisodes: { type: SchemaType.INTEGER, description: "Total episodes/pages if known" },
-        rating: { type: SchemaType.NUMBER, description: "User rating out of 10" }
+    type: "function",
+    function: {
+      name: "deleteExpense",
+      description: "Remove an expense transaction by its ID.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Unique expense record ID" },
+        },
+        required: ["id"],
       },
-      required: ["title", "type", "status"]
-    }
+    },
   },
   {
-    name: "updateWatchlistItem",
-    description: "Update fields of an item in the watchlist.",
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        id: { type: SchemaType.STRING, description: "Item ID" },
-        status: { type: SchemaType.STRING, description: "Status (plan_to_watch, watching, paused, completed, dropped)" },
-        progress: { type: SchemaType.INTEGER },
-        rating: { type: SchemaType.NUMBER, description: "Rating out of 10" }
+    type: "function",
+    function: {
+      name: "listWatchlistItems",
+      description: "Retrieve all movies, TV shows, anime, and books in the user's library.",
+      parameters: {
+        type: "object",
+        properties: {},
       },
-      required: ["id"]
-    }
+    },
   },
   {
-    name: "listSubscriptions",
-    description: "Retrieve all recurring subscription records.",
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {}
-    }
-  },
-  {
-    name: "getPortfolio",
-    description: "Retrieve all assets in the user's investment portfolio.",
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {}
-    }
-  },
-  {
-    name: "getNote",
-    description: "Fetch the contents of the auto-saving scratchpad note.",
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {}
-    }
-  },
-  {
-    name: "updateNote",
-    description: "Overwrite the entire content of the scratchpad note.",
-    parameters: {
-      type: SchemaType.OBJECT,
-      properties: {
-        content: { type: SchemaType.STRING, description: "New markdown/text note content" }
+    type: "function",
+    function: {
+      name: "addWatchlistItem",
+      description: "Add a media item (movie, show, anime, or book) to the watchlist.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Title of the media" },
+          type: { type: "string", description: "Type of media (movie, show, anime, book)" },
+          status: { type: "string", description: "Status (plan_to_watch, watching, paused, completed, dropped). Default is 'plan_to_watch'" },
+          progress: { type: "integer", description: "Current episode or page progress" },
+          totalEpisodes: { type: "integer", description: "Total episodes/pages if known" },
+          rating: { type: "number", description: "User rating out of 10" },
+        },
+        required: ["title", "type", "status"],
       },
-      required: ["content"]
-    }
-  }
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "updateWatchlistItem",
+      description: "Update fields of an item in the watchlist.",
+      parameters: {
+        type: "object",
+        properties: {
+          id: { type: "string", description: "Item ID" },
+          status: { type: "string", description: "Status (plan_to_watch, watching, paused, completed, dropped)" },
+          progress: { type: "integer" },
+          rating: { type: "number", description: "Rating out of 10" },
+        },
+        required: ["id"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "listSubscriptions",
+      description: "Retrieve all recurring subscription records.",
+      parameters: {
+        type: "object",
+        properties: {},
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "getPortfolio",
+      description: "Retrieve all assets in the user's investment portfolio.",
+      parameters: {
+        type: "object",
+        properties: {},
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "getNote",
+      description: "Fetch the contents of the auto-saving scratchpad note.",
+      parameters: {
+        type: "object",
+        properties: {},
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "updateNote",
+      description: "Overwrite the entire content of the scratchpad note.",
+      parameters: {
+        type: "object",
+        properties: {
+          content: { type: "string", description: "New markdown/text note content" },
+        },
+        required: ["content"],
+      },
+    },
+  },
 ];
 
 function recordAgentEvent(
@@ -323,19 +350,18 @@ export async function POST(req: NextRequest) {
     if (!redis) {
       return NextResponse.json({ error: "Rate limit cache offline." }, { status: 500 });
     }
-    const geminiApiKey = process.env.GEMINI_API_KEY;
     const groqApiKey = process.env.GROQ_API_KEY;
-    if (!geminiApiKey && !groqApiKey) {
+    if (!groqApiKey) {
       return NextResponse.json({ error: "Server AI service is not configured." }, { status: 500 });
     }
 
     const uid = session.uid;
-    const globalKey = "rate:gemini:global:minute";
-    const userKey = `rate:gemini:user:${uid}:minute`;
+    const globalKey = "rate:ai:global:minute";
+    const userKey = `rate:ai:user:${uid}:minute`;
 
     const globalCount = await redis.incr(globalKey);
     if (globalCount === 1) await redis.expire(globalKey, 60);
-    if (globalCount > 15) {
+    if (globalCount > 25) {
       return NextResponse.json(
         { error: "The assistant is busy right now. Please try again in a few seconds." },
         { status: 429 }
@@ -344,7 +370,7 @@ export async function POST(req: NextRequest) {
 
     const userCount = await redis.incr(userKey);
     if (userCount === 1) await redis.expire(userKey, 60);
-    if (userCount > 5) {
+    if (userCount > 8) {
       return NextResponse.json(
         { error: "You are sending messages too quickly. Please wait a minute." },
         { status: 429 }
@@ -364,111 +390,44 @@ export async function POST(req: NextRequest) {
 
     let replyText: string | null = null;
     let updatedHistory: any[] = [];
-    let lastError: any = null;
 
-    if (geminiApiKey) {
-      try {
-        const genAI = new GoogleGenerativeAI(geminiApiKey);
-        const model = genAI.getGenerativeModel({
-          model: "gemini-2.5-flash",
-          systemInstruction: SYSTEM_INSTRUCTION,
-          tools: [{ functionDeclarations }]
-        });
+    try {
+      const groqMessages = convertHistoryToGroqMessages(trimmedHistory, message, SYSTEM_INSTRUCTION);
 
-        const sdkHistory = trimmedHistory.map((h: any) => ({
-          role: h.role,
-          parts: h.parts
-        }));
+      replyText = await executeGroqChatWithTools({
+        messages: groqMessages,
+        tools: GROQ_TOOLS,
+        executeTool: (name, args) => executeTool(session, name, args),
+      });
 
-        const chat = model.startChat({
-          history: sdkHistory
-        });
+      const baseHistory = Array.isArray(history) ? [...history] : [];
+      updatedHistory = [
+        ...baseHistory,
+        { role: "user", parts: [{ text: message }] },
+        { role: "assistant", parts: [{ text: replyText }] },
+      ];
+    } catch (groqError: any) {
+      const groqErrorMsg = groqError?.message || String(groqError);
+      console.error("[Kiroku] Groq chat failed:", groqErrorMsg);
+      postDiscordEmbed({
+        title: "🚨 Assistant AI Outage: Groq Failed",
+        description: "Groq model failed to complete the user's assistant request.",
+        color: DISCORD_RED,
+        fields: [
+          { name: "Groq Error Reason", value: codeBlock(groqErrorMsg) },
+          { name: "User", value: session.user.email || session.uid, inline: true },
+          { name: "Query", value: message.slice(0, 200), inline: true },
+        ],
+        footer: { text: "Continuum Assistant • Critical Error" },
+      }).catch(() => {});
 
-        let response = await chat.sendMessage(message);
-        let attempts = 0;
-
-        while (attempts < 5) {
-          const functionCalls = response.response.functionCalls();
-          if (functionCalls && functionCalls.length > 0) {
-            const call = functionCalls[0];
-            const rawResult = await executeTool(session, call.name, call.args);
-            const toolResult = (rawResult && typeof rawResult === "object" && !Array.isArray(rawResult)) ? rawResult : { result: rawResult };
-
-            response = await chat.sendMessage([{
-              functionResponse: {
-                name: call.name,
-                response: toolResult
-              }
-            }]);
-
-            attempts++;
-          } else {
-            replyText = response.response.text();
-            updatedHistory = await chat.getHistory();
-            break;
-          }
-        }
-      } catch (geminiError: any) {
-        lastError = geminiError;
-        const geminiErrorMsg = geminiError?.message || String(geminiError);
-        console.warn("[Kiroku] Gemini call failed, attempting Groq fallback:", geminiErrorMsg);
-        postDiscordEmbed({
-          title: "⚠️ Gemini Assistant Request Failed",
-          description: "Gemini encountered an error. Attempting fallback to Groq.",
-          color: DISCORD_ORANGE,
-          fields: [
-            { name: "Error Reason", value: codeBlock(geminiErrorMsg) },
-            { name: "User", value: session.user.email || session.uid, inline: true },
-            { name: "Query", value: message.slice(0, 200), inline: true },
-          ],
-          footer: { text: "Continuum Assistant • Gemini Fallback" },
-        }).catch(() => {});
-      }
-    }
-
-    if (!replyText && groqApiKey) {
-      try {
-        const groqTools = convertGeminiToolsToGroq(functionDeclarations);
-        const groqMessages = convertHistoryToGroqMessages(trimmedHistory, message, SYSTEM_INSTRUCTION);
-
-        replyText = await executeGroqChatWithTools({
-          messages: groqMessages,
-          tools: groqTools,
-          executeTool: (name, args) => executeTool(session, name, args),
-        });
-
-        const baseHistory = Array.isArray(history) ? [...history] : [];
-        updatedHistory = [
-          ...baseHistory,
-          { role: "user", parts: [{ text: message }] },
-          { role: "model", parts: [{ text: replyText }] },
-        ];
-      } catch (groqError: any) {
-        lastError = groqError;
-        const groqErrorMsg = groqError?.message || String(groqError);
-        console.error("[Kiroku] Groq fallback also failed:", groqErrorMsg);
-        postDiscordEmbed({
-          title: "🚨 Assistant AI Outage: Gemini & Groq Failed",
-          description: "Both Gemini and Groq models failed to complete the user's assistant request.",
-          color: DISCORD_RED,
-          fields: [
-            { name: "Groq Error Reason", value: codeBlock(groqErrorMsg) },
-            { name: "User", value: session.user.email || session.uid, inline: true },
-            { name: "Query", value: message.slice(0, 200), inline: true },
-          ],
-          footer: { text: "Continuum Assistant • Critical Error" },
-        }).catch(() => {});
-      }
-    }
-
-    if (!replyText) {
-      const sanitized = sanitizeAiErrorMessage(lastError);
+      const sanitized = sanitizeAiErrorMessage(groqError);
       return NextResponse.json({ error: sanitized }, { status: 503 });
     }
 
     return NextResponse.json({
       reply: replyText,
-      history: updatedHistory
+      history: updatedHistory,
     });
   } catch (error: any) {
     console.error("Assistant Chat Error:", error);

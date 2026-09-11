@@ -76,13 +76,13 @@ describe("cron alerting", () => {
   });
 
   it("reports a cron that could not start at all", async () => {
-    reportCronAbort("recommendations", "Missing GEMINI_API_KEY");
+    reportCronAbort("recommendations", "Missing GROQ_API_KEY");
     await flush();
 
     const embed = lastPayload(fetchSpy).embeds[0];
     expect(embed.title).toContain("Cron Aborted");
     const fields = Object.fromEntries(embed.fields.map((f: any) => [f.name, f.value]));
-    expect(fields.Reason).toBe("Missing GEMINI_API_KEY");
+    expect(fields.Reason).toBe("Missing GROQ_API_KEY");
   });
 
   it("keeps oversized error logs inside Discord's field limit", async () => {

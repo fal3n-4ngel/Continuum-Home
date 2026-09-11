@@ -385,13 +385,13 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 text-text-primary border border-border-subtle shadow-2xs">
                   <Shield size={14} />
                 </div>
-                AI Privacy &amp; Data Control
+                AI Privacy &amp; Cloud Intelligence
               </h2>
               {setAiOptOut && (
                 <Toggle
-                  checked={!!aiOptOut}
+                  checked={!aiOptOut}
                   onChange={() => setAiOptOut(!aiOptOut)}
-                  label="Opt out of all AI features"
+                  label="Enable AI Features"
                 />
               )}
             </div>
@@ -403,14 +403,16 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   </span>
                   <span className={`font-mono text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
                     aiOptOut
-                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                      : "border-border-subtle bg-bg-secondary text-text-secondary"
+                      ? "border-border-subtle bg-bg-secondary text-text-muted"
+                      : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                   }`}>
                     {aiOptOut ? "Opted Out" : "Active"}
                   </span>
                 </div>
                 <p className="text-[11px] leading-relaxed text-text-muted mt-1">
-                  Disables all external AI features across Continuum Home (Kiroku chat assistant, AI health trajectory analysis, and daily media recommendations). No transaction or library data will be sent to external LLM services (Google Gemini or Groq). All financial analysis will strictly run locally using deterministic private math.
+                  {aiOptOut
+                    ? "Disables all external AI features across Continuum Home (Kiroku chat assistant, health analytics advisory, and historical spend intelligence). No transaction or library data will be sent to external LLM services. All financial analysis runs strictly locally using deterministic private math."
+                    : "External AI assistant features are active (Kiroku chat assistant, health trajectory advisory, and daily media recommendations) powered privately by Groq with zero data retention."}
                 </p>
               </div>
             </div>

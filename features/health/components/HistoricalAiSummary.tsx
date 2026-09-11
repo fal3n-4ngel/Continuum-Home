@@ -24,6 +24,7 @@ interface HistoricalAiSummaryProps {
   currency: string;
   isProUser: boolean;
   onClaimPro?: () => void;
+  aiOptOut?: boolean;
 }
 
 interface RecurringCategoryProfile {
@@ -45,7 +46,10 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
   currency,
   isProUser,
   onClaimPro,
+  aiOptOut,
 }) => {
+  if (aiOptOut) return null;
+
   const stats = useMemo(() => {
     const active = periods.filter((p) => p.totalSpend > 0);
     if (active.length === 0) {
@@ -370,7 +374,7 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
         </div>
 
         <span className="self-start sm:self-auto font-mono text-[10px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-full border border-border-subtle/60 shadow-2xs">
-          Gemini 2.5 Flash · Private
+          Groq AI · Private
         </span>
       </div>
 

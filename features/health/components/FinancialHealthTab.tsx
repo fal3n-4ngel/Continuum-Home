@@ -28,6 +28,7 @@ import { getEffectiveAmount } from "@/lib/finance";
 import { HealthAnalyticsReport } from "@/lib/firebase";
 import { toLocalDateStr } from "@/lib/utils/dates";
 import { HistoricalAnalyticsView } from "./HistoricalAnalyticsView";
+import { calculateDailyAndWeeklyLimits } from "../lib/financial-math";
 
 interface PayCycle {
   startStr: string;
@@ -98,6 +99,8 @@ interface FinancialHealthTabProps {
   getHeaders?: () => Record<string, string>;
   isProUser?: boolean;
   onClaimPro?: () => void;
+  aiOptOut?: boolean;
+  onOpenSettings?: () => void;
 }
 
 const STAT_CARD =
@@ -137,28 +140,33 @@ const LIQUIDITY_WEIGHTS: Record<string, number> = {
 };
 const DEFAULT_LIQUIDITY_WEIGHT = 0.85;
 
-interface GeminiHealthAnalyticsProps {
+interface AiHealthAnalyticsProps {
   currency: string;
   payCycle: PayCycle;
   targetSavingsGoal: number;
   portfolioValue: number;
   getHeaders?: () => Record<string, string>;
+  aiOptOut?: boolean;
+  onOpenSettings?: () => void;
 }
 
-const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
+const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
   currency,
   payCycle,
   targetSavingsGoal,
   portfolioValue,
   getHeaders,
+  aiOptOut,
+  onOpenSettings,
 }) => {
   const [report, setReport] = useState<HealthAnalyticsReport | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState<boolean>(!aiOptOut);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [isCached, setIsCached] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchAnalytics = async (force: boolean = false) => {
+    if (aiOptOut) return;
     if (force) setRefreshing(true);
     else setLoading(true);
     setError(null);
@@ -209,10 +217,10 @@ const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
         setReport(data.report);
         setIsCached(!!data.cached);
       } else if (data.budgetExceeded) {
-        setError("Daily Gemini request limit reached. Showing latest saved snapshot.");
+        setError("Daily AI request limit reached. Showing latest saved snapshot.");
       }
     } catch (err) {
-      console.error("Gemini spend analytics fetch error:", err);
+      console.error("AI spend analytics fetch error:", err);
       setError("AI spend analytics unavailable at the moment");
     } finally {
       setLoading(false);
@@ -221,8 +229,11 @@ const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
   };
 
   useEffect(() => {
-    fetchAnalytics(false);
+    if (!aiOptOut) {
+      fetchAnalytics(false);
+    }
   }, [
+    aiOptOut,
     payCycle.startStr,
     payCycle.spentSoFar,
     payCycle.projectedTotalSpend,
@@ -265,6 +276,40 @@ const GeminiHealthAnalytics: React.FC<GeminiHealthAnalyticsProps> = ({
         minute: "2-digit",
       })
     : "";
+
+  if (aiOptOut) {
+    return (
+      <div className="rounded-card border border-dashed border-border-subtle bg-bg-card/60 p-5 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-secondary text-text-primary">
+            <Shield size={18} className="text-emerald-600 dark:text-emerald-400" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-serif text-base font-semibold tracking-tight text-text-primary">
+                AI Spend Analytics Disabled
+              </h3>
+              <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+                Opted Out
+              </span>
+            </div>
+            <p className="text-[11.5px] text-text-muted mt-0.5">
+              AI features are opted out in account settings. Pay cycles, safe daily spending limits, and emergency runway math continue to calculate locally.
+            </p>
+          </div>
+        </div>
+        {onOpenSettings && (
+          <button
+            type="button"
+            onClick={onOpenSettings}
+            className="cursor-pointer rounded-full border border-border-subtle bg-bg-primary hover:bg-bg-secondary px-4 py-1.5 text-xs font-semibold text-text-primary transition-all shadow-xs shrink-0 self-start sm:self-auto"
+          >
+            Manage in Settings →
+          </button>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-card border border-border-subtle border-t-2 border-t-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col gap-4 relative overflow-hidden transition-all duration-200">
@@ -448,6 +493,8 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   getHeaders,
   isProUser = false,
   onClaimPro,
+  aiOptOut,
+  onOpenSettings,
 }) => {
   const [healthView, setHealthView] = useState<"overview" | "analytics">("overview");
   const [reconcileAnswer, setReconcileAnswer] = useState<"yes" | "no" | null>(null);
@@ -583,28 +630,30 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
     }
   };
 
-  const remainingDays = Math.max(1, payCycle.remainingDays);
-  const daysThisWeek = Math.min(7, remainingDays);
-
-  const unspentCash = Math.max(0, payCycle.totalIncome - payCycle.spentSoFar);
-
-  const spendablePoolForTarget = unspentCash - targetSavingsGoal;
-
-  const isBehindTarget = spendablePoolForTarget < 0;
-
-  const grossDailyLimit = isBehindTarget ? 0 : spendablePoolForTarget / remainingDays;
-  const grossWeekLimit = grossDailyLimit * daysThisWeek;
-
   const todayStr = toLocalDateStr(new Date());
 
   const todaySpent = expenses
     .filter((e) => e.date === todayStr && typeof e.amount === "number")
     .reduce((sum, e) => sum + (e.amount || 0), 0);
 
-  const safeToday = Math.max(0, grossDailyLimit - todaySpent);
-  const safeWeek = Math.max(0, grossWeekLimit - todaySpent);
-
-  const deficitToTarget = isBehindTarget ? Math.abs(spendablePoolForTarget) : 0;
+  const {
+    remainingDays,
+    daysThisWeek,
+    unspentCash,
+    spendablePoolForTarget,
+    isBehindTarget,
+    grossDailyLimit,
+    grossWeekLimit,
+    safeToday,
+    safeWeek,
+    deficitToTarget,
+  } = calculateDailyAndWeeklyLimits({
+    totalIncome: payCycle.totalIncome,
+    spentSoFar: payCycle.spentSoFar,
+    targetSavingsGoal,
+    remainingDays: payCycle.remainingDays,
+    todaySpent,
+  });
 
   const analyticsExpenses = expenses.map((e, idx) => ({
     id: e.id || `exp-${idx}`,
@@ -675,6 +724,8 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           isProUser={Boolean(isProUser)}
           onClaimPro={onClaimPro || (() => {})}
           onBackToOverview={() => setHealthView("overview")}
+          aiOptOut={aiOptOut}
+          onOpenSettings={onOpenSettings}
         />
       </div>
     );
@@ -737,7 +788,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
               Adaptive Pay-Cycles &amp; Liquidity Intelligence
             </h2>
             <p className="text-[13px] leading-relaxed text-text-secondary">
-              Gain automated daily safe-spending limits, cash-on-hand reconciliations, weighted emergency runway analytics, and private Gemini AI advisory tailored to your salary schedule.
+              Gain automated daily safe-spending limits, cash-on-hand reconciliations, weighted emergency runway analytics, and {aiOptOut ? "private local" : "private Groq AI"} advisory tailored to your salary schedule.
             </p>
           </div>
 
@@ -880,32 +931,36 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-primary text-text-primary">
-                  <Sparkles size={18} />
+                  {aiOptOut ? <Shield size={18} className="text-emerald-600 dark:text-emerald-400" /> : <Sparkles size={18} />}
                 </div>
                 <div>
                   <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-muted">
-                    AI Intelligence
+                    {aiOptOut ? "Privacy Mode" : "AI Intelligence"}
                   </span>
                   <h3 className="font-serif text-lg font-medium text-text-primary">
-                    Gemini AI Fiscal Advisory
+                    {aiOptOut ? "Private Fiscal Advisory" : "Groq AI Fiscal Advisory"}
                   </h3>
                 </div>
               </div>
               <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
-                Zero Cloud Leak
+                {aiOptOut ? "Opted Out" : "Zero Cloud Leak"}
               </span>
             </div>
             <p className="text-xs text-text-secondary leading-relaxed">
-              Analyzes category anomalies, monthly burn trajectory, and generates actionable steps to preserve savings without touching raw ledger entries.
+              {aiOptOut
+                ? "AI features are disabled. Financial calculations, category analysis, and safe daily limits run strictly locally and offline."
+                : "Analyzes category anomalies, monthly burn trajectory, and generates actionable steps to preserve savings without touching raw ledger entries."}
             </p>
             <div className="rounded-xl border border-dashed border-border-subtle bg-bg-primary/40 p-3 flex items-center justify-between text-xs">
               <div className="flex items-center gap-1.5">
                 <span className="text-text-muted">Model Execution</span>
                 <span className="rounded border border-border-subtle bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-text-muted">
-                  Sample
+                  {aiOptOut ? "Local" : "Sample"}
                 </span>
               </div>
-              <span className="font-mono font-semibold text-text-primary">Gemini 2.5 Flash · Private</span>
+              <span className="font-mono font-semibold text-text-primary">
+                {aiOptOut ? "Deterministic Math Only" : "Groq AI · Private"}
+              </span>
             </div>
           </div>
         </div>
@@ -1117,12 +1172,14 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         </div>
       </div>
 
-      <GeminiHealthAnalytics
+      <AiHealthAnalytics
         currency={currency}
         payCycle={payCycle}
         targetSavingsGoal={targetSavingsGoal}
         portfolioValue={portfolioValue}
         getHeaders={getHeaders}
+        aiOptOut={aiOptOut}
+        onOpenSettings={onOpenSettings}
       />
 
       <div className="grid grid-cols-2 gap-5 max-lg:grid-cols-1">

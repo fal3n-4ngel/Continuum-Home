@@ -1,14 +1,21 @@
-import { SchemaType } from "@google/generative-ai";
-
 const GROQ_TOOL_MODELS = [
+  process.env.GROQ_MODEL,
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
+  "qwen/qwen3.8-27b",
   "llama-3.3-70b-versatile",
   "llama-3.1-8b-instant",
-];
+].filter(Boolean) as string[];
 
 const GROQ_JSON_MODELS = [
+  process.env.GROQ_JSON_MODEL,
+  process.env.GROQ_MODEL,
+  "openai/gpt-oss-120b",
+  "openai/gpt-oss-20b",
+  "qwen/qwen3.8-27b",
   "llama-3.3-70b-versatile",
   "llama-3.1-8b-instant",
-];
+].filter(Boolean) as string[];
 
 export function sanitizeAiErrorMessage(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err || "");
@@ -40,47 +47,15 @@ export function sanitizeAiErrorMessage(err: unknown): string {
     return msg;
   }
 
+  if (lower.includes("does not exist") || lower.includes("model_not_found") || lower.includes("not have access")) {
+    return "The configured AI model is unavailable. Please check your Groq API configuration.";
+  }
+
   if (lower.includes("fetch") || lower.includes("network") || lower.includes("econnrefused")) {
     return "Network connection issue. Please verify your connection and try again.";
   }
 
   return "The assistant encountered a temporary issue. Please try again in a moment.";
-}
-
-export function convertGeminiToolsToGroq(geminiTools: any[]): any[] {
-  return geminiTools.map((t) => {
-    const rawProperties = t.parameters?.properties || {};
-    const required = t.parameters?.required || [];
-    const convertedProperties: Record<string, any> = {};
-
-    for (const [key, val] of Object.entries<any>(rawProperties)) {
-      let typeStr = "string";
-      if (val.type === SchemaType.NUMBER) typeStr = "number";
-      else if (val.type === SchemaType.INTEGER) typeStr = "integer";
-      else if (val.type === SchemaType.BOOLEAN) typeStr = "boolean";
-      else if (val.type === SchemaType.ARRAY) typeStr = "array";
-      else if (val.type === SchemaType.OBJECT) typeStr = "object";
-      else if (typeof val.type === "string") typeStr = val.type.toLowerCase();
-
-      convertedProperties[key] = {
-        type: typeStr,
-        description: val.description,
-      };
-    }
-
-    return {
-      type: "function",
-      function: {
-        name: t.name,
-        description: t.description,
-        parameters: {
-          type: "object",
-          properties: convertedProperties,
-          required: required.length > 0 ? required : undefined,
-        },
-      },
-    };
-  });
 }
 
 export function convertHistoryToGroqMessages(

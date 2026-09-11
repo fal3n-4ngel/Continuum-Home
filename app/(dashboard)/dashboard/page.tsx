@@ -213,8 +213,9 @@ export default function Dashboard() {
           if (typeof data.enableInvestmentPortfolios === "boolean") {
             setShowInvestmentsTab(data.enableInvestmentPortfolios);
           }
-          if (typeof data.enableGeminiChatAssitant === "boolean") {
-            setEnableChatAssistant(data.enableGeminiChatAssitant);
+          const chatFlag = data.enableChatAssistant ?? data.enableGeminiChatAssitant;
+          if (typeof chatFlag === "boolean") {
+            setEnableChatAssistant(chatFlag);
           }
         }
       })
@@ -1817,7 +1818,7 @@ export default function Dashboard() {
         setExpensesLoaded={setExpensesLoaded}
       />
 
-      <main className="ml-[250px] flex w-full max-w-[1680px] min-w-0 flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:overflow-x-hidden max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(102px+env(safe-area-inset-bottom))]">
+      <main className="ml-[250px] flex w-full max-w-[1680px] min-w-0 flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:overflow-x-hidden max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(130px+env(safe-area-inset-bottom))]">
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -2050,6 +2051,8 @@ export default function Dashboard() {
                 getHeaders={getHeaders}
                 isProUser={isProUser}
                 onClaimPro={() => setShowClaimPro(true)}
+                aiOptOut={aiOptOut}
+                onOpenSettings={() => setActiveTab("settings")}
               />
             )}
 

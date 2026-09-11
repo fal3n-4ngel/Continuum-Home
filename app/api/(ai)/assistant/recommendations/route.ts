@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { listWatchlist, getDailyRecommendation, saveDailyRecommendation, getSettings, DailyRecommendation } from "@/lib/firebase";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ApiError, toErrorResponse } from "@/lib/utils";
 import {
-  reserveGeminiCall,
+  reserveAiCall,
   acquireGenerationLock,
-  isGeminiQuotaError,
   executeGroqJson,
   postDiscordEmbed,
   codeBlock,
@@ -64,14 +62,13 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ recommendation: null });
     }
 
-    const geminiApiKey = process.env.GEMINI_API_KEY;
     const groqApiKey = process.env.GROQ_API_KEY;
-    if (!geminiApiKey && !groqApiKey) {
+    if (!groqApiKey) {
       return NextResponse.json({ recommendation: null });
     }
 
-    const withinBudget = geminiApiKey ? await reserveGeminiCall() : false;
-    if (!withinBudget && !groqApiKey) {
+    const withinBudget = await reserveAiCall();
+    if (!withinBudget) {
       return NextResponse.json({ recommendation: null });
     }
 
@@ -128,60 +125,31 @@ Return no other text, comments or markdown blocks. Just the raw JSON object.
 `;
     }
 
-    let geminiResult: any = null;
+    let groqResult: any = null;
 
-    if (withinBudget && geminiApiKey) {
-      try {
-        const genAI = new GoogleGenerativeAI(geminiApiKey);
-        const model = genAI.getGenerativeModel({
-          model: "gemini-2.5-flash",
-          generationConfig: {
-            responseMimeType: "application/json",
-          },
-        });
-        const response = await model.generateContent(prompt);
-        geminiResult = JSON.parse(response.response.text().trim());
-      } catch (err: any) {
-        const errMsg = err?.message || String(err);
-        console.warn("[recommendations] Gemini failed, attempting Groq fallback:", errMsg);
-        postDiscordEmbed({
-          title: "⚠️ Daily Recommendations: Gemini Failed (Groq Fallback Active)",
-          color: DISCORD_ORANGE,
-          fields: [
-            { name: "Error Reason", value: codeBlock(errMsg) },
-            { name: "User", value: session.user.email || session.uid, inline: true },
-            { name: "Media Type", value: type, inline: true },
-          ],
-          footer: { text: "Continuum Assistant • Recommendations Fallback" },
-        }).catch(() => {});
-      }
+    try {
+      groqResult = await executeGroqJson(prompt);
+    } catch (groqErr: any) {
+      const groqErrMsg = groqErr?.message || String(groqErr);
+      console.warn("[recommendations] Groq call failed:", groqErrMsg);
+      postDiscordEmbed({
+        title: "⚠️ Daily Recommendations: Groq Failed",
+        color: DISCORD_ORANGE,
+        fields: [
+          { name: "Groq Error Reason", value: codeBlock(groqErrMsg) },
+          { name: "User", value: session.user.email || session.uid, inline: true },
+          { name: "Media Type", value: type, inline: true },
+        ],
+        footer: { text: "Continuum Assistant • Recommendations Failed" },
+      }).catch(() => {});
     }
 
-    if (!geminiResult && process.env.GROQ_API_KEY) {
-      try {
-        geminiResult = await executeGroqJson(prompt);
-      } catch (groqErr: any) {
-        const groqErrMsg = groqErr?.message || String(groqErr);
-        console.warn("[recommendations] Groq fallback failed:", groqErrMsg);
-        postDiscordEmbed({
-          title: "⚠️ Daily Recommendations: Groq Fallback Failed",
-          color: DISCORD_ORANGE,
-          fields: [
-            { name: "Groq Error Reason", value: codeBlock(groqErrMsg) },
-            { name: "User", value: session.user.email || session.uid, inline: true },
-            { name: "Media Type", value: type, inline: true },
-          ],
-          footer: { text: "Continuum Assistant • Recommendations Failed" },
-        }).catch(() => {});
-      }
-    }
-
-    if (!geminiResult) {
+    if (!groqResult) {
       return NextResponse.json({ recommendation: null });
     }
-    const title = typeof geminiResult.title === "string" ? geminiResult.title.trim() : "";
-    const releaseYear = typeof geminiResult.releaseYear === "string" || typeof geminiResult.releaseYear === "number"
-      ? String(geminiResult.releaseYear).trim()
+    const title = typeof groqResult.title === "string" ? groqResult.title.trim() : "";
+    const releaseYear = typeof groqResult.releaseYear === "string" || typeof groqResult.releaseYear === "number"
+      ? String(groqResult.releaseYear).trim()
       : "";
 
     let coverImage: string | null = null;
@@ -246,9 +214,9 @@ Return no other text, comments or markdown blocks. Just the raw JSON object.
       type,
       title,
       releaseYear,
-      author: typeof geminiResult.author === "string" ? geminiResult.author : "",
-      synopsis: typeof geminiResult.synopsis === "string" ? geminiResult.synopsis : "",
-      rationale: typeof geminiResult.rationale === "string" ? geminiResult.rationale : "",
+      author: typeof groqResult.author === "string" ? groqResult.author : "",
+      synopsis: typeof groqResult.synopsis === "string" ? groqResult.synopsis : "",
+      rationale: typeof groqResult.rationale === "string" ? groqResult.rationale : "",
       coverImage,
       score,
       isLogged: false,
