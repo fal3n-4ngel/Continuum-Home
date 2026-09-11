@@ -19,8 +19,6 @@ import {
   updateWatchlistItem,
   listSubscriptions,
   getPortfolio,
-  getNote,
-  updateNote,
   getSettings,
 } from "@/lib/firebase";
 import { recordDomainEvent, DOMAIN_EVENTS } from "@/lib/domain-events";
@@ -162,31 +160,6 @@ const GROQ_TOOLS = [
       },
     },
   },
-  {
-    type: "function",
-    function: {
-      name: "getNote",
-      description: "Fetch the contents of the auto-saving scratchpad note.",
-      parameters: {
-        type: "object",
-        properties: {},
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "updateNote",
-      description: "Overwrite the entire content of the scratchpad note.",
-      parameters: {
-        type: "object",
-        properties: {
-          content: { type: "string", description: "New markdown/text note content" },
-        },
-        required: ["content"],
-      },
-    },
-  },
 ];
 
 function recordAgentEvent(
@@ -320,13 +293,6 @@ async function executeTool(session: any, name: string, args: any) {
         }
         return raw;
       }
-      case "getNote": {
-        const note = await getNote(session);
-        const content = note?.content || "";
-        return { content: content.length > 2000 ? `${content.slice(0, 2000)}... (truncated)` : content };
-      }
-      case "updateNote":
-        return await updateNote(session, args.content);
       default:
         throw new Error(`Unknown tool: ${name}`);
     }

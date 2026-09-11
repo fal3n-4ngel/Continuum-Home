@@ -12,6 +12,7 @@ export interface DashboardSettings {
   salaryLog?: Record<string, { date: string; amount: number }>;
   isPro?: boolean;
   aiOptOut?: boolean;
+  lastSeenRelease?: string;
   emailSubscriptions?: {
     expenses: boolean;
     portfolio: boolean;
@@ -63,6 +64,7 @@ export async function getSettings(session: Session): Promise<DashboardSettings |
       salaryLog,
       isPro: data.isPro === true,
       aiOptOut: data.aiOptOut === true,
+      lastSeenRelease: typeof data.lastSeenRelease === "string" && data.lastSeenRelease ? data.lastSeenRelease : undefined,
       emailSubscriptions: {
         expenses: emailSubsRaw.expenses !== false,
         portfolio: emailSubsRaw.portfolio === true,

@@ -32,6 +32,7 @@ vi.mock("@/lib/firebase/firebase-admin", () => ({
   adminGetLatestReleaseNote: vi.fn().mockResolvedValue(null),
   adminSaveReleaseNote: vi.fn().mockResolvedValue(undefined),
   adminDeactivateReleaseNote: vi.fn().mockResolvedValue(undefined),
+  adminCleanupLegacyCollections: vi.fn().mockResolvedValue({ deletedCount: 0, collections: [] }),
 }));
 
 const mockPrice = { priceInr: 2600, priceUsd: 31.14, previousCloseInr: 2580, previousCloseUsd: 30.9 };

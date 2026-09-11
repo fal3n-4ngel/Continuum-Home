@@ -228,28 +228,47 @@ export default function Dashboard() {
   const [activeReleaseNote, setActiveReleaseNote] = useState<ReleaseNote | null>(null);
   const [showReleaseNotesModal, setShowReleaseNotesModal] = useState(false);
 
+  const getHeaders = useCallback(() => getAuthHeaders(user?.idToken), [user]);
+
+  const [firestoreLastSeenRelease, setFirestoreLastSeenRelease] = useState<string | null>(null);
+
   useEffect(() => {
-    fetch("/api/release-notes/latest")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data?.releaseNote && data.releaseNote.active) {
-          const note = data.releaseNote as ReleaseNote;
-          const lastSeen = typeof window !== "undefined" ? window.localStorage.getItem("continuum_last_seen_release") : null;
-          if (lastSeen !== note.id && lastSeen !== note.version) {
-            setActiveReleaseNote(note);
-            setShowReleaseNotesModal(true);
-          }
+    if (!user) return;
+    Promise.all([
+      fetch("/api/release-notes/latest").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch("/api/settings", { headers: getHeaders() }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    ]).then(([relData, settingsData]) => {
+      if (relData?.releaseNote && relData.releaseNote.active) {
+        const note = relData.releaseNote as ReleaseNote;
+        const firestoreSeen = settingsData?.lastSeenRelease;
+        const localSeen = typeof window !== "undefined" ? window.localStorage.getItem("continuum_last_seen_release") : null;
+        const lastSeen = firestoreSeen || localSeen;
+        if (firestoreSeen) setFirestoreLastSeenRelease(firestoreSeen);
+        if (lastSeen !== note.id && lastSeen !== note.version) {
+          setActiveReleaseNote(note);
+          setShowReleaseNotesModal(true);
         }
-      })
-      .catch(() => {});
-  }, []);
+      }
+    });
+  }, [user?.idToken, getHeaders]);
 
   const handleDismissReleaseNotes = useCallback(() => {
-    if (activeReleaseNote && typeof window !== "undefined") {
-      window.localStorage.setItem("continuum_last_seen_release", activeReleaseNote.id || activeReleaseNote.version);
+    if (activeReleaseNote) {
+      const releaseId = activeReleaseNote.id || activeReleaseNote.version;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("continuum_last_seen_release", releaseId);
+      }
+      setFirestoreLastSeenRelease(releaseId);
+      if (user) {
+        fetch("/api/settings", {
+          method: "PATCH",
+          headers: getHeaders(),
+          body: JSON.stringify({ lastSeenRelease: releaseId }),
+        }).catch((err) => console.error(err));
+      }
     }
     setShowReleaseNotesModal(false);
-  }, [activeReleaseNote]);
+  }, [activeReleaseNote, user, getHeaders]);
 
   const [syncPreview, setSyncPreview] = useState<SyncPreviewState>({
     isOpen: false,
@@ -258,8 +277,6 @@ export default function Dashboard() {
     updatedItems: [],
     onConfirm: () => {},
   });
-
-  const getHeaders = useCallback(() => getAuthHeaders(user?.idToken), [user]);
 
   const triggerAlert = (
     title: string,
@@ -1095,6 +1112,9 @@ export default function Dashboard() {
         if (data.aiOptOut !== undefined) {
           setAiOptOutState(data.aiOptOut === true);
           localStorage.setItem("phub_ai_opt_out", String(data.aiOptOut === true));
+        }
+        if (data.lastSeenRelease) {
+          setFirestoreLastSeenRelease(data.lastSeenRelease);
         }
         setIsProUser(data.isPro === true);
       }

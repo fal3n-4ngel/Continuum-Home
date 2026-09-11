@@ -49,6 +49,7 @@ export function AdminTab({ user }: AdminTabProps) {
 
   const [cronRunning, setCronRunning] = useState<string | null>(null);
   const [flushLoading, setFlushLoading] = useState(false);
+  const [pruneLoading, setPruneLoading] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [migrationLoading, setMigrationLoading] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{ id: string; title: string } | null>(null);
@@ -140,6 +141,31 @@ Thank you for being part of our journey!`);
       setStatusMessage({ text: "Network error occurred while pinging Discord.", type: "error" });
     } finally {
       setDiscordSending(false);
+    }
+  };
+
+  const handlePruneLegacy = async () => {
+    setPruneLoading(true);
+    setStatusMessage(null);
+    try {
+      const res = await fetch("/api/admin/cleanup-legacy", {
+        method: "POST",
+        headers: getHeaders(),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatusMessage({
+          text: data.message || `Pruned ${data.deletedCount} legacy document(s) successfully.`,
+          type: "success",
+        });
+      } else {
+        setStatusMessage({ text: data.error || "Failed to prune legacy collections.", type: "error" });
+      }
+    } catch (err) {
+      console.error(err);
+      setStatusMessage({ text: "Network error occurred.", type: "error" });
+    } finally {
+      setPruneLoading(false);
     }
   };
 
@@ -748,6 +774,25 @@ Thank you for being part of our journey!`);
                 <span className="text-xs font-bold text-text-primary mt-1">Compose Announcement</span>
                 <span className="text-[11px] text-text-secondary leading-snug">
                   Open email & Discord broadcast center to send system notices.
+                </span>
+              </button>
+
+              <button
+                onClick={handlePruneLegacy}
+                disabled={pruneLoading}
+                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left disabled:opacity-50 cursor-pointer"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                    <Database className="h-3.5 w-3.5" /> Maintenance
+                  </span>
+                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">FIRESTORE</span>
+                </div>
+                <span className="text-xs font-bold text-text-primary mt-1">
+                  {pruneLoading ? "Pruning..." : "Prune Legacy Collections"}
+                </span>
+                <span className="text-[11px] text-text-secondary leading-snug">
+                  Purge obsolete collections (notes, watchlist, health_analytics).
                 </span>
               </button>
             </div>

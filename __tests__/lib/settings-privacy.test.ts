@@ -28,4 +28,15 @@ describe("Settings Privacy Validation", () => {
     expect(res.aiOptOut).toBe(true);
     expect(res.currency).toBe("₹");
   });
+
+  it("accepts and validates lastSeenRelease", () => {
+    const res = validateSettingsPatch({ lastSeenRelease: "rel_v1_2_1_1773200000000" });
+    expect(res.lastSeenRelease).toBe("rel_v1_2_1_1773200000000");
+  });
+
+  it("handles empty or whitespace-only lastSeenRelease as undefined", () => {
+    const res = validateSettingsPatch({ lastSeenRelease: "   ", salaryDay: 1 });
+    expect(res.lastSeenRelease).toBeUndefined();
+    expect(res.salaryDay).toBe(1);
+  });
 });

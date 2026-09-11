@@ -267,6 +267,9 @@ export function validateSettingsPatch(body: unknown): Partial<Omit<DashboardSett
   if (b.reconciliations !== undefined) patch.reconciliations = asReconciliationsMap(b.reconciliations, "reconciliations");
   if (b.salaryLog !== undefined) patch.salaryLog = asSalaryLogMap(b.salaryLog, "salaryLog");
   if (b.aiOptOut !== undefined) patch.aiOptOut = asBoolean(b.aiOptOut, "aiOptOut");
+  if (b.lastSeenRelease !== undefined) {
+    patch.lastSeenRelease = asTrimmedString(b.lastSeenRelease, "lastSeenRelease", 100, false) || undefined;
+  }
   if (b.emailSubscriptions !== undefined) {
     const es = requireObject(b.emailSubscriptions, "emailSubscriptions");
     patch.emailSubscriptions = {
@@ -276,23 +279,9 @@ export function validateSettingsPatch(body: unknown): Partial<Omit<DashboardSett
     };
   }
   if (Object.keys(patch).length === 0) {
-    badRequest("Patch body must include at least one of: timeFilter, salaryDay, monthlySalary, additionalIncome, currency, reconciliations, emailSubscriptions, aiOptOut.");
+    badRequest("Patch body must include at least one valid settings field.");
   }
   return patch;
-}
-
-const MAX_NOTE_LENGTH = 50_000;
-
-export function validateNoteContent(body: unknown): string {
-  const b = requireObject(body, "Note");
-  if (b.content !== undefined && typeof b.content !== "string") {
-    badRequest("Field 'content' must be a string.");
-  }
-  const content = (b.content as string) || "";
-  if (content.length > MAX_NOTE_LENGTH) {
-    badRequest(`Field 'content' must be at most ${MAX_NOTE_LENGTH} characters.`);
-  }
-  return content;
 }
 
 function validateFdDates(startDate: string | undefined, maturityDate: string | undefined) {
