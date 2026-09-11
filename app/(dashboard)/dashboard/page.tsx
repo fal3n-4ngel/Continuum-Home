@@ -44,7 +44,9 @@ import {
   ClaimProModal,
   DataCorrectionModal,
   DeleteAccountModal,
+  ReleaseNotesModal,
 } from "@/components/modals";
+import type { ReleaseNote } from "@/types";
 import { KirokuTab } from "@/features/assistant";
 
 const ExpensesTab = dynamic(() => import("@/features/expenses").then((mod) => mod.ExpensesTab));
@@ -223,6 +225,32 @@ export default function Dashboard() {
   }, []);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [activeReleaseNote, setActiveReleaseNote] = useState<ReleaseNote | null>(null);
+  const [showReleaseNotesModal, setShowReleaseNotesModal] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/release-notes/latest")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.releaseNote && data.releaseNote.active) {
+          const note = data.releaseNote as ReleaseNote;
+          const lastSeen = typeof window !== "undefined" ? window.localStorage.getItem("continuum_last_seen_release") : null;
+          if (lastSeen !== note.id && lastSeen !== note.version) {
+            setActiveReleaseNote(note);
+            setShowReleaseNotesModal(true);
+          }
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const handleDismissReleaseNotes = useCallback(() => {
+    if (activeReleaseNote && typeof window !== "undefined") {
+      window.localStorage.setItem("continuum_last_seen_release", activeReleaseNote.id || activeReleaseNote.version);
+    }
+    setShowReleaseNotesModal(false);
+  }, [activeReleaseNote]);
+
   const [syncPreview, setSyncPreview] = useState<SyncPreviewState>({
     isOpen: false,
     title: "",
@@ -2195,6 +2223,12 @@ export default function Dashboard() {
             throw new Error(errData.message || "Failed to delete account. Please try again.");
           }
         }}
+      />
+
+      <ReleaseNotesModal
+        isOpen={showReleaseNotesModal}
+        onClose={handleDismissReleaseNotes}
+        releaseNote={activeReleaseNote}
       />
     </div>
   );

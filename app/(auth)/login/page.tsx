@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LogoMark } from "@/components/Logo";
 import { SITE_NAME } from "@/lib/utils";
+import { useTheme } from "@/lib/theme/use-theme";
 
 export default function LoginPage() {
+  useTheme();
   const [status, setStatus] = useState<"loading" | "redirecting" | "error">("loading");
   const [error, setError] = useState("");
 

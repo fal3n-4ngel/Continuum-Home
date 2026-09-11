@@ -85,7 +85,7 @@ export async function listAllUsers(): Promise<AdminUser[]> {
         continue;
       }
       activeUsers.push(u);
-    } catch (e) {
+    } catch {
       activeUsers.push(u);
     }
   }
@@ -280,4 +280,36 @@ export async function decrementUserCount(): Promise<void> {
     { count: FieldValue.increment(-1), lastUpdated: FieldValue.serverTimestamp() },
     { merge: true }
   );
+}
+
+export interface ReleaseNoteRecord {
+  id: string;
+  version: string;
+  title: string;
+  content: string;
+  publishedAt: number;
+  active: boolean;
+  publishedBy?: string;
+}
+
+export async function adminGetLatestReleaseNote(): Promise<ReleaseNoteRecord | null> {
+  const db = getAdminDb();
+  if (!db) return null;
+  const doc = await db.collection("system").doc("release_notes").get();
+  if (!doc.exists) return null;
+  const data = doc.data() as ReleaseNoteRecord | undefined;
+  if (!data || !data.active) return null;
+  return data;
+}
+
+export async function adminSaveReleaseNote(note: ReleaseNoteRecord): Promise<void> {
+  const db = getAdminDb();
+  if (!db) return;
+  await db.collection("system").doc("release_notes").set(note, { merge: true });
+}
+
+export async function adminDeactivateReleaseNote(): Promise<void> {
+  const db = getAdminDb();
+  if (!db) return;
+  await db.collection("system").doc("release_notes").set({ active: false, updatedAt: Date.now() }, { merge: true });
 }

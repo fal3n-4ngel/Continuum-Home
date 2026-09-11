@@ -132,3 +132,83 @@ export function calculateExpenseTotals(expenses: Expense[]): {
 
   return { totalSpent, byCategory };
 }
+
+export interface DailyTrendOptions {
+  timeFilter?: "7" | "30" | "90" | "salary" | "all";
+  currentPayCycle?: ExpensePayCycleRange;
+  referenceDate?: Date;
+  startDate?: string;
+  endDate?: string;
+}
+
+export function calculateDailyTrend(
+  expenses: Expense[],
+  options: DailyTrendOptions = {}
+): [string, number][] {
+  const {
+    timeFilter = "all",
+    currentPayCycle,
+    referenceDate = new Date(),
+    startDate,
+    endDate,
+  } = options;
+
+  const expenseMap: Record<string, number> = {};
+  expenses.forEach((e) => {
+    if (e.date) {
+      const d = e.date.slice(0, 10);
+      expenseMap[d] = (expenseMap[d] || 0) + (e.amount || 0);
+    }
+  });
+
+  const refStr = toLocalDateStr(referenceDate);
+  let rangeStart = "";
+  let rangeEnd = refStr;
+
+  if (startDate && endDate) {
+    rangeStart = startDate;
+    rangeEnd = endDate;
+  } else if (timeFilter === "7") {
+    const d = new Date(referenceDate);
+    d.setDate(d.getDate() - 6);
+    rangeStart = toLocalDateStr(d);
+    rangeEnd = refStr;
+  } else if (timeFilter === "30") {
+    const d = new Date(referenceDate);
+    d.setDate(d.getDate() - 29);
+    rangeStart = toLocalDateStr(d);
+    rangeEnd = refStr;
+  } else if (timeFilter === "90") {
+    const d = new Date(referenceDate);
+    d.setDate(d.getDate() - 89);
+    rangeStart = toLocalDateStr(d);
+    rangeEnd = refStr;
+  } else if (timeFilter === "salary" && currentPayCycle) {
+    rangeStart = currentPayCycle.startStr;
+    rangeEnd = currentPayCycle.endStr;
+  } else {
+    const allDates = Object.keys(expenseMap).sort();
+    if (allDates.length === 0) return [];
+    rangeStart = allDates[0];
+    rangeEnd = allDates[allDates.length - 1];
+  }
+
+  if (rangeStart && rangeEnd && rangeStart <= rangeEnd) {
+    const s = new Date(`${rangeStart}T00:00:00`);
+    const e = new Date(`${rangeEnd}T00:00:00`);
+    const diffDays = Math.round((e.getTime() - s.getTime()) / 86400000);
+
+    if (diffDays >= 0 && diffDays <= 120) {
+      const result: [string, number][] = [];
+      const cur = new Date(s);
+      while (cur <= e) {
+        const dStr = toLocalDateStr(cur);
+        result.push([dStr, Math.round((expenseMap[dStr] || 0) * 100) / 100]);
+        cur.setDate(cur.getDate() + 1);
+      }
+      return result;
+    }
+  }
+
+  return Object.entries(expenseMap).sort(([a], [b]) => a.localeCompare(b));
+}

@@ -4,6 +4,7 @@ import {
   filterExpenses,
   sortExpenses,
   calculateExpenseTotals,
+  calculateDailyTrend,
 } from "@/features/expenses/lib/filtering";
 import { Expense } from "@/types";
 
@@ -199,4 +200,58 @@ describe("features/expenses/lib/filtering real unit tests", () => {
     expect(totals.byCategory["Rent"]).toBe(30000);
     expect(totals.byCategory["Electronics"]).toBe(18500);
   });
+
+  it("calculates daily trend for rolling 30 days filling all 30 days and zero-amount days", () => {
+    const trend = calculateDailyTrend(sampleExpenses, {
+      timeFilter: "30",
+      referenceDate: fixedRefDate,
+    });
+    expect(trend).toHaveLength(30);
+    expect(trend[0][0]).toBe("2026-08-12");
+    expect(trend[29][0]).toBe("2026-09-10");
+    const sep10 = trend.find(([d]) => d === "2026-09-10");
+    expect(sep10).toBeDefined();
+    expect(sep10?.[1]).toBe(250);
+    const sep09 = trend.find(([d]) => d === "2026-09-09");
+    expect(sep09).toBeDefined();
+    expect(sep09?.[1]).toBe(0);
+  });
+
+  it("calculates daily trend for rolling 7 days filling all 7 days", () => {
+    const trend = calculateDailyTrend(sampleExpenses, {
+      timeFilter: "7",
+      referenceDate: fixedRefDate,
+    });
+    expect(trend).toHaveLength(7);
+    expect(trend[0][0]).toBe("2026-09-04");
+    expect(trend[6][0]).toBe("2026-09-10");
+    const sep05 = trend.find(([d]) => d === "2026-09-05");
+    expect(sep05?.[1]).toBe(3200);
+  });
+
+  it("calculates daily trend for pay cycle filling every day in pay period", () => {
+    const trend = calculateDailyTrend(sampleExpenses, {
+      timeFilter: "salary",
+      currentPayCycle: {
+        startStr: "2026-09-01",
+        endStr: "2026-09-30",
+      },
+      referenceDate: fixedRefDate,
+    });
+    expect(trend).toHaveLength(30);
+    expect(trend[0][0]).toBe("2026-09-01");
+    expect(trend[29][0]).toBe("2026-09-30");
+  });
+
+  it("calculates daily trend for explicit custom start and end date", () => {
+    const trend = calculateDailyTrend(sampleExpenses, {
+      startDate: "2026-09-01",
+      endDate: "2026-09-05",
+    });
+    expect(trend).toHaveLength(5);
+    expect(trend[0][0]).toBe("2026-09-01");
+    expect(trend[4][0]).toBe("2026-09-05");
+    expect(trend[4][1]).toBe(3200);
+  });
 });
+

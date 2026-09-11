@@ -20,3 +20,13 @@ export interface ProClaim {
   status: "pending" | "approved" | "denied";
   submittedAt: number;
 }
+
+export interface ReleaseNote {
+  id: string;
+  version: string;
+  title: string;
+  content: string;
+  publishedAt: number;
+  active: boolean;
+  publishedBy?: string;
+}

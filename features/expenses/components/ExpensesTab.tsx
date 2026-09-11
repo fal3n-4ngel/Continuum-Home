@@ -12,7 +12,7 @@ import { useTheme } from "@/lib/theme/use-theme";
 import { ExpenseRow } from "./ExpenseRow";
 import { ExpenseLedgerControls } from "./ExpenseLedgerControls";
 import { EditExpenseModal } from "./EditExpenseModal";
-import { filterExpensesBase, filterExpenses } from "../lib/filtering";
+import { filterExpensesBase, filterExpenses, calculateDailyTrend } from "../lib/filtering";
 
 interface ExpensesTabProps {
   className?: string;
@@ -447,12 +447,17 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
   }, [filteredExpensesBase]);
 
   const dailyTrend = React.useMemo(() => {
-    const map: Record<string, number> = {};
-    filteredExpenses.forEach((e) => {
-      if (e.date) map[e.date] = (map[e.date] || 0) + (e.amount || 0);
+    return calculateDailyTrend(filteredExpenses, {
+      timeFilter,
+      currentPayCycle,
+      startDate: ledgerStartDate,
+      endDate: ledgerEndDate,
     });
-    return Object.entries(map).sort(([a], [b]) => a.localeCompare(b)).slice(-10);
-  }, [filteredExpenses]);
+  }, [filteredExpenses, timeFilter, currentPayCycle, ledgerStartDate, ledgerEndDate]);
+
+  const maxDailyAmt = React.useMemo(() => {
+    return Math.max(...dailyTrend.map(([, total]) => total), 1);
+  }, [dailyTrend]);
 
   const largestItem = React.useMemo(() => {
     if (filteredExpensesBase.length === 0) return null;
@@ -719,19 +724,30 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                 {Object.keys(chartCatBreakdown).length === 0 && <p className="self-center text-[13px] text-text-muted">No transactions to plot.</p>}
               </div>
             ) : (
-              <div className="flex h-[260px] items-end justify-start gap-4 overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2">
+              <div className="flex h-[260px] items-end justify-start gap-3 overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2">
                 {dailyTrend.map(([date, total]) => {
-                  const maxAmt = Math.max(...dailyTrend.map(d => d[1]), 1);
-                  const pct = (total / maxAmt) * 100;
+                  const pct = Math.min((total / maxDailyAmt) * 100, 100);
                   const dateParts = date.split("-");
                   const dateFormatted = dateParts.length === 3 ? `${dateParts[1]}/${dateParts[2]}` : date;
+                  const formattedTotal = total === 0 ? "—" : `${currency}${total >= 10000 ? `${(total / 1000).toFixed(1)}k` : total.toLocaleString()}`;
                   return (
-                    <div key={date} className="flex min-w-[60px] max-w-[90px] flex-1 shrink-0 flex-col items-center gap-1.5">
-                      <span className="text-[11px] font-semibold text-text-secondary">{currency}{total.toLocaleString()}</span>
-                      <div className="flex h-[200px] w-8 items-end rounded-t-md bg-bg-secondary">
-                        <div className="w-full rounded-t-md bg-accent-blue transition-[height] duration-500 ease-in-out" style={{ height: `${pct}%` }}></div>
+                    <div
+                      key={date}
+                      className="group flex min-w-[42px] max-w-[56px] flex-1 shrink-0 flex-col items-center gap-1.5"
+                      title={`${date}: ${currency}${total.toLocaleString()}`}
+                    >
+                      <span className="text-[10px] font-semibold text-text-secondary truncate max-w-full text-center">
+                        {formattedTotal}
+                      </span>
+                      <div className="flex h-[180px] w-full max-w-[28px] items-end rounded-t-sm bg-bg-secondary group-hover:bg-bg-secondary/80 transition-colors">
+                        <div
+                          className="w-full rounded-t-sm bg-accent-blue transition-[height] duration-500 ease-in-out group-hover:brightness-110"
+                          style={{ height: `${pct}%`, minHeight: total > 0 ? "2px" : "0px" }}
+                        ></div>
                       </div>
-                      <span className="w-full text-center font-mono text-[9px] text-text-muted">{dateFormatted}</span>
+                      <span className="w-full text-center font-mono text-[9px] text-text-muted group-hover:text-text-primary transition-colors">
+                        {dateFormatted}
+                      </span>
                     </div>
                   );
                 })}

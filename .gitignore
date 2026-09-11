@@ -20,6 +20,7 @@
 /scripts/*
 /scratch/*
 /test-results/*
+/playwright-report/
 
 # production
 /build
