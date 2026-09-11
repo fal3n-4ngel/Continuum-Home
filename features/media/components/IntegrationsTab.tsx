@@ -28,10 +28,10 @@ const BTN_SECONDARY = "rounded-xl border border-border-subtle bg-bg-secondary te
 
 export const IntegrationsTab = ({
   watchlist,
-  showLetterboxdModal,
+  showLetterboxdModal: _showLetterboxdModal,
   setShowLetterboxdModal,
   letterboxdUsername,
-  setLetterboxdUsername,
+  setLetterboxdUsername: _setLetterboxdUsername,
   handleLetterboxdImport,
   isImportingLetterboxd,
   disconnectLetterboxd,

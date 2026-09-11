@@ -41,15 +41,13 @@ interface RecurringCategoryProfile {
 
 export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
   periods,
-  expenses,
+  expenses: _expenses,
   dimension,
   currency,
   isProUser,
   onClaimPro,
   aiOptOut,
 }) => {
-  if (aiOptOut) return null;
-
   const stats = useMemo(() => {
     const active = periods.filter((p) => p.totalSpend > 0);
     if (active.length === 0) {
@@ -313,6 +311,7 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
       recommendations,
     };
   }, [periods, dimension, currency]);
+  if (aiOptOut) return null;
 
   const severityBadgeClass = (sev: "good" | "neutral" | "warning") => {
     if (sev === "good") return "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30";

@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo } from "react";
 import { ArrowLeft, BarChart3, Shield } from "lucide-react";
-import { resolvePayCycle, toLocalDateStr } from "@/lib/utils/dates";
+import { resolvePayCycle } from "@/lib/utils/dates";
 import { CategorySegmentedBar, CategorySegment } from "./CategorySegmentedBar";
 import { PeriodEvolutionChart, PeriodEvolutionData } from "./PeriodEvolutionChart";
 import { HistoricalAiSummary } from "./HistoricalAiSummary";
