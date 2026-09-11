@@ -2,9 +2,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Expense docs are owned via their userId field. Queries must filter on
-    // userId == auth.uid to satisfy the read rule; updates can never reassign
-    // ownership.
     match /expenses/{expenseId} {
       allow read: if request.auth != null
                   && resource.data.userId == request.auth.uid;
@@ -17,13 +14,11 @@ service cloud.firestore {
                     && resource.data.userId == request.auth.uid;
     }
 
-    // Single watchlist doc per user, keyed by uid.
     match /watchlists/{userId} {
       allow read, write: if request.auth != null
                          && request.auth.uid == userId;
     }
 
-    // Subscription docs are owned via their userId field, same pattern as expenses.
     match /subscriptions/{subscriptionId} {
       allow read: if request.auth != null
                   && resource.data.userId == request.auth.uid;
@@ -36,20 +31,16 @@ service cloud.firestore {
                     && resource.data.userId == request.auth.uid;
     }
 
-    // Single portfolio doc per user, keyed by uid.
     match /portfolios/{userId} {
       allow read, write: if request.auth != null
                          && request.auth.uid == userId;
     }
 
-    // Single dashboard-settings doc per user, keyed by uid (timeFilter,
-    // salaryDay, lastSeenRelease, and other lightweight UI preferences).
     match /settings/{userId} {
       allow read, write: if request.auth != null
                          && request.auth.uid == userId;
     }
 
-    // Single recommendations doc and entries subcollection per user, keyed by uid.
     match /recommendations/{userId} {
       allow read, write: if request.auth != null
                          && request.auth.uid == userId;
@@ -60,7 +51,14 @@ service cloud.firestore {
       }
     }
 
-    // Everything else is denied.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /{allSubcollections=**} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

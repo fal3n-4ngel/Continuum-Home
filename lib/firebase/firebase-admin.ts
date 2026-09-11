@@ -94,7 +94,10 @@ export async function listAllUsers(): Promise<AdminUser[]> {
 
 export async function adminListExpenses(uid: string): Promise<ExpenseRecord[]> {
   const db = getAdminDb();
-  const snap = await db.collection("expenses").where("userId", "==", uid).get();
+  let snap = await db.collection("users").doc(uid).collection("expenses").get();
+  if (snap.empty) {
+    snap = await db.collection("expenses").where("userId", "==", uid).get();
+  }
   return snap.docs.map((doc) => {
     const data = doc.data();
     const title = decrypt(data.title || "");
@@ -116,7 +119,10 @@ export async function adminListExpenses(uid: string): Promise<ExpenseRecord[]> {
 
 export async function adminListSubscriptions(uid: string): Promise<SubscriptionRecord[]> {
   const db = getAdminDb();
-  const snap = await db.collection("subscriptions").where("userId", "==", uid).get();
+  let snap = await db.collection("users").doc(uid).collection("subscriptions").get();
+  if (snap.empty) {
+    snap = await db.collection("subscriptions").where("userId", "==", uid).get();
+  }
   return snap.docs
     .map((doc) => {
       const data = doc.data();
@@ -135,7 +141,10 @@ export async function adminListSubscriptions(uid: string): Promise<SubscriptionR
 
 export async function adminGetPortfolio(uid: string): Promise<PortfolioRecord | null> {
   const db = getAdminDb();
-  const doc = await db.collection("portfolios").doc(uid).get();
+  let doc = await db.collection("users").doc(uid).collection("portfolio").doc("summary").get();
+  if (!doc.exists) {
+    doc = await db.collection("portfolios").doc(uid).get();
+  }
   if (!doc.exists) return null;
   const data = doc.data() || {};
   const assetsRaw = Array.isArray(data.assets) ? (data.assets as Record<string, unknown>[]) : [];
@@ -180,7 +189,10 @@ export async function adminReEncryptExpense(
 
 export async function adminListWatchlist(uid: string): Promise<WatchlistItem[]> {
   const db = getAdminDb();
-  const doc = await db.collection("watchlists").doc(uid).get();
+  let doc = await db.collection("users").doc(uid).collection("watchlists").doc("default").get();
+  if (!doc.exists) {
+    doc = await db.collection("watchlists").doc(uid).get();
+  }
   if (!doc.exists) return [];
   const data = doc.data() || {};
   const itemsMap = data.items && typeof data.items === "object" ? (data.items as Record<string, WatchlistItem>) : {};
@@ -197,7 +209,10 @@ export interface EmailSubscriptions {
 
 export async function adminGetEmailSubscriptions(uid: string): Promise<EmailSubscriptions> {
   const db = getAdminDb();
-  const doc = await db.collection("settings").doc(uid).get();
+  let doc = await db.collection("users").doc(uid).collection("settings").doc("preferences").get();
+  if (!doc.exists) {
+    doc = await db.collection("settings").doc(uid).get();
+  }
   if (doc.exists && doc.data()?.deleted === true) {
     return { expenses: false, portfolio: false, subscriptions: false };
   }
@@ -357,4 +372,165 @@ export async function adminCleanupLegacyCollections(): Promise<{ deletedCount: n
   }
 
   return { deletedCount: totalDeleted, collections: processed };
+}
+
+export interface MigrationSummary {
+  dryRun: boolean;
+  usersProcessed: number;
+  expensesMigrated: number;
+  subscriptionsMigrated: number;
+  portfoliosMigrated: number;
+  settingsMigrated: number;
+  watchlistsMigrated: number;
+  details: string[];
+}
+
+export async function adminMigrateFirestoreArchitecture(dryRun: boolean = true): Promise<MigrationSummary> {
+  const db = getAdminDb();
+  if (!db) {
+    return {
+      dryRun,
+      usersProcessed: 0,
+      expensesMigrated: 0,
+      subscriptionsMigrated: 0,
+      portfoliosMigrated: 0,
+      settingsMigrated: 0,
+      watchlistsMigrated: 0,
+      details: ["Database connection unavailable"],
+    };
+  }
+
+  const userIds = new Set<string>();
+  const users = await listAllUsers().catch(() => []);
+  users.forEach((u) => userIds.add(u.uid));
+
+  const expensesSnap = await db.collection("expenses").get();
+  expensesSnap.docs.forEach((d) => {
+    const uid = d.data().userId;
+    if (uid) userIds.add(uid);
+  });
+
+  const subsSnap = await db.collection("subscriptions").get();
+  subsSnap.docs.forEach((d) => {
+    const uid = d.data().userId;
+    if (uid) userIds.add(uid);
+  });
+
+  const settingsSnap = await db.collection("settings").get();
+  settingsSnap.docs.forEach((d) => userIds.add(d.id));
+
+  const portfoliosSnap = await db.collection("portfolios").get();
+  portfoliosSnap.docs.forEach((d) => userIds.add(d.id));
+
+  const watchlistsSnap = await db.collection("watchlists").get();
+  watchlistsSnap.docs.forEach((d) => userIds.add(d.id));
+
+  let expensesMigrated = 0;
+  let subscriptionsMigrated = 0;
+  let portfoliosMigrated = 0;
+  let settingsMigrated = 0;
+  let watchlistsMigrated = 0;
+  const details: string[] = [];
+
+  for (const uid of userIds) {
+    if (!dryRun) {
+      await db.collection("users").doc(uid).set({ updatedAt: Date.now() }, { merge: true });
+    }
+    const userExpenses = expensesSnap.docs.filter((d) => d.data().userId === uid);
+    if (userExpenses.length > 0) {
+      if (!dryRun) {
+        for (let i = 0; i < userExpenses.length; i += 400) {
+          const chunk = userExpenses.slice(i, i + 400);
+          const batch = db.batch();
+          chunk.forEach((d) => {
+            const targetRef = db.collection("users").doc(uid).collection("expenses").doc(d.id);
+            batch.set(targetRef, d.data(), { merge: true });
+          });
+          await batch.commit();
+        }
+      }
+      expensesMigrated += userExpenses.length;
+    }
+
+    const userSubs = subsSnap.docs.filter((d) => d.data().userId === uid);
+    if (userSubs.length > 0) {
+      if (!dryRun) {
+        for (let i = 0; i < userSubs.length; i += 400) {
+          const chunk = userSubs.slice(i, i + 400);
+          const batch = db.batch();
+          chunk.forEach((d) => {
+            const targetRef = db.collection("users").doc(uid).collection("subscriptions").doc(d.id);
+            batch.set(targetRef, d.data(), { merge: true });
+          });
+          await batch.commit();
+        }
+      }
+      subscriptionsMigrated += userSubs.length;
+    }
+
+    const portDoc = portfoliosSnap.docs.find((d) => d.id === uid);
+    if (portDoc) {
+      if (!dryRun) {
+        await db.collection("users").doc(uid).collection("portfolio").doc("summary").set(portDoc.data(), { merge: true });
+      }
+      portfoliosMigrated += 1;
+    }
+
+    const setDoc = settingsSnap.docs.find((d) => d.id === uid);
+    if (setDoc) {
+      if (!dryRun) {
+        await db.collection("users").doc(uid).collection("settings").doc("preferences").set(setDoc.data(), { merge: true });
+      }
+      settingsMigrated += 1;
+    }
+
+    const watchDoc = watchlistsSnap.docs.find((d) => d.id === uid);
+    if (watchDoc) {
+      if (!dryRun) {
+        await db.collection("users").doc(uid).collection("watchlists").doc("default").set(watchDoc.data(), { merge: true });
+      }
+      watchlistsMigrated += 1;
+    }
+
+    details.push(`User ${uid}: expenses=${userExpenses.length}, subs=${userSubs.length}, portfolio=${portDoc ? 1 : 0}, settings=${setDoc ? 1 : 0}, watchlist=${watchDoc ? 1 : 0}`);
+  }
+
+  return {
+    dryRun,
+    usersProcessed: userIds.size,
+    expensesMigrated,
+    subscriptionsMigrated,
+    portfoliosMigrated,
+    settingsMigrated,
+    watchlistsMigrated,
+    details,
+  };
+}
+
+export async function adminPruneMigratedLegacyRecords(): Promise<{ prunedCount: number; collections: string[] }> {
+  const db = getAdminDb();
+  if (!db) return { prunedCount: 0, collections: [] };
+
+  let prunedCount = 0;
+  const processed: string[] = [];
+
+  const legacyCollections = ["expenses", "subscriptions", "portfolios", "settings", "watchlists"];
+
+  for (const col of legacyCollections) {
+    try {
+      let colDeleted = 0;
+      while (true) {
+        const snap = await db.collection(col).limit(500).get();
+        if (snap.empty) break;
+        const batch = db.batch();
+        snap.docs.forEach((doc) => batch.delete(doc.ref));
+        await batch.commit();
+        colDeleted += snap.size;
+        prunedCount += snap.size;
+      }
+      if (colDeleted > 0) processed.push(col);
+    } catch {}
+  }
+
+  return { prunedCount, collections: processed };
 }

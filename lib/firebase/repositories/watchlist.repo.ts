@@ -10,6 +10,7 @@ import {
   toFields,
   fromFields,
   runOwnedQuery,
+  userPath,
 } from "../client";
 
 export interface WatchlistItem {
@@ -84,6 +85,13 @@ export async function writeWatchlistItems(
         },
         updateMask: { fieldPaths },
       },
+      {
+        update: {
+          name: docName(session, "users", session.uid, "watchlists", "default"),
+          fields: toFields({ items }),
+        },
+        updateMask: { fieldPaths },
+      },
     ],
   };
 
@@ -126,7 +134,16 @@ export async function getRawWatchlist(session: Session): Promise<Record<string, 
 
   let items: Record<string, WatchlistItem>;
   try {
-    const snap = await fsFetch<FirestoreDocument>(session, `${docsRoot(session)}/watchlists/${session.uid}`);
+    let snap: FirestoreDocument;
+    try {
+      snap = await fsFetch<FirestoreDocument>(session, userPath(session, "watchlists", "default"));
+    } catch (subErr) {
+      if (subErr instanceof ApiError && subErr.status === 404) {
+        snap = await fsFetch<FirestoreDocument>(session, `${docsRoot(session)}/watchlists/${session.uid}`);
+      } else {
+        throw subErr;
+      }
+    }
     items = (fromFields(snap.fields).items as Record<string, WatchlistItem>) || {};
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) {

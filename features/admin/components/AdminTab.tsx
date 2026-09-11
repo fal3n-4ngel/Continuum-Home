@@ -169,6 +169,32 @@ Thank you for being part of our journey!`);
     }
   };
 
+  const handleMigrateArchitecture = async () => {
+    setMigrationLoading(true);
+    setStatusMessage(null);
+    try {
+      const res = await fetch("/api/admin/migrate-schema", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ dryRun: false }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setStatusMessage({
+          text: `Migrated ${data.summary.expensesMigrated} expenses, ${data.summary.subscriptionsMigrated} subs, ${data.summary.portfoliosMigrated} portfolios, ${data.summary.settingsMigrated} settings to path-scoped subcollections.`,
+          type: "success",
+        });
+      } else {
+        setStatusMessage({ text: data.error || "Failed to execute schema migration.", type: "error" });
+      }
+    } catch (err) {
+      console.error(err);
+      setStatusMessage({ text: "Network error occurred.", type: "error" });
+    } finally {
+      setMigrationLoading(false);
+    }
+  };
+
   const handleAnnouncement = async (action: "preview" | "send") => {
     if (action === "send") {
       setAnnConfirmModal(false);
@@ -793,6 +819,25 @@ Thank you for being part of our journey!`);
                 </span>
                 <span className="text-[11px] text-text-secondary leading-snug">
                   Purge obsolete collections (notes, watchlist, health_analytics).
+                </span>
+              </button>
+
+              <button
+                onClick={handleMigrateArchitecture}
+                disabled={migrationLoading}
+                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left disabled:opacity-50 cursor-pointer"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                    <Database className="h-3.5 w-3.5" /> Migration
+                  </span>
+                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">SUBCOLLECTIONS</span>
+                </div>
+                <span className="text-xs font-bold text-text-primary mt-1">
+                  {migrationLoading ? "Migrating..." : "Migrate Schema to Subcollections"}
+                </span>
+                <span className="text-[11px] text-text-secondary leading-snug">
+                  Copy records to path-isolated /users/&#123;uid&#125;/... subcollections.
                 </span>
               </button>
             </div>
