@@ -71,7 +71,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             {
               icon: <Bot size={17} strokeWidth={1.75} />,
               title: "AI Assistant",
-              desc: "Connect ChatGPT, Claude, or Gemini via Permanent API Key & OpenAPI — log expenses or update your watchlist by chatting.",
+              desc: "Connect ChatGPT, Claude, or Groq via Permanent API Key & OpenAPI — log expenses or update your watchlist by chatting.",
               featured: true,
             },
             {

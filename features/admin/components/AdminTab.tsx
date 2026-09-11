@@ -24,10 +24,12 @@ import {
   Cpu,
   Clock,
   Layers,
-  Sparkles
+  Sparkles,
+  Bot
 } from "lucide-react";
 import { ProClaimsQueue } from "./ProClaimsQueue";
 import { CronTriggerSection } from "./CronTriggerSection";
+import { ReleaseNotesModal } from "@/components/modals";
 
 interface AdminTabProps {
   user: FirebaseUser;
@@ -47,6 +49,7 @@ export function AdminTab({ user }: AdminTabProps) {
 
   const [cronRunning, setCronRunning] = useState<string | null>(null);
   const [flushLoading, setFlushLoading] = useState(false);
+  const [pruneLoading, setPruneLoading] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [migrationLoading, setMigrationLoading] = useState(false);
   const [confirmModal, setConfirmModal] = useState<{ id: string; title: string } | null>(null);
@@ -72,6 +75,24 @@ Key Updates:
 Thank you for being part of our journey!`);
   const [annSending, setAnnSending] = useState<"preview" | "send" | null>(null);
   const [annConfirmModal, setAnnConfirmModal] = useState(false);
+
+  const [relVersion, setRelVersion] = useState("v1.3.0");
+  const [relTitle, setRelTitle] = useState("Historical Analytics & In-App Release Notes");
+  const [relContent, setRelContent] = useState(`### What's New
+- **Historical Cycle Analytics**: Deep-dive historical spend evolution, 100% stacked category distribution, and adherence benchmarks.
+- **Privacy First Controls**: Deterministic local financial computations with full AI opt-out capability.
+- **In-App Release Notes**: Automatically stay informed with release summaries delivered once upon opening the app.`);
+  const [relPublishing, setRelPublishing] = useState(false);
+  const [relGenerating, setRelGenerating] = useState(false);
+  const [showRelPreviewModal, setShowRelPreviewModal] = useState(false);
+  const [activeReleaseNote, setActiveReleaseNote] = useState<{
+    id: string;
+    version: string;
+    title: string;
+    content?: string;
+    publishedAt: number;
+    active: boolean;
+  } | null>(null);
 
   const [discordMsg, setDiscordMsg] = useState("");
   const [discordSending, setDiscordSending] = useState(false);
@@ -120,6 +141,31 @@ Thank you for being part of our journey!`);
       setStatusMessage({ text: "Network error occurred while pinging Discord.", type: "error" });
     } finally {
       setDiscordSending(false);
+    }
+  };
+
+  const handlePruneLegacy = async () => {
+    setPruneLoading(true);
+    setStatusMessage(null);
+    try {
+      const res = await fetch("/api/admin/cleanup-legacy", {
+        method: "POST",
+        headers: getHeaders(),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatusMessage({
+          text: data.message || `Pruned ${data.deletedCount} legacy document(s) successfully.`,
+          type: "success",
+        });
+      } else {
+        setStatusMessage({ text: data.error || "Failed to prune legacy collections.", type: "error" });
+      }
+    } catch (err) {
+      console.error(err);
+      setStatusMessage({ text: "Network error occurred.", type: "error" });
+    } finally {
+      setPruneLoading(false);
     }
   };
 
@@ -219,10 +265,107 @@ Thank you for being part of our journey!`);
     }
   };
 
+  const fetchActiveRelease = async () => {
+    try {
+      const res = await fetch("/api/admin/release-notes", { headers: getHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.releaseNote) {
+          setActiveReleaseNote(data.releaseNote);
+          if (data.releaseNote.version) setRelVersion(data.releaseNote.version);
+          if (data.releaseNote.title) setRelTitle(data.releaseNote.title);
+          if (data.releaseNote.content) setRelContent(data.releaseNote.content);
+        }
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     fetchStats();
     fetchProClaims();
+    fetchActiveRelease();
   }, [user.idToken]);
+
+  const handleGenerateReleaseNotesAI = async () => {
+    setRelGenerating(true);
+    setStatusMessage(null);
+    try {
+      const res = await fetch("/api/admin/release-notes/generate", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ version: relVersion.trim() || undefined }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (data.version) setRelVersion(data.version);
+        if (data.title) setRelTitle(data.title);
+        if (data.content) setRelContent(data.content);
+        setStatusMessage({
+          text: `Generated release notes for ${data.version} (${data.source || "release"}) using AI!`,
+          type: "success",
+        });
+      } else {
+        setStatusMessage({
+          text: data.error || "Failed to generate release notes with AI.",
+          type: "error",
+        });
+      }
+    } catch {
+      setStatusMessage({
+        text: "Network error occurred while calling AI release notes generator.",
+        type: "error",
+      });
+    } finally {
+      setRelGenerating(false);
+    }
+  };
+
+  const handlePublishReleaseNotes = async () => {
+    if (!relVersion.trim() || !relTitle.trim() || !relContent.trim()) return;
+    setRelPublishing(true);
+    setStatusMessage(null);
+    try {
+      const res = await fetch("/api/admin/release-notes", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({
+          version: relVersion,
+          title: relTitle,
+          content: relContent,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatusMessage({
+          text: `Release notes for ${relVersion} published! Users will see them once upon opening the app.`,
+          type: "success",
+        });
+        setActiveReleaseNote(data.releaseNote || null);
+      } else {
+        setStatusMessage({ text: data.error || "Failed to publish release notes.", type: "error" });
+      }
+    } catch {
+      setStatusMessage({ text: "Network error occurred while publishing release notes.", type: "error" });
+    } finally {
+      setRelPublishing(false);
+    }
+  };
+
+  const handleDeactivateReleaseNotes = async () => {
+    setStatusMessage(null);
+    try {
+      const res = await fetch("/api/admin/release-notes", {
+        method: "DELETE",
+        headers: getHeaders(),
+      });
+      if (res.ok) {
+        setActiveReleaseNote(null);
+        setStatusMessage({ text: "In-app release prompt deactivated.", type: "info" });
+      }
+    } catch {
+      setStatusMessage({ text: "Network error occurred.", type: "error" });
+    }
+  };
 
   const handleProAction = async (id: string, action: "approve" | "deny") => {
     setProActionLoading(id);
@@ -633,6 +776,25 @@ Thank you for being part of our journey!`);
                   Open email & Discord broadcast center to send system notices.
                 </span>
               </button>
+
+              <button
+                onClick={handlePruneLegacy}
+                disabled={pruneLoading}
+                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left disabled:opacity-50 cursor-pointer"
+              >
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
+                    <Database className="h-3.5 w-3.5" /> Maintenance
+                  </span>
+                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">FIRESTORE</span>
+                </div>
+                <span className="text-xs font-bold text-text-primary mt-1">
+                  {pruneLoading ? "Pruning..." : "Prune Legacy Collections"}
+                </span>
+                <span className="text-[11px] text-text-secondary leading-snug">
+                  Purge obsolete collections (notes, watchlist, health_analytics).
+                </span>
+              </button>
             </div>
           </div>
 
@@ -844,6 +1006,127 @@ Thank you for being part of our journey!`);
               </div>
             </div>
           </div>
+
+          <div className={CARD}>
+            <div className="flex items-center justify-between border-b-2 border-border-subtle pb-3 mb-4">
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-emerald-500" /> In-App Release Notes Dispatcher
+              </h3>
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  disabled={relGenerating}
+                  onClick={handleGenerateReleaseNotesAI}
+                  className="flex items-center gap-1.5 rounded-none border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all disabled:opacity-50 cursor-pointer"
+                >
+                  <Bot className={`h-3.5 w-3.5 ${relGenerating ? "animate-spin" : ""}`} />
+                  <span>{relGenerating ? "Extracting Commits..." : "Generate with AI"}</span>
+                </button>
+                {activeReleaseNote?.active && (
+                  <div className="flex items-center gap-2 border-l border-border-subtle pl-2.5">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                      Live: {activeReleaseNote.version}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleDeactivateReleaseNotes}
+                      className="text-[10px] font-mono text-text-muted hover:text-rose-500 underline cursor-pointer"
+                    >
+                      Deactivate
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <p className="text-xs text-text-secondary mb-4 leading-relaxed">
+              Publish release notes that automatically display once in an in-app modal when users next open the application. Once dismissed, users are never prompted again for this version.
+            </p>
+
+            <div className="grid grid-cols-[1.2fr_1fr] gap-6 max-lg:grid-cols-1">
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Release Version Tag</label>
+                    <input
+                      type="text"
+                      value={relVersion}
+                      onChange={(e) => setRelVersion(e.target.value)}
+                      placeholder="e.g. v1.3.0"
+                      className="w-full rounded-none border-2 border-border-subtle bg-bg-primary px-3.5 py-2 text-xs font-mono text-text-primary outline-none transition-all focus:border-text-primary"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Release Headline</label>
+                    <input
+                      type="text"
+                      value={relTitle}
+                      onChange={(e) => setRelTitle(e.target.value)}
+                      placeholder="e.g. Historical Analytics & UI Polish"
+                      className="w-full rounded-none border-2 border-border-subtle bg-bg-primary px-3.5 py-2 text-xs text-text-primary outline-none transition-all focus:border-text-primary"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Release Highlights & Notes (Markdown/Bullets)</label>
+                  <textarea
+                    value={relContent}
+                    onChange={(e) => setRelContent(e.target.value)}
+                    placeholder="Type what's new in this release..."
+                    rows={8}
+                    className="w-full rounded-none border-2 border-border-subtle bg-bg-primary px-3.5 py-2.5 text-xs text-text-primary outline-none transition-all focus:border-text-primary font-sans leading-relaxed resize-y"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3 justify-end mt-1">
+                  <button
+                    type="button"
+                    disabled={!relVersion.trim() || !relTitle.trim() || !relContent.trim()}
+                    onClick={() => setShowRelPreviewModal(true)}
+                    className="rounded-none border-2 border-border-subtle bg-transparent px-4 py-2 text-xs font-bold uppercase tracking-wide text-text-primary transition-all hover:bg-bg-primary disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    Preview In-App Modal
+                  </button>
+                  <button
+                    type="button"
+                    disabled={relPublishing || !relVersion.trim() || !relTitle.trim() || !relContent.trim()}
+                    onClick={handlePublishReleaseNotes}
+                    className="rounded-none border-2 border-text-primary bg-text-primary px-4 py-2 text-xs font-bold uppercase tracking-wide text-bg-card transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                  >
+                    {relPublishing ? "Publishing..." : "Publish In-App Release Notes"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3 rounded-none border-2 border-border-subtle bg-bg-primary/30 p-4">
+                <div className="flex items-center justify-between border-b-2 border-border-subtle pb-2">
+                  <span className="font-mono text-[9px] font-bold text-text-secondary uppercase tracking-wider">MODAL QUICK VIEW</span>
+                  <span className="text-[10px] text-text-muted italic">User launch preview</span>
+                </div>
+                <div className="rounded-xl border border-border-subtle bg-bg-card p-4 shadow-sm space-y-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[9px] font-semibold text-text-muted uppercase">What's New</span>
+                    <span className="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.2 font-mono text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                      {relVersion || "v0.0.0"}
+                    </span>
+                  </div>
+                  <h4 className="font-serif text-sm font-semibold text-text-primary">
+                    {relTitle || "Release Title"}
+                  </h4>
+                  <p className="text-[11px] text-text-secondary line-clamp-4 leading-relaxed whitespace-pre-wrap">
+                    {relContent || "No release notes specified."}
+                  </p>
+                  <div className="pt-2">
+                    <div className="rounded-lg bg-text-primary text-bg-primary text-[11px] font-medium text-center py-1.5">
+                      Got It, Explore Now →
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -1008,6 +1291,17 @@ Thank you for being part of our journey!`);
         </div>,
         document.body
       )}
+
+      <ReleaseNotesModal
+        isOpen={showRelPreviewModal}
+        onClose={() => setShowRelPreviewModal(false)}
+        releaseNote={{
+          version: relVersion,
+          title: relTitle,
+          content: relContent,
+        }}
+        isPreview={true}
+      />
     </div>
   );
 }

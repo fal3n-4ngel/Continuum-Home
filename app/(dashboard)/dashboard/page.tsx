@@ -44,7 +44,9 @@ import {
   ClaimProModal,
   DataCorrectionModal,
   DeleteAccountModal,
+  ReleaseNotesModal,
 } from "@/components/modals";
+import type { ReleaseNote } from "@/types";
 import { KirokuTab } from "@/features/assistant";
 
 const ExpensesTab = dynamic(() => import("@/features/expenses").then((mod) => mod.ExpensesTab));
@@ -213,8 +215,9 @@ export default function Dashboard() {
           if (typeof data.enableInvestmentPortfolios === "boolean") {
             setShowInvestmentsTab(data.enableInvestmentPortfolios);
           }
-          if (typeof data.enableGeminiChatAssitant === "boolean") {
-            setEnableChatAssistant(data.enableGeminiChatAssitant);
+          const chatFlag = data.enableChatAssistant ?? data.enableGeminiChatAssitant;
+          if (typeof chatFlag === "boolean") {
+            setEnableChatAssistant(chatFlag);
           }
         }
       })
@@ -222,6 +225,51 @@ export default function Dashboard() {
   }, []);
 
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [activeReleaseNote, setActiveReleaseNote] = useState<ReleaseNote | null>(null);
+  const [showReleaseNotesModal, setShowReleaseNotesModal] = useState(false);
+
+  const getHeaders = useCallback(() => getAuthHeaders(user?.idToken), [user]);
+
+  const [firestoreLastSeenRelease, setFirestoreLastSeenRelease] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([
+      fetch("/api/release-notes/latest").then((r) => (r.ok ? r.json() : null)).catch(() => null),
+      fetch("/api/settings", { headers: getHeaders() }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
+    ]).then(([relData, settingsData]) => {
+      if (relData?.releaseNote && relData.releaseNote.active) {
+        const note = relData.releaseNote as ReleaseNote;
+        const firestoreSeen = settingsData?.lastSeenRelease;
+        const localSeen = typeof window !== "undefined" ? window.localStorage.getItem("continuum_last_seen_release") : null;
+        const lastSeen = firestoreSeen || localSeen;
+        if (firestoreSeen) setFirestoreLastSeenRelease(firestoreSeen);
+        if (lastSeen !== note.id && lastSeen !== note.version) {
+          setActiveReleaseNote(note);
+          setShowReleaseNotesModal(true);
+        }
+      }
+    });
+  }, [user?.idToken, getHeaders]);
+
+  const handleDismissReleaseNotes = useCallback(() => {
+    if (activeReleaseNote) {
+      const releaseId = activeReleaseNote.id || activeReleaseNote.version;
+      if (typeof window !== "undefined") {
+        window.localStorage.setItem("continuum_last_seen_release", releaseId);
+      }
+      setFirestoreLastSeenRelease(releaseId);
+      if (user) {
+        fetch("/api/settings", {
+          method: "PATCH",
+          headers: getHeaders(),
+          body: JSON.stringify({ lastSeenRelease: releaseId }),
+        }).catch((err) => console.error(err));
+      }
+    }
+    setShowReleaseNotesModal(false);
+  }, [activeReleaseNote, user, getHeaders]);
+
   const [syncPreview, setSyncPreview] = useState<SyncPreviewState>({
     isOpen: false,
     title: "",
@@ -229,8 +277,6 @@ export default function Dashboard() {
     updatedItems: [],
     onConfirm: () => {},
   });
-
-  const getHeaders = useCallback(() => getAuthHeaders(user?.idToken), [user]);
 
   const triggerAlert = (
     title: string,
@@ -1067,6 +1113,9 @@ export default function Dashboard() {
           setAiOptOutState(data.aiOptOut === true);
           localStorage.setItem("phub_ai_opt_out", String(data.aiOptOut === true));
         }
+        if (data.lastSeenRelease) {
+          setFirestoreLastSeenRelease(data.lastSeenRelease);
+        }
         setIsProUser(data.isPro === true);
       }
     } catch (err) {
@@ -1817,7 +1866,7 @@ export default function Dashboard() {
         setExpensesLoaded={setExpensesLoaded}
       />
 
-      <main className="ml-[250px] flex w-full max-w-[1680px] min-w-0 flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:overflow-x-hidden max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(102px+env(safe-area-inset-bottom))]">
+      <main className="ml-[250px] flex w-full max-w-[1680px] min-w-0 flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:overflow-x-hidden max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(130px+env(safe-area-inset-bottom))]">
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -2050,6 +2099,8 @@ export default function Dashboard() {
                 getHeaders={getHeaders}
                 isProUser={isProUser}
                 onClaimPro={() => setShowClaimPro(true)}
+                aiOptOut={aiOptOut}
+                onOpenSettings={() => setActiveTab("settings")}
               />
             )}
 
@@ -2192,6 +2243,12 @@ export default function Dashboard() {
             throw new Error(errData.message || "Failed to delete account. Please try again.");
           }
         }}
+      />
+
+      <ReleaseNotesModal
+        isOpen={showReleaseNotesModal}
+        onClose={handleDismissReleaseNotes}
+        releaseNote={activeReleaseNote}
       />
     </div>
   );

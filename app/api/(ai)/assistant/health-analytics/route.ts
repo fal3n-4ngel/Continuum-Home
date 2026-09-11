@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { getHealthAnalytics, saveHealthAnalytics, getSettings, HealthAnalyticsReport } from "@/lib/firebase";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ApiError, toErrorResponse } from "@/lib/utils";
 import {
-  reserveGeminiCall,
+  reserveAiCall,
   acquireGenerationLock,
-  isGeminiQuotaError,
   executeGroqJson,
   postDiscordEmbed,
   codeBlock,
@@ -212,16 +210,15 @@ async function handleHealthAnalytics(req: NextRequest, isForceRefresh: boolean) 
       return NextResponse.json({ report: rep, cached: true, updated: false, busy: true });
     }
 
-    const geminiApiKey = process.env.GEMINI_API_KEY;
     const groqApiKey = process.env.GROQ_API_KEY;
-    if (!geminiApiKey && !groqApiKey) {
+    if (!groqApiKey) {
       const rep = cachedReport || fallbackReport;
       if (!cachedReport) await saveHealthAnalytics(session, fallbackReport);
       return NextResponse.json({ report: rep, cached: true, updated: false });
     }
 
-    const withinBudget = geminiApiKey ? await reserveGeminiCall() : false;
-    if (!withinBudget && !groqApiKey) {
+    const withinBudget = await reserveAiCall();
+    if (!withinBudget) {
       const rep = cachedReport || fallbackReport;
       if (!cachedReport) await saveHealthAnalytics(session, fallbackReport);
       return NextResponse.json({ report: rep, cached: true, updated: false, budgetExceeded: true });
@@ -255,70 +252,42 @@ Return ONLY a valid JSON object with these exact keys:
 Return no markdown backticks, no comments, and no text outside the JSON object.
 `;
 
-    let geminiData: any = null;
+    let aiData: any = null;
 
-    if (withinBudget && geminiApiKey) {
-      try {
-        const genAI = new GoogleGenerativeAI(geminiApiKey);
-        const model = genAI.getGenerativeModel({
-          model: "gemini-2.5-flash",
-          generationConfig: {
-            responseMimeType: "application/json",
-          },
-        });
-        const response = await model.generateContent(prompt);
-        geminiData = JSON.parse(response.response.text().trim());
-      } catch (err: any) {
-        const errMsg = err?.message || String(err);
-        console.warn("[health-analytics] Gemini call failed, attempting Groq fallback:", errMsg);
-        postDiscordEmbed({
-          title: "⚠️ Health Analytics: Gemini Failed (Groq Fallback Active)",
-          color: DISCORD_ORANGE,
-          fields: [
-            { name: "Error Reason", value: codeBlock(errMsg) },
-            { name: "User", value: session.user.email || session.uid, inline: true },
-          ],
-          footer: { text: "Continuum Assistant • Health Analytics Fallback" },
-        }).catch(() => {});
-      }
+    try {
+      aiData = await executeGroqJson(prompt);
+    } catch (groqErr: any) {
+      const groqErrMsg = groqErr?.message || String(groqErr);
+      console.warn("[health-analytics] Groq call failed:", groqErrMsg);
+      postDiscordEmbed({
+        title: "⚠️ Health Analytics: Groq Call Failed",
+        color: DISCORD_ORANGE,
+        fields: [
+          { name: "Groq Error Reason", value: codeBlock(groqErrMsg) },
+          { name: "User", value: session.user.email || session.uid, inline: true },
+        ],
+        footer: { text: "Continuum Assistant • Rule-based Fallback Active" },
+      }).catch(() => {});
     }
 
-    if (!geminiData && groqApiKey) {
-      try {
-        geminiData = await executeGroqJson(prompt);
-      } catch (groqErr: any) {
-        const groqErrMsg = groqErr?.message || String(groqErr);
-        console.warn("[health-analytics] Groq fallback failed:", groqErrMsg);
-        postDiscordEmbed({
-          title: "⚠️ Health Analytics: Groq Fallback Failed",
-          color: DISCORD_ORANGE,
-          fields: [
-            { name: "Groq Error Reason", value: codeBlock(groqErrMsg) },
-            { name: "User", value: session.user.email || session.uid, inline: true },
-          ],
-          footer: { text: "Continuum Assistant • Rule-based Fallback Active" },
-        }).catch(() => {});
-      }
-    }
-
-    if (!geminiData) {
+    if (!aiData) {
       const rep = cachedReport || fallbackReport;
       if (!cachedReport) await saveHealthAnalytics(session, fallbackReport);
       return NextResponse.json({ report: rep, cached: true, updated: false, budgetExceeded: true });
     }
 
     const severity: "good" | "neutral" | "warning" =
-      geminiData.trendSeverity === "warning" || geminiData.trendSeverity === "good" ? geminiData.trendSeverity : "neutral";
+      aiData.trendSeverity === "warning" || aiData.trendSeverity === "good" ? aiData.trendSeverity : "neutral";
 
     const newReport: HealthAnalyticsReport = {
-      trendStatus: String(geminiData.trendStatus || fallbackReport.trendStatus),
+      trendStatus: String(aiData.trendStatus || fallbackReport.trendStatus),
       trendSeverity: severity,
-      executiveSummary: String(geminiData.executiveSummary || fallbackReport.executiveSummary),
-      topCategories: Array.isArray(geminiData.topCategories) ? geminiData.topCategories : fallbackReport.topCategories,
-      spendTrends: Array.isArray(geminiData.spendTrends) ? geminiData.spendTrends.map(String) : fallbackReport.spendTrends,
-      anomalies: Array.isArray(geminiData.anomalies) ? geminiData.anomalies.map(String) : fallbackReport.anomalies,
-      savingOpportunities: Array.isArray(geminiData.savingOpportunities) ? geminiData.savingOpportunities.map(String) : fallbackReport.savingOpportunities,
-      safeSpendAdvice: String(geminiData.safeSpendAdvice || fallbackReport.safeSpendAdvice),
+      executiveSummary: String(aiData.executiveSummary || fallbackReport.executiveSummary),
+      topCategories: Array.isArray(aiData.topCategories) ? aiData.topCategories : fallbackReport.topCategories,
+      spendTrends: Array.isArray(aiData.spendTrends) ? aiData.spendTrends.map(String) : fallbackReport.spendTrends,
+      anomalies: Array.isArray(aiData.anomalies) ? aiData.anomalies.map(String) : fallbackReport.anomalies,
+      savingOpportunities: Array.isArray(aiData.savingOpportunities) ? aiData.savingOpportunities.map(String) : fallbackReport.savingOpportunities,
+      safeSpendAdvice: String(aiData.safeSpendAdvice || fallbackReport.safeSpendAdvice),
       fingerprint,
       updatedAt: Date.now(),
     };

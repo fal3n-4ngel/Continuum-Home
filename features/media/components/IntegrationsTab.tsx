@@ -22,16 +22,16 @@ interface IntegrationsTabProps {
   isSyncingTrakt?: boolean;
 }
 
-const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
-const BTN_PRIMARY = "rounded-md border border-text-primary bg-text-primary text-[13px] font-semibold text-bg-primary transition-all duration-200 hover:opacity-90 disabled:opacity-60";
-const BTN_SECONDARY = "rounded-md border border-border-subtle bg-transparent text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary";
+const BENTO_CARD = "rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle";
+const BTN_PRIMARY = "rounded-xl border border-text-primary bg-text-primary text-xs font-semibold text-bg-primary transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-60 cursor-pointer shadow-xs";
+const BTN_SECONDARY = "rounded-xl border border-border-subtle bg-bg-secondary text-xs font-semibold text-text-primary transition-all duration-200 hover:bg-bg-primary hover:border-border-hover active:scale-[0.98] disabled:opacity-60 cursor-pointer shadow-2xs";
 
 export const IntegrationsTab = ({
   watchlist,
-  showLetterboxdModal,
+  showLetterboxdModal: _showLetterboxdModal,
   setShowLetterboxdModal,
   letterboxdUsername,
-  setLetterboxdUsername,
+  setLetterboxdUsername: _setLetterboxdUsername,
   handleLetterboxdImport,
   isImportingLetterboxd,
   disconnectLetterboxd,
@@ -71,10 +71,11 @@ export const IntegrationsTab = ({
   };
 
   return (
-    <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]"><h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">Integrations</h1>
-      <div className="grid grid-cols-4 gap-5 max-xl:grid-cols-2 max-sm:grid-cols-2 max-sm:gap-3">
-        <div className={`${BENTO_CARD} flex flex-col justify-between p-5 max-sm:p-3.5 min-h-[155px]`}>
-          <div className="flex items-start gap-3.5 max-sm:flex-col max-sm:gap-2">
+    <div className="flex flex-col gap-6 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+      <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">Integrations</h1>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+        <div className={`${BENTO_CARD} flex flex-col justify-between min-h-[165px]`}>
+          <div className="flex items-start gap-3.5">
             <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.05)] bg-[#1e2630]">
               <svg viewBox="0 0 512 512" className="h-full w-full">
                 <path d="M0 0h512v512H0" fill="#1e2630"/>
@@ -86,32 +87,32 @@ export const IntegrationsTab = ({
               <p className="text-sm font-semibold text-text-primary">
                 {anilistUser ? "AniList Connected" : "Connect AniList"}
               </p>
-              <p className="text-[11px] text-text-muted mt-0.5 truncate font-medium" title={anilistUser ? anilistUser.name : undefined}>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed font-normal" title={anilistUser ? anilistUser.name : undefined}>
                 {anilistUser ? anilistUser.name : "Sync anime watch progress automatically."}
               </p>
             </div>
           </div>
-          <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-border-subtle pt-3 max-sm:flex-col max-sm:items-start max-sm:gap-1.5 max-sm:pt-2.5">
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-border-subtle/70 pt-3.5">
             {anilistUser ? (
               <>
-                <span className="text-[10px] font-mono text-text-muted">Status: Active</span>
+                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-semibold">Active</span>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   {syncAnilist && (
                     <button onClick={syncAnilist} disabled={isSyncingAnilist} className="text-xs font-semibold text-text-primary hover:underline bg-transparent border-none cursor-pointer">
                       {isSyncingAnilist ? "Syncing..." : "Sync"}
                     </button>
                   )}
-                  <button onClick={disconnectAnilist} className="text-xs font-semibold text-red-500 hover:underline bg-transparent border-none cursor-pointer">Disconnect</button>
+                  <button onClick={disconnectAnilist} className="text-xs font-semibold text-rose-500 hover:underline bg-transparent border-none cursor-pointer">Disconnect</button>
                 </div>
               </>
             ) : (
-              <button onClick={connectAnilist} className={`${BTN_PRIMARY} h-8 px-4 text-xs w-full`}>Connect</button>
+              <button onClick={connectAnilist} className={`${BTN_PRIMARY} h-8.5 px-4 w-full`}>Connect</button>
             )}
           </div>
         </div>
 
-        <div className={`${BENTO_CARD} flex flex-col justify-between p-5 max-sm:p-3.5 min-h-[155px]`}>
-          <div className="flex items-start gap-3.5 max-sm:flex-col max-sm:gap-2">
+        <div className={`${BENTO_CARD} flex flex-col justify-between min-h-[165px]`}>
+          <div className="flex items-start gap-3.5">
             <div className="h-9 w-9 shrink-0 overflow-hidden rounded-full shadow-[0_2px_6px_rgba(0,0,0,0.05)] bg-transparent">
               <svg viewBox="0 0 48 48" className="h-full w-full">
                 <defs>
@@ -136,32 +137,32 @@ export const IntegrationsTab = ({
               <p className="text-sm font-semibold text-text-primary">
                 {traktUser ? "Trakt Connected" : "Connect Trakt"}
               </p>
-              <p className="text-[11px] text-text-muted mt-0.5 truncate font-medium" title={traktUser ? (traktUser.name || traktUser.username) : undefined}>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed font-normal" title={traktUser ? (traktUser.name || traktUser.username) : undefined}>
                 {traktUser ? (traktUser.name || traktUser.username) : "Sync movies & TV shows history automatically."}
               </p>
             </div>
           </div>
-          <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-border-subtle pt-3 max-sm:flex-col max-sm:items-start max-sm:gap-1.5 max-sm:pt-2.5">
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-border-subtle/70 pt-3.5">
             {traktUser ? (
               <>
-                <span className="text-[10px] font-mono text-text-muted">Status: Active</span>
+                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-semibold">Active</span>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   {syncTrakt && (
                     <button onClick={syncTrakt} disabled={isSyncingTrakt} className="text-xs font-semibold text-text-primary hover:underline bg-transparent border-none cursor-pointer">
                       {isSyncingTrakt ? "Syncing..." : "Sync"}
                     </button>
                   )}
-                  <button onClick={disconnectTrakt} className="text-xs font-semibold text-red-500 hover:underline bg-transparent border-none cursor-pointer">Disconnect</button>
+                  <button onClick={disconnectTrakt} className="text-xs font-semibold text-rose-500 hover:underline bg-transparent border-none cursor-pointer">Disconnect</button>
                 </div>
               </>
             ) : (
-              <button onClick={connectTrakt} className={`${BTN_PRIMARY} h-8 px-4 text-xs w-full`}>Connect</button>
+              <button onClick={connectTrakt} className={`${BTN_PRIMARY} h-8.5 px-4 w-full`}>Connect</button>
             )}
           </div>
         </div>
 
-        <div className={`${BENTO_CARD} flex flex-col justify-between p-5 max-sm:p-3.5 min-h-[155px]`}>
-          <div className="flex items-start gap-3.5 max-sm:flex-col max-sm:gap-2">
+        <div className={`${BENTO_CARD} flex flex-col justify-between min-h-[165px]`}>
+          <div className="flex items-start gap-3.5">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#1c1b18] text-white">
               <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none">
                 <circle cx="7" cy="12" r="3.5" fill="#ff7a00" />
@@ -173,30 +174,30 @@ export const IntegrationsTab = ({
               <p className="text-sm font-semibold text-text-primary">
                 {letterboxdUsername ? "Letterboxd Connected" : "Sync Letterboxd"}
               </p>
-              <p className="text-[11px] text-text-muted mt-0.5 truncate font-medium" title={letterboxdUsername || undefined}>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed font-normal" title={letterboxdUsername || undefined}>
                 {letterboxdUsername ? letterboxdUsername : "Sync Letterboxd watched diary entries via RSS feed."}
               </p>
             </div>
           </div>
-          <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-border-subtle pt-3 max-sm:flex-col max-sm:items-start max-sm:gap-1.5 max-sm:pt-2.5">
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-border-subtle/70 pt-3.5">
             {letterboxdUsername ? (
               <>
-                <span className="text-[10px] font-mono text-text-muted">Status: Active</span>
+                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-semibold">Active</span>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <button onClick={handleLetterboxdImport} disabled={isImportingLetterboxd} className="text-xs font-semibold text-text-primary hover:underline bg-transparent border-none cursor-pointer">
                     {isImportingLetterboxd ? "Syncing..." : "Sync"}
                   </button>
-                  <button onClick={disconnectLetterboxd} className="text-xs font-semibold text-red-500 hover:underline bg-transparent border-none cursor-pointer">Disconnect</button>
+                  <button onClick={disconnectLetterboxd} className="text-xs font-semibold text-rose-500 hover:underline bg-transparent border-none cursor-pointer">Disconnect</button>
                 </div>
               </>
             ) : (
-              <button onClick={() => setShowLetterboxdModal(true)} className={`${BTN_PRIMARY} h-8 px-4 text-xs w-full`}>Connect</button>
+              <button onClick={() => setShowLetterboxdModal(true)} className={`${BTN_PRIMARY} h-8.5 px-4 w-full`}>Connect</button>
             )}
           </div>
         </div>
 
-        <div className={`${BENTO_CARD} flex flex-col justify-between p-5 max-sm:p-3.5 min-h-[155px]`}>
-          <div className="flex items-start gap-3.5 max-sm:flex-col max-sm:gap-2">
+        <div className={`${BENTO_CARD} flex flex-col justify-between min-h-[165px]`}>
+          <div className="flex items-start gap-3.5">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-bg-secondary text-text-primary">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -204,13 +205,13 @@ export const IntegrationsTab = ({
                 <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-text-primary">Export Library</p>
-              <p className="text-[11px] text-text-muted mt-0.5">Download movie diary entries as CSV for importing.</p>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed font-normal">Download movie diary entries as CSV for importing.</p>
             </div>
           </div>
-          <div className="mt-3.5 flex items-center justify-between gap-2 border-t border-border-subtle pt-3 max-sm:flex-col max-sm:items-start max-sm:gap-1.5 max-sm:pt-2.5">
-            <button onClick={exportLetterboxdCSV} className={`${BTN_SECONDARY} h-8 px-2 max-sm:px-1 text-[11px] sm:text-xs w-full font-semibold`}>Export CSV</button>
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-border-subtle/70 pt-3.5">
+            <button onClick={exportLetterboxdCSV} className={`${BTN_SECONDARY} h-8.5 px-3 w-full`}>Export CSV</button>
           </div>
         </div>
       </div>

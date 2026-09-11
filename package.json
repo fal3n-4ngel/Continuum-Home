@@ -15,11 +15,13 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:all": "npm test && npm run test:e2e"
   },
   "dependencies": {
     "@flags-sdk/vercel": "^1.4.5",
-    "@google/generative-ai": "^0.24.1",
     "@upstash/redis": "^1.38.0",
     "firebase": "^12.16.0",
     "firebase-admin": "^14.2.0",
@@ -36,6 +38,7 @@
     "zustand": "^5.0.15"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.3.2",

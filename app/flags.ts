@@ -12,9 +12,9 @@ export const enableInvestmentPortfolios = flag<boolean>({
   adapter: vercelAdapter,
 });
 
-export const enableGeminiChatAssitant = flag<boolean>({
-  key: 'enableGeminiChatAssitant',
-  description: 'Flag for the Gemini Live Chat Assistant bubble',
+export const enableChatAssistant = flag<boolean>({
+  key: 'enableChatAssistant',
+  description: 'Flag for the Live Chat Assistant bubble',
   defaultValue: false,
   options: [
     { value: false, label: 'Off' },
@@ -22,3 +22,5 @@ export const enableGeminiChatAssitant = flag<boolean>({
   ],
   adapter: vercelAdapter,
 });
+
+export const enableGeminiChatAssitant = enableChatAssistant;

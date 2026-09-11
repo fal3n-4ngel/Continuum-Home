@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { toErrorResponse } from "@/lib/utils";
 import { listAllUsers, adminListWatchlist, adminSaveDailyRecommendation, type AdminUser } from "@/lib/firebase/firebase-admin";
 import type { DailyRecommendation } from "@/lib/firebase";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron";
 import { reportCronFailures, reportCronAbort, type CronUserResult } from "@/lib/cron";
-import { reserveGeminiCall } from "@/lib/integrations";
+import { reserveAiCall, executeGroqJson } from "@/lib/integrations";
 import { env } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -25,45 +24,7 @@ type ProcessResult = { sent: false; reason: string } | { sent: true; generated: 
 
 const TYPES: ("movie" | "show" | "anime" | "book")[] = ["movie", "show", "anime", "book"];
 
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-const GEMINI_MIN_INTERVAL_MS = 13_000;
-let lastGeminiCallAt = 0;
-
-function extractRetryDelayMs(err: any): number | null {
-  const details = err?.errorDetails;
-  if (!Array.isArray(details)) return null;
-  const retryInfo = details.find((d) => d?.["@type"]?.includes("RetryInfo"));
-  const raw = retryInfo?.retryDelay;
-  if (typeof raw !== "string") return null;
-  const seconds = parseFloat(raw.replace(/s$/, ""));
-  return isNaN(seconds) ? null : Math.ceil(seconds * 1000);
-}
-
-async function generateThrottled(model: ReturnType<GoogleGenerativeAI["getGenerativeModel"]>, prompt: string): Promise<string> {
-  for (let attempt = 0; ; attempt++) {
-    const elapsed = Date.now() - lastGeminiCallAt;
-    if (elapsed < GEMINI_MIN_INTERVAL_MS) {
-      await sleep(GEMINI_MIN_INTERVAL_MS - elapsed);
-    }
-    lastGeminiCallAt = Date.now();
-    try {
-      const response = await model.generateContent(prompt);
-      return response.response.text();
-    } catch (err: any) {
-      const retryDelayMs = extractRetryDelayMs(err);
-      if (attempt === 0 && retryDelayMs !== null) {
-        await sleep(retryDelayMs + 500);
-        continue;
-      }
-      throw err;
-    }
-  }
-}
-
-async function processUser(user: AdminUser, geminiApiKey: string, dateStr: string, force: boolean = false): Promise<ProcessResult> {
+async function processUser(user: AdminUser, dateStr: string, force: boolean = false): Promise<ProcessResult> {
   if (!force) {
     const alreadySent = await hasCronBeenSentToday("recommendations", user.uid, dateStr);
     if (alreadySent) {
@@ -77,22 +38,14 @@ async function processUser(user: AdminUser, geminiApiKey: string, dateStr: strin
   }
   const existingTitles = allItems.map((item) => item.title.toLowerCase().trim());
 
-  const genAI = new GoogleGenerativeAI(geminiApiKey);
-  const model = genAI.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    generationConfig: {
-      responseMimeType: "application/json",
-    },
-  });
-
   const outcomes: boolean[] = [];
   for (const type of TYPES) {
     outcomes.push(
       await (async () => {
       try {
-        const withinBudget = await reserveGeminiCall();
+        const withinBudget = await reserveAiCall();
         if (!withinBudget) {
-          console.warn(`[Cron Recs] Daily Gemini budget exhausted, skipping "${type}" for uid ${user.uid}`);
+          console.warn(`[Cron Recs] Daily AI budget exhausted, skipping "${type}" for uid ${user.uid}`);
           return false;
         }
 
@@ -146,15 +99,14 @@ Return no other text or markdown blocks. Just the raw JSON object.
 `;
         }
 
-        const replyText = await generateThrottled(model, prompt);
-        const geminiResult = JSON.parse(replyText.trim());
+        const groqResult = await executeGroqJson(prompt);
 
         let coverImage: string | null = null;
         let score: string | null = null;
 
         if (type === "book") {
           try {
-            const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(geminiResult.title)}&limit=1`);
+            const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(groqResult.title)}&limit=1`);
             if (res.ok) {
               const data = await res.json();
               const doc = data.docs?.[0];
@@ -170,7 +122,7 @@ Return no other text or markdown blocks. Just the raw JSON object.
           if (omdbKey) {
             try {
               const res = await fetch(
-                `https://www.omdbapi.com/?t=${encodeURIComponent(geminiResult.title)}&y=${geminiResult.releaseYear || ""}&apikey=${omdbKey}`
+                `https://www.omdbapi.com/?t=${encodeURIComponent(groqResult.title)}&y=${groqResult.releaseYear || ""}&apikey=${omdbKey}`
               );
               if (res.ok) {
                 const data = await res.json();
@@ -184,7 +136,7 @@ Return no other text or markdown blocks. Just the raw JSON object.
 
           if (!coverImage) {
             try {
-              const res = await fetch(`https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(geminiResult.title)}`);
+              const res = await fetch(`https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(groqResult.title)}`);
               if (res.ok) {
                 const data = await res.json();
                 if (data.image?.medium) coverImage = data.image.medium;
@@ -198,11 +150,11 @@ Return no other text or markdown blocks. Just the raw JSON object.
 
         const payload: DailyRecommendation = {
           type,
-          title: geminiResult.title,
-          releaseYear: geminiResult.releaseYear,
-          author: geminiResult.author || "",
-          synopsis: geminiResult.synopsis || "",
-          rationale: geminiResult.rationale || "",
+          title: groqResult.title,
+          releaseYear: groqResult.releaseYear,
+          author: groqResult.author || "",
+          synopsis: groqResult.synopsis || "",
+          rationale: groqResult.rationale || "",
           coverImage,
           score,
           isLogged: false,
@@ -234,10 +186,10 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const geminiApiKey = process.env.GEMINI_API_KEY;
-    if (!geminiApiKey) {
-      reportCronAbort("recommendations", "Missing GEMINI_API_KEY");
-      return NextResponse.json({ error: "Missing GEMINI_API_KEY" }, { status: 500 });
+    const groqApiKey = process.env.GROQ_API_KEY;
+    if (!groqApiKey) {
+      reportCronAbort("recommendations", "Missing GROQ_API_KEY");
+      return NextResponse.json({ error: "Missing GROQ_API_KEY" }, { status: 500 });
     }
 
     const dateStr = getCalendarIstDate();
@@ -248,7 +200,7 @@ export async function POST(req: NextRequest) {
     const results: CronUserResult[] = [];
     for (const user of users) {
       try {
-        const outcome = await processUser(user, geminiApiKey, dateStr, force);
+        const outcome = await processUser(user, dateStr, force);
         results.push({ uid: user.uid, email: user.email, sent: outcome.sent, reason: outcome.sent ? undefined : outcome.reason });
       } catch (err: any) {
         console.error(`Error in cron/recommendations for uid ${user.uid}:`, err);

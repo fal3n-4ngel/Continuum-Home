@@ -198,7 +198,7 @@ const FAQ_ITEMS: { question: string; answer: string }[] = [
   {
     question: "How does the AI agent & ChatGPT integration work?",
     answer:
-      "Every route in Continuum exposes a standard OpenAPI 3.1 schema (/api/openapi.json). You can plug this schema directly into ChatGPT Custom GPT Actions, Claude, Gemini function calling, or MCP tool servers to log expenses, check balances, or update watchlists in plain English.",
+      "Every route in Continuum exposes a standard OpenAPI 3.1 schema (/api/openapi.json). You can plug this schema directly into ChatGPT Custom GPT Actions, Claude, Groq function calling, or MCP tool servers to log expenses, check balances, or update watchlists in plain English.",
   },
   {
     question: "Do I need coding experience to self-host?",
@@ -786,7 +786,7 @@ export default function LandingPage({
               </span>
             </h2>
             <p className={`${STEP_DESC} mb-6 max-w-[460px] text-sm`}>
-              Every API route in Continuum exposes a clean, standard OpenAPI 3.1 specification. Plug the schema directly into custom ChatGPT Actions, Claude, Gemini function calling, or MCP tool servers to interact with your data in plain English.
+              Every API route in Continuum exposes a clean, standard OpenAPI 3.1 specification. Plug the schema directly into custom ChatGPT Actions, Claude, Groq function calling, or MCP tool servers to interact with your data in plain English.
             </p>
 
             <ul className="mb-7 flex list-none flex-col gap-3 p-0">

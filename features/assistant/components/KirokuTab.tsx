@@ -83,7 +83,7 @@ function formatKirokuErrorMessage(raw?: string): string {
   ) {
     return "Daily AI request limit reached. Please try again later.";
   }
-  if (lower.includes("google") || lower.includes("gemini") || lower.includes("generativeai")) {
+  if (lower.includes("groq") || lower.includes("llm") || lower.includes("generativeai")) {
     return "The assistant encountered a temporary service issue. Please try again.";
   }
   return raw;

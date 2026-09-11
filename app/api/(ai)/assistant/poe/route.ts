@@ -61,8 +61,8 @@ export async function POST(req: NextRequest) {
 
         const lastMessage = query[query.length - 1]?.content || "";
 
-        const geminiHistory = query.slice(0, -1).map((q: any) => ({
-          role: q.role === "assistant" ? "model" : "user",
+        const chatHistory = query.slice(0, -1).map((q: any) => ({
+          role: q.role === "assistant" ? "assistant" : "user",
           parts: [{ text: q.content }]
         }));
 
@@ -75,7 +75,7 @@ export async function POST(req: NextRequest) {
           },
           body: JSON.stringify({
             message: lastMessage,
-            history: geminiHistory
+            history: chatHistory
           })
         });
 

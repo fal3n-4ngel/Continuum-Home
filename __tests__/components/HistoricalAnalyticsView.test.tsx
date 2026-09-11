@@ -140,7 +140,7 @@ describe("HistoricalAnalyticsView Component Integration Tests", () => {
 
     expect(screen.getByText("AI Historical Spend Intelligence")).toBeInTheDocument();
     expect(screen.getByText("AI Preview")).toBeInTheDocument();
-    expect(screen.getByText(/Gemini 2.5 Flash/i)).toBeInTheDocument();
+    expect(screen.getByText(/Groq/i)).toBeInTheDocument();
   });
 
   it("renders live multi-period AI trajectory and recommendations when isProUser is true", () => {
@@ -185,6 +185,57 @@ describe("HistoricalAnalyticsView Component Integration Tests", () => {
     expect(screen.getAllByText("Transport").length).toBeGreaterThan(0);
     expect(screen.getByText(/Fixed Recurring Outlay/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Discretionary Buffer/i).length).toBeGreaterThan(0);
+  });
+
+  it("does not generate empty past cycles when no data exists for them", () => {
+    const limitedExpenses = [
+      { id: "e1", amount: 2500, category: "Food", date: "2026-03-01", title: "Dinner" },
+      { id: "e2", amount: 4000, category: "Housing", date: "2026-02-15", title: "Rent" },
+    ];
+
+    const { container } = render(
+      <HistoricalAnalyticsView
+        expenses={limitedExpenses}
+        salaryDay={1}
+        salaryLog={{}}
+        currency="₹"
+        monthlySalary={50000}
+        additionalIncome={0}
+        isProUser={true}
+        onClaimPro={vi.fn()}
+      />
+    );
+
+    const select = container.querySelector("select");
+    expect(select).toBeInTheDocument();
+    const options = select ? Array.from(select.querySelectorAll("option")) : [];
+    expect(options.length).toBeLessThan(12);
+    expect(options.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("disables AI summary and renders privacy banner when aiOptOut is true", () => {
+    const onOpenSettings = vi.fn();
+    render(
+      <HistoricalAnalyticsView
+        expenses={defaultExpenses}
+        salaryDay={1}
+        salaryLog={{}}
+        currency="₹"
+        monthlySalary={50000}
+        additionalIncome={0}
+        isProUser={true}
+        onClaimPro={vi.fn()}
+        aiOptOut={true}
+        onOpenSettings={onOpenSettings}
+      />
+    );
+
+    expect(screen.getByText("AI Historical Spend Intelligence Disabled")).toBeInTheDocument();
+    expect(screen.queryByText("AI Historical Spend Intelligence")).not.toBeInTheDocument();
+
+    const settingsBtn = screen.getByRole("button", { name: /Manage in Settings/i });
+    fireEvent.click(settingsBtn);
+    expect(onOpenSettings).toHaveBeenCalledTimes(1);
   });
 });
 

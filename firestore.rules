@@ -36,12 +36,6 @@ service cloud.firestore {
                     && resource.data.userId == request.auth.uid;
     }
 
-    // Single scratch-note doc per user, keyed by uid.
-    match /notes/{userId} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId;
-    }
-
     // Single portfolio doc per user, keyed by uid.
     match /portfolios/{userId} {
       allow read, write: if request.auth != null
@@ -49,18 +43,10 @@ service cloud.firestore {
     }
 
     // Single dashboard-settings doc per user, keyed by uid (timeFilter,
-    // salaryDay, and other lightweight UI preferences).
+    // salaryDay, lastSeenRelease, and other lightweight UI preferences).
     match /settings/{userId} {
       allow read, write: if request.auth != null
                          && request.auth.uid == userId;
-    }
-
-    // Legacy per-item watchlist collection: readable by its owner so the
-    // one-time lazy migration can run; no new writes are ever allowed.
-    match /watchlist/{itemId} {
-      allow read: if request.auth != null
-                  && resource.data.userId == request.auth.uid;
-      allow write: if false;
     }
 
     // Single recommendations doc and entries subcollection per user, keyed by uid.
@@ -72,12 +58,6 @@ service cloud.firestore {
         allow read, write: if request.auth != null
                            && request.auth.uid == userId;
       }
-    }
-
-    // Single health_analytics doc per user, keyed by uid.
-    match /health_analytics/{userId} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId;
     }
 
     // Everything else is denied.

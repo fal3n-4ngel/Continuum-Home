@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { LogoMark } from "@/components/Logo";
 import { SITE_NAME } from "@/lib/utils";
+import { useTheme } from "@/lib/theme/use-theme";
 
 export default function LoginPage() {
+  useTheme();
   const [status, setStatus] = useState<"loading" | "redirecting" | "error">("loading");
   const [error, setError] = useState("");
 
@@ -76,68 +78,46 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        backgroundColor: "#f4f3ec",
-        gap: "24px",
-        padding: "24px",
-        fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-      }}
-    >
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        <LogoMark size={28} className="text-text-primary" />
-        <span style={{ fontSize: "18px", fontWeight: 600, color: "#1c1b18", letterSpacing: "-0.5px" }}>
+    <div className="flex w-full max-w-[380px] flex-col items-center justify-center rounded-2xl border border-border-subtle bg-bg-card p-8 shadow-subtle gap-6 text-center">
+      <div className="flex items-center gap-2.5">
+        <LogoMark size={30} className="text-text-primary" />
+        <span className="font-serif text-2xl font-bold tracking-tight text-text-primary">
           {SITE_NAME}
         </span>
       </div>
 
       {status === "loading" && (
-        <p style={{ fontSize: "13px", color: "#6e6c64" }}>Preparing sign-in…</p>
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-border-subtle border-t-text-primary" />
+          <p className="text-xs text-text-muted">Preparing sign-in…</p>
+        </div>
       )}
 
       {status === "redirecting" && (
-        <div style={{ textAlign: "center" }}>
-          <div
-            style={{
-              width: "22px",
-              height: "22px",
-              border: "2px solid #e5e3db",
-              borderTopColor: "#1c1b18",
-              borderRadius: "50%",
-              animation: "spin 0.7s linear infinite",
-              margin: "0 auto 12px",
-            }}
-          />
-          <p style={{ fontSize: "13px", color: "#6e6c64", margin: 0 }}>
-            Redirecting to Google…
-          </p>
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-border-subtle border-t-text-primary" />
+          <div className="flex flex-col gap-1">
+            <p className="text-sm font-semibold text-text-primary">
+              Redirecting to Google…
+            </p>
+            <p className="text-xs text-text-muted">
+              Completing secure authentication
+            </p>
+          </div>
         </div>
       )}
 
       {status === "error" && (
-        <div style={{ textAlign: "center", maxWidth: "340px" }}>
-          <p style={{ fontSize: "13px", color: "#dc2626", marginBottom: "16px" }}>{error}</p>
+        <div className="flex flex-col items-center gap-4">
+          <p className="text-xs text-rose-500 max-w-[320px]">{error}</p>
           <Link
             href="/"
-            style={{
-              fontSize: "13px",
-              fontWeight: 600,
-              color: "#1c1b18",
-              textDecoration: "none",
-              borderBottom: "1px solid #1c1b18",
-            }}
+            className="rounded-full border border-border-subtle bg-bg-primary px-4 py-2 text-xs font-semibold text-text-primary hover:border-border-hover transition-all"
           >
             ← Back to home
           </Link>
         </div>
       )}
-
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }

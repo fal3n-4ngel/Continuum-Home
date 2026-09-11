@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { ArrowLeft, BarChart3 } from "lucide-react";
-import { resolvePayCycle, toLocalDateStr } from "@/lib/utils/dates";
+import { ArrowLeft, BarChart3, Shield } from "lucide-react";
+import { resolvePayCycle } from "@/lib/utils/dates";
 import { CategorySegmentedBar, CategorySegment } from "./CategorySegmentedBar";
 import { PeriodEvolutionChart, PeriodEvolutionData } from "./PeriodEvolutionChart";
 import { HistoricalAiSummary } from "./HistoricalAiSummary";
@@ -25,6 +25,8 @@ interface HistoricalAnalyticsViewProps {
   isProUser: boolean;
   onClaimPro: () => void;
   onBackToOverview?: () => void;
+  aiOptOut?: boolean;
+  onOpenSettings?: () => void;
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
@@ -243,6 +245,8 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
   isProUser,
   onClaimPro,
   onBackToOverview,
+  aiOptOut,
+  onOpenSettings,
 }) => {
   const [dimension, setDimension] = useState<"cycle" | "month">("cycle");
   const [chartMode, setChartMode] = useState<"percentage" | "amount">("percentage");
@@ -263,6 +267,11 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
           (e) => e.date && e.date >= c.startStr && e.date <= c.endStr
         );
         const totalSpend = cycleExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+
+        if (cycleExpenses.length === 0 && totalSpend === 0 && i > 0) {
+          refDate = new Date(`${c.prevEndStr}T00:00:00`);
+          continue;
+        }
 
         const catMap = new Map<string, number>();
         for (const e of cycleExpenses) {
@@ -318,12 +327,20 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
 
     for (const yyyy of sortedYears) {
       for (let m = 0; m < 12; m++) {
+        const isCurrent = yyyy === now.getFullYear() && m === now.getMonth();
+        const isFuture = yyyy > now.getFullYear() || (yyyy === now.getFullYear() && m > now.getMonth());
+        if (isFuture) continue;
+
         const d = new Date(yyyy, m, 1);
         const mm = String(m + 1).padStart(2, "0");
         const prefix = `${yyyy}-${mm}`;
 
         const monthExpenses = expenses.filter((e) => e.date && e.date.startsWith(prefix));
         const totalSpend = monthExpenses.reduce((sum, e) => sum + (e.amount || 0), 0);
+
+        if (monthExpenses.length === 0 && totalSpend === 0 && !isCurrent) {
+          continue;
+        }
 
         const catMap = new Map<string, number>();
         for (const e of monthExpenses) {
@@ -341,7 +358,6 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
 
         const label = d.toLocaleString("en-US", { month: "short" }).toUpperCase();
         const fullLabel = d.toLocaleString("en-US", { month: "long", year: "numeric" });
-        const isCurrent = yyyy === now.getFullYear() && m === now.getMonth();
 
         results.push({
           id: prefix,
@@ -372,15 +388,17 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
   }, [activePeriods, selectedId]);
 
   const chartPeriods = useMemo(() => {
-    if (dimension !== "month" || activePeriods.length <= 12) {
-      return activePeriods;
+    const validPeriods = activePeriods.filter((p) => p.totalSpend > 0 || p.isCurrent);
+    const periodsToUse = validPeriods.length > 0 ? validPeriods : activePeriods;
+    if (dimension !== "month" || periodsToUse.length <= 12) {
+      return periodsToUse;
     }
     if (currentSelection) {
       const selectedYear = currentSelection.id.slice(0, 4);
-      const yearPeriods = activePeriods.filter((p) => p.id.startsWith(selectedYear));
+      const yearPeriods = periodsToUse.filter((p) => p.id.startsWith(selectedYear));
       if (yearPeriods.length > 0) return yearPeriods;
     }
-    return activePeriods.slice(-12);
+    return periodsToUse.slice(-12);
   }, [activePeriods, dimension, currentSelection]);
 
   const adherencePct = useMemo(() => {
@@ -394,7 +412,7 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
   }, [currentSelection]);
 
   return (
-    <div className="flex flex-col gap-6 w-full animate-[fadeIn_0.2s_ease]">
+    <div className="flex flex-col gap-6 w-full pb-28 sm:pb-8 animate-[fadeIn_0.2s_ease]">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border-subtle pb-4">
         <div className="flex items-center gap-3">
           {onBackToOverview && (
@@ -475,23 +493,23 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
 
       {currentSelection && (
         <div className="flex flex-col gap-6 rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-xs">
-          <div className="flex items-center justify-between border-b border-border-subtle/60 pb-4">
-            <div className="flex items-center gap-2">
-              <h2 className="font-serif text-2xl font-bold tracking-tight text-text-primary">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-subtle/60 pb-4">
+            <div className="flex items-center flex-wrap gap-2">
+              <h2 className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-text-primary leading-snug">
                 {currentSelection.fullLabel}
               </h2>
               {currentSelection.isCurrent && (
-                <span className="rounded bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-text-secondary">
+                <span className="rounded bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-text-secondary shrink-0">
                   Current
                 </span>
               )}
             </div>
 
-            <div className="relative">
+            <div className="relative w-full sm:w-auto">
               <select
                 value={currentSelection.id}
                 onChange={(e) => setSelectedId(e.target.value)}
-                className="cursor-pointer appearance-none rounded-lg border border-border-subtle bg-bg-secondary px-3 py-1.5 pr-8 font-mono text-xs font-semibold text-text-primary outline-none hover:border-border-hover transition-all"
+                className="w-full sm:w-auto cursor-pointer appearance-none rounded-lg border border-border-subtle bg-bg-secondary px-3 py-1.5 pr-8 font-mono text-xs font-semibold text-text-primary outline-none hover:border-border-hover transition-all"
               >
                 {activePeriods.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -554,17 +572,49 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
         </div>
       )}
 
-      <HistoricalAiSummary
-        periods={activePeriods}
-        expenses={expenses}
-        dimension={dimension}
-        currency={currency}
-        isProUser={isProUser}
-        onClaimPro={onClaimPro}
-      />
+      {aiOptOut ? (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-dashed border-border-subtle bg-bg-card/60 p-5 shadow-xs">
+          <div className="flex items-center gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-secondary text-text-primary">
+              <Shield size={18} className="text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="font-serif text-base font-bold tracking-tight text-text-primary">
+                  AI Historical Spend Intelligence Disabled
+                </h3>
+                <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+                  Opted Out
+                </span>
+              </div>
+              <p className="text-xs text-text-secondary mt-0.5">
+                AI features are opted out in account settings. Spend evolution and category proportion distributions continue to display using your local transaction records.
+              </p>
+            </div>
+          </div>
+          {onOpenSettings && (
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className="cursor-pointer rounded-full border border-border-subtle bg-bg-primary hover:bg-bg-secondary px-4 py-1.5 text-xs font-semibold text-text-primary transition-all shadow-xs shrink-0 self-start sm:self-auto"
+            >
+              Manage in Settings →
+            </button>
+          )}
+        </div>
+      ) : (
+        <HistoricalAiSummary
+          periods={activePeriods}
+          expenses={expenses}
+          dimension={dimension}
+          currency={currency}
+          isProUser={isProUser}
+          onClaimPro={onClaimPro}
+        />
+      )}
 
       <div className="flex flex-col gap-4 rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-xs">
-        <div className="flex items-center justify-between border-b border-border-subtle/60 pb-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-subtle/60 pb-3">
           <div>
             <h3 className="font-serif text-lg font-bold tracking-tight text-text-primary">
               Spend Evolution
@@ -574,7 +624,7 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
             </p>
           </div>
 
-          <div className="flex items-center gap-1 rounded-full border border-border-subtle bg-bg-secondary p-0.5">
+          <div className="flex items-center gap-1 rounded-full border border-border-subtle bg-bg-secondary p-0.5 self-start sm:self-auto shrink-0">
             <button
               onClick={() => setChartMode("percentage")}
               className={`rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase transition-all ${

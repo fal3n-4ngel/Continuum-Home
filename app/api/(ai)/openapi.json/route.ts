@@ -34,10 +34,10 @@ export async function GET() {
     info: {
       title: "Continuum Home API",
       description:
-        "API for a personal expense ledger, subscription tracker, investment portfolio, movie/show/anime/book watchlist, " +
-        "and scratchpad notes, backed by Firestore. Every request must carry the user's Firebase ID token or Permanent API Key as a Bearer token; " +
+        "API for a personal expense ledger, subscription tracker, investment portfolio, and movie/show/anime/book watchlist, " +
+        "backed by Firestore. Every request must carry the user's Firebase ID token or Permanent API Key as a Bearer token; " +
         "all data is scoped to that user.",
-      version: "2.2.0",
+      version: "2.3.0",
       contact: { name: AUTHOR.name, url: AUTHOR.url, email: AUTHOR.email },
     },
     servers: [
@@ -234,6 +234,49 @@ export async function GET() {
             },
           },
           responses: writeResult("Watchlist entries synced"),
+        },
+      },
+      "/api/watchlist/deduplicate": {
+        post: {
+          operationId: "deduplicateWatchlist",
+          summary: "Merge duplicate watchlist items",
+          description: "Merge duplicate watchlist entries into a primary item and remove duplicate IDs.",
+          "x-openai-isConsequential": false,
+          requestBody: {
+            required: true,
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required: ["primaryId", "duplicateIds", "mergedData"],
+                  properties: {
+                    primaryId: { type: "string" },
+                    duplicateIds: { type: "array", items: { type: "string" } },
+                    mergedData: { $ref: "#/components/schemas/WatchlistItemPatch" },
+                  },
+                },
+              },
+            },
+          },
+          responses: writeResult("Watchlist items deduplicated"),
+        },
+      },
+      "/api/watchlist/letterboxd": {
+        get: {
+          operationId: "getLetterboxdFeed",
+          summary: "Fetch Letterboxd user diary feed",
+          description: "Fetch and parse the public Letterboxd RSS diary for a user to import movies.",
+          "x-openai-isConsequential": false,
+          parameters: [
+            { name: "username", in: "query", required: true, schema: { type: "string" }, description: "Letterboxd username" },
+          ],
+          responses: {
+            "200": {
+              description: "Array of Letterboxd diary movie entries",
+              content: { "application/json": { schema: { type: "object", properties: { movies: { type: "array", items: { $ref: "#/components/schemas/NewWatchlistItem" } } } } } },
+            },
+            "401": errorResponse("Missing or invalid authentication token"),
+          },
         },
       },
       "/api/subscriptions": {
@@ -493,6 +536,29 @@ export async function GET() {
           },
         },
       },
+      "/api/release-notes/latest": {
+        get: {
+          operationId: "getLatestReleaseNote",
+          summary: "Get latest in-app release note",
+          description: "Retrieve the current active in-app release note displayed to users on app launch.",
+          "x-openai-isConsequential": false,
+          responses: {
+            "200": {
+              description: "Latest active release note or null",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      releaseNote: { $ref: "#/components/schemas/ReleaseNote" },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     },
     components: {
       securitySchemes: {
@@ -748,17 +814,15 @@ export async function GET() {
             },
           },
         },
-        NoteRecord: {
+        ReleaseNote: {
           type: "object",
           properties: {
-            content: { type: "string", description: "Markdown/plain-text note content" },
-            updatedAt: { type: "integer", description: "Last update time (Unix ms)" },
-          },
-        },
-        NoteContent: {
-          type: "object",
-          properties: {
-            content: { type: "string", maxLength: 50000 },
+            id: { type: "string" },
+            version: { type: "string" },
+            title: { type: "string" },
+            content: { type: "string" },
+            publishedAt: { type: "integer" },
+            active: { type: "boolean" },
           },
         },
         WriteResult: {
@@ -776,9 +840,20 @@ export async function GET() {
             salaryDay: { type: "integer", minimum: 1, maximum: 31 },
             monthlySalary: { type: "number", minimum: 0 },
             additionalIncome: { type: "number", minimum: 0 },
+            currency: { type: "string" },
             reconciliations: { type: "object", additionalProperties: { type: "number" } },
             salaryLog: { type: "object", additionalProperties: { type: "object", properties: { date: { type: "string" }, amount: { type: "number" } } } },
             isPro: { type: "boolean" },
+            aiOptOut: { type: "boolean" },
+            lastSeenRelease: { type: "string" },
+            emailSubscriptions: {
+              type: "object",
+              properties: {
+                expenses: { type: "boolean" },
+                portfolio: { type: "boolean" },
+                subscriptions: { type: "boolean" },
+              },
+            },
             updatedAt: { type: "integer" },
           },
         },
@@ -790,8 +865,19 @@ export async function GET() {
             salaryDay: { type: "integer", minimum: 1, maximum: 31 },
             monthlySalary: { type: "number", minimum: 0 },
             additionalIncome: { type: "number", minimum: 0 },
+            currency: { type: "string" },
             reconciliations: { type: "object", additionalProperties: { type: "number" } },
             salaryLog: { type: "object", additionalProperties: { type: "object", properties: { date: { type: "string" }, amount: { type: "number" } } } },
+            aiOptOut: { type: "boolean" },
+            lastSeenRelease: { type: "string" },
+            emailSubscriptions: {
+              type: "object",
+              properties: {
+                expenses: { type: "boolean" },
+                portfolio: { type: "boolean" },
+                subscriptions: { type: "boolean" },
+              },
+            },
           },
         },
         ProClaimRequest: {

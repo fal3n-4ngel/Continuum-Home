@@ -24,6 +24,7 @@ interface HistoricalAiSummaryProps {
   currency: string;
   isProUser: boolean;
   onClaimPro?: () => void;
+  aiOptOut?: boolean;
 }
 
 interface RecurringCategoryProfile {
@@ -40,11 +41,12 @@ interface RecurringCategoryProfile {
 
 export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
   periods,
-  expenses,
+  expenses: _expenses,
   dimension,
   currency,
   isProUser,
   onClaimPro,
+  aiOptOut,
 }) => {
   const stats = useMemo(() => {
     const active = periods.filter((p) => p.totalSpend > 0);
@@ -309,6 +311,7 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
       recommendations,
     };
   }, [periods, dimension, currency]);
+  if (aiOptOut) return null;
 
   const severityBadgeClass = (sev: "good" | "neutral" | "warning") => {
     if (sev === "good") return "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
@@ -370,7 +373,7 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
         </div>
 
         <span className="self-start sm:self-auto font-mono text-[10px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-full border border-border-subtle/60 shadow-2xs">
-          Gemini 2.5 Flash · Private
+          Groq AI · Private
         </span>
       </div>
 

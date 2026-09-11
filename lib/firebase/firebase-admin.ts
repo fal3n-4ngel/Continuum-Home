@@ -85,7 +85,7 @@ export async function listAllUsers(): Promise<AdminUser[]> {
         continue;
       }
       activeUsers.push(u);
-    } catch (e) {
+    } catch {
       activeUsers.push(u);
     }
   }
@@ -254,6 +254,22 @@ export async function adminPurgeUserData(uid: string): Promise<void> {
   await db.collection("recommendations").doc(uid).delete().catch(() => {});
 
   await db.collection("settings").doc(uid).delete().catch(() => {});
+
+  await db.collection("notes").doc(uid).delete().catch(() => {});
+  await db.collection("notepad").doc(uid).delete().catch(() => {});
+  const legacyNotepadSnap = await db.collection("notepad").where("userId", "==", uid).get();
+  if (!legacyNotepadSnap.empty) {
+    const wb = db.batch();
+    legacyNotepadSnap.docs.forEach((doc) => wb.delete(doc.ref));
+    await wb.commit();
+  }
+  await db.collection("health_analytics").doc(uid).delete().catch(() => {});
+  const legacyWatchlistSnap = await db.collection("watchlist").where("userId", "==", uid).get();
+  if (!legacyWatchlistSnap.empty) {
+    const wb = db.batch();
+    legacyWatchlistSnap.docs.forEach((doc) => wb.delete(doc.ref));
+    await wb.commit();
+  }
 }
 
 export async function adminGetUserCount(): Promise<number> {
@@ -280,4 +296,65 @@ export async function decrementUserCount(): Promise<void> {
     { count: FieldValue.increment(-1), lastUpdated: FieldValue.serverTimestamp() },
     { merge: true }
   );
+}
+
+export interface ReleaseNoteRecord {
+  id: string;
+  version: string;
+  title: string;
+  content: string;
+  publishedAt: number;
+  active: boolean;
+  publishedBy?: string;
+}
+
+export async function adminGetLatestReleaseNote(): Promise<ReleaseNoteRecord | null> {
+  const db = getAdminDb();
+  if (!db) return null;
+  const doc = await db.collection("system").doc("release_notes").get();
+  if (!doc.exists) return null;
+  const data = doc.data() as ReleaseNoteRecord | undefined;
+  if (!data || !data.active) return null;
+  return data;
+}
+
+export async function adminSaveReleaseNote(note: ReleaseNoteRecord): Promise<void> {
+  const db = getAdminDb();
+  if (!db) return;
+  await db.collection("system").doc("release_notes").set(note, { merge: true });
+}
+
+export async function adminDeactivateReleaseNote(): Promise<void> {
+  const db = getAdminDb();
+  if (!db) return;
+  await db.collection("system").doc("release_notes").set({ active: false, updatedAt: Date.now() }, { merge: true });
+}
+
+export async function adminCleanupLegacyCollections(): Promise<{ deletedCount: number; collections: string[] }> {
+  const db = getAdminDb();
+  if (!db) return { deletedCount: 0, collections: [] };
+
+  const targets = ["notes", "notepad", "watchlist", "health_analytics"];
+  let totalDeleted = 0;
+  const processed: string[] = [];
+
+  for (const col of targets) {
+    try {
+      let colDeleted = 0;
+      while (true) {
+        const snap = await db.collection(col).limit(500).get();
+        if (snap.empty) break;
+        const batch = db.batch();
+        snap.docs.forEach((doc) => batch.delete(doc.ref));
+        await batch.commit();
+        colDeleted += snap.size;
+        totalDeleted += snap.size;
+      }
+      if (colDeleted > 0) {
+        processed.push(col);
+      }
+    } catch {}
+  }
+
+  return { deletedCount: totalDeleted, collections: processed };
 }
