@@ -42,10 +42,16 @@ export interface PortfolioRecord {
   valuationHistory?: Record<string, number>;
 }
 
+interface EncryptedPortfolioData {
+  assets?: Record<string, unknown>[];
+  updatedAt?: number;
+  valuationHistory?: Record<string, unknown>;
+}
+
 const PORTFOLIO_CACHE_TTL = 3_600_000;
 
 export function portfolioCacheKey(session: Session): string {
-  return `portfolio:${session.config.projectId}:${session.uid}`;
+  return `portfolio:v2:${session.config.projectId}:${session.uid}`;
 }
 
 function decryptNumber(raw: unknown): number | undefined {
@@ -119,38 +125,47 @@ export function decryptValuationHistory(raw: Record<string, unknown>): Record<st
 
 export async function getPortfolio(session: Session): Promise<PortfolioRecord | null> {
   const cacheKey = portfolioCacheKey(session);
-  const cached = await cacheGet<PortfolioRecord | null>(cacheKey);
-  if (cached !== undefined) return cached;
+  const cached = await cacheGet<EncryptedPortfolioData | null>(cacheKey);
 
-  try {
-    let res: FirestoreDocument;
+  let data: EncryptedPortfolioData | null | undefined = cached;
+
+  if (data === undefined) {
     try {
-      res = await fsFetch<FirestoreDocument>(session, userPath(session, "portfolio", "summary"));
-    } catch (summaryErr) {
-      if (summaryErr instanceof ApiError && summaryErr.status === 404) {
-        res = await fsFetch<FirestoreDocument>(session, `${docsRoot(session)}/portfolios/${session.uid}`);
-      } else {
-        throw summaryErr;
+      let res: FirestoreDocument;
+      try {
+        res = await fsFetch<FirestoreDocument>(session, userPath(session, "portfolio", "summary"));
+      } catch (summaryErr) {
+        if (summaryErr instanceof ApiError && summaryErr.status === 404) {
+          res = await fsFetch<FirestoreDocument>(session, `${docsRoot(session)}/portfolios/${session.uid}`);
+        } else {
+          throw summaryErr;
+        }
       }
+
+      const parsed = fromFields(res.fields || {});
+      data = {
+        assets: Array.isArray(parsed.assets) ? (parsed.assets as Record<string, unknown>[]) : [],
+        updatedAt: Number(parsed.updatedAt || 0),
+        valuationHistory: parsed.valuationHistory && typeof parsed.valuationHistory === "object" ? (parsed.valuationHistory as Record<string, unknown>) : {},
+      };
+      await cacheSet(cacheKey, data, PORTFOLIO_CACHE_TTL);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 404) {
+        await cacheSet(cacheKey, null, PORTFOLIO_CACHE_TTL);
+        return null;
+      }
+      throw err;
     }
-
-    const data = fromFields(res.fields || {});
-    const assetsRaw = Array.isArray(data.assets) ? (data.assets as Record<string, unknown>[]) : [];
-    const assets: InvestmentAsset[] = assetsRaw.map(decryptAsset);
-
-    const valHistoryRaw = data.valuationHistory && typeof data.valuationHistory === "object" ? data.valuationHistory : {};
-    const valuationHistory = decryptValuationHistory(valHistoryRaw as Record<string, unknown>);
-
-    const record = { id: session.uid, assets, updatedAt: Number(data.updatedAt || 0), valuationHistory };
-    await cacheSet(cacheKey, record, PORTFOLIO_CACHE_TTL);
-    return record;
-  } catch (err) {
-    if (err instanceof ApiError && err.status === 404) {
-      await cacheSet(cacheKey, null, PORTFOLIO_CACHE_TTL);
-      return null;
-    }
-    throw err;
   }
+
+  if (data === null) return null;
+
+  const assetsRaw = Array.isArray(data.assets) ? data.assets : [];
+  const assets: InvestmentAsset[] = assetsRaw.map(decryptAsset);
+  const valHistoryRaw = data.valuationHistory && typeof data.valuationHistory === "object" ? data.valuationHistory : {};
+  const valuationHistory = decryptValuationHistory(valHistoryRaw);
+
+  return { id: session.uid, assets, updatedAt: Number(data.updatedAt || 0), valuationHistory };
 }
 
 export async function updatePortfolio(session: Session, assets: InvestmentAsset[]) {

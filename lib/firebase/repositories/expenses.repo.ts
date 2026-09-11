@@ -30,24 +30,31 @@ export interface ExpenseRecord {
   createdAt: number;
 }
 
+interface EncryptedExpenseRow {
+  id: string;
+  data: Record<string, unknown>;
+}
+
 const EXPENSE_CACHE_TTL = 3_600_000;
 const BATCH_CONCURRENCY = 3;
 
 export function expenseCacheKey(session: Session): string {
-  return `expenses:${session.config.projectId}:${session.uid}`;
+  return `expenses:v2:${session.config.projectId}:${session.uid}`;
 }
 
 export async function getRawExpenses(session: Session): Promise<ExpenseRecord[]> {
   const cacheKey = expenseCacheKey(session);
-  const cached = await cacheGet<ExpenseRecord[]>(cacheKey);
-  if (cached) return cached;
+  let rows = await cacheGet<EncryptedExpenseRow[]>(cacheKey);
 
-  let rows = await listSubcollectionDocs(session, "expenses");
-  if (rows.length === 0) {
-    rows = await runOwnedQuery(session, "expenses");
+  if (!rows) {
+    rows = await listSubcollectionDocs(session, "expenses");
+    if (rows.length === 0) {
+      rows = await runOwnedQuery(session, "expenses");
+    }
+    await cacheSet(cacheKey, rows, EXPENSE_CACHE_TTL);
   }
 
-  const records: ExpenseRecord[] = rows.map(({ id, data }) => {
+  return rows.map(({ id, data }) => {
     const title = decrypt(data.title as string || "");
     const category = decrypt(data.category as string || "");
     const notes = decrypt(data.notes as string || "");
@@ -64,9 +71,6 @@ export async function getRawExpenses(session: Session): Promise<ExpenseRecord[]>
       createdAt: typeof data.createdAt === "number" ? data.createdAt : 0,
     };
   });
-
-  await cacheSet(cacheKey, records, EXPENSE_CACHE_TTL);
-  return records;
 }
 
 export async function listExpenses(
