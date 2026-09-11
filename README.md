@@ -98,12 +98,15 @@ FIREBASE_CONFIG={"apiKey":"...","authDomain":"...","projectId":"..."}
 ENCRYPTION_KEY="your-custom-super-secret-key-phrase"
 ```
 
-Deploy Firestore security rules:
+Deploy Firestore security rules and index optimizations:
 ```bash
 firebase login
 firebase use <your-project-id>
-firebase deploy --only firestore:rules
+firebase deploy --only firestore:rules,firestore:indexes
 ```
+
+> [!NOTE]
+> For complete database architecture, subcollection directory maps, and migration utilities, refer to [`FIREBASE_SCHEMA.md`](FIREBASE_SCHEMA.md). For end-to-end system topology, multi-tenant security specifications, and threat models, see [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`docs/`](docs/).
 
 ### 3. Run
 

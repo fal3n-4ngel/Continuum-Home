@@ -10,7 +10,7 @@ import {
   toFields,
   fromFields,
   runOwnedQuery,
-  userPath,
+  listSubcollectionDocs,
 } from "../client";
 
 export interface WatchlistItem {
@@ -50,55 +50,116 @@ export function watchlistCacheKey(session: Session): string {
   return `watchlist:${session.config.projectId}:${session.uid}`;
 }
 
+export const WATCHLIST_CHUNK_LIMIT = 1500;
+export const DEFAULT_CHUNK_ID = "default";
+
 export async function writeWatchlistItems(
   session: Session,
   patches: Record<string, Record<string, unknown> | null>,
   wholeItemIds?: Set<string>
 ): Promise<void> {
-  const fieldPaths: string[] = [];
-  const items: Record<string, unknown> = {};
+  const chunks = await getRawWatchlistChunks(session);
+  if (!chunks[DEFAULT_CHUNK_ID]) {
+    chunks[DEFAULT_CHUNK_ID] = {};
+  }
 
-  for (const [id, patch] of Object.entries(patches)) {
-    assertDocId(id, "watchlist item");
-    if (patch === null) {
-      fieldPaths.push(`items.\`${id}\``);
-    } else if (wholeItemIds?.has(id)) {
-      fieldPaths.push(`items.\`${id}\``);
-      items[id] = patch;
-    } else {
-      for (const key of Object.keys(patch)) {
-        if (patch[key] === undefined) continue;
-        fieldPaths.push(`items.\`${id}\`.${key}`);
-      }
-      items[id] = patch;
+  const itemIdToChunk = new Map<string, string>();
+  for (const [chunkId, items] of Object.entries(chunks)) {
+    for (const id of Object.keys(items)) {
+      itemIdToChunk.set(id, chunkId);
     }
   }
 
-  if (fieldPaths.length === 0) return;
+  const chunkCounts = new Map<string, number>();
+  for (const [chunkId, items] of Object.entries(chunks)) {
+    chunkCounts.set(chunkId, Object.keys(items).length);
+  }
 
-  const body = {
-    writes: [
-      {
+  const chunkPatches: Record<string, { items: Record<string, unknown>; fieldPaths: string[] }> = {};
+
+  const getTargetChunkForNewItem = (): string => {
+    if ((chunkCounts.get(DEFAULT_CHUNK_ID) || 0) < WATCHLIST_CHUNK_LIMIT) {
+      chunkCounts.set(DEFAULT_CHUNK_ID, (chunkCounts.get(DEFAULT_CHUNK_ID) || 0) + 1);
+      return DEFAULT_CHUNK_ID;
+    }
+    let idx = 1;
+    while (true) {
+      const cId = `chunk_${idx}`;
+      const count = chunkCounts.get(cId) || 0;
+      if (count < WATCHLIST_CHUNK_LIMIT) {
+        chunkCounts.set(cId, count + 1);
+        return cId;
+      }
+      idx++;
+    }
+  };
+
+  for (const [id, patch] of Object.entries(patches)) {
+    assertDocId(id, "watchlist item");
+    let targetChunk = itemIdToChunk.get(id);
+
+    if (patch === null) {
+      if (!targetChunk) targetChunk = DEFAULT_CHUNK_ID;
+      if (!chunkPatches[targetChunk]) chunkPatches[targetChunk] = { items: {}, fieldPaths: [] };
+      chunkPatches[targetChunk].fieldPaths.push(`items.\`${id}\``);
+      if (itemIdToChunk.has(id)) {
+        chunkCounts.set(targetChunk, Math.max(0, (chunkCounts.get(targetChunk) || 1) - 1));
+      }
+    } else {
+      if (!targetChunk) {
+        targetChunk = getTargetChunkForNewItem();
+        itemIdToChunk.set(id, targetChunk);
+      }
+      if (!chunkPatches[targetChunk]) chunkPatches[targetChunk] = { items: {}, fieldPaths: [] };
+
+      if (wholeItemIds?.has(id)) {
+        chunkPatches[targetChunk].fieldPaths.push(`items.\`${id}\``);
+        chunkPatches[targetChunk].items[id] = patch;
+      } else {
+        for (const key of Object.keys(patch)) {
+          if (patch[key] === undefined) continue;
+          chunkPatches[targetChunk].fieldPaths.push(`items.\`${id}\`.${key}`);
+        }
+        chunkPatches[targetChunk].items[id] = patch;
+      }
+    }
+  }
+
+  const writes: Array<{ update: { name: string; fields: Record<string, unknown> }; updateMask: { fieldPaths: string[] } }> = [];
+
+  for (const [chunkId, { items, fieldPaths }] of Object.entries(chunkPatches)) {
+    if (fieldPaths.length === 0) continue;
+
+    writes.push({
+      update: {
+        name: docName(session, "users", session.uid, "watchlists", chunkId),
+        fields: toFields({ items }),
+      },
+      updateMask: { fieldPaths },
+    });
+
+    if (chunkId === DEFAULT_CHUNK_ID) {
+      writes.push({
         update: {
           name: docName(session, "watchlists", session.uid),
           fields: toFields({ items }),
         },
         updateMask: { fieldPaths },
-      },
-      {
-        update: {
-          name: docName(session, "users", session.uid, "watchlists", "default"),
-          fields: toFields({ items }),
-        },
-        updateMask: { fieldPaths },
-      },
-    ],
-  };
+      });
+    }
+  }
 
-  await fsFetch(session, `${docsRoot(session)}:commit`, {
-    method: "POST",
-    body: JSON.stringify(body),
-  });
+  if (writes.length === 0) return;
+
+  for (let i = 0; i < writes.length; i += 200) {
+    const batchWrites = writes.slice(i, i + 200);
+    await fsFetch(session, `${docsRoot(session)}:commit`, {
+      method: "POST",
+      body: JSON.stringify({ writes: batchWrites }),
+    });
+  }
+
+  await cacheInvalidate(watchlistCacheKey(session));
 }
 
 async function migrateLegacyWatchlist(session: Session): Promise<Record<string, WatchlistItem>> {
@@ -127,30 +188,41 @@ async function migrateLegacyWatchlist(session: Session): Promise<Record<string, 
   return items;
 }
 
+export async function getRawWatchlistChunks(session: Session): Promise<Record<string, Record<string, WatchlistItem>>> {
+  const chunks: Record<string, Record<string, WatchlistItem>> = {};
+  try {
+    const subDocs = await listSubcollectionDocs(session, "watchlists");
+    if (subDocs.length > 0) {
+      for (const doc of subDocs) {
+        chunks[doc.id] = (doc.data.items as Record<string, WatchlistItem>) || {};
+      }
+      return chunks;
+    }
+  } catch {}
+
+  try {
+    const snap = await fsFetch<FirestoreDocument>(session, `${docsRoot(session)}/watchlists/${session.uid}`);
+    chunks[DEFAULT_CHUNK_ID] = (fromFields(snap.fields).items as Record<string, WatchlistItem>) || {};
+    return chunks;
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      const legacyItems = await migrateLegacyWatchlist(session);
+      chunks[DEFAULT_CHUNK_ID] = legacyItems;
+      return chunks;
+    }
+    throw error;
+  }
+}
+
 export async function getRawWatchlist(session: Session): Promise<Record<string, WatchlistItem>> {
   const cacheKey = watchlistCacheKey(session);
   const cached = await cacheGet<Record<string, WatchlistItem>>(cacheKey);
   if (cached) return cached;
 
-  let items: Record<string, WatchlistItem>;
-  try {
-    let snap: FirestoreDocument;
-    try {
-      snap = await fsFetch<FirestoreDocument>(session, userPath(session, "watchlists", "default"));
-    } catch (subErr) {
-      if (subErr instanceof ApiError && subErr.status === 404) {
-        snap = await fsFetch<FirestoreDocument>(session, `${docsRoot(session)}/watchlists/${session.uid}`);
-      } else {
-        throw subErr;
-      }
-    }
-    items = (fromFields(snap.fields).items as Record<string, WatchlistItem>) || {};
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
-      items = await migrateLegacyWatchlist(session);
-    } else {
-      throw error;
-    }
+  const chunks = await getRawWatchlistChunks(session);
+  const items: Record<string, WatchlistItem> = {};
+  for (const chunk of Object.values(chunks)) {
+    Object.assign(items, chunk);
   }
 
   await cacheSet(cacheKey, items, WATCHLIST_CACHE_TTL);
