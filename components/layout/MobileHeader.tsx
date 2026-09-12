@@ -64,21 +64,20 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             title="Support this project"
-             className="shrink-0 flex h-9 w-10 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-secondary transition-colors hover:text-text-primary hover:border-border-hover cursor-pointer shadow-2xs"
-      >
+            className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-secondary transition-colors hover:text-text-primary hover:border-border-hover cursor-pointer shadow-2xs"
+          >
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8h1a4 4 0 0 1 0 8h-1" /><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z" /><line x1="6" y1="1" x2="6" y2="4" /><line x1="10" y1="1" x2="10" y2="4" /><line x1="14" y1="1" x2="14" y2="4" />
             </svg>
           </a>
 
-  
           <motion.button
             whileTap={{ scale: 0.88 }}
             type="button"
             onClick={toggleTheme}
             title={theme.type === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             aria-label={theme.type === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            className="shrink-0 flex  items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-secondary transition-colors hover:text-text-primary hover:border-border-hover cursor-pointer shadow-2xs"
+            className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-secondary transition-colors hover:text-text-primary hover:border-border-hover cursor-pointer shadow-2xs"
           >
             {theme.type === "dark" ? (
               <Sun className="h-3.5 w-3.5 text-amber-400 dark:text-amber-300 stroke-[2.2]" />
@@ -92,7 +91,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             onClick={() => setActiveTab("settings")}
             title="Settings"
             aria-label="Settings"
-            className={`shrink-0 flex items-center justify-center rounded-full border border-border-subtle cursor-pointer transition-colors ${activeTab === "settings"
+            className={`shrink-0 flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle cursor-pointer transition-colors ${activeTab === "settings"
                 ? "bg-bg-secondary text-text-primary border-border-hover"
                 : "bg-bg-primary text-text-secondary hover:text-text-primary"
               }`}

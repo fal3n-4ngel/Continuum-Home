@@ -630,7 +630,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                       <button
                         onClick={() => logRecommendation("dropped")}
                         disabled={logActionLoading}
-                        className="rounded-md border border-border-subtle bg-transparent text-[11px] font-semibold text-[#b3666b] py-2 hover:bg-[#fef2f2] hover:border-red-200 cursor-pointer disabled:opacity-50"
+                        className="rounded-md border border-border-subtle bg-transparent text-[11px] font-semibold text-[#b3666b] dark:text-rose-400 py-2 hover:bg-[#fef2f2] dark:hover:bg-rose-950/30 hover:border-red-200 dark:hover:border-rose-800/40 cursor-pointer disabled:opacity-50"
                       >
                         Dropped
                       </button>
@@ -758,7 +758,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                         e.stopPropagation();
                         deleteWatchItem(item.id);
                       }}
-                      className="absolute top-2 right-2 z-10 flex cursor-pointer items-center justify-center rounded-md border border-border-subtle bg-bg-card/95 p-1.5 text-text-muted shadow-sm max-md:opacity-100 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#fdf2f2] hover:text-[#b3666b] hover:border-[#fde2e2] active:scale-95"
+                      className="absolute top-2 right-2 z-10 flex cursor-pointer items-center justify-center rounded-md border border-border-subtle bg-bg-card/95 p-1.5 text-text-muted shadow-sm max-md:opacity-100 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#fdf2f2] dark:hover:bg-rose-950/40 hover:text-[#b3666b] dark:hover:text-rose-400 hover:border-[#fde2e2] dark:hover:border-rose-800/40 active:scale-95"
                       title="Remove item"
                     >
                       <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />

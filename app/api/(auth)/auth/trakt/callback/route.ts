@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const code = req.nextUrl.searchParams.get("code");
 
   if (!code) {
-    return NextResponse.redirect(`${origin}/?trakt_error=${encodeURIComponent("Missing authorization code")}`);
+    return NextResponse.redirect(`${origin}/dashboard?trakt_error=${encodeURIComponent("Missing authorization code")}`);
   }
 
   try {
@@ -48,9 +48,9 @@ export async function GET(req: NextRequest) {
       `&trakt_refresh_token=${encodeURIComponent(tokens.refresh_token)}` +
       `&trakt_expires_in=${tokens.expires_in}`;
 
-    return NextResponse.redirect(`${origin}/#${hash}`);
+    return NextResponse.redirect(`${origin}/dashboard#${hash}`);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Trakt sign-in failed.";
-    return NextResponse.redirect(`${origin}/?trakt_error=${encodeURIComponent(message)}`);
+    return NextResponse.redirect(`${origin}/dashboard?trakt_error=${encodeURIComponent(message)}`);
   }
 }

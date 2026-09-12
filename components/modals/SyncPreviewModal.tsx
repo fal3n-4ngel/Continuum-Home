@@ -53,7 +53,7 @@ export const SyncPreviewModal: React.FC<SyncPreviewModalProps> = ({ preview, onC
               <span className="mb-1.5 block text-[10px] font-semibold tracking-[0.5px] text-[#16a34a] uppercase">New ({preview.newItems.length})</span>
               <div className="flex flex-col gap-1">
                 {preview.newItems.map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 rounded-md bg-[#f0fdf4] px-2.5 py-1.5 text-[12px]">
+                  <div key={i} className="flex items-center gap-2 rounded-md border border-transparent dark:border-emerald-800/40 bg-[#f0fdf4] dark:bg-emerald-950/30 px-2.5 py-1.5 text-[12px]">
                     <span>{TYPE_LABEL[item.type] || "•"}</span>
                     <span className="min-w-0 flex-1 truncate font-medium text-text-primary" title={item.title}>{item.title}</span>
                   </div>
@@ -64,10 +64,10 @@ export const SyncPreviewModal: React.FC<SyncPreviewModalProps> = ({ preview, onC
 
           {preview.updatedItems.length > 0 && (
             <div>
-              <span className="mb-1.5 block text-[10px] font-semibold tracking-[0.5px] text-[#b45309] uppercase">Updated ({preview.updatedItems.length})</span>
+              <span className="mb-1.5 block text-[10px] font-semibold tracking-[0.5px] text-[#b45309] dark:text-amber-400 uppercase">Updated ({preview.updatedItems.length})</span>
               <div className="flex flex-col gap-1">
                 {preview.updatedItems.map((item, i) => (
-                  <div key={i} className="rounded-md bg-[#fffbeb] px-2.5 py-1.5">
+                  <div key={i} className="rounded-md border border-transparent dark:border-amber-800/40 bg-[#fffbeb] dark:bg-amber-950/30 px-2.5 py-1.5">
                     <div className="flex items-center gap-2 text-[12px]">
                       <span>{TYPE_LABEL[item.type] || "•"}</span>
                       <span className="min-w-0 flex-1 truncate font-medium text-text-primary" title={item.title}>{item.title}</span>
@@ -90,13 +90,13 @@ export const SyncPreviewModal: React.FC<SyncPreviewModalProps> = ({ preview, onC
 
         <div className="flex justify-end gap-2 border-t border-border-subtle pt-3.5">
           <button
-            className="cursor-pointer rounded-md border border-border-subtle bg-transparent px-4 py-2 text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary"
+            className="cursor-pointer rounded-md border border-border-subtle bg-transparent px-4 py-2 text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-secondary"
             onClick={onClose}
           >
             Cancel
           </button>
           <button
-            className="cursor-pointer rounded-lg bg-text-primary px-[18px] py-2 text-[13px] font-semibold text-white transition-all duration-200 hover:bg-[#2e2d27] disabled:cursor-not-allowed disabled:opacity-50"
+            className="cursor-pointer rounded-lg border border-text-primary bg-text-primary px-[18px] py-2 text-[13px] font-semibold text-bg-primary transition-all duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50 shadow-xs"
             onClick={preview.onConfirm}
             disabled={preview.isApplying || total === 0}
           >
