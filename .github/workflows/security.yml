@@ -93,7 +93,7 @@ jobs:
 
   alert:
     needs: [dependency-audit]
-    if: failure() && github.event_name != 'pull_request'
+    if: always() && needs.dependency-audit.result == 'failure' && github.event_name != 'pull_request'
     uses: ./.github/workflows/discord-notify.yml
     with:
       title: "🔐 Security Audit Failed"

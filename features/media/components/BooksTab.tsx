@@ -35,13 +35,13 @@ const pillClass = (id: string, active: boolean) => {
   if (!active) return `${base} bg-transparent text-text-secondary hover:text-text-primary hover:bg-bg-secondary/40`;
 
   if (id === "reading") {
-    return `${base} bg-[#e0f2fe] text-[#0369a1] shadow-[0_1px_2px_rgba(3,105,161,0.05)]`;
+    return `${base} bg-[#e0f2fe] text-[#0369a1] dark:bg-sky-950/40 dark:text-sky-300 dark:border dark:border-sky-800/40 shadow-[0_1px_2px_rgba(3,105,161,0.05)]`;
   }
   if (id === "to_read") {
-    return `${base} bg-[#ffedd5] text-[#c2410c] shadow-[0_1px_2px_rgba(194,65,12,0.05)]`;
+    return `${base} bg-[#ffedd5] text-[#c2410c] dark:bg-amber-950/40 dark:text-amber-300 dark:border dark:border-amber-800/40 shadow-[0_1px_2px_rgba(194,65,12,0.05)]`;
   }
   if (id === "completed") {
-    return `${base} bg-[#dcfce7] text-[#15803d] shadow-[0_1px_2px_rgba(21,128,61,0.05)]`;
+    return `${base} bg-[#dcfce7] text-[#15803d] dark:bg-emerald-950/40 dark:text-emerald-300 dark:border dark:border-emerald-800/40 shadow-[0_1px_2px_rgba(21,128,61,0.05)]`;
   }
   return `${base} bg-bg-card text-text-primary border border-border-subtle shadow-xs`;
 };
@@ -510,7 +510,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                           type="button"
                           onClick={() => logRecommendation("dropped")}
                           disabled={logActionLoading}
-                          className="rounded-md border border-border-subtle bg-transparent text-[11px] font-semibold text-[#b3666b] py-2 hover:bg-[#fef2f2] hover:border-red-200 cursor-pointer disabled:opacity-50"
+                          className="rounded-md border border-border-subtle bg-transparent text-[11px] font-semibold text-[#b3666b] dark:text-rose-400 py-2 hover:bg-[#fef2f2] dark:hover:bg-rose-950/30 hover:border-red-200 dark:hover:border-rose-800/40 cursor-pointer disabled:opacity-50"
                         >
                           Dropped
                         </button>
@@ -626,7 +626,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                     e.stopPropagation();
                     deleteWatchItem(item.id);
                   }}
-                  className="absolute top-2 right-2 z-10 flex cursor-pointer items-center justify-center rounded-md border border-border-subtle bg-bg-card/95 p-1.5 text-text-muted shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#fdf2f2] hover:text-[#b3666b] hover:border-[#fde2e2] active:scale-95"
+                  className="absolute top-2 right-2 z-10 flex cursor-pointer items-center justify-center rounded-md border border-border-subtle bg-bg-card/95 p-1.5 text-text-muted shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#fdf2f2] dark:hover:bg-rose-950/40 hover:text-[#b3666b] dark:hover:text-rose-400 hover:border-[#fde2e2] dark:hover:border-rose-800/40 active:scale-95"
                   title="Remove book"
                 >
                   <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />

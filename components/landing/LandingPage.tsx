@@ -334,31 +334,31 @@ export default function LandingPage({
         <nav className="flex items-center gap-7 max-[900px]:hidden">
           <a
             href="#how-it-works"
-            className="text-[13px] font-medium text-[#6e6c64] no-underline transition-colors duration-200 hover:text-[#1c1b18]"
+            className="text-[13px] font-medium text-[#6e6c64] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
           >
             Architecture
           </a>
           <a
             href="#ai"
-            className="text-[13px] font-medium text-[#6e6c64] no-underline transition-colors duration-200 hover:text-[#1c1b18]"
+            className="text-[13px] font-medium text-[#6e6c64] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
           >
             AI Agent
           </a>
           <a
             href="#dashboard"
-            className="text-[13px] font-medium text-[#6e6c64] no-underline transition-colors duration-200 hover:text-[#1c1b18]"
+            className="text-[13px] font-medium text-[#6e6c64] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
           >
             Dashboard
           </a>
           <a
             href="#setup"
-            className="text-[13px] font-medium text-[#6e6c64] no-underline transition-colors duration-200 hover:text-[#1c1b18]"
+            className="text-[13px] font-medium text-[#6e6c64] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
           >
             Self-Host
           </a>
           <a
             href="#pricing"
-            className="text-[13px] font-medium text-[#6e6c64] no-underline transition-colors duration-200 hover:text-[#1c1b18]"
+            className="text-[13px] font-medium text-[#6e6c64] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
           >
             Pricing
           </a>
@@ -366,14 +366,14 @@ export default function LandingPage({
             href="https://github.com/fal3n-4ngel/Continuum-Home"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-full border border-[#d6d3c9] bg-[#f4f1ea] px-3.5 py-1 text-xs font-semibold text-[#1c1b18] no-underline transition-all duration-200 hover:border-[#1c1b18] hover:bg-white"
+            className="flex items-center gap-1.5 rounded-full border border-[#d6d3c9] dark:border-white/15 bg-[#f4f1ea] dark:bg-white/10 px-3.5 py-1 text-xs font-semibold text-[#1c1b18] dark:text-white no-underline transition-all duration-200 hover:border-[#1c1b18] dark:hover:border-white/40 hover:bg-white dark:hover:bg-white/20"
           >
             <span>⭐️ Star on GitHub</span>
           </a>
         </nav>
         <div className="flex items-center gap-2.5">
           <button
-            className="hidden md:flex cursor-pointer items-center gap-2 rounded-full border-none bg-[#1c1b18] px-[22px] py-2.5 text-[13px] font-semibold text-white transition-[transform,background-color] duration-200 hover:-translate-y-px hover:bg-[#31302b] disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-55"
+            className="hidden md:flex cursor-pointer items-center gap-2 rounded-full border-none bg-[#1c1b18] dark:bg-white px-[22px] py-2.5 text-[13px] font-semibold text-white dark:text-[#1c1b18] transition-[transform,background-color] duration-200 hover:-translate-y-px hover:bg-[#31302b] dark:hover:bg-slate-200 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-55"
             onClick={onLogin}
             disabled={!firebaseAuthReady}
           >
@@ -381,7 +381,7 @@ export default function LandingPage({
             <span>→</span>
           </button>
           <button
-            className="hidden h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-[#e5e3db] bg-transparent text-[#1c1b18] max-[900px]:flex"
+            className="hidden h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-[#e5e3db] dark:border-white/15 bg-transparent text-[#1c1b18] dark:text-white hover:bg-black/5 dark:hover:bg-white/10 max-[900px]:flex"
             onClick={() => setMobileNavOpen((v) => !v)}
             aria-label={mobileNavOpen ? "Close menu" : "Open menu"}
             aria-expanded={mobileNavOpen}
@@ -410,39 +410,39 @@ export default function LandingPage({
           </button>
         </div>
         <nav
-          className={`hidden ${mobileNavOpen ? "max-[900px]:flex" : ""} max-[900px]:animate-[drawerSlideDown_0.2s_ease-out_both] max-[900px]:fixed max-[900px]:top-[65px] max-[900px]:right-4 max-[900px]:left-4 max-[900px]:z-[999] max-[900px]:flex-col max-[900px]:rounded-2xl max-[900px]:border max-[900px]:border-[#e5e3db] max-[900px]:bg-white max-[900px]:p-2.5 max-[900px]:shadow-[0_16px_40px_-12px_rgba(28,27,24,0.18)]`}
+          className={`hidden ${mobileNavOpen ? "max-[900px]:flex" : ""} max-[900px]:animate-[drawerSlideDown_0.2s_ease-out_both] max-[900px]:fixed max-[900px]:top-[65px] max-[900px]:right-4 max-[900px]:left-4 max-[900px]:z-[999] max-[900px]:flex-col max-[900px]:rounded-2xl max-[900px]:border max-[900px]:border-[#e5e3db] dark:max-[900px]:border-white/10 max-[900px]:bg-white dark:max-[900px]:bg-[#12161f] max-[900px]:p-2.5 max-[900px]:shadow-[0_16px_40px_-12px_rgba(28,27,24,0.18)] dark:max-[900px]:shadow-[0_16px_40px_-12px_rgba(0,0,0,0.6)]`}
         >
           <a
             href="#how-it-works"
-            className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] no-underline hover:bg-[#f4f3ec]"
+            className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] dark:text-[#d1cfc7] no-underline hover:bg-[#f4f3ec] dark:hover:bg-white/10 hover:text-[#1c1b18] dark:hover:text-white"
             onClick={() => setMobileNavOpen(false)}
           >
             Architecture
           </a>
           <a
             href="#ai"
-            className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] no-underline hover:bg-[#f4f3ec]"
+            className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] dark:text-[#d1cfc7] no-underline hover:bg-[#f4f3ec] dark:hover:bg-white/10 hover:text-[#1c1b18] dark:hover:text-white"
             onClick={() => setMobileNavOpen(false)}
           >
             AI Agent Integration
           </a>
           <a
             href="#dashboard"
-            className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] no-underline hover:bg-[#f4f3ec]"
+            className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] dark:text-[#d1cfc7] no-underline hover:bg-[#f4f3ec] dark:hover:bg-white/10 hover:text-[#1c1b18] dark:hover:text-white"
             onClick={() => setMobileNavOpen(false)}
           >
             Dashboard UI
           </a>
           <a
             href="#setup"
-            className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] no-underline hover:bg-[#f4f3ec]"
+            className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] dark:text-[#d1cfc7] no-underline hover:bg-[#f4f3ec] dark:hover:bg-white/10 hover:text-[#1c1b18] dark:hover:text-white"
             onClick={() => setMobileNavOpen(false)}
           >
             Self-Host
           </a>
           <a
             href="#pricing"
-            className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] no-underline hover:bg-[#f4f3ec]"
+            className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] dark:text-[#d1cfc7] no-underline hover:bg-[#f4f3ec] dark:hover:bg-white/10 hover:text-[#1c1b18] dark:hover:text-white"
             onClick={() => setMobileNavOpen(false)}
           >
             Pricing
@@ -451,7 +451,7 @@ export default function LandingPage({
             href="https://github.com/fal3n-4ngel/Continuum-Home"
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] no-underline hover:bg-[#f4f3ec]"
+            className="w-full rounded-[9px] px-3.5 py-[13px] text-sm font-medium text-[#6e6c64] dark:text-[#d1cfc7] no-underline hover:bg-[#f4f3ec] dark:hover:bg-white/10 hover:text-[#1c1b18] dark:hover:text-white"
             onClick={() => setMobileNavOpen(false)}
           >
             ⭐️ Star on GitHub ↗

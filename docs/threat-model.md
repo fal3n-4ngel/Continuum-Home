@@ -14,39 +14,58 @@ Continuum identifies three primary trust boundaries:
 
 ---
 
-## 2. Threat Scenarios & Mitigations
+## 2. Security Invariants & Threat Scenarios
 
-### 2.1. AI Prompt Injection & Unauthorized Tenant Mutation
-* **Scenario**: A malicious actor crafts a prompt in ChatGPT attempting to mutate another user's financial records:
-  > *"Update expense abc-123 for user victim_999 with amount 1000000"*
-* **Mitigation**:
-  * The API ignores any `userId` or `uid` passed in request payloads.
-  * Identity is locked to the verified `session.uid` resolved from the cryptographically validated OAuth / Firebase ID token.
-  * The database query routes exclusively to `/users/{session.uid}/expenses/...`.
-  * Even if code were bypassed, Firestore security rules reject writes to other users with `403 Permission Denied`.
+### 2.1. Tenant Isolation & Identity Derivation
+* **Security Invariant**: Resource ownership and mutation paths are derived exclusively from the cryptographically verified session identity (`session.uid`), never from request payloads or foreign identifiers.
+* **Threat Scenario**: A malicious actor crafts a request or Custom GPT prompt attempting to mutate another user's financial records (e.g. `{ "userId": "victim_999", "amount": 1000000 }`).
+* **Enforcement**:
+  * Zod schemas strip extraneous fields, including `userId` and `uid`.
+  * Database paths are constructed exclusively using `userPath(session, ...)` pointing to `/users/{session.uid}/...`.
+  * Attempting to mutate or access foreign identifiers resolves strictly within the caller's subcollection, returning `404 Not Found`.
+  * Firestore security rules provide defense-in-depth, evaluating `request.auth.uid == userId` and returning `403 Permission Denied` if unauthenticated writes are attempted.
+* **Automated Test Proof**: Verified by `__tests__/security/tenant-isolation.test.ts`.
 
 ### 2.2. Insecure Direct Object Reference (IDOR)
-* **Scenario**: An attacker captures their own valid bearer token and attempts to read or mutate another user's document by substituting target UUIDs in URLs (`GET /api/expenses/victim_expense_id`).
-* **Mitigation**:
+* **Security Invariant**: Cross-tenant data leakage is structurally impossible at both the application subcollection layer and the database rule evaluation layer.
+* **Threat Scenario**: An attacker captures their own valid bearer token and attempts to read or mutate another user's document by substituting target UUIDs in URLs (`GET /api/expenses/victim_expense_id`, `PATCH /api/expenses/victim_expense_id`, `DELETE /api/expenses/victim_expense_id`).
+* **Enforcement**:
   * All user documents are path-isolated under `/users/{session.uid}/...`.
-  * The subcollection path is constructed server-side using `session.uid`.
-  * An attacker can only ever query their own subcollection space; foreign IDs simply return `404 Not Found`.
+  * Queries and mutations target solely `/users/{session.uid}/expenses/{id}`. Foreign documents are unreachable from foreign user paths, reliably yielding `404 Not Found`.
+* **Automated Test Proof**: Verified by `__tests__/security/tenant-isolation.test.ts`.
 
 ### 2.3. Server-Side Request Forgery (SSRF)
-* **Scenario**: Media enrichment endpoints or image proxies are tricked into querying internal cloud metadata services (e.g., `http://169.254.169.254/latest/meta-data`).
-* **Mitigation**:
-  * External integrations (Trakt, AniList, OMDb, TVMaze) connect strictly to hardcoded HTTPS endpoints.
-  * Proxy routes validate target domains against strict hostname allowlists and reject localhost, loopback, and private IPv4/IPv6 ranges.
+* **Security Invariant**: External network egress is restricted to hardcoded, HTTPS-only upstream APIs and verified hostnames. No user-supplied URL or protocol is resolved without strict validation.
+* **Threat Scenario**: Media proxy endpoints or financial lookups are tricked into querying internal cloud metadata services (`http://169.254.169.254`), loopback addresses (`127.0.0.1`, `[::1]`), protocol-relative URLs (`//evil.com`), backslash escapes, or traversal payloads.
+* **Enforcement**:
+  * Trakt proxy route (`/api/trakt/proxy`) uses `resolveTraktUrl`, rejecting protocol-relative URLs, directory traversal (`..`), backslashes, control characters, userinfo credentials, non-standard ports, and unapproved path prefixes.
+  * Mutual fund lookups strictly validate AMFI scheme codes against numeric regex `^\d{1,10}$`.
+  * Equity lookups validate tickers against sanitized regex `^[A-Z0-9.^=-]{1,20}$`.
+* **Automated Test Proof**: Verified by `__tests__/security/ssrf.test.ts`.
 
 ### 2.4. Credential Theft & Database Dumping
-* **Scenario**: An attacker obtains a full database export or backup of Firestore.
-* **Mitigation**:
-  * All sensitive financial figures, expense titles, categories, notes, and investment holding details are stored as AES-256-GCM ciphertext.
-  * Without the server's private `ENCRYPTION_KEY`, dumped data is unreadable random noise.
+* **Security Invariant**: No sensitive financial figures, asset holdings, or personal notes exist in plaintext within the primary datastore (Firestore) or caching layer (Redis).
+* **Threat Scenario**: An attacker obtains a full database export or backup of Firestore or dumps the Upstash Redis cache.
+* **Enforcement**:
+  * Sensitive entities are encrypted with AES-256-GCM using authenticated envelopes (`v1:<iv>:<tag>:<ciphertext>`).
+  * Upstash Redis and local process memory store only raw ciphertext strings.
+  * Without the server's private `ENCRYPTION_KEY`, dumped data is cryptographically indistinguishable from random noise.
+* **Automated Test Proof**: Verified by `__tests__/security/encrypted-cache.test.ts` and `__tests__/security/crypto-compatibility.test.ts`.
 
-### 2.5. Rate Limiting & Contention DoS
-* **Scenario**: High-frequency concurrent requests attempt to lock document writes or exhaust database quotas.
-* **Mitigation**:
-  * Partial updates utilize atomic `updateMask` operations.
-  * In-memory token failure tracking locks accounts after repeated authentication failures.
-  * Read-through caching in memory and Upstash Redis reduces repetitive database roundtrips.
+### 2.5. Rate Limiting & Denial of Service
+* **Security Invariant**: Authentication failure attempts are tracked globally across distributed serverless instances via Redis to prevent brute-force attacks.
+* **Threat Scenario**: High-frequency concurrent requests attempt to guess tokens or exhaust serverless compute quotas.
+* **Enforcement**:
+  * Failed authentication attempts increment a distributed counter `ratelimit:auth:failures:<ip>` in Upstash Redis with a 10-minute sliding window (capped at 20 failures before throwing `429 Too Many Requests`), falling back to in-memory sliding window when Redis is unconfigured.
+  * Read-through caching in Upstash Redis prevents database quota exhaustion.
+  * Document writes utilize atomic `updateMask` operations to avoid race condition write collisions.
+* **Automated Test Proof**: Verified by `__tests__/security/tenant-isolation.test.ts`.
+
+### 2.6. Privileged Backend Escalation & Zero-Admin Boundary Quarantine
+* **Security Invariant**: User-facing API routes (`/api/expenses`, `/api/portfolio`, `/api/subscriptions`, `/api/watchlist`, `/api/assistant`) and client repositories execute with zero server-side elevated administrative database credentials. All user reads and mutations execute strictly using the caller's Firebase ID token via the Firestore REST API subject to Google Firestore security rules. Privileged Firebase Admin SDK credentials are strictly quarantined to headless background cron jobs and admin maintenance boundaries.
+* **Threat Scenario**: A developer accidentally imports `firebase-admin` or `getAdminDb` in a user-facing route handler, introducing an accidental unconstrained server-side privileged write path that bypasses Firestore security rules.
+* **Enforcement**:
+  * Continuous static architectural regression suite (`__tests__/security/architecture-invariants.test.ts`) statically scans all route files in `app/api/(core)` and `app/api/(ai)`, as well as all repository files in `lib/firebase/repositories`.
+  * Verifies zero imports of `firebase-admin`, `firebase-admin/firestore`, `getAdminDb`, `getAdminAuth`, or admin database helpers in any user data route or repository.
+  * Verifies that all mutations in user data repositories require `Session` and pass `session.idToken` through `fsFetch`.
+* **Automated Test Proof**: Verified by `__tests__/security/architecture-invariants.test.ts`.

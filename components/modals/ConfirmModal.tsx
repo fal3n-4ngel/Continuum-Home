@@ -51,7 +51,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({ confirmDlg, setConfi
             )}
           </div>
           <div>
-            <p className="mb-1.5 text-[15px] font-bold">{confirmDlg.title}</p>
+            <p className="mb-1.5 text-[15px] font-bold text-text-primary">{confirmDlg.title}</p>
             <p className="text-[13px] leading-normal text-text-secondary">{confirmDlg.message}</p>
           </div>
         </div>

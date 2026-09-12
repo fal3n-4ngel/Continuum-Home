@@ -28,7 +28,18 @@ function clientIp(req: NextRequest): string {
   return req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
 }
 
-function checkAuthFailures(ip: string) {
+export async function checkAuthFailures(ip: string): Promise<void> {
+  if (redis) {
+    try {
+      const count = await redis.get<number>(`ratelimit:auth:failures:${ip}`);
+      if (count && count >= AUTH_FAILURE_LIMIT) {
+        throw new ApiError(429, "Too many failed authentication attempts. Try again later.");
+      }
+      return;
+    } catch (e) {
+      if (e instanceof ApiError) throw e;
+    }
+  }
   const entry = authFailures.get(ip);
   if (!entry) return;
   if (Date.now() - entry.windowStart > AUTH_FAILURE_WINDOW) {
@@ -40,7 +51,17 @@ function checkAuthFailures(ip: string) {
   }
 }
 
-function recordAuthFailure(ip: string) {
+export async function recordAuthFailure(ip: string): Promise<void> {
+  if (redis) {
+    try {
+      const key = `ratelimit:auth:failures:${ip}`;
+      const count = await redis.incr(key);
+      if (count === 1) {
+        await redis.expire(key, Math.floor(AUTH_FAILURE_WINDOW / 1000));
+      }
+      return;
+    } catch {}
+  }
   const now = Date.now();
   const entry = authFailures.get(ip);
   if (!entry || now - entry.windowStart > AUTH_FAILURE_WINDOW) {
@@ -136,7 +157,7 @@ export async function refreshIdToken(
 
 export async function requireUser(req: NextRequest): Promise<Session> {
   const ip = clientIp(req);
-  checkAuthFailures(ip);
+  await checkAuthFailures(ip);
 
   const creds = await getCredentials(req);
   const config = parseFirebaseConfig(creds);
@@ -214,7 +235,7 @@ async function trackApiMetrics(req: NextRequest, uid: string, email: string | nu
       user = refreshResult.user;
       resolvedIdToken = refreshResult.idToken;
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) recordAuthFailure(ip);
+      if (err instanceof ApiError && err.status === 401) await recordAuthFailure(ip);
       throw err;
     }
   }

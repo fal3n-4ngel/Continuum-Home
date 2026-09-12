@@ -18,6 +18,7 @@
 /out/
 
 /scripts/*
+!/scripts/verify-config.mjs
 /scratch/*
 /test-results/*
 /playwright-report/
@@ -48,3 +49,5 @@ next-env.d.ts
 
 .vercel
 .env*
+AGENTS.md
+CLAUDE.md

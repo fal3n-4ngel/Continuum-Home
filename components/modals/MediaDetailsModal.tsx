@@ -411,7 +411,7 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
 
   return (
     <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="flex w-[500px] max-w-[90%] flex-col gap-4 rounded-card border border-border-subtle bg-[#f4f3ec] p-6 shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)] text-text-primary relative max-h-[85vh] overflow-y-auto">
+      <div className="flex w-[500px] max-w-[90%] flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-6 shadow-2xl text-text-primary relative max-h-[85vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4.5 right-4.5 cursor-pointer border-none bg-transparent p-1 text-base text-text-secondary hover:text-text-primary transition-colors"
@@ -436,7 +436,7 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
           </div>
 
           <div className="flex-1 min-w-0 pr-6">
-            <span className="inline-block rounded bg-[#eae8e0] px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-text-secondary">
+            <span className="inline-block rounded bg-bg-secondary border border-border-subtle/50 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-text-secondary">
               {item.type === "movie" ? "Movie" : item.type === "show" ? "TV Show" : item.type === "anime" ? "Anime" : "Book"}
             </span>
 
@@ -525,12 +525,12 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
               </p>
             )}
             {!isEditing && !displayYear && (
-              <p className="text-[11px] text-[#b3666b] mt-1.5">
-                Year missing — <button onClick={() => setIsEditing(true)} className="cursor-pointer border-none bg-transparent p-0 font-semibold text-[#b3666b] underline">add it</button>
+              <p className="text-[11px] text-rose-600 dark:text-rose-400 mt-1.5">
+                Year missing — <button onClick={() => setIsEditing(true)} className="cursor-pointer border-none bg-transparent p-0 font-semibold text-rose-600 dark:text-rose-400 underline">add it</button>
               </p>
             )}
             {!isEditing && discrepancy && (
-              <div className="mt-2 flex flex-col gap-1.5 rounded-md border border-[#fde68a] bg-[#fffbeb] px-2.5 py-2 text-[10.5px] text-[#92400e]">
+              <div className="mt-2 flex flex-col gap-1.5 rounded-md border border-[#fde68a] dark:border-amber-800/40 bg-[#fffbeb] dark:bg-amber-950/30 px-2.5 py-2 text-[10.5px] text-[#92400e] dark:text-amber-300">
                 <span className="font-semibold">⚠️ Mismatch found vs. the source data:</span>
                 <ul className="ml-3.5 list-disc">
                   {discrepancy.title && (
@@ -546,13 +546,13 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
                 <div className="mt-0.5 flex gap-1.5">
                   <button
                     onClick={applyDiscrepancyFix}
-                    className="cursor-pointer rounded border-none bg-[#92400e] px-2 py-1 text-[10px] font-semibold text-white"
+                    className="cursor-pointer rounded border-none bg-[#92400e] dark:bg-amber-600 px-2 py-1 text-[10px] font-semibold text-white"
                   >
                     Auto-fix
                   </button>
                   <button
                     onClick={() => setDiscrepancy(null)}
-                    className="cursor-pointer rounded border border-[#fde68a] bg-transparent px-2 py-1 text-[10px] font-semibold text-[#92400e]"
+                    className="cursor-pointer rounded border border-[#fde68a] dark:border-amber-800/60 bg-transparent px-2 py-1 text-[10px] font-semibold text-[#92400e] dark:text-amber-300"
                   >
                     Dismiss
                   </button>
@@ -560,13 +560,13 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
               </div>
             )}
             {!isEditing && noMatchFound && (
-              <div className="mt-2 flex flex-col gap-1.5 rounded-md border border-[#fecaca] bg-[#fef2f2] px-2.5 py-2 text-[10.5px] text-[#991b1b]">
+              <div className="mt-2 flex flex-col gap-1.5 rounded-md border border-[#fecaca] dark:border-red-800/40 bg-[#fef2f2] dark:bg-red-950/30 px-2.5 py-2 text-[10.5px] text-[#991b1b] dark:text-red-300">
                 <span>
                   ⚠️ No poster, and no match found online for &ldquo;{displayTitle}&rdquo; either — the stored title is likely misspelled or wrong.
                 </span>
                 <button
                   onClick={() => setIsEditing(true)}
-                  className="w-fit cursor-pointer rounded border-none bg-[#991b1b] px-2 py-1 text-[10px] font-semibold text-white"
+                  className="w-fit cursor-pointer rounded border-none bg-[#991b1b] dark:bg-red-600 px-2 py-1 text-[10px] font-semibold text-white"
                 >
                   Correct the title
                 </button>

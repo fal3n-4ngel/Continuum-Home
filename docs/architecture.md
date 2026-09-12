@@ -164,7 +164,7 @@ Sensitive financial fields (`title`, `amount`, `category`, `notes`, `assets`, `v
 ```
 This reduces database storage consumption by up to 60% and lowers write latency.
 
-### 3.4. Zero-Knowledge Caching Engine
+### 3.4.Caching Engine
 
 To eliminate memory and distributed cache exposure risks:
 

@@ -1,7 +1,7 @@
-﻿Contact: mailto:hello@adithyakrishnan.com
+Contact: mailto:hello@adithyakrishnan.com
 Contact: https://github.com/fal3n-4ngel/Continuum-Home/security/advisories/new
 Expires: 2027-12-31T23:59:59.000Z
 Preferred-Languages: en
-Policy: https://github.com/fal3n-4ngel/Continuum-Home/blob/main/docs/security.md
+Policy: https://github.com/fal3n-4ngel/Continuum-Home/blob/main/SECURITY.md
 Canonical: https://continuum-home.vercel.app/.well-known/security.txt
 Acknowledgments: https://github.com/fal3n-4ngel/Continuum-Home/blob/main/README.md#contributors
