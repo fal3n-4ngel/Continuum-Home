@@ -309,7 +309,7 @@ export default function Dashboard() {
   }
 
   function connectAnilist() {
-    const clientId = process.env.NEXT_PUBLIC_ANILIST_CLIENT_ID || "46468";
+    const clientId = process.env.NEXT_PUBLIC_ANILIST_CLIENT_ID || "46469";
     window.location.href = `https://anilist.co/api/v2/oauth/authorize?client_id=${clientId}&response_type=token`;
   }
 
