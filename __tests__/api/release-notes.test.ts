@@ -126,7 +126,7 @@ describe("Release Notes API Integration Tests", () => {
 
     it("generates user-friendly release notes with AI from git commits", async () => {
       const groqSpy = vi.spyOn(groqIntegration, "executeGroqJson").mockResolvedValueOnce({
-        version: "v1.2.1",
+        version: "v1.3.0",
         title: "Historical Spend Evolution & Calm Polish",
         content: "### What's New\n- **Historical Spend Analytics**: Deep-dive historical spend evolution.\n\n### Improvements\n- **Zero Comment Rule**: Verified across codebase.",
       });
@@ -135,7 +135,7 @@ describe("Release Notes API Integration Tests", () => {
         method: "POST",
         headers: { Authorization: "Bearer valid-token" },
         body: JSON.stringify({
-          version: "v1.2.1",
+          version: "v1.3.0",
           commits: [
             "8ad30fc feat: ux improvements and folder restructure",
             "d4cad9c fix: theme issues and unwanted audit events",
@@ -148,7 +148,7 @@ describe("Release Notes API Integration Tests", () => {
       const data = await res.json();
 
       expect(res.status).toBe(200);
-      expect(data.version).toBe("v1.2.1");
+      expect(data.version).toBe("v1.3.0");
       expect(data.title).toBe("Historical Spend Evolution & Calm Polish");
       expect(data.content).toContain("### What's New");
       expect(data.commitCount).toBe(3);
@@ -157,8 +157,8 @@ describe("Release Notes API Integration Tests", () => {
 
     it("generates release notes for latest release without custom commits payload", async () => {
       const groqSpy = vi.spyOn(groqIntegration, "executeGroqJson").mockResolvedValueOnce({
-        version: "v1.2.1",
-        title: "Release v1.2.1",
+        version: "v1.3.0",
+        title: "Release v1.3.0",
         content: "### What's New\n- **Audit Logs**: Clearer audit logs.\n\n### Fixes\n- **Timeouts**: Fixed timeout alerts.",
       });
 
@@ -172,8 +172,8 @@ describe("Release Notes API Integration Tests", () => {
       const data = await res.json();
 
       expect(res.status).toBe(200);
-      expect(data.version).toBe("v1.2.1");
-      expect(data.title).toBe("Release v1.2.1");
+      expect(data.version).toBe("v1.3.0");
+      expect(data.title).toBe("Release v1.3.0");
       expect(data.content).toContain("### What's New");
       expect(groqSpy).toHaveBeenCalledTimes(1);
     });

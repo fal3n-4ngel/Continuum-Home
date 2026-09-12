@@ -52,7 +52,7 @@ function getGitTagRelease(targetTag?: string): ReleaseSourceData {
     try {
       tag = execSync("git describe --tags --abbrev=0", { encoding: "utf-8" }).trim();
     } catch {
-      tag = "v1.2.1";
+      tag = "v1.3.0";
     }
   }
 
@@ -97,7 +97,7 @@ export const POST = withAdmin("POST /api/admin/release-notes/generate", async (r
   let releaseData: ReleaseSourceData;
 
   if (manualCommits.length > 0) {
-    const customTag = typeof body.version === "string" && body.version.trim() ? body.version.trim() : "v1.2.1";
+    const customTag = typeof body.version === "string" && body.version.trim() ? body.version.trim() : "v1.3.0";
     releaseData = {
       tag: customTag,
       name: `Release ${customTag}`,
