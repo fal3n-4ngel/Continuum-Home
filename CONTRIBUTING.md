@@ -38,10 +38,11 @@ Branch from `main` using the following standardized namespaces:
    git checkout -b feature/your-feature-name
    ```
 
-3. **Install Dependencies:**
+3. **Install Dependencies (Deterministic):**
    ```bash
-   npm install
+   npm ci
    ```
+   *Note: Use `npm ci` for reproducible onboarding and local verification. Reserve `npm install` for deliberately adding or bumping package dependencies.*
 
 4. **Environment Configuration:**
    Copy the template and fill in `FIREBASE_CONFIG` + `ENCRYPTION_KEY` at minimum — see [`.env.example`](.env.example) for the full list (Trakt, AniList, TMDb are optional):
@@ -83,8 +84,11 @@ Continuum enforces strict automated checks on all branches and Pull Requests. Pr
   ```
 
 ### Automated GitHub Actions Pipelines
-- **Pre-Merge Verification (`.github/workflows/ci.yml`):** Runs on push and PRs to `main` and `develop`. Executes ESLint, TypeScript compilation, Vitest suite, Next.js production build, and headless Playwright Chromium tests.
+- **Pre-Merge Verification (`.github/workflows/ci.yml`):** Runs on push and PRs to `main` and `develop`. Executes ESLint, TypeScript compilation, Vitest suite (adversarial SSRF, tenant isolation, and cryptographic compatibility tests), Next.js production build, and headless Playwright Chromium tests.
 - **Security Audit (`.github/workflows/security.yml`):** Audits production dependencies (`npm audit`), executes GitHub's `dependency-review` on PRs, and runs automated CodeQL code scanning via GitHub default setup.
+
+### Repository & Package Scope
+`package.json` specifies `"private": true` by design. Continuum Home is a deployable web application and self-hostable service, not an npm library intended for registry distribution. Marking `"private": true` protects against unintended package publication while the repository remains completely open source and community-driven.
 
 ---
 

@@ -9,9 +9,12 @@ const TRAKT_API = "https://api.trakt.tv";
 const ALLOWED_METHODS = new Set(["GET", "POST", "DELETE"]);
 const ALLOWED_PATH_PREFIXES = ["/users/", "/sync/", "/search/", "/shows/", "/movies/"];
 
-function resolveTraktUrl(path: unknown): URL {
+export function resolveTraktUrl(path: unknown): URL {
   if (typeof path !== "string" || !path.startsWith("/")) {
     throw new ApiError(400, "'path' must be a string starting with '/'.");
+  }
+  if (path.startsWith("//") || path.startsWith("/\\") || path.includes("\\") || path.includes("..") || /[\s\x00-\x1f\x7f]/.test(path)) {
+    throw new ApiError(400, "Invalid 'path': traversal and scheme tricks are rejected.");
   }
   if (!ALLOWED_PATH_PREFIXES.some((prefix) => path.startsWith(prefix))) {
     throw new ApiError(400, "This Trakt endpoint is not allowed.");
@@ -23,8 +26,18 @@ function resolveTraktUrl(path: unknown): URL {
   } catch {
     throw new ApiError(400, "Invalid 'path'.");
   }
-  if (url.origin !== TRAKT_API) {
-    throw new ApiError(400, "Invalid 'path'.");
+  if (
+    url.origin !== TRAKT_API ||
+    url.protocol !== "https:" ||
+    url.hostname !== "api.trakt.tv" ||
+    url.username !== "" ||
+    url.password !== "" ||
+    (url.port !== "" && url.port !== "443")
+  ) {
+    throw new ApiError(400, "Invalid 'path': must resolve to api.trakt.tv over HTTPS.");
+  }
+  if (!ALLOWED_PATH_PREFIXES.some((prefix) => url.pathname.startsWith(prefix))) {
+    throw new ApiError(400, "This Trakt endpoint is not allowed.");
   }
   return url;
 }

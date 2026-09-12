@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getCredentials, parseFirebaseConfig } from "@/lib/auth";
-import { verifyIdToken } from "@/lib/auth";
+import { getCredentials, parseFirebaseConfig } from "@/lib/auth/credentials";
+import { verifyIdToken } from "@/lib/auth/auth";
 import { redis } from "@/lib/utils";
-import { isAllowedOAuthRedirect } from "@/lib/auth";
+import { isAllowedOAuthRedirect } from "@/lib/auth/oauth-clients";
 import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
