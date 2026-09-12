@@ -44,7 +44,7 @@ export default function PrivacyPolicyPage() {
                 **AES-256-GCM Encryption at Rest:** Sensitive financial fields (expense amounts, titles, categories, notes, and investment portfolio assets) are encrypted with authenticated AES-256-GCM prior to database persistence.
               </li>
               <li>
-                **Zero-Knowledge Caching:** Upstash Redis and server process caches store strictly encrypted ciphertext blobs (`v1:iv:tag:ciphertext`). Decryption occurs ephemerally in-memory only during authorized HTTPS request fulfillment.
+                **Caching:** Upstash Redis and server process caches store strictly encrypted ciphertext blobs (`v1:iv:tag:ciphertext`). Decryption occurs ephemerally in-memory only during authorized HTTPS request fulfillment.
               </li>
               <li>
                 **Zero Admin Master Keys:** Database reads and writes execute via the Firestore REST API authenticated exclusively with the caller&apos;s personal Firebase ID token. No elevated admin service account key exists on the server.

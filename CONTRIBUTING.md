@@ -29,8 +29,8 @@ Branch from `main` using the following standardized namespaces:
 
 1. **Clone the Repository:**
    ```bash
-   git clone https://github.com/fal3n-4ngel/personal-dashboard.git
-   cd personal-dashboard
+   git clone https://github.com/fal3n-4ngel/Continuum-Home.git
+   cd Continuum-Home
    ```
 
 2. **Initialize Branch:**
@@ -59,7 +59,7 @@ Branch from `main` using the following standardized namespaces:
 
 ## 🧪 Quality Assurance & CI/CD Validation
 
-Continuum utilizes an automated CI/CD pipeline. Prior to submitting a Pull Request, verify that all local checks execute successfully:
+Continuum enforces strict automated checks on all branches and Pull Requests. Prior to submitting a Pull Request, verify that all local checks execute successfully:
 
 - **Static Type Analysis:**
   ```bash
@@ -69,16 +69,22 @@ Continuum utilizes an automated CI/CD pipeline. Prior to submitting a Pull Reque
   ```bash
   npm run lint
   ```
-- **Integration Tests:**
+- **Unit & Integration Tests:**
   ```bash
-  npm run test
+  npm test
+  ```
+- **End-to-End Browser Tests:**
+  ```bash
+  npx playwright test
   ```
 - **Production Compilation:**
   ```bash
   npm run build
   ```
 
-PRs are also checked by `dependency-review` (fails on a newly introduced dependency with a known high/critical vulnerability) and CodeQL's default code scanning — neither has a local equivalent to run beforehand, but both show up as PR checks.
+### Automated GitHub Actions Pipelines
+- **Pre-Merge Verification (`.github/workflows/ci.yml`):** Runs on push and PRs to `main` and `develop`. Executes ESLint, TypeScript compilation, Vitest suite, Next.js production build, and headless Playwright Chromium tests.
+- **Security Audit (`.github/workflows/security.yml`):** Audits production dependencies (`npm audit`), executes GitHub's `dependency-review` on PRs, and runs automated CodeQL code scanning via GitHub default setup.
 
 ---
 
@@ -90,4 +96,4 @@ PRs are also checked by `dependency-review` (fails on a newly introduced depende
    ```
 2. Open a Pull Request targeting the `main` branch.
 3. Link the PR to its associated issue (e.g., `Fixes #12` or `Resolves #45`).
-4. Ensure all automated GitHub Actions checks (lint, typecheck, test, build, dependency review) pass.
+4. Ensure all automated GitHub Actions checks pass (CI verification, dependency review, and CodeQL analysis).

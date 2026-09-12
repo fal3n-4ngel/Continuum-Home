@@ -2,60 +2,61 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    match /expenses/{expenseId} {
-      allow read: if request.auth != null
-                  && resource.data.userId == request.auth.uid;
-      allow create: if request.auth != null
-                    && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null
-                    && resource.data.userId == request.auth.uid
-                    && request.resource.data.userId == request.auth.uid;
-      allow delete: if request.auth != null
-                    && resource.data.userId == request.auth.uid;
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
     }
 
-    match /watchlists/{userId} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId;
-    }
-
-    match /subscriptions/{subscriptionId} {
-      allow read: if request.auth != null
-                  && resource.data.userId == request.auth.uid;
-      allow create: if request.auth != null
-                    && request.resource.data.userId == request.auth.uid;
-      allow update: if request.auth != null
-                    && resource.data.userId == request.auth.uid
-                    && request.resource.data.userId == request.auth.uid;
-      allow delete: if request.auth != null
-                    && resource.data.userId == request.auth.uid;
-    }
-
-    match /portfolios/{userId} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId;
-    }
-
-    match /settings/{userId} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId;
-    }
-
-    match /recommendations/{userId} {
-      allow read, write: if request.auth != null
-                         && request.auth.uid == userId;
-      
-      match /entries/{entryId} {
-        allow read, write: if request.auth != null
-                           && request.auth.uid == userId;
-      }
+    function isEncrypted(val) {
+      return val is string && val.matches('^v1:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+$');
     }
 
     match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+      allow read, write: if isOwner(userId);
 
-      match /{allSubcollections=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+      match /expenses/{expenseId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+                              && isEncrypted(request.resource.data.title);
+      }
+
+      match /subscriptions/{subscriptionId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /portfolio/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /settings/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /watchlists/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /recommendations/{docId} {
+        allow read, write: if isOwner(userId);
+
+        match /{subDoc=**} {
+          allow read, write: if isOwner(userId);
+        }
+      }
+    }
+
+    match /watchlists/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /settings/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /recommendations/{userId} {
+      allow read, write: if isOwner(userId);
+
+      match /entries/{entryId} {
+        allow read, write: if isOwner(userId);
       }
     }
 

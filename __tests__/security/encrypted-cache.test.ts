@@ -1,4 +1,4 @@
-﻿import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
+import { describe, it, expect, vi, beforeEach, beforeAll, afterAll } from "vitest";
 import { getRawExpenses, expenseCacheKey } from "@/lib/firebase/repositories/expenses.repo";
 import { getPortfolio, portfolioCacheKey } from "@/lib/firebase/repositories/portfolio.repo";
 import { encrypt } from "@/lib/utils";
@@ -87,7 +87,7 @@ vi.mock("@/lib/firebase/client", async () => {
   };
 });
 
-describe("Zero-Knowledge Redis & Memory Cache Layer", () => {
+describe("Ciphertext-Only Redis & Memory Cache Layer", () => {
   beforeEach(() => {
     cacheStorage.clear();
     vi.clearAllMocks();

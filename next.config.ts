@@ -10,7 +10,15 @@ function getFirebaseProjectId(): string {
       if (parsed.projectId) return parsed.projectId;
     }
   } catch {}
-  return process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "personal-hub-adi";
+  if (process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID) {
+    return process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+  }
+  if (process.env.CI || process.env.NODE_ENV === "test") {
+    return "demo-project";
+  }
+  throw new Error(
+    "Missing Firebase Project ID: Please set FIREBASE_CONFIG or NEXT_PUBLIC_FIREBASE_PROJECT_ID in your environment."
+  );
 }
 
 const securityHeaders = [

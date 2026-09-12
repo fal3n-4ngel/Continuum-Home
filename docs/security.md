@@ -30,13 +30,64 @@ Unlike traditional server-side applications that store administrative database c
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read, write: if request.auth != null && request.auth.uid == userId;
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
 
-      match /{allSubcollections=**} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+    function isEncrypted(val) {
+      return val is string && val.matches('^v1:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+$');
+    }
+
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+
+      match /expenses/{expenseId} {
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+                              && isEncrypted(request.resource.data.title);
+      }
+
+      match /subscriptions/{subscriptionId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /portfolio/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /settings/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /watchlists/{docId} {
+        allow read, write: if isOwner(userId);
+      }
+
+      match /recommendations/{docId} {
+        allow read, write: if isOwner(userId);
+
+        match /{subDoc=**} {
+          allow read, write: if isOwner(userId);
+        }
       }
     }
+
+    match /watchlists/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /settings/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /recommendations/{userId} {
+      allow read, write: if isOwner(userId);
+
+      match /entries/{entryId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }
@@ -61,7 +112,7 @@ All sensitive financial and personal attributes are encrypted before persistence
 * **Integrity Authentication**: GCM calculates an authentication tag that verifies ciphertext integrity and prevents tampering or bit-flipping attacks.
 * **Format**: Ciphertext is stored as `v1:iv:authTag:ciphertext` in hexadecimal encoding.
 
-### 3.3. Zero-Knowledge Caching Architecture
+### 3.3. Ciphertext-Only Caching Architecture
 * **No Plaintext in Caching Layers**: To eliminate memory and cache exposure risks, Upstash Redis and server-side in-memory process stores cache strictly raw encrypted Firestore documents.
 * **Ephemeral In-Memory Decryption**: Decryption occurs exclusively in-memory during active HTTP request processing right before the response is serialized and returned over HTTPS.
 * **Breach Resilience**: In the event of a Redis dump or external cache inspection, an adversary acquires only authenticated AES-256-GCM ciphertexts with zero plaintext financial figures, portfolio assets, or personal notes exposed.

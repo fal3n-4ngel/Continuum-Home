@@ -59,14 +59,14 @@ The API is the source of truth; AI clients interact through standard authenticat
 
 - **Frontend & Server**: Next.js 16 (App Router, Turbopack) + React 19 + TypeScript + Tailwind CSS
 - **Database & Auth**: Firebase (Google Sign-In + Firestore REST API)
-- **Security & Cryptography**: AES-256-GCM encryption at rest; Zero-Knowledge cache (Redis and process memory store only encrypted ciphertext); zero admin credentials in backend (all writes execute using the caller's Firebase ID token subject to Firestore security rules); SSRF-guarded upstream integrations.
+- **Security & Cryptography**: AES-256-GCM encryption at rest; ciphertext-only caching (Redis and process memory store only encrypted ciphertext); zero admin credentials in backend (all writes execute using the caller's Firebase ID token subject to Firestore security rules); SSRF-guarded upstream integrations.
 - **Telemetry**: Audit events stream out to a dedicated ingestion service storing structured logs in BigQuery.
 
 ![Continuum Architecture Diagram](architecture-diagram.svg)
 
 ### 🔒 Privacy, Security & Data Flow Matrix
 
-Continuum uses a **Zero-Knowledge at Rest & in Cache** model. Instead of relying on blanket marketing claims, our exact data flow boundaries are documented below:
+Continuum implements **Server-Side AES-256-GCM Encryption with Ciphertext-Only Caching**. Instead of relying on blanket marketing claims, our exact data flow boundaries are documented below:
 
 | Data Category | Persisted At | In-Memory / Redis Cache | Encryption Standard | Third Parties Contacted |
 | :--- | :--- | :--- | :--- | :--- |
@@ -78,7 +78,7 @@ Continuum uses a **Zero-Knowledge at Rest & in Cache** model. Instead of relying
 | **Audit Logs & Telemetry** | Monolith Ingestion Service | Ephemeral queue | HTTPS (sanitized event metadata) | BigQuery (Internal telemetry) |
 
 > [!IMPORTANT]
-> **Zero-Knowledge Cache Architecture**: Redis and local process memory store only `v1:iv:tag:ciphertext` blobs for financial records. Decryption occurs strictly in-memory per request right before returning responses to authorized callers over HTTPS. Even if the Redis cache is dumped or inspected, no financial figures, asset holdings, or notes are exposed in plaintext.
+> **Ciphertext-Only Cache Architecture**: Redis and local process memory store only `v1:iv:tag:ciphertext` blobs for financial records. Decryption occurs strictly in-memory per request right before returning responses to authorized callers over HTTPS. Even if the Redis cache is dumped or inspected, no financial figures, asset holdings, or notes are exposed in plaintext.
 
 ---
 
