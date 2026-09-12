@@ -12,7 +12,7 @@ export default function PrivacyPolicyPage() {
   const containerClass = "max-w-[700px] mx-auto flex flex-col gap-6 text-text-primary leading-relaxed";
 
   return (
-    <div className="min-h-screen bg-[#f4f3ec] p-10 max-md:p-5">
+    <div className="min-h-screen bg-bg-primary text-text-primary p-10 max-md:p-5 transition-colors duration-200">
       <div className={containerClass}>
 
         <div className="flex items-center justify-between border-b border-border-subtle pb-5">
@@ -20,12 +20,12 @@ export default function PrivacyPolicyPage() {
             <Shield className="h-6 w-6 text-text-primary" />
             <h1 className="font-serif text-2xl font-bold">Privacy Policy</h1>
           </div>
-          <Link href="/" className="text-xs text-text-secondary hover:text-text-primary flex items-center gap-1 no-underline">
+          <Link href="/" className="text-xs text-text-secondary hover:text-text-primary flex items-center gap-1 no-underline transition-colors">
             <ArrowLeft className="h-3 w-3" /> Back
           </Link>
         </div>
 
-        <div className="bg-white rounded-card border border-border-subtle p-8 max-md:p-6 shadow-subtle flex flex-col gap-6 text-sm text-text-secondary">
+        <div className="bg-bg-card rounded-card border border-border-subtle p-8 max-md:p-6 shadow-subtle flex flex-col gap-6 text-sm text-text-secondary transition-colors duration-200">
 
           <section className="flex flex-col gap-2">
             <h2 className="font-serif text-base font-bold text-text-primary">1. Introduction</h2>
@@ -35,7 +35,7 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="flex flex-col gap-2">
-            <h2 className="font-serif text-base font-bold text-text-primary">2. Data Collection, Ownership & Encryption</h2>
+            <h2 className="font-serif text-base font-bold text-text-primary">2. Data Collection &amp; Ownership</h2>
             <p>
               All your transaction ledger, subscriptions, libraries, notes, and investment data are stored directly inside your personal **Firebase Firestore database**.
             </p>
