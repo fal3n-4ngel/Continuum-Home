@@ -45,6 +45,10 @@ service cloud.firestore {
 
       match /recommendations/{docId} {
         allow read, write: if isOwner(userId);
+
+        match /entries/{entryId} {
+          allow read, write: if isOwner(userId);
+        }
       }
     }
 

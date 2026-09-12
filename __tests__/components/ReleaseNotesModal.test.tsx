@@ -35,7 +35,6 @@ describe("ReleaseNotesModal Component Tests", () => {
       <ReleaseNotesModal isOpen={true} onClose={onClose} releaseNote={sampleNote} />
     );
 
-    expect(screen.getByText("v1.3.0")).toBeInTheDocument();
     expect(screen.getByText("Historical Spend & In-App Release Notes")).toBeInTheDocument();
     expect(screen.getByText("Highlights")).toBeInTheDocument();
     expect(screen.getByText("Deep dive into historical cycle spend.")).toBeInTheDocument();

@@ -217,7 +217,7 @@ export async function updatePortfolioValuationHistory(
   params.append("updateMask.fieldPaths", "valuationHistory");
   params.append("updateMask.fieldPaths", "updatedAt");
 
-  await fsFetch(session, `${docsRoot(session)}/portfolios/${session.uid}?${params}`, {
+  await fsFetch(session, `${userPath(session, "portfolio", session.uid)}?${params}`, {
     method: "PATCH",
     body: JSON.stringify({ fields: toFields(docData) }),
   });
