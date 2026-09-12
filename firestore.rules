@@ -31,10 +31,6 @@ service cloud.firestore {
                               && request.resource.data.cost is number;
       }
 
-      match /portfolio/{docId} {
-        allow read, write: if isOwner(userId);
-      }
-
       match /settings/{docId} {
         allow read, write: if isOwner(userId);
       }
@@ -42,8 +38,16 @@ service cloud.firestore {
       match /watchlists/{docId} {
         allow read, write: if isOwner(userId);
       }
+    }
 
-      match /recommendations/{docId} {
+    match /portfolios/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+
+    match /recommendations/{userId} {
+      allow read, write: if isOwner(userId);
+
+      match /entries/{entryId} {
         allow read, write: if isOwner(userId);
       }
     }
