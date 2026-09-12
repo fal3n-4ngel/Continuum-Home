@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.0.0 <23.0.0"
+    "node": ">=20.0.0"
   },
   "overrides": {
     "jose": "5.10.0",
@@ -17,6 +17,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "verify:config": "node scripts/verify-config.mjs",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",

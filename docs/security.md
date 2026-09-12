@@ -19,12 +19,17 @@ This document details the security principles, authentication mechanics, token h
 
 ---
 
-## 2. Zero Elevated Backend Credentials
+## 2. Zero Elevated Backend Credentials & Privileged Quarantine
 
-Unlike traditional server-side applications that store administrative database credentials (such as service accounts with root permissions):
-* Continuum's user-facing API routes execute without an admin service account.
-* Database requests are dispatched directly to the Google Cloud Firestore REST API using the caller's own Firebase ID token.
-* Access control is enforced by Google's native Firestore security rule engine:
+### 2.1. Architectural Boundary & Invariant
+Unlike traditional server-side applications that store administrative database credentials (such as service accounts with root permissions) for all database interactions:
+* **User-Facing Data Routes (`app/api/(core)/**`, `app/api/(ai)/**`)**: Execute with zero server-side admin credentials.
+* **Client Repositories (`lib/firebase/repositories/**`)**: Execute with zero server-side admin credentials. All reads and mutations dispatch directly to the Google Cloud Firestore REST API using the caller's Firebase ID token (`fsFetch` with `Authorization: Bearer ${session.idToken}`).
+* **Headless Background Jobs (`app/api/(ops)/cron/**`, `app/api/(ops)/admin/**`)**: Headless operations (daily portfolio valuations, email dispatches, schema migrations) operate outside user browser sessions and require server-side Firebase Admin credentials guarded by `CRON_SECRET`.
+* **Automated Static Quarantine**: Continuous architecture regression suite (`__tests__/security/architecture-invariants.test.ts`) statically verifies that no user-facing API routes or repositories import `firebase-admin` or privileged Firestore clients.
+
+### 2.2. Native Firestore Security Rules Engine
+Access control for user mutations is enforced by Google's native Firestore security rule engine:
 
 ```javascript
 rules_version = '2';
@@ -115,6 +120,8 @@ All sensitive financial and personal attributes are encrypted before persistence
 * **Key Derivation & Entropy Guarantees**:
   * The raw secret is supplied via `ENCRYPTION_KEY` and digested using SHA-256 (`crypto.createHash("sha256").update(secret).digest()`) yielding exactly 256 bits (32 bytes) of cryptographic key material.
   * Administrators must generate high-entropy keys using `openssl rand -base64 32`.
+  * **Fail-Closed Validation**: The application strictly rejects keys under 32 characters, keys with low entropy (< 8 unique characters), and placeholder phrases (`your-custom-super-secret-key-phrase`, `change-me`, `password123`, etc.) with `EncryptionError`.
+  * Configuration validity can be deterministically audited prior to boot using `npm run verify:config`.
 * **Backward Compatibility**: Decryptor transparently parses both versioned (`v1:<iv>:<tag>:<ciphertext>`) and legacy (`<iv>:<tag>:<ciphertext>`) envelopes.
 * **Tamper Resistance**: Bit modifications to ciphertext, IV, or authentication tag fail authentication and throw a strongly typed `DecryptionError`.
 

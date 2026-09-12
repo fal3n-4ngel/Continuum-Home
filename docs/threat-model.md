@@ -60,3 +60,12 @@ Continuum identifies three primary trust boundaries:
   * Read-through caching in Upstash Redis prevents database quota exhaustion.
   * Document writes utilize atomic `updateMask` operations to avoid race condition write collisions.
 * **Automated Test Proof**: Verified by `__tests__/security/tenant-isolation.test.ts`.
+
+### 2.6. Privileged Backend Escalation & Zero-Admin Boundary Quarantine
+* **Security Invariant**: User-facing API routes (`/api/expenses`, `/api/portfolio`, `/api/subscriptions`, `/api/watchlist`, `/api/assistant`) and client repositories execute with zero server-side elevated administrative database credentials. All user reads and mutations execute strictly using the caller's Firebase ID token via the Firestore REST API subject to Google Firestore security rules. Privileged Firebase Admin SDK credentials are strictly quarantined to headless background cron jobs and admin maintenance boundaries.
+* **Threat Scenario**: A developer accidentally imports `firebase-admin` or `getAdminDb` in a user-facing route handler, introducing an accidental unconstrained server-side privileged write path that bypasses Firestore security rules.
+* **Enforcement**:
+  * Continuous static architectural regression suite (`__tests__/security/architecture-invariants.test.ts`) statically scans all route files in `app/api/(core)` and `app/api/(ai)`, as well as all repository files in `lib/firebase/repositories`.
+  * Verifies zero imports of `firebase-admin`, `firebase-admin/firestore`, `getAdminDb`, `getAdminAuth`, or admin database helpers in any user data route or repository.
+  * Verifies that all mutations in user data repositories require `Session` and pass `session.idToken` through `fsFetch`.
+* **Automated Test Proof**: Verified by `__tests__/security/architecture-invariants.test.ts`.

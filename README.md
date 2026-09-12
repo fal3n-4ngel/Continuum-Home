@@ -59,7 +59,7 @@ The API is the source of truth; AI clients interact through standard authenticat
 
 - **Frontend & Server**: Next.js 16 (App Router, Turbopack) + React 19 + TypeScript + Tailwind CSS
 - **Database & Auth**: Firebase (Google Sign-In + Firestore REST API)
-- **Security & Cryptography**: AES-256-GCM encryption at rest; ciphertext-only caching (Redis and process memory store only encrypted ciphertext); zero admin credentials in backend (all writes execute using the caller's Firebase ID token subject to Firestore security rules); SSRF-guarded upstream integrations.
+- **Security & Cryptography**: AES-256-GCM encryption at rest; ciphertext-only caching (Redis and process memory store only encrypted ciphertext); zero admin credentials in user-facing data routes (all user transactions and mutations execute strictly using the caller's Firebase ID token subject to Firestore security rules; privileged credentials are quarantined to headless background cron/admin maintenance boundaries); SSRF-guarded upstream integrations.
 - **Telemetry**: Audit events stream out to a dedicated ingestion service storing structured logs in BigQuery.
 
 ![Continuum Architecture Diagram](architecture-diagram.svg)
@@ -98,20 +98,25 @@ Continuum exposes an OpenAPI 3.1 specification at `/api/openapi.json`. This allo
 ```bash
 git clone https://github.com/fal3n-4ngel/Continuum-Home.git
 cd Continuum-Home
-npm install
+npm ci
 ```
 
-### 2. Configure Environment & Firebase
+### 2. Configure Environment & Cryptographic Keys
 
 Copy the example environment file:
 ```bash
 cp .env.example .env.local
 ```
 
-Set required variables in `.env.local`:
+Generate a cryptographically secure 256-bit encryption key:
+```bash
+openssl rand -base64 32
+```
+
+Set required variables in `.env.local` (the application rejects weak, short, or placeholder keys fail-closed):
 ```env
 FIREBASE_CONFIG={"apiKey":"...","authDomain":"...","projectId":"..."}
-ENCRYPTION_KEY="your-custom-super-secret-key-phrase"
+ENCRYPTION_KEY="<output-from-openssl-rand-base64-32>"
 ```
 
 Deploy Firestore security rules and index optimizations:
@@ -124,9 +129,15 @@ firebase deploy --only firestore:rules,firestore:indexes
 > [!NOTE]
 > For complete database architecture, subcollection directory maps, and migration utilities, refer to [`firebase-schema.md`](docs/firebase-schema.md). For end-to-end system topology, multi-tenant security specifications, and threat models, see [`docs/`](docs/).
 
-### 3. Run
+### 3. Verify Configuration & Run
 
 ```bash
+# Validate environment, crypto key entropy, and runtime invariants
+npm run verify:config
+
+# Run automated tests
+npm test
+
 # Development
 npm run dev
 
