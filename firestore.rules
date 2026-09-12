@@ -11,16 +11,24 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId)
+                   && request.resource.data.keys().hasOnly(['updatedAt', 'email', 'displayName', 'photoURL', 'createdAt', 'lastLoginAt']);
 
       match /expenses/{expenseId} {
         allow read, delete: if isOwner(userId);
         allow create, update: if isOwner(userId)
-                              && isEncrypted(request.resource.data.title);
+                              && isEncrypted(request.resource.data.title)
+                              && isEncrypted(request.resource.data.amount)
+                              && (request.resource.data.category == null || isEncrypted(request.resource.data.category))
+                              && (request.resource.data.notes == null || isEncrypted(request.resource.data.notes));
       }
 
       match /subscriptions/{subscriptionId} {
-        allow read, write: if isOwner(userId);
+        allow read, delete: if isOwner(userId);
+        allow create, update: if isOwner(userId)
+                              && request.resource.data.name is string
+                              && request.resource.data.cost is number;
       }
 
       match /portfolio/{docId} {
@@ -36,26 +44,6 @@ service cloud.firestore {
       }
 
       match /recommendations/{docId} {
-        allow read, write: if isOwner(userId);
-
-        match /{subDoc=**} {
-          allow read, write: if isOwner(userId);
-        }
-      }
-    }
-
-    match /watchlists/{userId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    match /settings/{userId} {
-      allow read, write: if isOwner(userId);
-    }
-
-    match /recommendations/{userId} {
-      allow read, write: if isOwner(userId);
-
-      match /entries/{entryId} {
         allow read, write: if isOwner(userId);
       }
     }

@@ -1,13 +1,11 @@
 import { Session } from "@/lib/auth";
-import { cacheGet, cacheSet, cacheInvalidate, ApiError } from "@/lib/utils";
+import { cacheGet, cacheSet, cacheInvalidate } from "@/lib/utils";
 import {
   assertDocId,
-  docsRoot,
   fsFetch,
   FirestoreDocument,
   toFields,
   idFromName,
-  runOwnedQuery,
   userPath,
   listSubcollectionDocs,
 } from "../client";
@@ -41,10 +39,7 @@ export async function listSubscriptions(session: Session): Promise<SubscriptionR
   const cached = await cacheGet<SubscriptionRecord[]>(cacheKey);
   if (cached) return cached;
 
-  let rows = await listSubcollectionDocs(session, "subscriptions");
-  if (rows.length === 0) {
-    rows = await runOwnedQuery(session, "subscriptions");
-  }
+  const rows = await listSubcollectionDocs(session, "subscriptions");
 
   const records = rows
     .map(({ id, data }) => ({
@@ -85,19 +80,9 @@ export async function createSubscription(session: Session, entry: SubscriptionEn
 export async function deleteSubscription(session: Session, id: string) {
   assertDocId(id, "subscription");
 
-  try {
-    await fsFetch(session, `${userPath(session, "subscriptions", id)}?currentDocument.exists=true`, {
-      method: "DELETE",
-    });
-  } catch (err) {
-    if (err instanceof ApiError && err.status === 404) {
-      await fsFetch(session, `${docsRoot(session)}/subscriptions/${id}?currentDocument.exists=true`, {
-        method: "DELETE",
-      });
-    } else {
-      throw err;
-    }
-  }
+  await fsFetch(session, `${userPath(session, "subscriptions", id)}?currentDocument.exists=true`, {
+    method: "DELETE",
+  });
 
   await cacheInvalidate(subscriptionCacheKey(session));
   return { id };
@@ -112,21 +97,10 @@ export async function updateSubscription(session: Session, id: string, updates: 
     params.append("updateMask.fieldPaths", k);
   });
 
-  try {
-    await fsFetch(session, `${userPath(session, "subscriptions", id)}?${params}`, {
-      method: "PATCH",
-      body: JSON.stringify({ fields: toFields(docData) }),
-    });
-  } catch (err) {
-    if (err instanceof ApiError && err.status === 404) {
-      await fsFetch(session, `${docsRoot(session)}/subscriptions/${id}?${params}`, {
-        method: "PATCH",
-        body: JSON.stringify({ fields: toFields(docData) }),
-      });
-    } else {
-      throw err;
-    }
-  }
+  await fsFetch(session, `${userPath(session, "subscriptions", id)}?${params}`, {
+    method: "PATCH",
+    body: JSON.stringify({ fields: toFields(docData) }),
+  });
 
   await cacheInvalidate(subscriptionCacheKey(session));
 }

@@ -1,15 +1,12 @@
 import { randomUUID } from "crypto";
 import { Session } from "@/lib/auth";
-import { ApiError, cacheGet, cacheSet, cacheInvalidate } from "@/lib/utils";
+import { cacheGet, cacheSet, cacheInvalidate } from "@/lib/utils";
 import {
   assertDocId,
   docsRoot,
   docName,
   fsFetch,
-  FirestoreDocument,
   toFields,
-  fromFields,
-  runOwnedQuery,
   listSubcollectionDocs,
 } from "../client";
 
@@ -137,16 +134,6 @@ export async function writeWatchlistItems(
       },
       updateMask: { fieldPaths },
     });
-
-    if (chunkId === DEFAULT_CHUNK_ID) {
-      writes.push({
-        update: {
-          name: docName(session, "watchlists", session.uid),
-          fields: toFields({ items }),
-        },
-        updateMask: { fieldPaths },
-      });
-    }
   }
 
   if (writes.length === 0) return;
@@ -162,56 +149,13 @@ export async function writeWatchlistItems(
   await cacheInvalidate(watchlistCacheKey(session));
 }
 
-async function migrateLegacyWatchlist(session: Session): Promise<Record<string, WatchlistItem>> {
-  const rows = await runOwnedQuery(session, "watchlist");
-  if (rows.length === 0) return {};
-
-  const items: Record<string, WatchlistItem> = {};
-  rows.forEach(({ id, data }) => {
-    items[id] = {
-      title: (data.title as string) || "Untitled",
-      type: (data.type as WatchlistItem["type"]) || "movie",
-      status: (data.status as WatchlistItem["status"]) || "plan_to_watch",
-      progress: typeof data.progress === "number" ? data.progress : 0,
-      totalEpisodes: typeof data.totalEpisodes === "number" ? data.totalEpisodes : null,
-      rating: typeof data.rating === "number" ? data.rating : null,
-      coverImage: (data.coverImage as string) || null,
-      year: typeof data.year === "number" ? data.year : null,
-      updatedAt: typeof data.updatedAt === "number" ? data.updatedAt : 0,
-      createdAt: typeof data.createdAt === "number" ? data.createdAt : (typeof data.updatedAt === "number" ? data.updatedAt : 0),
-      anilistId: typeof data.anilistId === "number" ? data.anilistId : null,
-      traktId: typeof data.traktId === "number" ? data.traktId : null,
-    };
-  });
-
-  await writeWatchlistItems(session, items as unknown as Record<string, Record<string, unknown>>, new Set(Object.keys(items)));
-  return items;
-}
-
 export async function getRawWatchlistChunks(session: Session): Promise<Record<string, Record<string, WatchlistItem>>> {
   const chunks: Record<string, Record<string, WatchlistItem>> = {};
-  try {
-    const subDocs = await listSubcollectionDocs(session, "watchlists");
-    if (subDocs.length > 0) {
-      for (const doc of subDocs) {
-        chunks[doc.id] = (doc.data.items as Record<string, WatchlistItem>) || {};
-      }
-      return chunks;
-    }
-  } catch {}
-
-  try {
-    const snap = await fsFetch<FirestoreDocument>(session, `${docsRoot(session)}/watchlists/${session.uid}`);
-    chunks[DEFAULT_CHUNK_ID] = (fromFields(snap.fields).items as Record<string, WatchlistItem>) || {};
-    return chunks;
-  } catch (error) {
-    if (error instanceof ApiError && error.status === 404) {
-      const legacyItems = await migrateLegacyWatchlist(session);
-      chunks[DEFAULT_CHUNK_ID] = legacyItems;
-      return chunks;
-    }
-    throw error;
+  const subDocs = await listSubcollectionDocs(session, "watchlists");
+  for (const doc of subDocs) {
+    chunks[doc.id] = (doc.data.items as Record<string, WatchlistItem>) || {};
   }
+  return chunks;
 }
 
 export async function getRawWatchlist(session: Session): Promise<Record<string, WatchlistItem>> {
