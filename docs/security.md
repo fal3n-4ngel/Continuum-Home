@@ -59,7 +59,12 @@ All sensitive financial and personal attributes are encrypted before persistence
 * **Key Derivation**: Configured via the `ENCRYPTION_KEY` environment variable.
 * **Initialization Vectors**: A fresh, cryptographically secure 12-byte random initialization vector (IV) is generated for each encryption operation.
 * **Integrity Authentication**: GCM calculates an authentication tag that verifies ciphertext integrity and prevents tampering or bit-flipping attacks.
-* **Format**: Ciphertext is stored as `iv:authTag:ciphertext` in Base64 encoding.
+* **Format**: Ciphertext is stored as `v1:iv:authTag:ciphertext` in hexadecimal encoding.
+
+### 3.3. Zero-Knowledge Caching Architecture
+* **No Plaintext in Caching Layers**: To eliminate memory and cache exposure risks, Upstash Redis and server-side in-memory process stores cache strictly raw encrypted Firestore documents.
+* **Ephemeral In-Memory Decryption**: Decryption occurs exclusively in-memory during active HTTP request processing right before the response is serialized and returned over HTTPS.
+* **Breach Resilience**: In the event of a Redis dump or external cache inspection, an adversary acquires only authenticated AES-256-GCM ciphertexts with zero plaintext financial figures, portfolio assets, or personal notes exposed.
 
 ---
 

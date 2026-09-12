@@ -59,10 +59,26 @@ The API is the source of truth; AI clients interact through standard authenticat
 
 - **Frontend & Server**: Next.js 16 (App Router, Turbopack) + React 19 + TypeScript + Tailwind CSS
 - **Database & Auth**: Firebase (Google Sign-In + Firestore REST API)
-- **Security**: AES-256-GCM encryption on sensitive fields; zero admin credentials in backend (all writes execute using the caller's Firebase ID token subject to Firestore security rules); SSRF-guarded upstream integrations.
+- **Security & Cryptography**: AES-256-GCM encryption at rest; Zero-Knowledge cache (Redis and process memory store only encrypted ciphertext); zero admin credentials in backend (all writes execute using the caller's Firebase ID token subject to Firestore security rules); SSRF-guarded upstream integrations.
 - **Telemetry**: Audit events stream out to a dedicated ingestion service storing structured logs in BigQuery.
 
 ![Continuum Architecture Diagram](architecture-diagram.svg)
+
+### 🔒 Privacy, Security & Data Flow Matrix
+
+Continuum uses a **Zero-Knowledge at Rest & in Cache** model. Instead of relying on blanket marketing claims, our exact data flow boundaries are documented below:
+
+| Data Category | Persisted At | In-Memory / Redis Cache | Encryption Standard | Third Parties Contacted |
+| :--- | :--- | :--- | :--- | :--- |
+| **Expenses** (amounts, titles, categories, notes) | Firestore `/users/{uid}/expenses` | Encrypted ciphertext only | AES-256-GCM (v1, random 12-byte IV) | None |
+| **Portfolios** (assets, quantities, prices, history) | Firestore `/users/{uid}/portfolio` | Encrypted ciphertext only | AES-256-GCM (v1, random 12-byte IV) | None |
+| **Media Watchlists & Books** | Firestore `/users/{uid}/watchlists` | Plaintext (public catalog data) | None (public media IDs) | AniList, Trakt, OMDb, OpenLibrary |
+| **Market Quotes & NAV** | Upstash Redis | Plaintext (public tickers) | None (public financial tickers) | Yahoo Finance, AMFI India |
+| **Auth & Session Tokens** | Firebase Auth / Redis | Cryptographic session tokens | HTTPS / Google Identity Token | Google Identity Platform |
+| **Audit Logs & Telemetry** | Monolith Ingestion Service | Ephemeral queue | HTTPS (sanitized event metadata) | BigQuery (Internal telemetry) |
+
+> [!IMPORTANT]
+> **Zero-Knowledge Cache Architecture**: Redis and local process memory store only `v1:iv:tag:ciphertext` blobs for financial records. Decryption occurs strictly in-memory per request right before returning responses to authorized callers over HTTPS. Even if the Redis cache is dumped or inspected, no financial figures, asset holdings, or notes are exposed in plaintext.
 
 ---
 
@@ -106,7 +122,7 @@ firebase deploy --only firestore:rules,firestore:indexes
 ```
 
 > [!NOTE]
-> For complete database architecture, subcollection directory maps, and migration utilities, refer to [`FIREBASE_SCHEMA.md`](FIREBASE_SCHEMA.md). For end-to-end system topology, multi-tenant security specifications, and threat models, see [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`docs/`](docs/).
+> For complete database architecture, subcollection directory maps, and migration utilities, refer to [`firebase-schema.md`](docs/firebase-schema.md). For end-to-end system topology, multi-tenant security specifications, and threat models, see [`docs/`](docs/).
 
 ### 3. Run
 

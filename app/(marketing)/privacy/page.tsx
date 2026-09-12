@@ -12,7 +12,7 @@ export default function PrivacyPolicyPage() {
   const containerClass = "max-w-[700px] mx-auto flex flex-col gap-6 text-text-primary leading-relaxed";
 
   return (
-    <div className="min-h-screen bg-[#f4f3ec] p-10 max-md:p-5">
+    <div className="min-h-screen bg-bg-primary text-text-primary p-10 max-md:p-5 transition-colors duration-200">
       <div className={containerClass}>
 
         <div className="flex items-center justify-between border-b border-border-subtle pb-5">
@@ -20,12 +20,12 @@ export default function PrivacyPolicyPage() {
             <Shield className="h-6 w-6 text-text-primary" />
             <h1 className="font-serif text-2xl font-bold">Privacy Policy</h1>
           </div>
-          <Link href="/" className="text-xs text-text-secondary hover:text-text-primary flex items-center gap-1 no-underline">
+          <Link href="/" className="text-xs text-text-secondary hover:text-text-primary flex items-center gap-1 no-underline transition-colors">
             <ArrowLeft className="h-3 w-3" /> Back
           </Link>
         </div>
 
-        <div className="bg-white rounded-card border border-border-subtle p-8 max-md:p-6 shadow-subtle flex flex-col gap-6 text-sm text-text-secondary">
+        <div className="bg-bg-card rounded-card border border-border-subtle p-8 max-md:p-6 shadow-subtle flex flex-col gap-6 text-sm text-text-secondary transition-colors duration-200">
 
           <section className="flex flex-col gap-2">
             <h2 className="font-serif text-base font-bold text-text-primary">1. Introduction</h2>
@@ -35,16 +35,22 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="flex flex-col gap-2">
-            <h2 className="font-serif text-base font-bold text-text-primary">2. Data Collection & Ownership</h2>
+            <h2 className="font-serif text-base font-bold text-text-primary">2. Data Collection &amp; Ownership</h2>
             <p>
               All your transaction ledger, subscriptions, libraries, notes, and investment data are stored directly inside your personal **Firebase Firestore database**.
             </p>
             <ul className="list-disc pl-5 flex flex-col gap-1.5 mt-1">
               <li>
-                **No Third-Party Access:** We do not own, sell, or inspect your data. It remains strictly under your control.
+                **AES-256-GCM Encryption at Rest:** Sensitive financial fields (expense amounts, titles, categories, notes, and investment portfolio assets) are encrypted with authenticated AES-256-GCM prior to database persistence.
               </li>
               <li>
-                **User-Scoped Storage:** Every database read and write is authenticated and strictly limited to your individual Firebase user account.
+                **Zero-Knowledge Caching:** Upstash Redis and server process caches store strictly encrypted ciphertext blobs (`v1:iv:tag:ciphertext`). Decryption occurs ephemerally in-memory only during authorized HTTPS request fulfillment.
+              </li>
+              <li>
+                **Zero Admin Master Keys:** Database reads and writes execute via the Firestore REST API authenticated exclusively with the caller&apos;s personal Firebase ID token. No elevated admin service account key exists on the server.
+              </li>
+              <li>
+                **User-Scoped Storage:** Every database read and write is strictly isolated under `/users/&#123;userId&#125;/**` and enforced by path-scoped Firestore security rules.
               </li>
             </ul>
           </section>
@@ -90,9 +96,12 @@ export default function PrivacyPolicyPage() {
           </section>
 
           <section className="flex flex-col gap-2">
-            <h2 className="font-serif text-base font-bold text-text-primary">6. Security Measures</h2>
+            <h2 className="font-serif text-base font-bold text-text-primary">6. Security &amp; Cryptographic Measures</h2>
             <p>
-              Communication between your browser, the AI Assistant, and our Next.js backend endpoints is fully encrypted using Transport Layer Security (HTTPS/SSL). All Firebase credentials and access secrets are securely handled on the server boundary.
+              Communication between your browser, external AI Assistants (ChatGPT Actions), and our Next.js backend endpoints is strictly encrypted in transit using TLS/HTTPS.
+            </p>
+            <p>
+              At rest, all financial amounts, titles, and investment assets are protected with versioned AES-256-GCM ciphertexts with dynamic 12-byte initialization vectors and integrity authentication tags. The distributed caching layer retains only ciphertext blobs, preventing plaintext leaks across database backups or caching tiers.
             </p>
           </section>
 
