@@ -153,3 +153,35 @@ describe("Security Invariant: Cryptographic Key Strength & Weak Passphrase Rejec
     }
   });
 });
+
+describe("Security Invariant: Firestore Security Rules & Schema v2 Pure Path-Isolation", () => {
+  const rootDir = process.cwd();
+  const rulesPath = path.join(rootDir, "firestore.rules");
+  const rulesContent = fs.readFileSync(rulesPath, "utf-8");
+
+  it("prohibits all legacy root-level collections in security rules", () => {
+    expect(rulesContent).not.toMatch(/match\s+\/watchlists\/\{userId\}/);
+    expect(rulesContent).not.toMatch(/match\s+\/settings\/\{userId\}/);
+    expect(rulesContent).not.toMatch(/match\s+\/recommendations\/\{userId\}/);
+    expect(rulesContent).not.toMatch(/match\s+\/portfolios\/\{userId\}/);
+    expect(rulesContent).not.toMatch(/^\s{4}match\s+\/(?!users\/\{userId\}|\{document=\*\*\}).+/m);
+  });
+
+  it("prohibits recursive blanket subcollection wildcards", () => {
+    expect(rulesContent).not.toMatch(/\{allSubcollections=\*\*\}/);
+    expect(rulesContent).not.toMatch(/\{subDoc=\*\*\}/);
+  });
+
+  it("enforces cryptographic envelope validation on financial fields", () => {
+    expect(rulesContent).toMatch(/isEncrypted\(request\.resource\.data\.title\)/);
+    expect(rulesContent).toMatch(/isEncrypted\(request\.resource\.data\.amount\)/);
+  });
+
+  it("restricts user root document modifications to whitelisted profile keys", () => {
+    expect(rulesContent).toMatch(/request\.resource\.data\.keys\(\)\.hasOnly/);
+  });
+
+  it("enforces fail-closed denial for all unspecified document paths", () => {
+    expect(rulesContent).toMatch(/match\s+\/\{document=\*\*\}\s*\{\s*allow\s+read,\s*write:\s*if\s+false;\s*\}/);
+  });
+});

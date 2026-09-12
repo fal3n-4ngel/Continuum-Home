@@ -2,7 +2,6 @@ import { Session } from "@/lib/auth";
 import { ApiError, cacheGet, cacheSet, cacheInvalidate, encrypt, decrypt } from "@/lib/utils";
 import {
   assertDocId,
-  docsRoot,
   fsFetch,
   FirestoreDocument,
   toFields,
@@ -131,16 +130,7 @@ export async function getPortfolio(session: Session): Promise<PortfolioRecord | 
 
   if (data === undefined) {
     try {
-      let res: FirestoreDocument;
-      try {
-        res = await fsFetch<FirestoreDocument>(session, userPath(session, "portfolio", "summary"));
-      } catch (summaryErr) {
-        if (summaryErr instanceof ApiError && summaryErr.status === 404) {
-          res = await fsFetch<FirestoreDocument>(session, `${docsRoot(session)}/portfolios/${session.uid}`);
-        } else {
-          throw summaryErr;
-        }
-      }
+      const res = await fsFetch<FirestoreDocument>(session, userPath(session, "portfolio", "summary"));
 
       const parsed = fromFields(res.fields || {});
       data = {
@@ -174,19 +164,10 @@ export async function updatePortfolio(session: Session, assets: InvestmentAsset[
   params.append("updateMask.fieldPaths", "assets");
   params.append("updateMask.fieldPaths", "updatedAt");
 
-  try {
-    await fsFetch(session, `${userPath(session, "portfolio", "summary")}?${params}`, {
-      method: "PATCH",
-      body: JSON.stringify({ fields: toFields(docData) }),
-    });
-  } catch {}
-
-  try {
-    await fsFetch(session, `${docsRoot(session)}/portfolios/${session.uid}?${params}`, {
-      method: "PATCH",
-      body: JSON.stringify({ fields: toFields(docData) }),
-    });
-  } catch {}
+  await fsFetch(session, `${userPath(session, "portfolio", "summary")}?${params}`, {
+    method: "PATCH",
+    body: JSON.stringify({ fields: toFields(docData) }),
+  });
 
   await cacheInvalidate(portfolioCacheKey(session));
 }

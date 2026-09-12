@@ -97,8 +97,9 @@ describe("Watchlist Auto-Chunking Engine", () => {
     expect(mockFsFetch).toHaveBeenCalledTimes(1);
     const commitPayload = JSON.parse(mockFsFetch.mock.calls[0][2].body);
     const updateNames = commitPayload.writes.map((w: { update: { name: string } }) => w.update.name);
-    expect(updateNames).toContain("projects/test-project/databases/(default)/documents/users/test-user-123/watchlists/default");
-    expect(updateNames).toContain("projects/test-project/databases/(default)/documents/watchlists/test-user-123");
+    expect(updateNames).toEqual([
+      "projects/test-project/databases/(default)/documents/users/test-user-123/watchlists/default",
+    ]);
   });
 
   it("spills new items to chunk_1 when default chunk hits 1500 items", async () => {
