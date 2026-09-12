@@ -7,6 +7,7 @@ import {
   toFields,
   fromFields,
   userPath,
+  docsRoot,
 } from "../client";
 
 export type FdCompounding = "monthly" | "quarterly" | "half_yearly" | "yearly";
