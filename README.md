@@ -122,7 +122,7 @@ firebase deploy --only firestore:rules,firestore:indexes
 ```
 
 > [!NOTE]
-> For complete database architecture, subcollection directory maps, and migration utilities, refer to [`FIREBASE_SCHEMA.md`](FIREBASE_SCHEMA.md). For end-to-end system topology, multi-tenant security specifications, and threat models, see [`ARCHITECTURE.md`](ARCHITECTURE.md) and [`docs/`](docs/).
+> For complete database architecture, subcollection directory maps, and migration utilities, refer to [`firebase-schema.md`](docs/firebase-schema.md). For end-to-end system topology, multi-tenant security specifications, and threat models, see [`docs/`](docs/).
 
 ### 3. Run
 

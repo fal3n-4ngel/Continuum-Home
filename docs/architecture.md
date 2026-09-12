@@ -242,4 +242,4 @@ Self-hosters deploy Continuum using standard cloud building blocks:
 4. **Configuration**:
    * Deploy security rules: `firebase deploy --only firestore:rules`
    * Deploy index overrides: `firebase deploy --only firestore:indexes`
-   * Refer to [`FIREBASE_SCHEMA.md`](FIREBASE_SCHEMA.md) for full collection specifications and migration utilities.
+   * Refer to [`FIREBASE_SCHEMA.md`](firebase-schema.md) for full collection specifications and migration utilities.
