@@ -365,31 +365,31 @@ export default function LandingPage({
         <nav className="flex items-center gap-7 max-[900px]:hidden">
           <a
             href="#how-it-works"
-            className="text-[13px] font-medium text-[#6e6c64] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
+            className="text-[13px] font-medium text-[#525048] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
           >
             Architecture
           </a>
           <a
             href="#ai"
-            className="text-[13px] font-medium text-[#6e6c64] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
+            className="text-[13px] font-medium text-[#525048] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
           >
             AI Agent
           </a>
           <a
             href="#dashboard"
-            className="text-[13px] font-medium text-[#6e6c64] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
+            className="text-[13px] font-medium text-[#525048] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
           >
             Dashboard
           </a>
           <a
             href="#setup"
-            className="text-[13px] font-medium text-[#6e6c64] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
+            className="text-[13px] font-medium text-[#525048] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
           >
             Self-Host
           </a>
           <a
             href="#pricing"
-            className="text-[13px] font-medium text-[#6e6c64] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
+            className="text-[13px] font-medium text-[#525048] dark:text-[#a8a69d] no-underline transition-colors duration-200 hover:text-[#1c1b18] dark:hover:text-white"
           >
             Pricing
           </a>
@@ -397,7 +397,7 @@ export default function LandingPage({
             href="https://github.com/fal3n-4ngel/Continuum-Home"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 rounded-full border border-[#d6d3c9] dark:border-white/15 bg-[#f4f1ea] dark:bg-white/10 px-3.5 py-1 text-xs font-semibold text-[#1c1b18] dark:text-white no-underline transition-all duration-200 hover:border-[#1c1b18] dark:hover:border-white/40 hover:bg-white dark:hover:bg-white/20"
+            className="flex items-center gap-1.5 rounded-full border border-[#d6d3c9] dark:border-white/15 bg-white dark:bg-white/10 px-3.5 py-1 text-xs font-semibold text-[#1c1b18] dark:text-white no-underline shadow-2xs transition-all duration-200 hover:border-[#1c1b18] dark:hover:border-white/40 hover:bg-[#faf8f4] dark:hover:bg-white/20"
           >
             <span>⭐️ Star on GitHub</span>
           </a>
