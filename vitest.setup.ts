@@ -44,6 +44,30 @@ vi.mock("@/lib/firebase/firebase-admin", () => ({
     details: [],
   }),
   adminPruneMigratedLegacyRecords: vi.fn().mockResolvedValue({ prunedCount: 10, collections: ["expenses", "subscriptions"] }),
+  adminAddProUserByEmail: vi.fn().mockImplementation(async (email: string) => ({
+    success: true,
+    isNewUser: email.includes("unregistered"),
+    email,
+    uid: email.includes("unregistered") ? null : "mock-uid-123",
+    message: "Pro access granted",
+  })),
+  adminRevokeProUserByEmail: vi.fn().mockImplementation(async (email: string) => ({
+    success: true,
+    email,
+    message: "Pro access revoked",
+  })),
+  adminListProUsers: vi.fn().mockResolvedValue([
+    {
+      id: "grant1",
+      email: "user@example.com",
+      uid: "user456",
+      grantedBy: "adiad.dev@gmail.com",
+      grantedAt: 1700000000000,
+      status: "active",
+      source: "manual_admin",
+    },
+  ]),
+  adminCheckAndConsumeProGrant: vi.fn().mockResolvedValue(false),
 }));
 
 const mockPrice = { priceInr: 2600, priceUsd: 31.14, previousCloseInr: 2580, previousCloseUsd: 30.9 };

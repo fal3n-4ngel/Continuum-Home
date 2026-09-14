@@ -138,7 +138,7 @@ export async function POST(req: NextRequest) {
       }
 
       try {
-        const settingsDoc = await getAdminDb().collection("settings").doc(user.uid).get();
+        const settingsDoc = await getAdminDb().collection("users").doc(user.uid).collection("settings").doc("preferences").get();
         if (settingsDoc.exists) {
           const settingsData = settingsDoc.data() || {};
           if (settingsData.monthlySalary !== undefined || settingsData.salaryDay !== undefined) {

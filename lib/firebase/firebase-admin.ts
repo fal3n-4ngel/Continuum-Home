@@ -1,7 +1,7 @@
 import { getApps, initializeApp, cert, type App } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, FieldValue, type Firestore } from "firebase-admin/firestore";
-import { encrypt, decrypt, ApiError, env } from "@/lib/utils";
+import { encrypt, decrypt, ApiError, env, cacheInvalidate } from "@/lib/utils";
 import {
   encryptAsset,
   decryptAsset,
@@ -80,7 +80,7 @@ export async function listAllUsers(): Promise<AdminUser[]> {
   const activeUsers: AdminUser[] = [];
   for (const u of rawUsers) {
     try {
-      const doc = await db.collection("settings").doc(u.uid).get();
+      const doc = await db.collection("users").doc(u.uid).collection("settings").doc("preferences").get();
       if (doc.exists && doc.data()?.deleted === true) {
         continue;
       }
@@ -209,10 +209,7 @@ export interface EmailSubscriptions {
 
 export async function adminGetEmailSubscriptions(uid: string): Promise<EmailSubscriptions> {
   const db = getAdminDb();
-  let doc = await db.collection("users").doc(uid).collection("settings").doc("preferences").get();
-  if (!doc.exists) {
-    doc = await db.collection("settings").doc(uid).get();
-  }
+  const doc = await db.collection("users").doc(uid).collection("settings").doc("preferences").get();
   if (doc.exists && doc.data()?.deleted === true) {
     return { expenses: false, portfolio: false, subscriptions: false };
   }
@@ -226,7 +223,7 @@ export async function adminGetEmailSubscriptions(uid: string): Promise<EmailSubs
 
 export async function adminSetEmailSubscriptions(uid: string, updates: Partial<EmailSubscriptions>): Promise<void> {
   const db = getAdminDb();
-  await db.collection("settings").doc(uid).set({ emailSubscriptions: updates, updatedAt: Date.now() }, { merge: true });
+  await db.collection("users").doc(uid).collection("settings").doc("preferences").set({ emailSubscriptions: updates, updatedAt: Date.now() }, { merge: true });
 }
 
 export async function adminSaveDailyRecommendation(
@@ -273,7 +270,10 @@ export async function adminPurgeUserData(uid: string): Promise<void> {
   if (!recsEntries.empty) await recsBatch.commit();
   await db.collection("recommendations").doc(uid).delete().catch(() => {});
 
-  await db.collection("settings").doc(uid).delete().catch(() => {});
+  const userSettingsSnap = await db.collection("users").doc(uid).collection("settings").get();
+  const userSettingsBatch = db.batch();
+  userSettingsSnap.docs.forEach((doc) => userSettingsBatch.delete(doc.ref));
+  if (!userSettingsSnap.empty) await userSettingsBatch.commit();
 
   await db.collection("notes").doc(uid).delete().catch(() => {});
   await db.collection("notepad").doc(uid).delete().catch(() => {});
@@ -354,7 +354,7 @@ export async function adminCleanupLegacyCollections(): Promise<{ deletedCount: n
   const db = getAdminDb();
   if (!db) return { deletedCount: 0, collections: [] };
 
-  const targets = ["notes", "notepad", "watchlist", "health_analytics"];
+  const targets = ["notes", "notepad", "watchlist", "watchlists", "health_analytics", "recommendations", "portfolios", "expenses", "subscriptions", "settings"];
   let totalDeleted = 0;
   const processed: string[] = [];
 
@@ -421,9 +421,6 @@ export async function adminMigrateFirestoreArchitecture(dryRun: boolean = true):
     if (uid) userIds.add(uid);
   });
 
-  const settingsSnap = await db.collection("settings").get();
-  settingsSnap.docs.forEach((d) => userIds.add(d.id));
-
   const portfoliosSnap = await db.collection("portfolios").get();
   portfoliosSnap.docs.forEach((d) => userIds.add(d.id));
 
@@ -481,14 +478,6 @@ export async function adminMigrateFirestoreArchitecture(dryRun: boolean = true):
       portfoliosMigrated += 1;
     }
 
-    const setDoc = settingsSnap.docs.find((d) => d.id === uid);
-    if (setDoc) {
-      if (!dryRun) {
-        await db.collection("users").doc(uid).collection("settings").doc("preferences").set(setDoc.data(), { merge: true });
-      }
-      settingsMigrated += 1;
-    }
-
     const watchDoc = watchlistsSnap.docs.find((d) => d.id === uid);
     if (watchDoc) {
       if (!dryRun) {
@@ -497,7 +486,7 @@ export async function adminMigrateFirestoreArchitecture(dryRun: boolean = true):
       watchlistsMigrated += 1;
     }
 
-    details.push(`User ${uid}: expenses=${userExpenses.length}, subs=${userSubs.length}, portfolio=${portDoc ? 1 : 0}, settings=${setDoc ? 1 : 0}, watchlist=${watchDoc ? 1 : 0}`);
+    details.push(`User ${uid}: expenses=${userExpenses.length}, subs=${userSubs.length}, portfolio=${portDoc ? 1 : 0}, settings=0, watchlist=${watchDoc ? 1 : 0}`);
   }
 
   return {
@@ -539,3 +528,287 @@ export async function adminPruneMigratedLegacyRecords(): Promise<{ prunedCount: 
 
   return { prunedCount, collections: processed };
 }
+
+export interface ProGrantRecord {
+  id: string;
+  email: string;
+  uid: string | null;
+  grantedBy: string | null;
+  grantedAt: number;
+  status: "active" | "pending_registration" | "revoked";
+  source?: "manual_admin" | "claim" | "system";
+  revokedAt?: number;
+  revokedBy?: string | null;
+}
+
+export async function adminAddProUserByEmail(
+  rawEmail: string,
+  grantedBy?: string | null
+): Promise<{ success: boolean; isNewUser: boolean; email: string; uid: string | null; message: string }> {
+  const email = (rawEmail || "").trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new ApiError(400, "Invalid email address format.");
+  }
+
+  const auth = getAdminAuth();
+  const db = getAdminDb();
+  let uid: string | null = null;
+  let isNewUser = false;
+
+  try {
+    const userRecord = await auth.getUserByEmail(email);
+    uid = userRecord.uid;
+  } catch (err: any) {
+    if (err?.code === "auth/user-not-found") {
+      isNewUser = true;
+    } else {
+      throw err;
+    }
+  }
+
+  const now = Date.now();
+
+  if (uid) {
+    // 1. Update modern subcollection: users/{uid}/settings/preferences
+    const userPrefsRef = db.collection("users").doc(uid).collection("settings").doc("preferences");
+    const userPrefsSnap = await userPrefsRef.get();
+    if (userPrefsSnap.exists) {
+      await userPrefsRef.update({ isPro: true, updatedAt: now });
+    } else {
+      await userPrefsRef.set({
+        isPro: true,
+        timeFilter: "all",
+        salaryDay: 1,
+        monthlySalary: 0,
+        additionalIncome: 0,
+        currency: "₹",
+        reconciliations: {},
+        salaryLog: {},
+        aiOptOut: false,
+        emailSubscriptions: { expenses: true, portfolio: false, subscriptions: true },
+        updatedAt: now,
+      });
+    }
+    await db.collection("users").doc(uid).set({ updatedAt: now }, { merge: true });
+
+    // 3. Invalidate Redis settings cache
+    try {
+      const rawConfig = env.FIREBASE_CONFIG;
+      if (rawConfig) {
+        const { projectId } = JSON.parse(rawConfig) as { projectId?: string };
+        if (projectId) await cacheInvalidate(`settings:${projectId}:${uid}`);
+      }
+    } catch {}
+
+    // 4. Update any pending pro claims for this user or email to approved
+    try {
+      const claimsSnap = await db.collection("pro_claims").where("uid", "==", uid).get();
+      const emailClaimsSnap = await db.collection("pro_claims").where("email", "==", email).get();
+      const allClaimDocs = [...claimsSnap.docs, ...emailClaimsSnap.docs];
+      const seenClaimIds = new Set<string>();
+      for (const doc of allClaimDocs) {
+        if (!seenClaimIds.has(doc.id)) {
+          seenClaimIds.add(doc.id);
+          if (doc.data().status === "pending") {
+            await doc.ref.update({ status: "approved", reviewedAt: now });
+          }
+        }
+      }
+    } catch {}
+
+    // 5. Record grant in pro_grants
+    await db.collection("pro_grants").doc(email).set(
+      {
+        email,
+        uid,
+        grantedBy: grantedBy || null,
+        grantedAt: now,
+        status: "active",
+        source: "manual_admin",
+      },
+      { merge: true }
+    );
+
+    return {
+      success: true,
+      isNewUser: false,
+      email,
+      uid,
+      message: `Pro access granted to ${email} (UID: ${uid}). Account upgraded immediately.`,
+    };
+  } else {
+    // Unregistered user - record pre-grant
+    await db.collection("pro_grants").doc(email).set(
+      {
+        email,
+        uid: null,
+        grantedBy: grantedBy || null,
+        grantedAt: now,
+        status: "pending_registration",
+        source: "manual_admin",
+      },
+      { merge: true }
+    );
+
+    return {
+      success: true,
+      isNewUser: true,
+      email,
+      uid: null,
+      message: `Pro access pre-granted to ${email}. Pro privileges will automatically activate when this user registers.`,
+    };
+  }
+}
+
+export async function adminRevokeProUserByEmail(
+  rawEmail: string,
+  revokedBy?: string | null
+): Promise<{ success: boolean; email: string; message: string }> {
+  const email = (rawEmail || "").trim().toLowerCase();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    throw new ApiError(400, "Invalid email address format.");
+  }
+
+  const auth = getAdminAuth();
+  const db = getAdminDb();
+  let uid: string | null = null;
+
+  try {
+    const userRecord = await auth.getUserByEmail(email);
+    uid = userRecord.uid;
+  } catch (err: any) {
+    if (err?.code !== "auth/user-not-found") {
+      throw err;
+    }
+  }
+
+  const now = Date.now();
+
+  if (uid) {
+    await db.collection("users").doc(uid).collection("settings").doc("preferences").set(
+      { isPro: false, updatedAt: now },
+      { merge: true }
+    );
+    await db.collection("users").doc(uid).set({ updatedAt: now }, { merge: true });
+
+    try {
+      const rawConfig = env.FIREBASE_CONFIG;
+      if (rawConfig) {
+        const { projectId } = JSON.parse(rawConfig) as { projectId?: string };
+        if (projectId) await cacheInvalidate(`settings:${projectId}:${uid}`);
+      }
+    } catch {}
+  }
+
+  await db.collection("pro_grants").doc(email).set(
+    {
+      email,
+      status: "revoked",
+      revokedAt: now,
+      revokedBy: revokedBy || null,
+    },
+    { merge: true }
+  );
+
+  return {
+    success: true,
+    email,
+    message: `Pro access revoked for ${email}.`,
+  };
+}
+
+export async function adminListProUsers(): Promise<ProGrantRecord[]> {
+  const db = getAdminDb();
+  if (!db) return [];
+
+  const auth = getAdminAuth();
+  const grantsSnap = await db.collection("pro_grants").orderBy("grantedAt", "desc").get();
+  const proUsersMap = new Map<string, ProGrantRecord>();
+
+  for (const doc of grantsSnap.docs) {
+    const data = doc.data();
+    let status = data.status || "active";
+    let uid = data.uid || null;
+
+    if (status === "pending_registration" && !uid && auth) {
+      try {
+        const u = await auth.getUserByEmail(data.email || doc.id);
+        if (u?.uid) {
+          uid = u.uid;
+          status = "active";
+          const now = Date.now();
+          doc.ref.set({ uid, status: "active", activatedAt: now }, { merge: true }).catch(() => {});
+          db.collection("users").doc(uid).collection("settings").doc("preferences").set(
+            { isPro: true, updatedAt: now },
+            { merge: true }
+          ).catch(() => {});
+          db.collection("users").doc(uid).set({ updatedAt: now }, { merge: true }).catch(() => {});
+        }
+      } catch {}
+    }
+
+    proUsersMap.set(doc.id, {
+      id: doc.id,
+      email: data.email || doc.id,
+      uid,
+      grantedBy: data.grantedBy || null,
+      grantedAt: typeof data.grantedAt === "number" ? data.grantedAt : Date.now(),
+      status,
+      source: data.source || "manual_admin",
+      revokedAt: data.revokedAt,
+      revokedBy: data.revokedBy,
+    });
+  }
+
+  // Also include approved claims if not already in pro_grants
+  try {
+    const claimsSnap = await db.collection("pro_claims").where("status", "==", "approved").get();
+    for (const doc of claimsSnap.docs) {
+      const data = doc.data();
+      const email = (data.email || "").toLowerCase();
+      if (email && !proUsersMap.has(email)) {
+        proUsersMap.set(email, {
+          id: doc.id,
+          email,
+          uid: data.uid || null,
+          grantedBy: "Claim Verification",
+          grantedAt: typeof data.reviewedAt === "number" ? data.reviewedAt : (data.submittedAt || Date.now()),
+          status: "active",
+          source: "claim",
+        });
+      }
+    }
+  } catch {}
+
+  return Array.from(proUsersMap.values()).sort((a, b) => b.grantedAt - a.grantedAt);
+}
+
+export async function adminCheckAndConsumeProGrant(rawEmail: string, uid: string): Promise<boolean> {
+  const email = (rawEmail || "").trim().toLowerCase();
+  if (!email) return false;
+
+  const db = getAdminDb();
+  if (!db) return false;
+
+  try {
+    const grantDoc = await db.collection("pro_grants").doc(email).get();
+    if (grantDoc.exists) {
+      const data = grantDoc.data();
+      if (data?.status === "pending_registration" || data?.status === "active") {
+        await grantDoc.ref.set(
+          {
+            uid,
+            status: "active",
+            activatedAt: Date.now(),
+          },
+          { merge: true }
+        );
+        return true;
+      }
+    }
+  } catch (err) {
+    console.error("[ProGrant] Failed to check/consume pro grant:", err);
+  }
+  return false;
+}
+

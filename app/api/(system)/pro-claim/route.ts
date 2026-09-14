@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const settingsDoc = await db.collection("settings").doc(session.uid).get();
+    const settingsDoc = await db.collection("users").doc(session.uid).collection("settings").doc("preferences").get();
     if (settingsDoc.exists && settingsDoc.data()?.isPro === true) {
       return NextResponse.json({ error: "Your account is already a Pro account." }, { status: 409 });
     }

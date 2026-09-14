@@ -28,6 +28,7 @@ import {
   Bot
 } from "lucide-react";
 import { ProClaimsQueue } from "./ProClaimsQueue";
+import { ProUsersManager } from "./ProUsersManager";
 import { CronTriggerSection } from "./CronTriggerSection";
 import { ReleaseNotesModal } from "@/components/modals";
 
@@ -635,7 +636,7 @@ Thank you for being part of our journey!`);
                   : "text-text-muted hover:text-text-primary"
               }`}
             >
-              {tab.replace("-", " ")}
+              {tab === "pro-requests" ? "Pro Access" : tab.replace("-", " ")}
               {tab === "pro-requests" && proClaims.filter((c) => c.status === "pending").length > 0 && (
                 <span className="ml-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold bg-amber-500/20 text-amber-600 border border-amber-500/30 rounded-none">
                   {proClaims.filter((c) => c.status === "pending").length}
@@ -1236,7 +1237,8 @@ Thank you for being part of our journey!`);
       )}
 
       {activeTab === "pro-requests" && (
-        <div className="animate-[fadeIn_0.3s_ease-out_both]">
+        <div className="animate-[fadeIn_0.3s_ease-out_both] flex flex-col gap-6">
+          <ProUsersManager idToken={user.idToken} />
           <ProClaimsQueue
             proClaims={proClaims}
             proClaimsLoading={proClaimsLoading}

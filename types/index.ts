@@ -30,3 +30,14 @@ export interface ReleaseNote {
   active: boolean;
   publishedBy?: string;
 }
+
+export interface ProGrant {
+  id: string;
+  email: string;
+  uid: string | null;
+  grantedBy: string | null;
+  grantedAt: number;
+  status: "active" | "pending_registration" | "revoked";
+  source?: "manual_admin" | "claim" | "system";
+}
+

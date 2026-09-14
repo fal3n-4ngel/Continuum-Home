@@ -12,6 +12,13 @@ import {
 export default function MarketingPage() {
   const router = useRouter();
   const [authReady, setAuthReady] = useState(false);
+  const [authApi, setAuthApi] = useState<{
+    auth: any;
+    GoogleAuthProvider: any;
+    signInWithPopup: any;
+    signInWithRedirect: any;
+  } | null>(null);
+
   const [isRedirecting, setIsRedirecting] = useState(() => {
     if (typeof window !== "undefined") {
       const search = window.location.search;
@@ -58,8 +65,10 @@ export default function MarketingPage() {
         if (!res.ok) return;
         const config = await res.json();
         const app = getApps().length ? getApps()[0] : initializeApp(config);
-        const { getAuth, onAuthStateChanged } = await import("firebase/auth");
+        const { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, onAuthStateChanged } =
+          await import("firebase/auth");
         const auth = getAuth(app);
+        setAuthApi({ auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect });
         setAuthReady(true);
         unsubscribe = onAuthStateChanged(auth, (user) => {
           if (user) {
@@ -80,6 +89,31 @@ export default function MarketingPage() {
     };
   }, [router]);
 
+  const handleLogin = async () => {
+    if (!authApi) {
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const provider = new authApi.GoogleAuthProvider();
+      provider.setCustomParameters({ prompt: "select_account" });
+      await authApi.signInWithPopup(authApi.auth, provider);
+    } catch (err: any) {
+      console.warn("[Login] Popup failed or closed:", err?.code, err?.message);
+      if (err?.code === "auth/popup-blocked" || err?.code === "auth/cancelled-popup-request") {
+        try {
+          const provider = new authApi.GoogleAuthProvider();
+          await authApi.signInWithRedirect(authApi.auth, provider);
+        } catch {
+          router.push("/login");
+        }
+      } else if (err?.code !== "auth/popup-closed-by-user") {
+        router.push("/login");
+      }
+    }
+  };
+
   if (isRedirecting) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#F5F1EB]">
@@ -95,7 +129,7 @@ export default function MarketingPage() {
 
   return (
     <LandingPage
-      onLogin={() => router.push("/login")}
+      onLogin={handleLogin}
       firebaseAuthReady={authReady}
     />
   );

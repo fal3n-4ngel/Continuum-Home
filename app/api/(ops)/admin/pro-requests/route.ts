@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/utils";
-import { getAdminDb } from "@/lib/firebase/firebase-admin";
+import { getAdminDb, adminAddProUserByEmail } from "@/lib/firebase/firebase-admin";
 import { cacheInvalidate } from "@/lib/utils";
 import { env } from "@/lib/utils";
 import { waitUntil } from "@vercel/functions";
@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    await assertAdmin(req);
+    const session = await assertAdmin(req);
 
     let body: unknown;
     try {
@@ -51,7 +51,19 @@ export async function POST(req: NextRequest) {
     }
 
     if (!body || typeof body !== "object") throw new ApiError(400, "Invalid body");
-    const { claimId, action } = body as Record<string, unknown>;
+    const { claimId, action, email } = body as Record<string, unknown>;
+
+    if (action === "grant_by_email") {
+      if (!email || typeof email !== "string") throw new ApiError(400, "email is required for grant_by_email");
+      const res = await adminAddProUserByEmail(email, session.user.email);
+      waitUntil(sendDiscordEmbed(
+        "Admin Audit Log",
+        `Admin **GRANTED PRO ACCESS** to \`${res.email}\`${res.isNewUser ? " (Pre-granted)" : ` (UID: \`${res.uid}\`)`}`,
+        5763719,
+        "Continuum Dashboard • Admin Audit"
+      ));
+      return NextResponse.json(res);
+    }
 
     if (!claimId || typeof claimId !== "string") throw new ApiError(400, "claimId is required");
     if (!action || !["approve", "deny"].includes(action as string)) {
@@ -69,27 +81,48 @@ export async function POST(req: NextRequest) {
       throw new ApiError(409, `Claim is already ${claimData.status}`);
     }
 
+    const now = Date.now();
     await claimRef.update({
       status: action === "approve" ? "approved" : "denied",
-      reviewedAt: Date.now(),
+      reviewedAt: now,
     });
 
     if (action === "approve") {
       const uid = claimData.uid as string;
-      const settingsRef = db.collection("settings").doc(uid);
-      const settingsSnap = await settingsRef.get();
+      const userPrefsRef = db.collection("users").doc(uid).collection("settings").doc("preferences");
+      const userPrefsSnap = await userPrefsRef.get();
 
-      if (settingsSnap.exists) {
-        await settingsRef.update({ isPro: true, updatedAt: Date.now() });
+      if (userPrefsSnap.exists) {
+        await userPrefsRef.update({ isPro: true, updatedAt: now });
       } else {
-        await settingsRef.set({
+        await userPrefsRef.set({
           isPro: true,
           timeFilter: "all",
           salaryDay: 1,
           monthlySalary: 0,
           additionalIncome: 0,
-          updatedAt: Date.now(),
+          currency: "₹",
+          reconciliations: {},
+          salaryLog: {},
+          aiOptOut: false,
+          emailSubscriptions: { expenses: true, portfolio: false, subscriptions: true },
+          updatedAt: now,
         });
+      }
+      await db.collection("users").doc(uid).set({ updatedAt: now }, { merge: true });
+
+      if (claimData.email) {
+        await db.collection("pro_grants").doc((claimData.email as string).toLowerCase()).set(
+          {
+            email: (claimData.email as string).toLowerCase(),
+            uid,
+            grantedBy: session.user.email,
+            grantedAt: now,
+            status: "active",
+            source: "claim",
+          },
+          { merge: true }
+        );
       }
 
       try {

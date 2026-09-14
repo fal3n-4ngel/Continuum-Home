@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/utils";
 import { getSettings, updateSettings } from "@/lib/firebase";
 import { validateSettingsPatch } from "@/lib/firebase";
-import { adminPurgeUserData } from "@/lib/firebase/firebase-admin";
+import { adminPurgeUserData, adminCheckAndConsumeProGrant } from "@/lib/firebase/firebase-admin";
 import { recordDomainEvent } from "@/lib/domain-events/client";
 import { DOMAIN_EVENTS } from "@/lib/domain-events/types";
 
@@ -18,6 +18,11 @@ export async function GET(req: NextRequest) {
     let settings = await getSettings(session);
 
     if (!settings) {
+      let isPro = false;
+      if (session.user.email) {
+        isPro = await adminCheckAndConsumeProGrant(session.user.email, session.uid).catch(() => false);
+      }
+
       const initialSettings = {
         timeFilter: "all" as const,
         salaryDay: 1,
@@ -26,6 +31,7 @@ export async function GET(req: NextRequest) {
         currency: "₹",
         reconciliations: {},
         salaryLog: {},
+        isPro,
         aiOptOut: false,
         emailSubscriptions: { expenses: true, portfolio: false, subscriptions: true },
       };
@@ -55,6 +61,12 @@ export async function GET(req: NextRequest) {
         ],
         timestamp: new Date().toISOString(),
       }).catch((err) => console.error("[DiscordAlert] Failed to dispatch new user alert:", err));
+    } else if (!settings.isPro && session.user.email) {
+      const granted = await adminCheckAndConsumeProGrant(session.user.email, session.uid).catch(() => false);
+      if (granted) {
+        await updateSettings(session, { isPro: true });
+        settings.isPro = true;
+      }
     }
 
     return NextResponse.json(settings || { timeFilter: "all", salaryDay: 1 });
