@@ -5,6 +5,7 @@ import { SITE_NAME } from "@/lib/utils";
 import { LogoMark } from "@/components/Logo";
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "@/lib/theme/use-theme";
+import { clearClientAuthSession } from "@/lib/auth/session-cookie";
 import { motion } from "framer-motion";
 
 interface MobileHeaderProps {
@@ -105,6 +106,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               alt="Profile"
               onClick={() => {
                 triggerConfirm("Sign Out", "Are you sure you want to sign out?", async () => {
+                  clearClientAuthSession();
                   if (firebaseAuth) {
                     await firebaseAuth.signOut(firebaseAuth.auth);
                     setExpenses([]);

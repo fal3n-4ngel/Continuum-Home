@@ -31,6 +31,7 @@ import { usePayCycleData } from "@/hooks/usePayCycleData";
 import { motion, AnimatePresence } from "framer-motion";
 
 import LandingPage from "@/components/landing/LandingPage";
+import { setClientAuthSession, clearClientAuthSession } from "@/lib/auth/session-cookie";
 import dynamic from "next/dynamic";
 import { Sidebar, MobileHeader } from "@/components/layout";
 import {
@@ -957,6 +958,7 @@ export default function Dashboard() {
             idToken,
           };
           setUser(u);
+          setClientAuthSession();
         } else if (typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("embedded") === "true" || localStorage.getItem("phub_embedded_token"))) {
           const token = localStorage.getItem("phub_embedded_token") || "embedded_token";
           setUser({
@@ -967,9 +969,11 @@ export default function Dashboard() {
             idToken: token,
           });
           setIsProUser(true);
+          setClientAuthSession();
         } else {
           setUser(null);
           setIsProUser(false);
+          clearClientAuthSession();
         }
         setAuthLoading(false);
       });
