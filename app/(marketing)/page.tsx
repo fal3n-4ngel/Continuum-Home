@@ -3,10 +3,33 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LandingPage from "@/components/landing/LandingPage";
+import {
+  isClientAuthSessionPresent,
+  setClientAuthSession,
+  clearClientAuthSession,
+} from "@/lib/auth/session-cookie";
 
 export default function MarketingPage() {
   const router = useRouter();
   const [authReady, setAuthReady] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(() => {
+    if (typeof window !== "undefined") {
+      const search = window.location.search;
+      const hash = window.location.hash;
+      if (
+        hash.includes("access_token") ||
+        hash.includes("trakt_") ||
+        search.includes("trakt_") ||
+        search.includes("code=")
+      ) {
+        return true;
+      }
+      if (isClientAuthSessionPresent() && !search.includes("logout")) {
+        return true;
+      }
+    }
+    return false;
+  });
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -18,6 +41,11 @@ export default function MarketingPage() {
         search.includes("trakt_") ||
         search.includes("code=")
       ) {
+        window.location.replace("/dashboard" + search + hash);
+        return;
+      }
+
+      if (isClientAuthSessionPresent() && !search.includes("logout")) {
         window.location.replace("/dashboard" + search + hash);
         return;
       }
@@ -35,7 +63,12 @@ export default function MarketingPage() {
         setAuthReady(true);
         unsubscribe = onAuthStateChanged(auth, (user) => {
           if (user) {
+            setClientAuthSession();
+            setIsRedirecting(true);
             router.replace("/dashboard" + window.location.search + window.location.hash);
+          } else {
+            clearClientAuthSession();
+            setIsRedirecting(false);
           }
         });
       } catch (err) {
@@ -46,6 +79,19 @@ export default function MarketingPage() {
       if (unsubscribe) unsubscribe();
     };
   }, [router]);
+
+  if (isRedirecting) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F5F1EB]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#DCD8D0] border-t-[#1A1A1A]" />
+          <span className="font-mono text-xs tracking-wider text-[#6B685F] uppercase">
+            Opening Dashboard…
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <LandingPage
