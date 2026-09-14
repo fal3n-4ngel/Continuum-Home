@@ -5,6 +5,7 @@ import { AUTHOR, SITE_NAME } from "@/lib/utils";
 import { LogoMark } from "@/components/Logo";
 import { Sun, Moon } from "lucide-react";
 import { useTheme } from "@/lib/theme/use-theme";
+import { clearClientAuthSession } from "@/lib/auth/session-cookie";
 
 interface SidebarProps {
   activeTab: string;
@@ -339,6 +340,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <button
               onClick={() => {
                 triggerConfirm("Sign Out", "Are you sure you want to sign out?", async () => {
+                  clearClientAuthSession();
                   if (firebaseAuth) {
                     await firebaseAuth.signOut(firebaseAuth.auth);
                     setExpenses([]);

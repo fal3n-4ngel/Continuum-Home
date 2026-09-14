@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { AUTHOR, SITE_NAME } from "@/lib/utils";
 import { LogoMark as BentoLogo } from "@/components/Logo";
+import { Sun, Moon } from "lucide-react";
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -221,6 +222,36 @@ export default function LandingPage({
   const [coords, setCoords] = useState<DiagramCoords | null>(null);
   const [userCount, setUserCount] = useState<number | null>(null);
   const [activeDashTab, setActiveDashTab] = useState<"finance" | "media" | "investments" | "books">("finance");
+  const [isDark, setIsDark] = useState(false);
+
+  useEffect(() => {
+    // Landing page always defaults to light mode unless the user explicitly toggled during session
+    const saved = typeof window !== "undefined" ? sessionStorage.getItem("landing_theme") : null;
+    const shouldBeDark = saved === "continuum-dark";
+    setIsDark(shouldBeDark);
+    if (shouldBeDark) {
+      document.documentElement.classList.add("dark");
+      document.documentElement.setAttribute("data-theme", "continuum-dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      document.documentElement.setAttribute("data-theme", "continuum");
+    }
+  }, []);
+
+  const toggleLandingTheme = () => {
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    const themeName = nextDark ? "continuum-dark" : "continuum";
+    if (nextDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    document.documentElement.setAttribute("data-theme", themeName);
+    try {
+      sessionStorage.setItem("landing_theme", themeName);
+    } catch {}
+  };
 
   useEffect(() => {
     fetch("/api/stats")
@@ -373,6 +404,18 @@ export default function LandingPage({
         </nav>
         <div className="flex items-center gap-2.5">
           <button
+            onClick={toggleLandingTheme}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full border border-border-subtle bg-bg-card text-text-secondary transition-all hover:border-border-hover hover:text-text-primary"
+          >
+            {isDark ? (
+              <Sun size={15} className="text-amber-400 stroke-[2.2]" />
+            ) : (
+              <Moon size={15} className="text-text-secondary stroke-[2.2]" />
+            )}
+          </button>
+          <button
             className="hidden md:flex cursor-pointer items-center gap-2 rounded-full border-none bg-[#1c1b18] dark:bg-white px-[22px] py-2.5 text-[13px] font-semibold text-white dark:text-[#1c1b18] transition-[transform,background-color] duration-200 hover:-translate-y-px hover:bg-[#31302b] dark:hover:bg-slate-200 disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-55"
             onClick={onLogin}
             disabled={!firebaseAuthReady}
@@ -456,6 +499,20 @@ export default function LandingPage({
           >
             ⭐️ Star on GitHub ↗
           </a>
+          <button
+            onClick={() => {
+              toggleLandingTheme();
+              setMobileNavOpen(false);
+            }}
+            className="flex w-full items-center justify-between rounded-[9px] px-3.5 py-[12px] text-sm font-medium text-[#6e6c64] dark:text-[#d1cfc7] border-t border-border-subtle mt-1 cursor-pointer hover:bg-[#f4f3ec] dark:hover:bg-white/10 hover:text-[#1c1b18] dark:hover:text-white"
+          >
+            <span>Theme: {isDark ? "Dark Mode" : "Light Mode"}</span>
+            {isDark ? (
+              <Sun size={15} className="text-amber-400 stroke-[2.2]" />
+            ) : (
+              <Moon size={15} className="text-text-secondary stroke-[2.2]" />
+            )}
+          </button>
         </nav>
       </header>
 
@@ -470,12 +527,12 @@ export default function LandingPage({
         <h1 className={`${HERO_TITLE} ${HERO_REVEAL} [animation-delay:0.08s]`}>
           One place. Everything you track.
           <br />
-          <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
+          <span className="font-normal italic text-text-secondary" style={SERIF_ITALIC_STYLE}>
             A dashboard for you. An API for your AI.
           </span>
         </h1>
         <p
-          className={`mx-auto mb-6 max-w-[620px] text-base leading-[1.65] text-[#6e6c64] ${HERO_REVEAL} [animation-delay:0.14s]`}
+          className={`mx-auto mb-6 max-w-[620px] text-base leading-[1.65] text-text-secondary ${HERO_REVEAL} [animation-delay:0.14s]`}
         >
           A self-hostable system for your daily expenses, investments, media watchlists, and book library — with an API designed for both humans and AI agents.
         </p>
@@ -493,16 +550,16 @@ export default function LandingPage({
             href="https://github.com/fal3n-4ngel/Continuum-Home"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-full border-[1.5px] border-[#d1cfc7] bg-white px-7 py-[13px] text-sm font-semibold text-[#1c1b18] no-underline transition-all duration-200 hover:border-[#1c1b18] hover:shadow-xs"
+            className="flex items-center gap-2 rounded-full border-[1.5px] border-[#d1cfc7] dark:border-white/15 bg-white dark:bg-white/10 px-7 py-[13px] text-sm font-semibold text-[#1c1b18] dark:text-white no-underline transition-all duration-200 hover:border-[#1c1b18] dark:hover:border-white/40 hover:shadow-xs"
           >
             <span>⭐️ Star on GitHub</span>
           </a>
         </div>
         {userCount !== null && (
           <p
-            className={`mt-4 text-[12.5px] text-[#9c9a92] ${HERO_REVEAL} [animation-delay:0.23s]`}
+            className={`mt-4 text-[12.5px] text-text-muted ${HERO_REVEAL} [animation-delay:0.23s]`}
           >
-            <strong className="font-semibold text-[#6e6c64]">{userCount}</strong>{" "}
+            <strong className="font-semibold text-text-secondary">{userCount}</strong>{" "}
             {userCount === 1 ? "person is" : "people are"} actively using Continuum
           </p>
         )}
@@ -510,7 +567,7 @@ export default function LandingPage({
         <div
           className={`mt-7 flex flex-wrap justify-center gap-2.5 ${HERO_REVEAL} [animation-delay:0.26s]`}
         >
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#bfdbfe] bg-[#eff6ff] px-4 py-1.5 text-[12px] font-semibold text-[#1d4ed8]">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#bfdbfe] dark:border-blue-500/30 bg-[#eff6ff] dark:bg-blue-500/15 px-4 py-1.5 text-[12px] font-semibold text-[#1d4ed8] dark:text-blue-300">
             🤖 AI Endpoints (ChatGPT &amp; Claude)
           </span>
           <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card px-4 py-1.5 text-[12px] font-medium text-text-primary">
@@ -844,11 +901,11 @@ export default function LandingPage({
         <h2 className={`${HERO_TITLE} mb-3 text-[42px] max-[480px]:text-[30px]`}>
           One dashboard.
           <br />
-          <span className="font-normal italic text-[#6e6c64]" style={SERIF_ITALIC_STYLE}>
+          <span className="font-normal italic text-text-secondary" style={SERIF_ITALIC_STYLE}>
             Everything connected.
           </span>
         </h2>
-        <p className="mx-auto mb-10 max-w-[580px] text-base leading-[1.6] text-[#6e6c64]">
+        <p className="mx-auto mb-10 max-w-[580px] text-base leading-[1.6] text-text-secondary">
           A clean editorial interface designed for daily use. Track custom salary cycles, anime &amp; movie watchlists, book reading progress, and stock quotes without app fatigue.
         </p>
 
@@ -857,8 +914,8 @@ export default function LandingPage({
             onClick={() => setActiveDashTab("finance")}
             className={`rounded-full px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
               activeDashTab === "finance"
-                ? "bg-[#1c1b18] text-white shadow-xs"
-                : "border border-[#e5e3db] bg-white text-[#6e6c64] hover:border-[#1c1b18]"
+                ? "bg-text-primary text-bg-card shadow-xs"
+                : "border border-border-subtle bg-bg-card text-text-secondary hover:border-border-hover hover:text-text-primary"
             }`}
           >
             💸 Finance &amp; Salary Cycles
@@ -867,8 +924,8 @@ export default function LandingPage({
             onClick={() => setActiveDashTab("media")}
             className={`rounded-full px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
               activeDashTab === "media"
-                ? "bg-[#1c1b18] text-white shadow-xs"
-                : "border border-[#e5e3db] bg-white text-[#6e6c64] hover:border-[#1c1b18]"
+                ? "bg-text-primary text-bg-card shadow-xs"
+                : "border border-border-subtle bg-bg-card text-text-secondary hover:border-border-hover hover:text-text-primary"
             }`}
           >
             🎬 Media Watchlist &amp; Sync
@@ -877,8 +934,8 @@ export default function LandingPage({
             onClick={() => setActiveDashTab("investments")}
             className={`rounded-full px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
               activeDashTab === "investments"
-                ? "bg-[#1c1b18] text-white shadow-xs"
-                : "border border-[#e5e3db] bg-white text-[#6e6c64] hover:border-[#1c1b18]"
+                ? "bg-text-primary text-bg-card shadow-xs"
+                : "border border-border-subtle bg-bg-card text-text-secondary hover:border-border-hover hover:text-text-primary"
             }`}
           >
             📈 Portfolio &amp; Assets
@@ -887,35 +944,35 @@ export default function LandingPage({
             onClick={() => setActiveDashTab("books")}
             className={`rounded-full px-4 py-2 text-xs font-semibold transition-all cursor-pointer ${
               activeDashTab === "books"
-                ? "bg-[#1c1b18] text-white shadow-xs"
-                : "border border-[#e5e3db] bg-white text-[#6e6c64] hover:border-[#1c1b18]"
+                ? "bg-text-primary text-bg-card shadow-xs"
+                : "border border-border-subtle bg-bg-card text-text-secondary hover:border-border-hover hover:text-text-primary"
             }`}
           >
             📚 Book Library &amp; Notes
           </button>
         </div>
 
-        <div className="overflow-hidden rounded-2xl border border-[#e5e3db] bg-white shadow-[0_16px_36px_-10px_rgba(28,27,24,0.08)]">
-          <div className="flex h-10 items-center justify-between border-b border-[#e5e3db] bg-[#f4f3ec] px-4">
+        <div className="overflow-hidden rounded-2xl border border-border-subtle bg-bg-card shadow-[0_16px_36px_-10px_rgba(28,27,24,0.08)] dark:shadow-[0_16px_36px_-10px_rgba(0,0,0,0.4)]">
+          <div className="flex h-10 items-center justify-between border-b border-border-subtle bg-bg-secondary/70 px-4">
             <div className="flex items-center gap-2">
               <div className={`${BROWSER_DOT} bg-[#ff5f56]`} />
               <div className={`${BROWSER_DOT} bg-[#ffbd2e]`} />
               <div className={`${BROWSER_DOT} bg-[#27c93f]`} />
-              <span className="ml-2 font-mono text-[11px] text-[#6e6c64]">continuum.home / dashboard</span>
+              <span className="ml-2 font-mono text-[11px] text-text-muted">continuum.home / dashboard</span>
             </div>
-            <div className="flex items-center gap-3 text-xs font-medium text-[#6e6c64]">
-              <span className="rounded bg-[#e5e3db] px-2 py-0.5 font-mono text-[10px] text-[#1c1b18]">
+            <div className="flex items-center gap-3 text-xs font-medium text-text-secondary">
+              <span className="rounded bg-bg-card border border-border-subtle px-2 py-0.5 font-mono text-[10px] text-text-primary">
                 {activeDashTab.toUpperCase()} TAB ACTIVE
               </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-[190px_1fr] max-[768px]:grid-cols-1 text-left bg-[#f7f4ee]">
+          <div className="grid grid-cols-[190px_1fr] max-[768px]:grid-cols-1 text-left bg-[#f7f4ee] dark:bg-bg-primary">
 
-            <div className="flex flex-col justify-between border-r border-[#e7e3da] bg-[#f4f0ea] p-3.5 text-[11.5px] max-[768px]:hidden">
+            <div className="flex flex-col justify-between border-r border-border-subtle bg-[#f4f0ea] dark:bg-bg-sidebar p-3.5 text-[11.5px] max-[768px]:hidden">
               <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2 px-2 py-1.5 font-semibold text-[#1c1b18] mb-3 border-b border-[#e7e3da]/70 pb-2.5">
-                  <BentoLogo size={15} color="#1c1b18" />
+                <div className="flex items-center gap-2 px-2 py-1.5 font-semibold text-text-primary mb-3 border-b border-border-subtle pb-2.5">
+                  <BentoLogo size={15} color="var(--text-primary)" />
                   <span className="font-bold text-[13px] tracking-tight">Continuum</span>
                 </div>
 
@@ -923,21 +980,21 @@ export default function LandingPage({
                   onClick={() => setActiveDashTab("finance")}
                   className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left font-medium transition-colors cursor-pointer ${
                     activeDashTab === "finance"
-                      ? "bg-[#eee8dd] font-bold text-[#1c1b18] shadow-xs"
-                      : "text-[#6e6c64] hover:bg-[#e9e4d9]"
+                      ? "bg-[#eee8dd] dark:bg-bg-card font-bold text-[#1c1b18] dark:text-text-primary shadow-xs"
+                      : "text-[#6e6c64] dark:text-text-secondary hover:bg-[#e9e4d9] dark:hover:bg-bg-card/50"
                   }`}
                 >
                   <span>💸</span> <span>Expenses &amp; Subs</span>
                 </button>
-                <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium text-[#6e6c64] hover:bg-[#e9e4d9]">
+                <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium text-[#6e6c64] dark:text-text-secondary hover:bg-[#e9e4d9] dark:hover:bg-bg-card/50">
                   <span>🩺</span> <span>Financial Health</span>
                 </div>
                 <button
                   onClick={() => setActiveDashTab("investments")}
                   className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left font-medium transition-colors cursor-pointer ${
                     activeDashTab === "investments"
-                      ? "bg-[#eee8dd] font-bold text-[#1c1b18] shadow-xs"
-                      : "text-[#6e6c64] hover:bg-[#e9e4d9]"
+                      ? "bg-[#eee8dd] dark:bg-bg-card font-bold text-[#1c1b18] dark:text-text-primary shadow-xs"
+                      : "text-[#6e6c64] dark:text-text-secondary hover:bg-[#e9e4d9] dark:hover:bg-bg-card/50"
                   }`}
                 >
                   <span>📈</span> <span>Investments</span>
@@ -946,88 +1003,88 @@ export default function LandingPage({
                   onClick={() => setActiveDashTab("media")}
                   className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left font-medium transition-colors cursor-pointer ${
                     activeDashTab === "media" || activeDashTab === "books"
-                      ? "bg-[#eee8dd] font-bold text-[#1c1b18] shadow-xs"
-                      : "text-[#6e6c64] hover:bg-[#e9e4d9]"
+                      ? "bg-[#eee8dd] dark:bg-bg-card font-bold text-[#1c1b18] dark:text-text-primary shadow-xs"
+                      : "text-[#6e6c64] dark:text-text-secondary hover:bg-[#e9e4d9] dark:hover:bg-bg-card/50"
                   }`}
                 >
                   <span>📚</span> <span>Library</span>
                 </button>
-                <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium text-[#6e6c64]">
+                <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium text-[#6e6c64] dark:text-text-secondary">
                   <span>📊</span> <span>Reports</span>
                 </div>
-                <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium text-[#6e6c64]">
+                <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium text-[#6e6c64] dark:text-text-secondary">
                   <span>🤖</span> <span>AI Agent</span>
                 </div>
-                <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium text-[#6e6c64]">
+                <div className="flex items-center gap-2 rounded-lg px-2.5 py-2 font-medium text-[#6e6c64] dark:text-text-secondary">
                   <span>⚙️</span> <span>Settings</span>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 pt-3 border-t border-[#e7e3da] text-[10px] text-[#6e6c64]">
+              <div className="flex flex-col gap-2 pt-3 border-t border-[#e7e3da] dark:border-border-subtle text-[10px] text-[#6e6c64] dark:text-text-muted">
                 <span className="font-mono text-[9px] font-bold uppercase text-[#9c9a92] px-2">Integrations</span>
                 <div className="flex items-center gap-1.5 px-2 text-[10.5px]">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#3b82f6]" />
                   <span>Trakt &amp; AniList</span>
                 </div>
-                <div className="flex items-center justify-between px-2 pt-2 border-t border-[#e7e3da]/70">
+                <div className="flex items-center justify-between px-2 pt-2 border-t border-[#e7e3da]/70 dark:border-border-subtle">
                   <div className="flex items-center gap-1.5 min-w-0">
                     <div className="h-5 w-5 shrink-0 rounded-full bg-[#1c1b18] text-white flex items-center justify-center font-bold text-[9px]">A</div>
-                    <span className="font-semibold text-[#1c1b18] truncate">User</span>
+                    <span className="font-semibold text-[#1c1b18] dark:text-text-primary truncate">User</span>
                   </div>
-                  <span className="shrink-0 rounded bg-[#fef08a] px-1 py-0.2 font-mono text-[7.5px] font-bold text-[#854d0e]">PRO</span>
+                  <span className="shrink-0 rounded bg-[#fef08a] dark:bg-amber-950/60 dark:text-amber-300 px-1 py-0.2 font-mono text-[7.5px] font-bold text-[#854d0e]">PRO</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-5 max-[480px]:p-3 bg-[#f7f4ee] h-[510px] overflow-y-auto">
+            <div className="p-5 max-[480px]:p-3 bg-[#f7f4ee] dark:bg-bg-primary h-[510px] overflow-y-auto">
               {activeDashTab === "finance" && (
                 <div className="flex flex-col gap-4 font-body">
-                  <div className="flex items-center justify-between border-b border-[#e5e1d8] pb-2.5 max-[600px]:flex-col max-[600px]:items-start max-[600px]:gap-2">
+                  <div className="flex items-center justify-between border-b border-[#e5e1d8] dark:border-border-subtle pb-2.5 max-[600px]:flex-col max-[600px]:items-start max-[600px]:gap-2">
                     <div className="flex items-center gap-4">
-                      <h3 className="text-lg font-bold tracking-tight text-[#1c1b18] italic font-serif" style={SERIF_ITALIC_STYLE}>
+                      <h3 className="text-lg font-bold tracking-tight text-[#1c1b18] dark:text-text-primary italic font-serif" style={SERIF_ITALIC_STYLE}>
                         Expenses Ledger
                       </h3>
                       <div className="flex items-center gap-1 text-[11px]">
-                        <span className="rounded-lg bg-[#eee8dd] px-2.5 py-0.5 font-semibold text-[#1c1b18]">Ledger</span>
-                        <span className="px-2.5 py-0.5 text-[#6e6c64]">Subscriptions</span>
+                        <span className="rounded-lg bg-[#eee8dd] dark:bg-bg-card px-2.5 py-0.5 font-semibold text-[#1c1b18] dark:text-text-primary">Ledger</span>
+                        <span className="px-2.5 py-0.5 text-[#6e6c64] dark:text-text-muted">Subscriptions</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 text-[11px]">
-                      <span className="font-mono text-[10.5px] text-[#6e6c64]">PAYDAY: <strong className="text-[#1c1b18]">25th of month</strong></span>
-                      <span className="rounded-lg border border-[#e5e1d8] bg-white px-2.5 py-0.5 font-semibold text-[#1c1b18] shadow-xs">Current Pay Period ▾</span>
+                      <span className="font-mono text-[10.5px] text-[#6e6c64] dark:text-text-secondary">PAYDAY: <strong className="text-[#1c1b18] dark:text-text-primary">25th of month</strong></span>
+                      <span className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card px-2.5 py-0.5 font-semibold text-[#1c1b18] dark:text-text-primary shadow-xs">Current Pay Period ▾</span>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-4 gap-3 max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
-                    <div className="rounded-xl border border-[#7ca4c7] bg-[#90b4d4] p-3 text-[#1c1b18]">
+                    <div className="rounded-xl border border-[#7ca4c7] dark:border-blue-700 bg-[#90b4d4] dark:bg-blue-900/40 p-3 text-[#1c1b18] dark:text-blue-100">
                       <span className="text-[9px] font-bold tracking-wider uppercase opacity-85">Total Spent</span>
-                      <p className="mt-0.5 text-xl font-extrabold text-[#1c1b18]">₹22,349.2</p>
-                      <span className="mt-0.5 block text-[9.5px] font-medium text-[#2c4760]">Last salary cycle</span>
+                      <p className="mt-0.5 text-xl font-extrabold text-[#1c1b18] dark:text-white">₹22,349.2</p>
+                      <span className="mt-0.5 block text-[9.5px] font-medium text-[#2c4760] dark:text-blue-300">Last salary cycle</span>
                     </div>
-                    <div className="rounded-xl border border-[#d6a83a] bg-[#e5b84c] p-3 text-[#1c1b18]">
+                    <div className="rounded-xl border border-[#d6a83a] dark:border-amber-700 bg-[#e5b84c] dark:bg-amber-900/40 p-3 text-[#1c1b18] dark:text-amber-100">
                       <span className="text-[9px] font-bold tracking-wider uppercase opacity-85">Charges Logged</span>
-                      <p className="mt-0.5 text-xl font-extrabold text-[#1c1b18]">44</p>
-                      <span className="mt-0.5 block text-[9.5px] font-medium text-[#5e4713]">Transactions</span>
+                      <p className="mt-0.5 text-xl font-extrabold text-[#1c1b18] dark:text-white">44</p>
+                      <span className="mt-0.5 block text-[9.5px] font-medium text-[#5e4713] dark:text-amber-300">Transactions</span>
                     </div>
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3">
-                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#6e6c64]">Largest Charge</span>
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-3">
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#6e6c64] dark:text-text-secondary">Largest Charge</span>
                       <p className="mt-0.5 text-xl font-extrabold text-[#d96b5a]">₹5,000</p>
-                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64]">Rent</span>
+                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64] dark:text-text-muted">Rent</span>
                     </div>
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3">
-                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#6e6c64]">Top Category</span>
-                      <p className="mt-0.5 text-xl font-extrabold text-[#1c1b18]">Food</p>
-                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64]">Highest share</span>
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-3">
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#6e6c64] dark:text-text-secondary">Top Category</span>
+                      <p className="mt-0.5 text-xl font-extrabold text-[#1c1b18] dark:text-text-primary">Food</p>
+                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64] dark:text-text-muted">Highest share</span>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-[1.3fr_1fr] gap-3 max-[900px]:grid-cols-1">
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3 shadow-xs flex flex-col justify-between">
-                      <div className="flex items-center justify-between border-b border-[#f4f0ea] pb-2 mb-2">
-                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#1c1b18]">Analytics</h4>
-                        <div className="flex rounded-lg border border-[#e5e1d8] bg-[#faf8f4] p-0.5 text-[9.5px] font-semibold">
-                          <span className="rounded-md bg-[#262522] px-2 py-0.5 text-white">Category Distribution</span>
-                          <span className="px-2 py-0.5 text-[#6e6c64]">Daily Trend</span>
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-3 shadow-xs flex flex-col justify-between">
+                      <div className="flex items-center justify-between border-b border-[#f4f0ea] dark:border-border-subtle pb-2 mb-2">
+                        <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#1c1b18] dark:text-text-primary">Analytics</h4>
+                        <div className="flex rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-[#faf8f4] dark:bg-bg-secondary p-0.5 text-[9.5px] font-semibold">
+                          <span className="rounded-md bg-[#262522] dark:bg-white/20 px-2 py-0.5 text-white">Category Distribution</span>
+                          <span className="px-2 py-0.5 text-[#6e6c64] dark:text-text-muted">Daily Trend</span>
                         </div>
                       </div>
 
@@ -1035,15 +1092,15 @@ export default function LandingPage({
                         {[
                           { cat: "FOOD", height: "88%", amt: "₹5.8k", color: "bg-[#b85c5c]" },
                           { cat: "TRANSPORT", height: "78%", amt: "₹5.3k", color: "bg-[#e09181]" },
-                          { cat: "RENT", height: "70%", amt: "₹5.0k", color: "bg-[#1c1b18]" },
+                          { cat: "RENT", height: "70%", amt: "₹5.0k", color: "bg-[#1c1b18] dark:bg-slate-400" },
                           { cat: "MEDICAL", height: "40%", amt: "₹2.7k", color: "bg-[#706c62]" },
-                          { cat: "ENT.", height: "22%", amt: "₹1.3k", color: "bg-[#c2bdae]" },
-                          { cat: "CARE", height: "18%", amt: "₹1.1k", color: "bg-[#c2bdae]" },
+                          { cat: "ENT.", height: "22%", amt: "₹1.3k", color: "bg-[#c2bdae] dark:bg-slate-600" },
+                          { cat: "CARE", height: "18%", amt: "₹1.1k", color: "bg-[#c2bdae] dark:bg-slate-600" },
                           { cat: "DRINKS", height: "12%", amt: "₹0.8k", color: "bg-[#706c62]" },
-                          { cat: "GIFTS", height: "8%", amt: "₹0.5k", color: "bg-[#c2bdae]" },
+                          { cat: "GIFTS", height: "8%", amt: "₹0.5k", color: "bg-[#c2bdae] dark:bg-slate-600" },
                         ].map((bar) => (
                           <div className="flex flex-1 flex-col items-center justify-end h-full gap-0.5" key={bar.cat}>
-                            <span className="font-mono text-[8px] font-bold text-[#6e6c64]">{bar.amt}</span>
+                            <span className="font-mono text-[8px] font-bold text-[#6e6c64] dark:text-text-muted">{bar.amt}</span>
                             <div className="w-full h-14 flex items-end justify-center">
                               <div
                                 className={`w-full max-w-[20px] rounded-t-xs ${bar.color}`}
@@ -1056,36 +1113,36 @@ export default function LandingPage({
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3 shadow-xs flex flex-col justify-between">
-                      <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#1c1b18] mb-2 border-b border-[#f4f0ea] pb-2">
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-3 shadow-xs flex flex-col justify-between">
+                      <h4 className="text-[11px] font-bold uppercase tracking-wider text-[#1c1b18] dark:text-text-primary mb-2 border-b border-[#f4f0ea] dark:border-border-subtle pb-2">
                         📅 Upcoming Bills
                       </h4>
                       <div className="flex flex-col gap-2">
-                        <div className="flex items-center justify-between rounded-lg border border-[#e5e1d8] bg-white p-2 text-xs shadow-2xs">
+                        <div className="flex items-center justify-between rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-2 text-xs shadow-2xs">
                           <div className="flex items-center gap-2">
-                            <span className="flex h-7 w-7 items-center justify-center rounded bg-[#e0f2fe] text-xs">📺</span>
+                            <span className="flex h-7 w-7 items-center justify-center rounded bg-[#e0f2fe] dark:bg-blue-950/50 text-xs">📺</span>
                             <div>
-                              <p className="font-bold text-[#1c1b18] text-[11px]">Youtube <span className="font-mono text-[#1c1b18]">₹148</span></p>
-                              <span className="inline-block rounded bg-[#fef2f2] px-1 py-0.2 text-[8.5px] font-bold text-[#dc2626]">Due 7 Sept · Monthly</span>
+                              <p className="font-bold text-[#1c1b18] dark:text-text-primary text-[11px]">Youtube <span className="font-mono text-[#1c1b18] dark:text-text-primary">₹148</span></p>
+                              <span className="inline-block rounded bg-[#fef2f2] dark:bg-rose-950/40 px-1 py-0.2 text-[8.5px] font-bold text-[#dc2626] dark:text-rose-400">Due 7 Sept · Monthly</span>
                             </div>
                           </div>
                           <div className="flex gap-1">
-                            <span className="flex h-5 w-5 items-center justify-center rounded bg-[#dcfce7] text-[#15803d] font-bold text-[10px]">✓</span>
-                            <span className="flex h-5 w-5 items-center justify-center rounded bg-[#fee2e2] text-[#dc2626] font-bold text-[10px]">✕</span>
+                            <span className="flex h-5 w-5 items-center justify-center rounded bg-[#dcfce7] dark:bg-emerald-950/40 text-[#15803d] dark:text-emerald-400 font-bold text-[10px]">✓</span>
+                            <span className="flex h-5 w-5 items-center justify-center rounded bg-[#fee2e2] dark:bg-rose-950/40 text-[#dc2626] dark:text-rose-400 font-bold text-[10px]">✕</span>
                           </div>
                         </div>
 
-                        <div className="flex items-center justify-between rounded-lg border border-[#e5e1d8] bg-white p-2 text-xs shadow-2xs">
+                        <div className="flex items-center justify-between rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-2 text-xs shadow-2xs">
                           <div className="flex items-center gap-2">
-                            <span className="flex h-7 w-7 items-center justify-center rounded bg-[#f3e8ff] text-xs">🎵</span>
+                            <span className="flex h-7 w-7 items-center justify-center rounded bg-[#f3e8ff] dark:bg-purple-950/50 text-xs">🎵</span>
                             <div>
-                              <p className="font-bold text-[#1c1b18] text-[11px]">Spotify <span className="font-mono text-[#1c1b18]">₹300</span></p>
-                              <span className="text-[8.5px] text-[#6e6c64]">Due 13 Sept · Monthly</span>
+                              <p className="font-bold text-[#1c1b18] dark:text-text-primary text-[11px]">Spotify <span className="font-mono text-[#1c1b18] dark:text-text-primary">₹300</span></p>
+                              <span className="text-[8.5px] text-[#6e6c64] dark:text-text-muted">Due 13 Sept · Monthly</span>
                             </div>
                           </div>
                           <div className="flex gap-1">
-                            <span className="flex h-5 w-5 items-center justify-center rounded bg-[#dcfce7] text-[#15803d] font-bold text-[10px]">✓</span>
-                            <span className="flex h-5 w-5 items-center justify-center rounded bg-[#fee2e2] text-[#dc2626] font-bold text-[10px]">✕</span>
+                            <span className="flex h-5 w-5 items-center justify-center rounded bg-[#dcfce7] dark:bg-emerald-950/40 text-[#15803d] dark:text-emerald-400 font-bold text-[10px]">✓</span>
+                            <span className="flex h-5 w-5 items-center justify-center rounded bg-[#fee2e2] dark:bg-rose-950/40 text-[#dc2626] dark:text-rose-400 font-bold text-[10px]">✕</span>
                           </div>
                         </div>
                       </div>
@@ -1093,28 +1150,28 @@ export default function LandingPage({
                   </div>
 
                   <div className="grid grid-cols-[200px_1fr] gap-3 max-[900px]:grid-cols-1">
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3 text-xs flex flex-col gap-2 shadow-xs">
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-3 text-xs flex flex-col gap-2 shadow-xs">
                       <span className="font-mono text-[9px] font-bold uppercase text-[#9c9a92]">Log Transaction</span>
-                      <input className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-2.5 py-1 text-[11px] text-[#1c1b18]" placeholder="Description" defaultValue="Lunch biryani" />
-                      <input className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-2.5 py-1 text-[11px] text-[#1c1b18]" placeholder="Amount (₹)" defaultValue="275" />
-                      <select className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-2.5 py-1 text-[11px] text-[#1c1b18]">
+                      <input className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-[#f7f4ed] dark:bg-bg-secondary px-2.5 py-1 text-[11px] text-[#1c1b18] dark:text-text-primary" placeholder="Description" defaultValue="Lunch biryani" />
+                      <input className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-[#f7f4ed] dark:bg-bg-secondary px-2.5 py-1 text-[11px] text-[#1c1b18] dark:text-text-primary" placeholder="Amount (₹)" defaultValue="275" />
+                      <select className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-[#f7f4ed] dark:bg-bg-secondary px-2.5 py-1 text-[11px] text-[#1c1b18] dark:text-text-primary">
                         <option>Food</option>
                         <option>Groceries</option>
                         <option>Rent</option>
                       </select>
-                      <button className="mt-0.5 rounded-lg bg-[#1c1b18] py-1.5 text-[11px] font-bold text-white cursor-pointer">+ Add Transaction</button>
+                      <button className="mt-0.5 rounded-lg bg-[#1c1b18] dark:bg-white py-1.5 text-[11px] font-bold text-white dark:text-[#1c1b18] cursor-pointer">+ Add Transaction</button>
                     </div>
 
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3 text-xs shadow-xs">
-                      <div className="flex items-center justify-between border-b border-[#f4f0ea] pb-2 mb-2">
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-3 text-xs shadow-xs">
+                      <div className="flex items-center justify-between border-b border-[#f4f0ea] dark:border-border-subtle pb-2 mb-2">
                         <span className="font-mono text-[9px] font-bold uppercase text-[#9c9a92]">Ledger Sheet</span>
                         <div className="flex gap-1">
-                          <span className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-2 py-0.5 text-[9.5px] font-semibold text-[#1c1b18]">📥 Import</span>
-                          <span className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-2 py-0.5 text-[9.5px] font-semibold text-[#1c1b18]">📤 Export</span>
+                          <span className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-[#f7f4ed] dark:bg-bg-secondary px-2 py-0.5 text-[9.5px] font-semibold text-[#1c1b18] dark:text-text-primary">📥 Import</span>
+                          <span className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-[#f7f4ed] dark:bg-bg-secondary px-2 py-0.5 text-[9.5px] font-semibold text-[#1c1b18] dark:text-text-primary">📤 Export</span>
                         </div>
                       </div>
                       <div className="flex flex-col gap-1">
-                        <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_36px] items-center border-b border-[#f4f0ea] pb-1 font-mono text-[9px] text-[#9c9a92] uppercase">
+                        <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_36px] items-center border-b border-[#f4f0ea] dark:border-border-subtle pb-1 font-mono text-[9px] text-[#9c9a92] uppercase">
                           <span>Description</span>
                           <span>Category</span>
                           <span>Date</span>
@@ -1127,13 +1184,13 @@ export default function LandingPage({
                           { desc: "Lunch", cat: "FOOD", date: "2026-09-06", amt: "₹208" },
                           { desc: "Dinner", cat: "FOOD", date: "2026-09-05", amt: "₹312" },
                         ].map((row, i) => (
-                          <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_36px] items-center border-b border-[#f7f4ed] py-0.5 text-[11px]" key={i}>
-                            <span className="font-bold text-[#1c1b18] truncate">{row.desc}</span>
+                          <div className="grid grid-cols-[1.4fr_1fr_1fr_1fr_36px] items-center border-b border-[#f7f4ed] dark:border-border-subtle py-0.5 text-[11px]" key={i}>
+                            <span className="font-bold text-[#1c1b18] dark:text-text-primary truncate">{row.desc}</span>
                             <div>
-                              <span className="rounded bg-[#eae6dd] border border-[#e2ddd0] px-1 py-0.2 font-mono text-[8px] font-bold text-[#55534c]">{row.cat}</span>
+                              <span className="rounded bg-[#eae6dd] dark:bg-white/10 border border-[#e2ddd0] dark:border-border-subtle px-1 py-0.2 font-mono text-[8px] font-bold text-[#55534c] dark:text-text-secondary">{row.cat}</span>
                             </div>
                             <span className="font-mono text-[10px] text-[#9c9a92]">{row.date}</span>
-                            <span className="font-bold text-right text-[#1c1b18]">{row.amt}</span>
+                            <span className="font-bold text-right text-[#1c1b18] dark:text-text-primary">{row.amt}</span>
                             <div className="flex justify-center gap-0.5 text-[10px] text-[#9c9a92]">
                               <span>✏️</span>
                               <span>🗑️</span>
@@ -1148,77 +1205,77 @@ export default function LandingPage({
 
               {activeDashTab === "media" && (
                 <div className="flex flex-col gap-5 font-body">
-                  <div className="flex items-center justify-between border-b border-[#e5e1d8] pb-3">
-                    <h3 className="text-xl font-bold tracking-tight text-[#1c1b18] italic font-serif" style={SERIF_ITALIC_STYLE}>
+                  <div className="flex items-center justify-between border-b border-[#e5e1d8] dark:border-border-subtle pb-3">
+                    <h3 className="text-xl font-bold tracking-tight text-[#1c1b18] dark:text-text-primary italic font-serif" style={SERIF_ITALIC_STYLE}>
                       Media library
                     </h3>
                   </div>
 
                   <div className="grid grid-cols-4 gap-3.5 max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4">
-                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64]">Watching Now</span>
-                      <p className="mt-1 text-2xl font-extrabold text-[#1c1b18]">8</p>
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64] dark:text-text-secondary">Watching Now</span>
+                      <p className="mt-1 text-2xl font-extrabold text-[#1c1b18] dark:text-text-primary">8</p>
                       <span className="mt-1 block font-mono text-[10px] text-[#9c9a92]">ANIME 8 · TV/S 0</span>
                     </div>
-                    <div className="rounded-xl border border-[#fecaca] bg-[#fff5f5] p-4">
-                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#dc2626]">Plan to Watch</span>
-                      <p className="mt-1 text-2xl font-extrabold text-[#dc2626]">28</p>
-                      <span className="mt-1 block font-mono text-[10px] text-[#ef4444]">ANIME 28 · TV/S 0</span>
+                    <div className="rounded-xl border border-[#fecaca] dark:border-rose-900/40 bg-[#fff5f5] dark:bg-rose-950/30 p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#dc2626] dark:text-rose-400">Plan to Watch</span>
+                      <p className="mt-1 text-2xl font-extrabold text-[#dc2626] dark:text-rose-400">28</p>
+                      <span className="mt-1 block font-mono text-[10px] text-[#ef4444] dark:text-rose-400">ANIME 28 · TV/S 0</span>
                     </div>
-                    <div className="rounded-xl border border-[#bbf7d0] bg-[#f0fdf4] p-4">
-                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#15803d]">Completed</span>
-                      <p className="mt-1 text-2xl font-extrabold text-[#15803d]">475</p>
-                      <span className="mt-1 block font-mono text-[10px] text-[#16a34a]">ANIME 220 · TV/S 255</span>
+                    <div className="rounded-xl border border-[#bbf7d0] dark:border-emerald-900/40 bg-[#f0fdf4] dark:bg-emerald-950/30 p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#15803d] dark:text-emerald-400">Completed</span>
+                      <p className="mt-1 text-2xl font-extrabold text-[#15803d] dark:text-emerald-400">475</p>
+                      <span className="mt-1 block font-mono text-[10px] text-[#16a34a] dark:text-emerald-400">ANIME 220 · TV/S 255</span>
                     </div>
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4">
-                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64]">Total Library</span>
-                      <p className="mt-1 text-xl font-extrabold text-[#1c1b18]">269 <span className="text-xs font-normal text-[#6e6c64]">anime</span></p>
-                      <span className="mt-1 block font-mono text-[10px] text-[#6e6c64]">24 shows · 249 movies</span>
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64] dark:text-text-secondary">Total Library</span>
+                      <p className="mt-1 text-xl font-extrabold text-[#1c1b18] dark:text-text-primary">269 <span className="text-xs font-normal text-[#6e6c64] dark:text-text-muted">anime</span></p>
+                      <span className="mt-1 block font-mono text-[10px] text-[#6e6c64] dark:text-text-muted">24 shows · 249 movies</span>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-[220px_1fr] gap-4 max-[900px]:grid-cols-1">
                     <div className="flex flex-col gap-3">
-                      <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 text-xs flex flex-col gap-2 shadow-xs">
+                      <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-3.5 text-xs flex flex-col gap-2 shadow-xs">
                         <span className="font-mono text-[9.5px] font-bold uppercase text-[#9c9a92]">Search &amp; Add</span>
-                        <input className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-3 py-1.5 text-xs" placeholder="Search title..." />
-                        <select className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-3 py-1.5 text-xs">
+                        <input className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-[#f7f4ed] dark:bg-bg-secondary px-3 py-1.5 text-xs text-[#1c1b18] dark:text-text-primary" placeholder="Search title..." />
+                        <select className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-[#f7f4ed] dark:bg-bg-secondary px-3 py-1.5 text-xs text-[#1c1b18] dark:text-text-primary">
                           <option>Movies (Trakt)</option>
                           <option>TV Shows</option>
                           <option>Anime (AniList)</option>
                         </select>
-                        <button className="rounded-lg bg-[#6e6c64] py-1.5 text-xs font-bold text-white cursor-pointer">Search</button>
+                        <button className="rounded-lg bg-[#1c1b18] dark:bg-white py-1.5 text-xs font-bold text-white dark:text-[#1c1b18] cursor-pointer">Search</button>
                       </div>
 
-                      <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 text-xs shadow-xs">
+                      <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-3.5 text-xs shadow-xs">
                         <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#9c9a92]">🤖 AI Recommendation</span>
                         <div className="mt-2.5 flex gap-2.5 items-center">
                           <img
                             src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&q=80"
                             alt="Minority Report poster"
-                            className="h-16 w-12 rounded object-cover shadow-xs border border-[#e5e1d8]"
+                            className="h-16 w-12 rounded object-cover shadow-xs border border-[#e5e1d8] dark:border-border-subtle"
                           />
                           <div>
-                            <p className="font-bold text-[#1c1b18]">Minority Report</p>
+                            <p className="font-bold text-[#1c1b18] dark:text-text-primary">Minority Report</p>
                             <span className="text-[10.5px] font-bold text-[#d97706]">⭐️ 7.8</span>
-                            <span className="mt-0.5 block text-[9.5px] text-[#6e6c64]">Sci-Fi / Action</span>
+                            <span className="mt-0.5 block text-[9.5px] text-[#6e6c64] dark:text-text-muted">Sci-Fi / Action</span>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4 shadow-xs">
-                      <div className="flex items-center justify-between border-b border-[#f4f0ea] pb-3 mb-3 max-[600px]:flex-col max-[600px]:gap-2">
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-4 shadow-xs">
+                      <div className="flex items-center justify-between border-b border-[#f4f0ea] dark:border-border-subtle pb-3 mb-3 max-[600px]:flex-col max-[600px]:gap-2">
                         <div className="flex gap-1.5">
-                          <span className="rounded-lg bg-[#1c1b18] px-3 py-1 text-xs font-bold text-white">Movies</span>
-                          <span className="rounded-lg border border-[#e5e1d8] px-3 py-1 text-xs font-medium text-[#6e6c64]">TV Shows</span>
-                          <span className="rounded-lg border border-[#e5e1d8] px-3 py-1 text-xs font-medium text-[#6e6c64]">Anime</span>
+                          <span className="rounded-lg bg-[#1c1b18] dark:bg-white px-3 py-1 text-xs font-bold text-white dark:text-[#1c1b18]">Movies</span>
+                          <span className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle px-3 py-1 text-xs font-medium text-[#6e6c64] dark:text-text-secondary">TV Shows</span>
+                          <span className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle px-3 py-1 text-xs font-medium text-[#6e6c64] dark:text-text-secondary">Anime</span>
                         </div>
-                        <div className="flex gap-1 text-[10.5px] font-semibold text-[#6e6c64]">
-                          <span className="rounded bg-[#f7f4ed] px-2 py-0.5">All</span>
-                          <span className="rounded bg-[#f7f4ed] px-2 py-0.5">Watching</span>
-                          <span className="rounded bg-[#f7f4ed] px-2 py-0.5">Plan</span>
-                          <span className="rounded bg-[#dcfce7] px-2 py-0.5 text-[#15803d]">Done</span>
+                        <div className="flex gap-1 text-[10.5px] font-semibold text-[#6e6c64] dark:text-text-muted">
+                          <span className="rounded bg-[#f7f4ed] dark:bg-bg-secondary px-2 py-0.5">All</span>
+                          <span className="rounded bg-[#f7f4ed] dark:bg-bg-secondary px-2 py-0.5">Watching</span>
+                          <span className="rounded bg-[#f7f4ed] dark:bg-bg-secondary px-2 py-0.5">Plan</span>
+                          <span className="rounded bg-[#dcfce7] dark:bg-emerald-950/40 px-2 py-0.5 text-[#15803d] dark:text-emerald-400">Done</span>
                         </div>
                       </div>
 
@@ -1227,7 +1284,7 @@ export default function LandingPage({
                           {
                             title: "Dune: Part Two",
                             status: "Completed",
-                            statusBg: "bg-[#dcfce7] text-[#15803d]",
+                            statusBg: "bg-[#dcfce7] dark:bg-emerald-950/40 text-[#15803d] dark:text-emerald-400",
                             img: "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400&q=80",
                             year: "2024",
                             rating: "★ 8.6",
@@ -1235,7 +1292,7 @@ export default function LandingPage({
                           {
                             title: "Severance S2",
                             status: "Plan to Watch",
-                            statusBg: "bg-[#fef2f2] text-[#dc2626]",
+                            statusBg: "bg-[#fef2f2] dark:bg-rose-950/40 text-[#dc2626] dark:text-rose-400",
                             img: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80",
                             year: "2025",
                             rating: "★ 8.7",
@@ -1243,7 +1300,7 @@ export default function LandingPage({
                           {
                             title: "Frieren",
                             status: "Watching",
-                            statusBg: "bg-[#e0e7ff] text-[#3730a3]",
+                            statusBg: "bg-[#e0e7ff] dark:bg-indigo-950/40 text-[#3730a3] dark:text-indigo-400",
                             img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80",
                             year: "2023",
                             rating: "★ 9.1",
@@ -1251,25 +1308,25 @@ export default function LandingPage({
                           {
                             title: "Thunderbolts*",
                             status: "Completed",
-                            statusBg: "bg-[#dcfce7] text-[#15803d]",
+                            statusBg: "bg-[#dcfce7] dark:bg-emerald-950/40 text-[#15803d] dark:text-emerald-400",
                             img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80",
                             year: "2025",
                             rating: "★ 7.9",
                           },
                         ].map((item, idx) => (
-                          <div className="rounded-lg border border-[#e5e1d8] bg-[#faf8f4] p-2 flex flex-col items-center shadow-2xs group hover:border-[#1c1b18] transition-colors" key={idx}>
-                            <div className="relative h-28 w-full overflow-hidden rounded-md bg-[#eee8dd] mb-2">
+                          <div className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-[#faf8f4] dark:bg-bg-secondary p-2 flex flex-col items-center shadow-2xs group hover:border-[#1c1b18] dark:hover:border-border-hover transition-colors" key={idx}>
+                            <div className="relative h-28 w-full overflow-hidden rounded-md bg-[#eee8dd] dark:bg-bg-card mb-2">
                               <img
                                 src={item.img}
                                 alt={item.title}
                                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                               />
-                              <span className="absolute top-1 right-1 rounded bg-[#1c1b18]/80 px-1.5 py-0.5 font-mono text-[8.5px] font-bold text-white backdrop-blur-xs">
+                              <span className="absolute top-1 right-1 rounded bg-[#1c1b18]/80 dark:bg-black/70 px-1.5 py-0.5 font-mono text-[8.5px] font-bold text-white backdrop-blur-xs">
                                 {item.rating}
                               </span>
                             </div>
-                            <p className="text-[11px] font-bold text-[#1c1b18] truncate w-full text-center">{item.title}</p>
-                            <span className="text-[9px] text-[#6e6c64]">{item.year}</span>
+                            <p className="text-[11px] font-bold text-[#1c1b18] dark:text-text-primary truncate w-full text-center">{item.title}</p>
+                            <span className="text-[9px] text-[#6e6c64] dark:text-text-muted">{item.year}</span>
                             <span className={`mt-1 rounded px-1.5 py-0.2 text-[8.5px] font-bold ${item.statusBg}`}>{item.status}</span>
                           </div>
                         ))}
@@ -1281,60 +1338,60 @@ export default function LandingPage({
 
               {activeDashTab === "investments" && (
                 <div className="flex flex-col gap-5 font-body">
-                  <div className="flex items-center justify-between border-b border-[#e5e1d8] pb-3">
+                  <div className="flex items-center justify-between border-b border-[#e5e1d8] dark:border-border-subtle pb-3">
                     <div>
-                      <h3 className="text-xl font-bold tracking-tight text-[#1c1b18] italic font-serif" style={SERIF_ITALIC_STYLE}>
+                      <h3 className="text-xl font-bold tracking-tight text-[#1c1b18] dark:text-text-primary italic font-serif" style={SERIF_ITALIC_STYLE}>
                         Wealth &amp; Portfolio Management
                       </h3>
-                      <p className="text-xs text-[#6e6c64]">Manage holdings, learn investment principles, and optimize asset allocation</p>
+                      <p className="text-xs text-[#6e6c64] dark:text-text-muted">Manage holdings, learn investment principles, and optimize asset allocation</p>
                     </div>
-                    <button className="rounded-lg bg-[#1c1b18] px-3 py-1.5 text-xs font-semibold text-white cursor-pointer shadow-xs">🔄 Sync Live Prices</button>
+                    <button className="rounded-lg bg-[#1c1b18] dark:bg-white px-3 py-1.5 text-xs font-semibold text-white dark:text-[#1c1b18] cursor-pointer shadow-xs">🔄 Sync Live Prices</button>
                   </div>
 
                   <div className="grid grid-cols-5 gap-3 max-[900px]:grid-cols-3 max-[480px]:grid-cols-1">
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3">
-                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#6e6c64]">Portfolio Value</span>
-                      <p className="mt-1 text-lg font-extrabold text-[#1c1b18]">₹6,736.80</p>
-                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64]">Current market valuation</span>
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-3">
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#6e6c64] dark:text-text-muted">Portfolio Value</span>
+                      <p className="mt-1 text-lg font-extrabold text-[#1c1b18] dark:text-text-primary">₹6,736.80</p>
+                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64] dark:text-text-muted">Current market valuation</span>
                     </div>
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3">
-                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#6e6c64]">Total Invested</span>
-                      <p className="mt-1 text-lg font-extrabold text-[#1c1b18]">₹6,689.55</p>
-                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64]">Total net capital inputs</span>
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-3">
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#6e6c64] dark:text-text-muted">Total Invested</span>
+                      <p className="mt-1 text-lg font-extrabold text-[#1c1b18] dark:text-text-primary">₹6,689.55</p>
+                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64] dark:text-text-muted">Total net capital inputs</span>
                     </div>
-                    <div className="rounded-xl border border-[#bbf7d0] bg-[#f0fdf4] p-3">
-                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#166534]">Unrealized P&amp;L</span>
-                      <p className="mt-1 text-lg font-extrabold text-[#15803d]">+₹47.25</p>
-                      <span className="mt-0.5 block text-[9.5px] font-bold text-[#16a34a]">+0.71% Return</span>
+                    <div className="rounded-xl border border-[#bbf7d0] dark:border-emerald-900/40 bg-[#f0fdf4] dark:bg-emerald-950/30 p-3">
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#166534] dark:text-emerald-400">Unrealized P&amp;L</span>
+                      <p className="mt-1 text-lg font-extrabold text-[#15803d] dark:text-emerald-300">+₹47.25</p>
+                      <span className="mt-0.5 block text-[9.5px] font-bold text-[#16a34a] dark:text-emerald-400">+0.71% Return</span>
                     </div>
-                    <div className="rounded-xl border border-[#bbf7d0] bg-[#f0fdf4] p-3">
-                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#166534]">Realized Profit</span>
-                      <p className="mt-1 text-lg font-extrabold text-[#15803d]">+₹1,268.30</p>
-                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64]">From 3 closed assets</span>
+                    <div className="rounded-xl border border-[#bbf7d0] dark:border-emerald-900/40 bg-[#f0fdf4] dark:bg-emerald-950/30 p-3">
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#166534] dark:text-emerald-400">Realized Profit</span>
+                      <p className="mt-1 text-lg font-extrabold text-[#15803d] dark:text-emerald-300">+₹1,268.30</p>
+                      <span className="mt-0.5 block text-[9.5px] text-[#6e6c64] dark:text-text-muted">From 3 closed assets</span>
                     </div>
-                    <div className="rounded-xl border border-[#fecaca] bg-[#fff5f5] p-3">
-                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#991b1b]">Today&apos;s Movement</span>
-                      <p className="mt-1 text-lg font-extrabold text-[#dc2626]">-₹40.95</p>
-                      <span className="mt-0.5 block text-[9.5px] font-bold text-[#ef4444]">-0.60% Today</span>
+                    <div className="rounded-xl border border-[#fecaca] dark:border-rose-900/40 bg-[#fff5f5] dark:bg-rose-950/30 p-3">
+                      <span className="text-[9px] font-bold tracking-wider uppercase text-[#991b1b] dark:text-rose-400">Today&apos;s Movement</span>
+                      <p className="mt-1 text-lg font-extrabold text-[#dc2626] dark:text-rose-400">-₹40.95</p>
+                      <span className="mt-0.5 block text-[9.5px] font-bold text-[#ef4444] dark:text-rose-400">-0.60% Today</span>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4 max-[800px]:grid-cols-1 text-xs">
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4 shadow-xs">
-                      <span className="font-bold text-[#1c1b18]">Current Asset Allocation</span>
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-4 shadow-xs">
+                      <span className="font-bold text-[#1c1b18] dark:text-text-primary">Current Asset Allocation</span>
                       <div className="mt-3 flex items-center gap-4">
                         <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#1d4ed8] text-white font-extrabold text-[10px] text-center shadow-xs">NET WORTH ₹7K</div>
                         <div>
-                          <p className="font-bold text-[#1c1b18]">Stocks / Equity <span className="font-mono text-[#6e6c64]">₹6,737 (100%)</span></p>
-                          <span className="mt-2 inline-block rounded bg-[#dcfce7] px-2 py-0.5 font-bold text-[#15803d] text-[10px]">BEST RETURN: ETERNAL.NS (+0.71%)</span>
+                          <p className="font-bold text-[#1c1b18] dark:text-text-primary">Stocks / Equity <span className="font-mono text-[#6e6c64] dark:text-text-muted">₹6,737 (100%)</span></p>
+                          <span className="mt-2 inline-block rounded bg-[#dcfce7] dark:bg-emerald-950/40 px-2 py-0.5 font-bold text-[#15803d] dark:text-emerald-400 text-[10px]">BEST RETURN: ETERNAL.NS (+0.71%)</span>
                         </div>
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4 shadow-xs">
-                      <div className="flex justify-between border-b border-[#f4f0ea] pb-2 mb-2 font-bold text-[#1c1b18]">
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-4 shadow-xs">
+                      <div className="flex justify-between border-b border-[#f4f0ea] dark:border-border-subtle pb-2 mb-2 font-bold text-[#1c1b18] dark:text-text-primary">
                         <span>Target Risk Allocation</span>
-                        <span className="text-[10.5px] text-[#6e6c64]">Balanced Profile</span>
+                        <span className="text-[10.5px] text-[#6e6c64] dark:text-text-muted">Balanced Profile</span>
                       </div>
                       <div className="flex flex-col gap-1.5 text-[10.5px]">
                         <div className="flex justify-between"><span>Cash &amp; FDs</span><span className="font-mono text-[#9c9a92]">0% / 25% target</span></div>
@@ -1346,33 +1403,33 @@ export default function LandingPage({
                   </div>
 
                   <div className="grid grid-cols-[220px_1fr] gap-4 max-[900px]:grid-cols-1 text-xs">
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 flex flex-col gap-2 shadow-xs">
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-3.5 flex flex-col gap-2 shadow-xs">
                       <span className="font-mono text-[9.5px] font-bold uppercase text-[#9c9a92]">Add Investment</span>
-                      <input className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-3 py-1.5 text-xs" placeholder="Asset Ticker" defaultValue="ETERNAL.NS" />
-                      <select className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-3 py-1.5 text-xs">
+                      <input className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-[#f7f4ed] dark:bg-bg-secondary px-3 py-1.5 text-xs text-[#1c1b18] dark:text-text-primary" placeholder="Asset Ticker" defaultValue="ETERNAL.NS" />
+                      <select className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-[#f7f4ed] dark:bg-bg-secondary px-3 py-1.5 text-xs text-[#1c1b18] dark:text-text-primary">
                         <option>Equity (Stocks)</option>
                         <option>Mutual Fund</option>
                         <option>Crypto</option>
                       </select>
-                      <input className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-3 py-1.5 text-xs" placeholder="Total Capital" defaultValue="6689.55" />
-                      <button className="rounded-lg bg-[#1c1b18] py-1.5 text-xs font-bold text-white cursor-pointer">+ Save Asset</button>
+                      <input className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-[#f7f4ed] dark:bg-bg-secondary px-3 py-1.5 text-xs text-[#1c1b18] dark:text-text-primary" placeholder="Total Capital" defaultValue="6689.55" />
+                      <button className="rounded-lg bg-[#1c1b18] dark:bg-white py-1.5 text-xs font-bold text-white dark:text-[#1c1b18] cursor-pointer">+ Save Asset</button>
                     </div>
 
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 shadow-xs">
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-3.5 shadow-xs">
                       <span className="font-mono text-[9.5px] font-bold uppercase text-[#9c9a92] mb-2.5 block">Active Holdings Ledger</span>
-                      <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_1fr] border-b border-[#f4f0ea] pb-2 font-mono text-[9.5px] text-[#9c9a92] uppercase">
+                      <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_1fr] border-b border-[#f4f0ea] dark:border-border-subtle pb-2 font-mono text-[9.5px] text-[#9c9a92] uppercase">
                         <span>Asset</span>
                         <span>Category</span>
                         <span>Market Value</span>
                         <span>Returns</span>
                         <span className="text-right">Day Chg</span>
                       </div>
-                      <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_1fr] items-center border-b border-[#f7f4ed] py-2 text-xs">
-                        <span className="font-bold text-[#1c1b18]">ETERNAL.NS</span>
-                        <div><span className="rounded bg-[#dbeafe] px-2 py-0.5 font-mono text-[8.5px] font-bold text-[#1d4ed8]">EQUITY</span></div>
-                        <span className="font-bold text-[#1c1b18]">₹6,736.80</span>
-                        <span className="font-bold text-[#15803d]">+₹47.25 (+0.71%)</span>
-                        <span className="font-bold text-right text-[#dc2626]">-₹40.95</span>
+                      <div className="grid grid-cols-[1.2fr_1fr_1fr_1fr_1fr] items-center border-b border-[#f7f4ed] dark:border-border-subtle py-2 text-xs">
+                        <span className="font-bold text-[#1c1b18] dark:text-text-primary">ETERNAL.NS</span>
+                        <div><span className="rounded bg-[#dbeafe] dark:bg-blue-950/40 px-2 py-0.5 font-mono text-[8.5px] font-bold text-[#1d4ed8] dark:text-blue-400">EQUITY</span></div>
+                        <span className="font-bold text-[#1c1b18] dark:text-text-primary">₹6,736.80</span>
+                        <span className="font-bold text-[#15803d] dark:text-emerald-400">+₹47.25 (+0.71%)</span>
+                        <span className="font-bold text-right text-[#dc2626] dark:text-rose-400">-₹40.95</span>
                       </div>
                     </div>
                   </div>
@@ -1381,67 +1438,67 @@ export default function LandingPage({
 
               {activeDashTab === "books" && (
                 <div className="flex flex-col gap-5 font-body">
-                  <div className="flex items-center justify-between border-b border-[#e5e1d8] pb-3">
-                    <h3 className="text-xl font-bold tracking-tight text-[#1c1b18] italic font-serif" style={SERIF_ITALIC_STYLE}>
+                  <div className="flex items-center justify-between border-b border-[#e5e1d8] dark:border-border-subtle pb-3">
+                    <h3 className="text-xl font-bold tracking-tight text-[#1c1b18] dark:text-text-primary italic font-serif" style={SERIF_ITALIC_STYLE}>
                       Book Library
                     </h3>
                   </div>
 
                   <div className="grid grid-cols-4 gap-3.5 max-[900px]:grid-cols-2 max-[480px]:grid-cols-1">
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4">
-                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64]">Reading Now</span>
-                      <p className="mt-1 text-2xl font-extrabold text-[#1c1b18]">1</p>
-                      <span className="mt-1 block text-[10px] text-[#6e6c64]">In progress</span>
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64] dark:text-text-muted">Reading Now</span>
+                      <p className="mt-1 text-2xl font-extrabold text-[#1c1b18] dark:text-text-primary">1</p>
+                      <span className="mt-1 block text-[10px] text-[#6e6c64] dark:text-text-muted">In progress</span>
                     </div>
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4">
-                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64]">To Read</span>
-                      <p className="mt-1 text-2xl font-extrabold text-[#1c1b18]">0</p>
-                      <span className="mt-1 block text-[10px] text-[#6e6c64]">On the shelf</span>
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64] dark:text-text-muted">To Read</span>
+                      <p className="mt-1 text-2xl font-extrabold text-[#1c1b18] dark:text-text-primary">0</p>
+                      <span className="mt-1 block text-[10px] text-[#6e6c64] dark:text-text-muted">On the shelf</span>
                     </div>
-                    <div className="rounded-xl border border-[#bbf7d0] bg-[#f0fdf4] p-4">
-                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#15803d]">Finished</span>
-                      <p className="mt-1 text-2xl font-extrabold text-[#15803d]">27</p>
-                      <span className="mt-1 block text-[10px] text-[#16a34a]">Books read</span>
+                    <div className="rounded-xl border border-[#bbf7d0] dark:border-emerald-800/40 bg-[#f0fdf4] dark:bg-emerald-950/20 p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#15803d] dark:text-emerald-400">Finished</span>
+                      <p className="mt-1 text-2xl font-extrabold text-[#15803d] dark:text-emerald-400">27</p>
+                      <span className="mt-1 block text-[10px] text-[#16a34a] dark:text-emerald-300">Books read</span>
                     </div>
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4">
-                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64]">Total in Library</span>
-                      <p className="mt-1 text-2xl font-extrabold text-[#1c1b18]">28</p>
-                      <span className="mt-1 block text-[10px] text-[#6e6c64]">All cataloged books</span>
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-4">
+                      <span className="text-[9.5px] font-bold tracking-wider uppercase text-[#6e6c64] dark:text-text-muted">Total in Library</span>
+                      <p className="mt-1 text-2xl font-extrabold text-[#1c1b18] dark:text-text-primary">28</p>
+                      <span className="mt-1 block text-[10px] text-[#6e6c64] dark:text-text-muted">All cataloged books</span>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-[220px_1fr] gap-4 max-[900px]:grid-cols-1">
                     <div className="flex flex-col gap-3">
-                      <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 text-xs flex flex-col gap-2 shadow-xs">
-                        <span className="font-mono text-[9.5px] font-bold uppercase text-[#9c9a92]">Search Google Books</span>
-                        <input className="rounded-lg border border-[#e5e1d8] bg-[#f7f4ed] px-3 py-1.5 text-xs" placeholder="Search books..." />
-                        <button className="rounded-lg bg-[#6e6c64] py-1.5 text-xs font-bold text-white cursor-pointer">Search</button>
+                      <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-3.5 text-xs flex flex-col gap-2 shadow-xs">
+                        <span className="font-mono text-[9.5px] font-bold uppercase text-[#9c9a92] dark:text-text-muted">Search Google Books</span>
+                        <input className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-[#f7f4ed] dark:bg-bg-surface px-3 py-1.5 text-xs text-[#1c1b18] dark:text-text-primary outline-none" placeholder="Search books..." />
+                        <button className="rounded-lg bg-[#6e6c64] dark:bg-bg-surface-active py-1.5 text-xs font-bold text-white cursor-pointer hover:opacity-90">Search</button>
                       </div>
 
-                      <div className="rounded-xl border border-[#e5e1d8] bg-white p-3.5 text-xs shadow-xs">
-                        <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#9c9a92]">🤖 AI Book Recommendation</span>
+                      <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-3.5 text-xs shadow-xs">
+                        <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#9c9a92] dark:text-text-muted">🤖 AI Book Recommendation</span>
                         <div className="mt-2.5 flex gap-2.5 items-center">
                           <img
                             src="https://covers.openlibrary.org/b/isbn/9780156001311-L.jpg"
                             alt="The Name of the Rose cover"
-                            className="h-16 w-11 rounded object-cover shadow-xs border border-[#e5e1d8]"
+                            className="h-16 w-11 rounded object-cover shadow-xs border border-[#e5e1d8] dark:border-border-subtle"
                           />
                           <div>
-                            <p className="font-bold text-[#1c1b18] leading-tight">The Name of the Rose</p>
-                            <span className="mt-0.5 block text-[9.5px] text-[#6e6c64]">Umberto Eco</span>
-                            <span className="mt-1 inline-block rounded bg-[#fef08a] px-1.5 py-0.2 text-[8.5px] font-bold text-[#854d0e]">Mystery / History</span>
+                            <p className="font-bold text-[#1c1b18] dark:text-text-primary leading-tight">The Name of the Rose</p>
+                            <span className="mt-0.5 block text-[9.5px] text-[#6e6c64] dark:text-text-muted">Umberto Eco</span>
+                            <span className="mt-1 inline-block rounded bg-[#fef08a] dark:bg-amber-950/40 px-1.5 py-0.2 text-[8.5px] font-bold text-[#854d0e] dark:text-amber-300">Mystery / History</span>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="rounded-xl border border-[#e5e1d8] bg-white p-4 shadow-xs">
-                      <div className="flex items-center justify-between border-b border-[#f4f0ea] pb-3 mb-3">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-[#1c1b18]">Your Library</h4>
-                        <div className="flex gap-1 text-[10.5px] font-semibold text-[#6e6c64]">
-                          <span className="rounded bg-[#f7f4ed] px-2 py-0.5">All</span>
-                          <span className="rounded bg-[#f7f4ed] px-2 py-0.5">Reading</span>
-                          <span className="rounded bg-[#dcfce7] px-2 py-0.5 text-[#15803d]">Done</span>
+                    <div className="rounded-xl border border-[#e5e1d8] dark:border-border-subtle bg-white dark:bg-bg-card p-4 shadow-xs">
+                      <div className="flex items-center justify-between border-b border-[#f4f0ea] dark:border-border-subtle pb-3 mb-3">
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-[#1c1b18] dark:text-text-primary">Your Library</h4>
+                        <div className="flex gap-1 text-[10.5px] font-semibold text-[#6e6c64] dark:text-text-muted">
+                          <span className="rounded bg-[#f7f4ed] dark:bg-bg-surface px-2 py-0.5">All</span>
+                          <span className="rounded bg-[#f7f4ed] dark:bg-bg-surface px-2 py-0.5">Reading</span>
+                          <span className="rounded bg-[#dcfce7] dark:bg-emerald-950/40 px-2 py-0.5 text-[#15803d] dark:text-emerald-400">Done</span>
                         </div>
                       </div>
 
@@ -1468,17 +1525,17 @@ export default function LandingPage({
                             cover: "https://covers.openlibrary.org/b/isbn/9780439554930-L.jpg",
                           },
                         ].map((book, idx) => (
-                          <div className="rounded-lg border border-[#e5e1d8] bg-[#faf8f4] p-2 flex flex-col items-center text-center shadow-2xs group hover:border-[#1c1b18] transition-colors" key={idx}>
-                            <div className="relative h-28 w-full overflow-hidden rounded-md bg-[#eee8dd] mb-2 flex items-center justify-center">
+                          <div className="rounded-lg border border-[#e5e1d8] dark:border-border-subtle bg-[#faf8f4] dark:bg-bg-surface p-2 flex flex-col items-center text-center shadow-2xs group hover:border-[#1c1b18] dark:hover:border-text-primary transition-colors" key={idx}>
+                            <div className="relative h-28 w-full overflow-hidden rounded-md bg-[#eee8dd] dark:bg-bg-card mb-2 flex items-center justify-center">
                               <img
                                 src={book.cover}
                                 alt={book.title}
                                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                               />
                             </div>
-                            <p className="text-[11px] font-bold text-[#1c1b18] truncate w-full">{book.title}</p>
-                            <span className="text-[9px] text-[#6e6c64] truncate w-full">{book.author}</span>
-                            <span className="mt-1 rounded bg-[#dcfce7] px-1.5 py-0.2 text-[8.5px] font-bold text-[#15803d]">Done ✓</span>
+                            <p className="text-[11px] font-bold text-[#1c1b18] dark:text-text-primary truncate w-full">{book.title}</p>
+                            <span className="text-[9px] text-[#6e6c64] dark:text-text-muted truncate w-full">{book.author}</span>
+                            <span className="mt-1 rounded bg-[#dcfce7] dark:bg-emerald-950/40 px-1.5 py-0.2 text-[8.5px] font-bold text-[#15803d] dark:text-emerald-400">Done ✓</span>
                           </div>
                         ))}
                       </div>
