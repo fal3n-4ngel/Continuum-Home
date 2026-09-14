@@ -238,9 +238,9 @@ export async function adminSaveDailyRecommendation(
   const db = getAdminDb();
   const expireAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
   await db
-    .collection("recommendations")
+    .collection("users")
     .doc(uid)
-    .collection("entries")
+    .collection("recommendations")
     .doc(`${type}_${date}`)
     .set({ ...recommendation, expireAt });
 }
@@ -261,6 +261,11 @@ export async function adminPurgeUserData(uid: string): Promise<void> {
   await db.collection("portfolios").doc(uid).delete().catch(() => {});
 
   await db.collection("watchlists").doc(uid).delete().catch(() => {});
+
+  const userRecsSnap = await db.collection("users").doc(uid).collection("recommendations").get();
+  const userRecsBatch = db.batch();
+  userRecsSnap.docs.forEach((doc) => userRecsBatch.delete(doc.ref));
+  if (!userRecsSnap.empty) await userRecsBatch.commit();
 
   const recsEntries = await db.collection("recommendations").doc(uid).collection("entries").get();
   const recsBatch = db.batch();
