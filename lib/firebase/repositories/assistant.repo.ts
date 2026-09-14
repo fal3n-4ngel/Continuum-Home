@@ -31,7 +31,7 @@ export async function getDailyRecommendation(
   if (cached !== undefined && cached !== null) return cached;
 
   try {
-    const docPath = userPath(session, "recommendations", "entries", `${type}_${date}`);
+    const docPath = userPath(session, "recommendations", `${type}_${date}`);
     const snap = await fsFetch<FirestoreDocument>(session, docPath);
     const data = fromFields(snap.fields || {}) as unknown as DailyRecommendation;
     await cacheSet(cacheKey, data, RECOMMENDATIONS_CACHE_TTL);
@@ -59,7 +59,7 @@ export async function saveDailyRecommendation(
     expireAt,
   };
 
-  const docPath = userPath(session, "recommendations", "entries", `${type}_${date}`);
+  const docPath = userPath(session, "recommendations", `${type}_${date}`);
   const body = {
     fields: toFields(docData),
   };
@@ -97,7 +97,7 @@ export async function getHealthAnalytics(session: Session): Promise<HealthAnalyt
   if (cached !== undefined && cached !== null) return cached;
 
   try {
-    const docPath = userPath(session, "recommendations", "entries", "health_analytics");
+    const docPath = userPath(session, "recommendations", "health_analytics");
     const snap = await fsFetch<FirestoreDocument>(session, docPath);
     const data = fromFields(snap.fields || {}) as unknown as HealthAnalyticsReport;
     await cacheSet(cacheKey, data, HEALTH_ANALYTICS_CACHE_TTL);
@@ -116,7 +116,7 @@ export async function saveHealthAnalytics(
   report: HealthAnalyticsReport
 ): Promise<void> {
   const cacheKey = healthAnalyticsCacheKey(session);
-  const docPath = userPath(session, "recommendations", "entries", "health_analytics");
+  const docPath = userPath(session, "recommendations", "health_analytics");
   const body = {
     fields: toFields(report as any),
   };

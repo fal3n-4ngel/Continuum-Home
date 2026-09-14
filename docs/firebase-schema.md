@@ -27,9 +27,9 @@ Continuum Home adheres to three core database architectural tenets:
 │
 ├── /settings/preferences                       [Single document: UI settings, salary schedule, release dismissals]
 │
-└── /watchlists/default                         [Single document: bucketed map of all media items]
-
-/recommendations/{date}                         [System collection: AI financial advice & health summaries]
+├── /watchlists/default                         [Single document: bucketed map of all media items]
+│
+└── /recommendations/{docId}                    [Subcollection: AI daily media recommendations & health analytics]
 ```
 
 ---
