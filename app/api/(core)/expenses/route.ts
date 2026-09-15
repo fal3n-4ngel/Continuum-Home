@@ -45,12 +45,28 @@ export async function POST(req: NextRequest) {
       const added = results.filter((r) => r.success).length;
 
       if (added > 0) {
-        recordDomainEvent({
-          eventType: DOMAIN_EVENTS.EXPENSE_CREATED,
-          userId: session.uid,
-          userEmail: session.user.email,
-          itemCount: added,
-          payload: { batch: true, submitted: entries.length },
+        const channel = isCustomGptRequest(req) ? "custom_gpt" : "web";
+        results.forEach((r, idx) => {
+          if (r.success && "id" in r && r.id) {
+            const entry = entries[idx];
+            if (!entry) return;
+            const resolvedDate = entry.date || new Date().toISOString().slice(0, 10);
+            recordDomainEvent({
+              eventType: DOMAIN_EVENTS.EXPENSE_CREATED,
+              userId: session.uid,
+              entityId: r.id as string,
+              userEmail: session.user.email,
+              itemCount: 1,
+              payload: {
+                title: entry.title,
+                amount: entry.amount,
+                category: entry.category,
+                date: resolvedDate,
+                channel,
+                batch: true,
+              },
+            });
+          }
         });
       }
 
