@@ -10,9 +10,9 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: 'continuum',
     name: 'Continuum',
-    description: 'The original signature warm paper canvas and ivory card',
+    description: 'The signature architectural warm paper canvas, terracotta, and golden ochre',
     type: 'light',
-    swatches: ['#F5F1EB', '#FAF7F2', '#DCD8D0', '#E5B85C', '#1A1A1A'],
+    swatches: ['#F3EFEA', '#FAF8F5', '#DDD5CB', '#D99419', '#9E5D48'],
   },
   {
     id: 'obsidian-noir',
@@ -38,9 +38,9 @@ export const THEMES: ThemeDefinition[] = [
   {
     id: 'continuum-dark',
     name: 'Continuum Dark',
-    description: 'Deep midnight sumi ink with warm ivory parchment text',
+    description: 'Deep architectural CAD midnight with warm parchment, terracotta, and ochre',
     type: 'dark',
-    swatches: ['#0F1012', '#1A1B20', '#262830', '#60A5FA', '#F3F4F6'],
+    swatches: ['#0C0D0E', '#18191D', '#25272E', '#F59E0B', '#E07A5F'],
   },
   {
     id: 'dracula',

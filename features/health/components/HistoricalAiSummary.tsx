@@ -349,10 +349,10 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-xs">
+    <div className="flex flex-col gap-4 rounded-sm border border-border-subtle bg-bg-card p-6 shadow-xs">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-subtle/60 pb-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-secondary text-text-primary">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-border-subtle bg-bg-secondary text-accent-terracotta">
             <Sparkles size={18} strokeWidth={1.8} />
           </div>
           <div>
@@ -361,7 +361,7 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
                 AI Historical Spend Intelligence
               </h3>
               {!isProUser && (
-                <span className="rounded border border-border-subtle bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-text-muted">
+                <span className="rounded-xs border border-border-subtle bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-text-muted">
                   AI Preview
                 </span>
               )}
@@ -372,15 +372,15 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
           </div>
         </div>
 
-        <span className="self-start sm:self-auto font-mono text-[10px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-full border border-border-subtle/60 shadow-2xs">
+        <span className="self-start sm:self-auto font-mono text-[10px] font-semibold uppercase tracking-wider text-text-secondary bg-bg-secondary px-3 py-1 rounded-sm border border-border-subtle shadow-2xs">
           Groq AI · Private
         </span>
       </div>
 
       {!isProUser && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-dashed border-border-subtle bg-bg-primary/40 p-3.5 text-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-sm border border-dashed border-border-subtle bg-bg-primary/40 p-3.5 text-xs">
           <div className="flex items-center gap-2.5">
-            <ShieldCheck size={16} className="shrink-0 text-text-secondary" />
+            <ShieldCheck size={16} className="shrink-0 text-accent-terracotta" />
             <span className="text-text-secondary leading-relaxed">
               Showing simulated AI historical insights. Continuum Pro analyzes your real logged expenses privately.
             </span>
@@ -389,7 +389,7 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
             <button
               type="button"
               onClick={onClaimPro}
-              className="cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-1 text-xs font-semibold text-bg-primary hover:opacity-90 transition-all shrink-0 self-start sm:self-auto shadow-xs"
+              className="cursor-pointer rounded-sm border border-accent-terracotta bg-accent-terracotta px-4 py-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-[#FAF8F5] hover:opacity-90 transition-all shrink-0 self-start sm:self-auto shadow-xs"
             >
               Unlock Pro Insights →
             </button>
@@ -398,7 +398,7 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
       )}
 
       {stats.inProgressPeriod && (
-        <div className="flex items-center justify-between gap-3 rounded-xl border border-border-subtle/80 bg-bg-secondary/40 px-4 py-2.5 text-xs">
+        <div className="flex items-center justify-between gap-3 rounded-sm border border-border-subtle bg-bg-secondary/40 px-4 py-2.5 text-xs">
           <div className="flex items-center gap-2.5 min-w-0">
             <Clock size={15} className="shrink-0 text-text-muted" />
             <span className="truncate text-text-secondary text-[11.5px]">
@@ -407,20 +407,20 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
               {Math.round(stats.inProgressPeriod.totalSpend).toLocaleString("en-IN")} logged so far. Historical baseline strictly reflects completed periods to prevent premature distortion.
             </span>
           </div>
-          <span className="shrink-0 rounded-full border border-border-subtle bg-bg-primary px-2.5 py-0.5 font-mono text-[9.5px] font-semibold text-text-secondary">
+          <span className="shrink-0 rounded-sm border border-border-subtle bg-bg-primary px-2.5 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider text-text-secondary">
             In Progress
           </span>
         </div>
       )}
 
       <div className="grid grid-cols-3 gap-3 max-md:grid-cols-1">
-        <div className="flex flex-col justify-between rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4">
+        <div className="flex flex-col justify-between rounded-sm border border-border-subtle bg-bg-primary/40 p-4">
           <span className="font-mono text-[10px] font-semibold tracking-wider text-text-muted uppercase">
             Trajectory Status
           </span>
           <div className="my-2">
             <span
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 font-mono text-[11px] font-bold ${severityBadgeClass(
+              className={`inline-flex items-center gap-1.5 rounded-sm border px-2.5 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider ${severityBadgeClass(
                 stats.trendSeverity
               )}`}
             >
@@ -439,7 +439,7 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
           </span>
         </div>
 
-        <div className="flex flex-col justify-between rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4">
+        <div className="flex flex-col justify-between rounded-sm border border-border-subtle bg-bg-primary/40 p-4">
           <span className="font-mono text-[10px] font-semibold tracking-wider text-text-muted uppercase">
             Historical Average Spend
           </span>
@@ -453,7 +453,7 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
           </span>
         </div>
 
-        <div className="flex flex-col justify-between rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4">
+        <div className="flex flex-col justify-between rounded-sm border border-border-subtle bg-bg-primary/40 p-4">
           <span className="font-mono text-[10px] font-semibold tracking-wider text-text-muted uppercase">
             Dominant Category Baseline
           </span>
@@ -474,7 +474,7 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
       </div>
 
       {stats.fixedTotalAvg > 0 && (
-        <div className="rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4 space-y-3">
+        <div className="rounded-sm border border-border-subtle bg-bg-primary/40 p-4 space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
             <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary">
               Fixed Obligations vs. Discretionary Flexibility
@@ -484,9 +484,9 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
             </span>
           </div>
 
-          <div className="h-3 w-full overflow-hidden rounded-full bg-bg-secondary flex">
+          <div className="h-2 w-full overflow-hidden rounded-xs bg-bg-secondary flex border border-border-subtle/50">
             <div
-              className="h-full bg-text-primary transition-all duration-500"
+              className="h-full bg-accent-terracotta transition-all duration-500"
               style={{ width: `${stats.fixedSharePct}%` }}
               title={`Fixed Commitments: ${stats.fixedSharePct}%`}
             />
@@ -523,7 +523,7 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
       )}
 
       {stats.recurringProfiles.length > 0 && (
-        <div className="rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4 space-y-3">
+        <div className="rounded-sm border border-border-subtle bg-bg-primary/40 p-4 space-y-3">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary">
               Recurring Category Intelligence (Rent, Transport, Essentials)
@@ -537,7 +537,7 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
             {stats.recurringProfiles.map((p) => (
               <div
                 key={p.name}
-                className="flex flex-col justify-between rounded-lg border border-border-subtle/60 bg-bg-card/70 p-3"
+                className="flex flex-col justify-between rounded-sm border border-border-subtle bg-bg-card/70 p-3"
               >
                 <div className="flex items-center justify-between mb-1.5">
                   <div className="flex items-center gap-1.5">
@@ -582,7 +582,7 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
         </div>
       )}
 
-      <div className="rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4 space-y-2">
+      <div className="rounded-sm border border-border-subtle bg-bg-primary/40 p-4 space-y-2">
         <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary block">
           AI Trajectory Diagnosis
         </span>
@@ -597,7 +597,7 @@ export const HistoricalAiSummary: React.FC<HistoricalAiSummaryProps> = ({
       </div>
 
       {stats.recommendations.length > 0 && (
-        <div className="rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4">
+        <div className="rounded-sm border border-border-subtle bg-bg-primary/40 p-4">
           <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary flex items-center gap-1.5 mb-2.5">
             <Lightbulb size={13} className="text-text-primary" /> STRATEGIC MULTI-PERIOD RECOMMENDATIONS
           </span>

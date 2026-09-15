@@ -17,7 +17,7 @@ export interface SubscriptionsEmailData {
   isPreview?: boolean;
 }
 
-const ALERT = "#b45309";
+const ALERT = "#9E5D48";
 
 function renewalCard(sub: UpcomingRenewal): string {
   return `
@@ -26,12 +26,12 @@ function renewalCard(sub: UpcomingRenewal): string {
                 <table width="100%" cellpadding="0" cellspacing="0"><tr>
                   <td align="left" valign="middle">
                     <table cellpadding="0" cellspacing="0"><tr>
-                      <td align="center" valign="middle" style="font-size:24px;width:44px;height:44px;background-color:${COLORS.hairline};border-radius:8px;">
+                      <td align="center" valign="middle" style="font-size:24px;width:44px;height:44px;background-color:${COLORS.hairline};border-radius:2px;">
                         ${sub.icon || "💳"}
                       </td>
                       <td valign="middle" style="padding-left:16px;">
                         <div class="font-sans txt-main" style="font-size:15px;font-weight:600;line-height:1.2;">${sub.name}</div>
-                        <div class="font-mono txt-warn" style="font-size:9px;font-weight:700;background-color:${COLORS.warnBg}!important;background-image:linear-gradient(${COLORS.warnBg},${COLORS.warnBg})!important;padding:3px 6px;border-radius:4px;margin-top:6px;display:inline-block;">RENEWING IN ${sub.daysUntil} DAYS</div>
+                        <div class="font-mono txt-warn" style="font-size:9px;font-weight:700;background-color:${COLORS.warnBg}!important;background-image:linear-gradient(${COLORS.warnBg},${COLORS.warnBg})!important;border:1px solid ${COLORS.warnBorder};padding:2px 6px;border-radius:2px;margin-top:6px;display:inline-block;">RENEWING IN ${sub.daysUntil} DAYS</div>
                       </td>
                     </tr></table>
                   </td>

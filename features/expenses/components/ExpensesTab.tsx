@@ -1023,7 +1023,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
 
       {mounted && showLogModal && pendingSubToPay && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs transition-opacity">
-          <div className="w-full max-w-md rounded-xl border border-border-subtle bg-bg-card p-6 shadow-2xl animate-[fadeIn_0.2s_ease-out]">
+          <div className="w-full max-w-md rounded-sm border border-border-subtle bg-bg-card p-6 shadow-2xl animate-[fadeIn_0.2s_ease-out]">
             <h3 className="text-sm font-bold text-text-primary mb-2 flex items-center gap-2">
               <span>💳</span> Confirm Subscription Payment
             </h3>
@@ -1075,7 +1075,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
 
       {mounted && showImportResultModal && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs transition-opacity">
-          <div className="w-full max-w-sm rounded-xl border border-border-subtle bg-bg-card p-6 shadow-2xl animate-[fadeIn_0.2s_ease-out]">
+          <div className="w-full max-w-sm rounded-sm border border-border-subtle bg-bg-card p-6 shadow-2xl animate-[fadeIn_0.2s_ease-out]">
             <h3 className="text-sm font-bold text-text-primary mb-2 flex items-center gap-2">
               <span>📥</span> Import CSV Results
             </h3>

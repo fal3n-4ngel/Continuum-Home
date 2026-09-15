@@ -29,11 +29,11 @@ export interface ExpensesEmailData {
   isPreview?: boolean;
 }
 
-const HERO_BG = "#bfdbfe";
-const HERO_BORDER = "#93c5fd";
-const HERO_RULE = "#3b82f6";
-const HERO_LABEL = "#1e40af";
-const HERO_VALUE = "#1e3a8a";
+const HERO_BG = "#FAF8F5";
+const HERO_BORDER = "#DDD5CB";
+const HERO_RULE = "#9E5D48";
+const HERO_LABEL = "#9E5D48";
+const HERO_VALUE = "#26211F";
 
 const TH = `class="font-mono txt-muted" style="font-size:10px;font-weight:700;text-transform:uppercase;padding-bottom:12px;border-bottom:1px solid ${COLORS.hairline};`;
 
@@ -74,11 +74,11 @@ export function buildExpensesEmail(data: ExpensesEmailData): { subject: string; 
   const periodTitle = expensesPeriodTitle(data.period);
 
   const body = wrap(`
-${header(pill(data.period, COLORS.ink))}${data.isPreview ? previewBanner() : ""}
+${header(pill(data.period, COLORS.terracotta))}${data.isPreview ? previewBanner() : ""}
 ${title(periodTitle, `Reporting Period: ${data.periodRange}`)}
 
         <tr><td>
-          <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${HERO_BG}!important;background-image:linear-gradient(${HERO_BG},${HERO_BG})!important;border:1px solid ${HERO_BORDER};border-top:3px solid ${HERO_RULE};border-radius:12px;margin-bottom:24px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color:${HERO_BG}!important;background-image:linear-gradient(${HERO_BG},${HERO_BG})!important;border:1px solid ${HERO_BORDER};border-top:3px solid ${HERO_RULE};border-radius:4px;margin-bottom:24px;">
             <tr><td align="center" style="padding:24px;">
               <div class="font-mono" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:${HERO_LABEL}!important;-webkit-text-fill-color:${HERO_LABEL}!important;">Total Outflow</div>
               <div class="font-sans" style="font-size:36px;font-weight:bold;margin:8px 0;letter-spacing:-1px;color:${HERO_VALUE}!important;-webkit-text-fill-color:${HERO_VALUE}!important;">${inr2(data.totalAmount)}</div>

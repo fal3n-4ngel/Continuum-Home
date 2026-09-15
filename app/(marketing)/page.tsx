@@ -82,10 +82,10 @@ export default function MarketingPage() {
 
   if (isRedirecting) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F5F1EB]">
+      <div className="flex min-h-screen items-center justify-center bg-[#F3EFEA] dark:bg-[#0C0D0E]">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#DCD8D0] border-t-[#1A1A1A]" />
-          <span className="font-mono text-xs tracking-wider text-[#6B685F] uppercase">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-[#DDD5CB] dark:border-[#25272E] border-t-[#9E5D48]" />
+          <span className="font-mono text-xs tracking-wider text-[#6D635C] dark:text-[#9BA1B0] uppercase">
             Opening Dashboard…
           </span>
         </div>

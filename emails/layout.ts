@@ -40,7 +40,11 @@ export function header(rightHtml: string): string {
           <tr>
             <td style="border-bottom:1px solid ${COLORS.hairline};padding-bottom:16px;">
               <table width="100%" cellpadding="0" cellspacing="0"><tr>
-                <td align="left" class="txt-main font-sans" style="font-size:16px;font-weight:500;">Continuum Home</td>
+                <td align="left" style="font-size:15px;font-weight:700;">
+                  <span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:${COLORS.terracotta};margin-right:6px;">⌜</span>
+                  <span class="txt-main font-sans" style="font-size:15px;font-weight:700;letter-spacing:-0.2px;">Continuum</span>
+                  <span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:${COLORS.terracotta};margin-left:6px;">⌟</span>
+                </td>
                 <td align="right">${rightHtml}</td>
               </tr></table>
             </td>
@@ -49,16 +53,16 @@ export function header(rightHtml: string): string {
 }
 
 export function pill(label: string, bg: string): string {
-  return `<span class="font-sans txt-white" style="font-size:9px;font-weight:700;background-color:${bg};background-image:linear-gradient(${bg},${bg});padding:4px 8px;border-radius:20px;text-transform:uppercase;letter-spacing:0.5px;">${label}</span>`;
+  return `<span class="font-mono txt-white" style="font-size:9px;font-weight:700;background-color:${bg};background-image:linear-gradient(${bg},${bg});padding:3px 8px;border-radius:2px;text-transform:uppercase;letter-spacing:0.8px;">${label}</span>`;
 }
 
 export function dateStamp(text: string): string {
-  return `<span class="txt-muted font-sans" style="font-size:12px;">${text}</span>`;
+  return `<span class="txt-muted font-mono" style="font-size:11px;letter-spacing:0.5px;">${text}</span>`;
 }
 
 export function previewBanner(): string {
   return `
-          <tr><td style="background-color:${COLORS.warnBg};background-image:linear-gradient(${COLORS.warnBg},${COLORS.warnBg});border:1px solid ${COLORS.warnBorder};border-radius:8px;padding:10px 16px;">
+          <tr><td style="background-color:${COLORS.warnBg};background-image:linear-gradient(${COLORS.warnBg},${COLORS.warnBg});border:1px solid ${COLORS.warnBorder};border-radius:4px;padding:10px 16px;">
             <span style="font-size:11px;font-weight:700;color:${COLORS.warnInk};font-family:ui-monospace,monospace;">⚡ EMAIL PREVIEW — Sample data only. Not your real data.</span>
           </td></tr>
           <tr><td height="24"></td></tr>`;

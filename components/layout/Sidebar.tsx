@@ -44,9 +44,9 @@ interface SidebarProps {
 }
 
 const navLinkClass = (active: boolean) =>
-  `mb-1 flex cursor-pointer items-center gap-3 rounded-lg px-3.5 py-2.5 text-[13px] font-medium no-underline transition-all duration-200 ${
+  `mb-1 flex cursor-pointer items-center gap-3 rounded-sm px-3.5 py-2 text-[13px] font-medium no-underline transition-all duration-150 ${
     active
-      ? "bg-bg-primary font-semibold text-text-primary"
+      ? "bg-bg-primary font-semibold text-accent-terracotta border-l-2 border-accent-terracotta shadow-xs"
       : "text-text-secondary hover:bg-bg-primary hover:text-text-primary"
   }`;
 
@@ -102,7 +102,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
           <span>Financial Health</span>
           {!isProUser && (
-            <span className="ml-auto inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-1.5 py-[0.5px] font-mono text-[8.5px] font-semibold text-text-muted tracking-wider uppercase">
+            <span className="ml-auto inline-flex shrink-0 items-center rounded-sm border border-border-subtle bg-bg-secondary px-1.5 py-[0.5px] font-mono text-[8.5px] font-semibold text-accent-yellow tracking-wider uppercase">
               PRO
             </span>
           )}
@@ -126,7 +126,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 8V4H8"/><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M2 14h2M20 14h2M15 13v2M9 13v2"/></svg>
           <span>AI Agent</span>
           {!isProUser && (
-            <span className="ml-auto inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-1.5 py-[0.5px] font-mono text-[8.5px] font-semibold text-text-muted tracking-wider uppercase">
+            <span className="ml-auto inline-flex shrink-0 items-center rounded-sm border border-border-subtle bg-bg-secondary px-1.5 py-[0.5px] font-mono text-[8.5px] font-semibold text-accent-yellow tracking-wider uppercase">
               PRO
             </span>
           )}

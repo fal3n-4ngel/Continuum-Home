@@ -18,11 +18,18 @@
   --color-accent-flame: var(--accent-flame);
   --color-accent-terracotta: var(--accent-terracotta);
 
-  --radius-card: 10px;
-  --radius-button: 9999px;
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 4px;
+  --radius-xl: 4px;
+  --radius-2xl: 6px;
+  --radius-3xl: 6px;
+  --radius-card: 4px;
+  --radius-button: 2px;
 
   --shadow-subtle: 0 2px 10px -2px rgba(110, 108, 100, 0.03);
-  --shadow-focus: 0 0 0 3px rgba(28, 27, 24, 0.05);
+  --shadow-focus: 0 0 0 3px rgba(158, 93, 72, 0.15);
 
   --font-body: 'Plus Jakarta Sans', sans-serif;
   --font-serif: 'Playfair Display', serif;
@@ -33,25 +40,25 @@
 [data-theme="continuum"],
 [data-theme="continuum-paper"],
 [data-theme="paper-classic"] {
-  --bg-primary: #F5F1EB;
-  --bg-secondary: #EBE5DB;
-  --bg-card: #FAF7F2;
-  --bg-sidebar: #FAF7F2;
-  --text-primary: #1A1A1A;
-  --text-secondary: #6B685F;
-  --text-muted: #9E9C94;
-  --border-subtle: #DCD8D0;
-  --border-hover: #C5BFA0;
-  --accent-blue: #A0C4E2;
-  --accent-yellow: #E5B85C;
-  --accent-flame: #E58C4A;
-  --accent-terracotta: #B35C44;
+  --bg-primary: #F3EFEA;
+  --bg-secondary: #EAE4DB;
+  --bg-card: #FAF8F5;
+  --bg-sidebar: #FAF8F5;
+  --text-primary: #26211F;
+  --text-secondary: #6D635C;
+  --text-muted: #9C9288;
+  --border-subtle: #DDD5CB;
+  --border-hover: #C8BFB2;
+  --accent-blue: #7C98A6;
+  --accent-yellow: #D99419;
+  --accent-flame: #CF7538;
+  --accent-terracotta: #9E5D48;
 
   --shadow-subtle: 0 2px 10px -2px rgba(110, 108, 100, 0.03);
-  --shadow-focus: 0 0 0 3px rgba(28, 27, 24, 0.05);
+  --shadow-focus: 0 0 0 3px rgba(158, 93, 72, 0.15);
 
-  --radius-card: 10px;
-  --radius-button: 9999px;
+  --radius-card: 4px;
+  --radius-button: 2px;
 
   --font-body: 'Plus Jakarta Sans', sans-serif;
 }
@@ -153,7 +160,7 @@
   --accent-blue: #60A5FA;
   --accent-yellow: #F59E0B;
   --accent-flame: #F97316;
-  --accent-terracotta: #EF4444;
+  --accent-terracotta: #9E5D48;
 
   --shadow-subtle: 0 4px 20px -2px rgba(0, 0, 0, 0.7);
   --shadow-focus: 0 0 0 3px rgba(96, 165, 250, 0.25);
@@ -163,24 +170,24 @@
 
 .dark,
 [data-theme="continuum-dark"] {
-  --bg-primary: #0F1012;
-  --bg-secondary: #17181C;
-  --bg-card: #1A1B20;
-  --bg-sidebar: #141518;
-  --text-primary: #F3F4F6;
-  --text-secondary: #9CA3AF;
+  --bg-primary: #0C0D0E;
+  --bg-secondary: #141518;
+  --bg-card: #18191D;
+  --bg-sidebar: #0F1012;
+  --text-primary: #F4F5F7;
+  --text-secondary: #9BA1B0;
   --text-muted: #6B7280;
-  --border-subtle: #262830;
-  --border-hover: #3B3E4B;
+  --border-subtle: #25272E;
+  --border-hover: #373A45;
   --accent-blue: #60A5FA;
   --accent-yellow: #F59E0B;
   --accent-flame: #F97316;
-  --accent-terracotta: #EF4444;
+  --accent-terracotta: #E07A5F;
 
-  --shadow-subtle: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
-  --shadow-focus: 0 0 0 3px rgba(96, 165, 250, 0.25);
-  --radius-card: 10px;
-  --radius-button: 9999px;
+  --shadow-subtle: 0 4px 20px -2px rgba(0, 0, 0, 0.7);
+  --shadow-focus: 0 0 0 3px rgba(224, 122, 95, 0.25);
+  --radius-card: 4px;
+  --radius-button: 2px;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -197,7 +204,7 @@
     --accent-blue: #60A5FA;
     --accent-yellow: #F59E0B;
     --accent-flame: #F97316;
-    --accent-terracotta: #EF4444;
+    --accent-terracotta: #9E5D48;
 
     --shadow-subtle: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
     --shadow-focus: 0 0 0 3px rgba(96, 165, 250, 0.25);
@@ -219,7 +226,7 @@
   --accent-blue: #3B82F6;
   --accent-yellow: #EAB308;
   --accent-flame: #F97316;
-  --accent-terracotta: #EF4444;
+  --accent-terracotta: #9E5D48;
 
   --shadow-subtle: 0 4px 20px -2px rgba(0, 0, 0, 0.95);
   --shadow-focus: 0 0 0 3px rgba(59, 130, 246, 0.3);
@@ -240,7 +247,7 @@
   --accent-blue: #58A6FF;
   --accent-yellow: #D29922;
   --accent-flame: #DB6D28;
-  --accent-terracotta: #F85149;
+  --accent-terracotta: #9E5D48;
 
   --shadow-subtle: 0 4px 20px -2px rgba(1, 4, 9, 0.85);
   --shadow-focus: 0 0 0 3px rgba(88, 166, 255, 0.25);
@@ -261,7 +268,7 @@
   --accent-blue: #8BE9FD;
   --accent-yellow: #F1FA8C;
   --accent-flame: #FFB86C;
-  --accent-terracotta: #FF5555;
+  --accent-terracotta: #9E5D48;
 
   --shadow-subtle: 0 4px 20px -2px rgba(25, 26, 33, 0.7);
   --shadow-focus: 0 0 0 3px rgba(189, 147, 249, 0.3);
@@ -356,5 +363,101 @@ html.theme-transition *::after {
 ::view-transition-new(root) {
   animation-duration: 0.28s;
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes heroFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bubbleIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes chatDotBounce {
+  0%, 80%, 100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.architectural-grid {
+  background-image: 
+    linear-gradient(to right, rgba(160, 145, 130, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(160, 145, 130, 0.08) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.architectural-dashed-grid {
+  background-image: radial-gradient(circle, rgba(160, 145, 130, 0.2) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.dark .architectural-grid {
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+.dark .architectural-dashed-grid {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.canvas-dotted-grid {
+  background-image: radial-gradient(circle, #D8D1C5 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+}
+
+.dark .canvas-dotted-grid {
+  background-image: radial-gradient(circle, #25272E 1.2px, transparent 1.2px);
+  background-size: 24px 24px;
+}
+
+@keyframes dashFlow {
+  to {
+    stroke-dashoffset: -24;
+  }
+}
+
+.animate-dash-flow {
+  animation: dashFlow 1.2s linear infinite;
+}
+
+@keyframes floatCursor {
+  0%, 100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(28px, 14px);
+  }
+  50% {
+    transform: translate(14px, 32px);
+  }
+  75% {
+    transform: translate(-12px, 18px);
+  }
+}
+
+.animate-float-cursor {
+  animation: floatCursor 9s ease-in-out infinite;
 }
 

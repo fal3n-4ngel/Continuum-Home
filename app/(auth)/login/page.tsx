@@ -78,29 +78,34 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <div className="flex w-full max-w-[380px] flex-col items-center justify-center rounded-2xl border border-border-subtle bg-bg-card p-8 shadow-subtle gap-6 text-center">
+    <div className="relative flex w-full max-w-[380px] flex-col items-center justify-center border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] p-8 shadow-sm gap-6 text-center">
+      <span className="absolute top-2 left-2 font-mono text-[9px] text-[#D99419]">⌜</span>
+      <span className="absolute top-2 right-2 font-mono text-[9px] text-[#D99419]">⌝</span>
+      <span className="absolute bottom-2 left-2 font-mono text-[9px] text-[#D99419]">⌞</span>
+      <span className="absolute bottom-2 right-2 font-mono text-[9px] text-[#D99419]">⌟</span>
+
       <div className="flex items-center gap-2.5">
-        <LogoMark size={30} className="text-text-primary" />
-        <span className="font-serif text-2xl font-bold tracking-tight text-text-primary">
+        <LogoMark size={28} className="text-[#9E5D48] dark:text-[#E07A5F]" />
+        <span className="font-mono text-xl font-bold tracking-[0.18em] text-[#26211F] dark:text-[#F4F5F7] uppercase">
           {SITE_NAME}
         </span>
       </div>
 
       {status === "loading" && (
         <div className="flex flex-col items-center gap-3">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-border-subtle border-t-text-primary" />
-          <p className="text-xs text-text-muted">Preparing sign-in…</p>
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#DDD5CB] dark:border-[#25272E] border-t-[#9E5D48]" />
+          <p className="font-mono text-xs text-[#9C9288] uppercase tracking-wider">Preparing sign-in…</p>
         </div>
       )}
 
       {status === "redirecting" && (
         <div className="flex flex-col items-center gap-3">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-border-subtle border-t-text-primary" />
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#DDD5CB] dark:border-[#25272E] border-t-[#9E5D48]" />
           <div className="flex flex-col gap-1">
-            <p className="text-sm font-semibold text-text-primary">
+            <p className="font-mono text-sm font-semibold text-[#26211F] dark:text-[#F4F5F7] uppercase tracking-wide">
               Redirecting to Google…
             </p>
-            <p className="text-xs text-text-muted">
+            <p className="font-mono text-xs text-[#9C9288]">
               Completing secure authentication
             </p>
           </div>
@@ -109,10 +114,10 @@ export default function LoginPage() {
 
       {status === "error" && (
         <div className="flex flex-col items-center gap-4">
-          <p className="text-xs text-rose-500 max-w-[320px]">{error}</p>
+          <p className="font-mono text-xs text-rose-500 max-w-[320px]">{error}</p>
           <Link
             href="/"
-            className="rounded-full border border-border-subtle bg-bg-primary px-4 py-2 text-xs font-semibold text-text-primary hover:border-border-hover transition-all"
+            className="border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-4 py-2 font-mono text-xs font-semibold text-[#26211F] dark:text-[#F4F5F7] hover:border-[#9E5D48] transition-all uppercase"
           >
             ← Back to home
           </Link>

@@ -51,12 +51,12 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="flex max-h-[88vh] w-full max-w-[560px] flex-col overflow-hidden rounded-2xl border border-border-subtle bg-bg-card shadow-2xl animate-[fadeInScale_0.2s_ease]"
+        className="flex max-h-[88vh] w-full max-w-[560px] flex-col overflow-hidden rounded-sm border border-border-subtle bg-bg-card shadow-2xl animate-[fadeInScale_0.2s_ease]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4 border-b border-border-subtle p-6 pb-4 bg-bg-primary/40">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-2xs">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-2xs">
               <Sparkles size={20} />
             </div>
             <div>
@@ -65,7 +65,7 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
                   {isPreview ? "Release Preview" : "What's New"}
                 </span>
                 {releaseNote.version && (
-                  <span className="inline-flex shrink-0 items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <span className="inline-flex shrink-0 items-center rounded-xs border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                     {releaseNote.version}
                   </span>
                 )}
@@ -85,7 +85,7 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="flex h-8 w-8 min-w-[32px] min-h-[32px] aspect-square p-0 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border-subtle bg-bg-secondary text-text-muted transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover shadow-2xs"
+            className="flex h-8 w-8 min-w-[32px] min-h-[32px] aspect-square p-0 shrink-0 cursor-pointer items-center justify-center rounded-xs border border-border-subtle bg-bg-secondary text-text-muted transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover shadow-2xs"
             aria-label="Close release notes"
           >
             <X size={15} />
@@ -155,7 +155,7 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
           <button
             type="button"
             onClick={onClose}
-            className="flex items-center justify-center gap-2 w-full cursor-pointer rounded-xl border border-text-primary bg-text-primary py-2.5 text-xs font-semibold text-bg-primary transition-all duration-200 hover:opacity-90 active:scale-[0.98] shadow-xs"
+            className="flex items-center justify-center gap-2 w-full cursor-pointer rounded-sm border border-text-primary bg-text-primary py-2.5 text-xs font-mono uppercase tracking-wider font-semibold text-bg-primary transition-all duration-200 hover:opacity-90 active:scale-[0.98] shadow-xs"
           >
             <span>{isPreview ? "Close Preview" : "Got It, Explore Now"}</span>
             <ArrowRight size={14} />

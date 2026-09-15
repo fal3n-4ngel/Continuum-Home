@@ -26,14 +26,16 @@ export function buildAnnouncementEmail(data: AnnouncementEmailData): { subject: 
   const body = wrap(
     `${previewNotice}
       <tr><td>
-        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #fcfbfa; border: 1px solid ${COLORS.hairline}; border-radius: 12px; box-shadow: 0 2px 10px rgba(28,27,24,0.02);">
+        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: ${COLORS.card}; border: 1px solid ${COLORS.hairline}; border-radius: 4px; box-shadow: 0 1px 3px rgba(38,27,24,0.03);">
           <tr>
             <td style="padding: 32px;">
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr><td style="border-bottom: 1px solid ${COLORS.hairline}; padding-bottom: 16px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
-                    <td align="left" style="font-family: ${SANS}; font-size: 14px; font-weight: 600; color: ${COLORS.ink};">Continuum Home</td>
-                    <td align="right" style="font-family: ${SANS}; font-size: 11px; font-weight: 500; color: ${COLORS.muted};">Announcement</td>
+                    <td align="left" style="font-family: ${SANS}; font-size: 14px; font-weight: 700; color: ${COLORS.ink};">
+                      <span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:${COLORS.terracotta};margin-right:6px;">⌜</span>Continuum<span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:${COLORS.terracotta};margin-left:6px;">⌟</span>
+                    </td>
+                    <td align="right" style="font-family: ui-monospace, monospace; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: ${COLORS.muted};">Announcement</td>
                   </tr></table>
                 </td></tr>
 
@@ -41,14 +43,14 @@ export function buildAnnouncementEmail(data: AnnouncementEmailData): { subject: 
 
                 <tr><td align="left">
                   <h1 style="font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 26px; font-weight: normal; margin: 0 0 16px 0; line-height: 1.3; color: ${COLORS.ink};">${data.title}</h1>
-                  <div style="font-family: ${SANS}; font-size: 14px; line-height: 1.6; white-space: pre-wrap; color: #2e2d27;">${data.content}</div>
+                  <div style="font-family: ${SANS}; font-size: 14px; line-height: 1.6; white-space: pre-wrap; color: ${COLORS.ink};">${data.content}</div>
                 </td></tr>
 
                 <tr><td height="32"></td></tr>
 
                 <tr><td align="center" style="border-top: 1px solid ${COLORS.hairline}; padding-top: 24px;">
-                  <a href="${data.appUrl}" style="display: inline-block; background-color: ${COLORS.ink}; color: #ffffff; font-family: ${SANS}; font-size: 13px; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 6px;">Open Dashboard</a>
-                  <p style="font-family: ${SANS}; font-size: 10px; margin-top: 16px; color: #8c8a80;">Continuum — steady flow of life progression.</p>
+                  <a href="${data.appUrl}" style="display: inline-block; background-color: ${COLORS.terracotta}; color: #FAF8F5; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; padding: 11px 22px; border-radius: 2px;">Open Dashboard</a>
+                  <p style="font-family: ${SANS}; font-size: 11px; margin-top: 16px; color: ${COLORS.muted};">Continuum — steady flow of life progression.</p>
                 </td></tr>
               </table>
             </td>

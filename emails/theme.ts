@@ -2,53 +2,60 @@
 export const EMAIL_CSS = `
     :root { color-scheme: light; supported-color-schemes: light; }
     * { box-sizing: border-box; }
-    body { margin: 0; padding: 0; background-color: #f4f3ec !important; -webkit-font-smoothing: antialiased; }
+    body { margin: 0; padding: 0; background-color: #F3EFEA !important; -webkit-font-smoothing: antialiased; }
     table { border-collapse: collapse; border-spacing: 0; }
-    .txt-main  { color: #1c1b18 !important; -webkit-text-fill-color: #1c1b18 !important; }
-    .txt-muted { color: #7c7a72 !important; -webkit-text-fill-color: #7c7a72 !important; }
-    .txt-green { color: #16a34a !important; -webkit-text-fill-color: #16a34a !important; }
-    .txt-red   { color: #dc2626 !important; -webkit-text-fill-color: #dc2626 !important; }
-    .txt-white { color: #ffffff !important; -webkit-text-fill-color: #ffffff !important; }
-    .txt-warn  { color: #b45309 !important; -webkit-text-fill-color: #b45309 !important; }
-    .font-sans  { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
-    .font-serif { font-family: Georgia, "Times New Roman", serif; font-style: italic; }
-    .font-mono  { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
+    .txt-main       { color: #26211F !important; -webkit-text-fill-color: #26211F !important; }
+    .txt-muted      { color: #6D635C !important; -webkit-text-fill-color: #6D635C !important; }
+    .txt-terracotta { color: #9E5D48 !important; -webkit-text-fill-color: #9E5D48 !important; }
+    .txt-ochre      { color: #D99419 !important; -webkit-text-fill-color: #D99419 !important; }
+    .txt-green      { color: #16a34a !important; -webkit-text-fill-color: #16a34a !important; }
+    .txt-red        { color: #dc2626 !important; -webkit-text-fill-color: #dc2626 !important; }
+    .txt-white      { color: #FAF8F5 !important; -webkit-text-fill-color: #FAF8F5 !important; }
+    .txt-warn       { color: #8A5410 !important; -webkit-text-fill-color: #8A5410 !important; }
+    .font-sans      { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    .font-serif     { font-family: Georgia, "Times New Roman", serif; font-style: italic; }
+    .font-mono      { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; }
     .bento-card {
-      background-color: #fcfbfa !important;
-      background-image: linear-gradient(#fcfbfa, #fcfbfa) !important;
-      border: 1px solid #eae8e0;
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(28,27,24,0.02);
+      background-color: #FAF8F5 !important;
+      background-image: linear-gradient(#FAF8F5, #FAF8F5) !important;
+      border: 1px solid #DDD5CB;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(38,33,31,0.03);
     }
     .btn-primary {
       display: inline-block;
-      background-color: #1c1b18 !important;
-      background-image: linear-gradient(#1c1b18, #1c1b18) !important;
-      color: #ffffff !important; -webkit-text-fill-color: #ffffff !important;
-      font-size: 13px; font-weight: 600;
-      text-decoration: none; padding: 12px 24px; border-radius: 6px;
+      background-color: #9E5D48 !important;
+      background-image: linear-gradient(#9E5D48, #9E5D48) !important;
+      color: #FAF8F5 !important; -webkit-text-fill-color: #FAF8F5 !important;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1px;
+      text-decoration: none; padding: 11px 22px; border-radius: 2px;
     }
     .cat-bar-bg {
       height: 6px;
-      background-color: #e5e5e5 !important;
-      background-image: linear-gradient(#e5e5e5,#e5e5e5) !important;
-      border-radius: 3px; overflow: hidden;
+      background-color: #EAE4DB !important;
+      background-image: linear-gradient(#EAE4DB, #EAE4DB) !important;
+      border-radius: 2px; overflow: hidden;
     }
     .cat-bar {
       height: 100%;
-      background-color: #1c1b18 !important;
-      background-image: linear-gradient(#1c1b18,#1c1b18) !important;
-      border-radius: 3px;
+      background-color: #9E5D48 !important;
+      background-image: linear-gradient(#9E5D48, #9E5D48) !important;
+      border-radius: 2px;
     }`;
 
 export const COLORS = {
-  canvas: "#f4f3ec",
-  ink: "#1c1b18",
-  muted: "#7c7a72",
-  hairline: "#eae8e0",
-  positive: "#22c55e",
-  negative: "#ef4444",
-  warnBg: "#fef3c7",
-  warnBorder: "#fde68a",
-  warnInk: "#92400e",
+  canvas: "#F3EFEA",
+  card: "#FAF8F5",
+  ink: "#26211F",
+  muted: "#6D635C",
+  hairline: "#DDD5CB",
+  terracotta: "#9E5D48",
+  ochre: "#D99419",
+  positive: "#16a34a",
+  negative: "#dc2626",
+  warnBg: "#FBF3E8",
+  warnBorder: "#E8CD9E",
+  warnInk: "#8A5410",
 } as const;

@@ -1150,10 +1150,10 @@ Thank you for being part of our journey!`);
                   <span className="font-mono text-[9px] font-bold text-text-secondary uppercase tracking-wider">MODAL QUICK VIEW</span>
                   <span className="text-[10px] text-text-muted italic">User launch preview</span>
                 </div>
-                <div className="rounded-xl border border-border-subtle bg-bg-card p-4 shadow-sm space-y-2">
+                <div className="rounded-sm border border-border-subtle bg-bg-card p-4 shadow-sm space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="font-mono text-[9px] font-semibold text-text-muted uppercase">What's New</span>
-                    <span className="inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.2 font-mono text-[9px] font-bold text-emerald-600 dark:text-emerald-400">
+                    <span className="inline-flex rounded-xs border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.2 font-mono text-[9px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                       {relVersion || "v0.0.0"}
                     </span>
                   </div>
