@@ -39,7 +39,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({ confirmDlg, setConfi
       >
         <style>{`@keyframes fadeInScale { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }`}</style>
         <div className="flex items-start gap-3.5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[10px]" style={{ backgroundColor: iconBg }}>
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xs" style={{ backgroundColor: iconBg }}>
             {tone === "danger" && (
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
             )}
@@ -58,14 +58,14 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({ confirmDlg, setConfi
         <div className="flex justify-end gap-2">
           {!isAlert && (
             <button
-              className="rounded-md border border-border-subtle bg-transparent px-4 py-2 text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary active:scale-95 cursor-pointer"
+              className="rounded-xs border border-border-subtle bg-transparent px-4 py-2 text-xs font-mono uppercase tracking-wider font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary active:scale-95 cursor-pointer"
               onClick={() => setConfirmDlg((prev) => ({ ...prev, isOpen: false }))}
             >
               {confirmDlg.cancelText || "Cancel"}
             </button>
           )}
           <button
-            className="rounded-lg px-[18px] py-2 text-[13px] font-semibold transition-all active:scale-95 cursor-pointer hover:opacity-90 shadow-2xs"
+            className="rounded-xs px-4 py-2 text-xs font-mono uppercase tracking-wider font-semibold transition-all active:scale-95 cursor-pointer hover:opacity-90 shadow-2xs"
             style={{
               backgroundColor: confirmBtnBg,
               color: tone === "danger" || tone === "success" ? "#ffffff" : "var(--bg-card)",

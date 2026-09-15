@@ -129,13 +129,13 @@ Always confirm what you logged in one short line, including the year you recorde
     "What am I currently watching?",
   ];
 
-  const CARD = "rounded-[10px] border border-border-subtle bg-bg-card p-6 shadow-[0_2px_10px_-2px_rgba(110,108,100,0.05)]";
-  const CODE = "rounded-[5px] border border-border-subtle bg-bg-secondary px-[7px] py-0.5 font-mono text-xs text-text-primary break-all";
-  const BTN_PRIMARY = "inline-flex items-center justify-center rounded-md border border-text-primary bg-text-primary px-4 py-2.5 text-[12.5px] font-medium text-bg-primary no-underline transition-all duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40";
-  const BTN_GHOST = "inline-flex items-center justify-center rounded-md border border-border-subtle bg-transparent px-4 py-2.5 text-[12.5px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary disabled:cursor-not-allowed disabled:opacity-40";
+  const CARD = "rounded-sm border border-border-subtle bg-bg-card p-6 shadow-subtle";
+  const CODE = "rounded-xs border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-xs text-text-primary break-all";
+  const BTN_PRIMARY = "inline-flex items-center justify-center rounded-sm border border-text-primary bg-text-primary px-4 py-2 text-xs font-mono uppercase tracking-wider font-semibold text-bg-primary no-underline transition-all duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer";
+  const BTN_GHOST = "inline-flex items-center justify-center rounded-sm border border-border-subtle bg-transparent px-4 py-2 text-xs font-mono uppercase tracking-wider font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary disabled:cursor-not-allowed disabled:opacity-40 cursor-pointer";
 
   const renderStep = (n: number) => (
-    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-bg-primary font-mono text-[11px] font-bold text-text-secondary">
+    <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-xs border border-border-subtle bg-bg-primary font-mono text-[11px] font-bold text-text-secondary">
       {n}
     </span>
   );
@@ -151,7 +151,7 @@ Always confirm what you logged in one short line, including the year you recorde
           </div>
           <Link
             href="/"
-            className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[12.5px] font-medium text-text-secondary no-underline transition-all hover:bg-bg-secondary hover:text-text-primary"
+            className="flex items-center gap-1.5 rounded-sm px-3 py-1.5 text-xs font-mono uppercase tracking-wider font-medium text-text-secondary no-underline transition-all hover:bg-bg-secondary hover:text-text-primary"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
@@ -171,7 +171,7 @@ Always confirm what you logged in one short line, including the year you recorde
         </div>
 
         {authError && (
-          <div className="rounded-[8px] border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[12.5px] text-rose-600 dark:text-rose-400">
+          <div className="rounded-sm border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[12.5px] text-rose-600 dark:text-rose-400">
             {authError}
           </div>
         )}
@@ -263,7 +263,7 @@ Always confirm what you logged in one short line, including the year you recorde
               </p>
             </div>
 
-            <div className="rounded-[8px] border border-border-subtle bg-bg-primary p-4 flex flex-col gap-3">
+            <div className="rounded-sm border border-border-subtle bg-bg-primary p-4 flex flex-col gap-3">
               <div>
                 <p className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted mb-1">Option A</p>
                 <h3 className="text-[13px] font-semibold text-text-primary">OAuth 2.0 (Recommended)</h3>
@@ -285,7 +285,7 @@ Always confirm what you logged in one short line, including the year you recorde
               </table>
             </div>
 
-            <div className="rounded-[8px] border border-border-subtle bg-bg-primary p-4 flex flex-col gap-3">
+            <div className="rounded-sm border border-border-subtle bg-bg-primary p-4 flex flex-col gap-3">
               <div>
                 <p className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted mb-1">Option B</p>
                 <h3 className="text-[13px] font-semibold text-text-primary">Permanent API Key</h3>
@@ -326,7 +326,7 @@ Always confirm what you logged in one short line, including the year you recorde
             <p className="mb-3 text-[13px] leading-[1.7] text-text-secondary">
               Paste this into the agent's <strong className="text-text-primary">Instructions</strong> or <strong className="text-text-primary">System Instructions</strong> field:
             </p>
-            <pre className="max-h-64 overflow-y-auto rounded-[8px] bg-bg-secondary p-4 font-mono text-[11px] leading-[1.7] whitespace-pre-wrap break-words text-text-primary">
+            <pre className="max-h-64 overflow-y-auto rounded-sm bg-bg-secondary p-4 font-mono text-[11px] leading-[1.7] whitespace-pre-wrap break-words text-text-primary">
               {agentInstructions}
             </pre>
             <button onClick={() => copyText("instructions", agentInstructions)} className={`${BTN_GHOST} mt-3 text-xs py-1.5`}>
@@ -344,7 +344,7 @@ Always confirm what you logged in one short line, including the year you recorde
             </p>
             <div className="flex flex-col gap-1.5">
               {examplePrompts.map((prompt) => (
-                <div key={prompt} className="rounded-[6px] bg-bg-secondary px-3.5 py-2 text-[12.5px] text-text-secondary">
+                <div key={prompt} className="rounded-sm bg-bg-secondary px-3.5 py-2 text-[12.5px] text-text-secondary">
                   &ldquo;{prompt}&rdquo;
                 </div>
               ))}

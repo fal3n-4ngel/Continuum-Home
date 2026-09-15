@@ -104,15 +104,15 @@ interface FinancialHealthTabProps {
 }
 
 const STAT_CARD =
-  "flex flex-col justify-between gap-2 rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
+  "flex flex-col justify-between gap-2 rounded-sm border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-150 hover:border-border-hover";
 const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
-const STAT_VALUE = "text-[24px] font-bold tracking-[-0.5px] text-text-primary";
+const STAT_VALUE = "text-[24px] font-bold tracking-tight text-text-primary";
 const STAT_SUBTEXT = "text-[11px] text-text-muted";
-const BENTO_CARD = "rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col justify-between";
+const BENTO_CARD = "rounded-sm border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col justify-between";
 const BTN_PRIMARY =
-  "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-xs font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 disabled:opacity-60";
+  "cursor-pointer rounded-sm border border-accent-terracotta bg-accent-terracotta px-4 py-2 font-mono text-xs font-semibold tracking-wider text-[#FAF8F5] uppercase shadow-xs transition-all duration-150 hover:opacity-90 disabled:opacity-50";
 const BTN_SECONDARY =
-  "cursor-pointer rounded-full border border-border-subtle bg-bg-card px-4 py-2 text-xs font-semibold text-text-primary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:border-border-hover";
+  "cursor-pointer rounded-sm border border-border-subtle bg-bg-card px-4 py-2 font-mono text-xs font-semibold tracking-wider text-text-primary uppercase shadow-2xs transition-all duration-150 hover:bg-bg-primary hover:border-border-hover disabled:opacity-50";
 
 const fmtDate = (s: string) => {
   const d = new Date(`${s}T00:00:00`);
@@ -279,9 +279,9 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
 
   if (aiOptOut) {
     return (
-      <div className="rounded-card border border-dashed border-border-subtle bg-bg-card/60 p-5 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="rounded-sm border border-dashed border-border-subtle bg-bg-card/60 p-5 shadow-subtle flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-secondary text-text-primary">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-border-subtle bg-bg-secondary text-text-primary">
             <Shield size={18} className="text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
@@ -289,7 +289,7 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
               <h3 className="font-serif text-base font-semibold tracking-tight text-text-primary">
                 AI Spend Analytics Disabled
               </h3>
-              <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+              <span className="rounded-sm border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted uppercase">
                 Opted Out
               </span>
             </div>
@@ -302,7 +302,7 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
           <button
             type="button"
             onClick={onOpenSettings}
-            className="cursor-pointer rounded-full border border-border-subtle bg-bg-primary hover:bg-bg-secondary px-4 py-1.5 text-xs font-semibold text-text-primary transition-all shadow-xs shrink-0 self-start sm:self-auto"
+            className="cursor-pointer rounded-sm border border-border-subtle bg-bg-primary hover:bg-bg-secondary px-4 py-1.5 font-mono text-xs font-semibold text-text-primary uppercase tracking-wider transition-all shadow-xs shrink-0 self-start sm:self-auto"
           >
             Manage in Settings →
           </button>
@@ -312,10 +312,10 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
   }
 
   return (
-    <div className="rounded-card border border-border-subtle border-t-2 border-t-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col gap-4 relative overflow-hidden transition-all duration-200">
+    <div className="rounded-sm border border-border-subtle border-t-2 border-t-accent-terracotta/80 bg-bg-card p-5 shadow-subtle flex flex-col gap-4 relative overflow-hidden transition-all duration-150">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-border-subtle bg-bg-primary text-text-secondary">
+          <div className="flex h-8 w-8 items-center justify-center rounded-sm border border-border-subtle bg-bg-primary text-accent-terracotta">
             <BarChart3 size={16} />
           </div>
           <div>
@@ -324,7 +324,7 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
                 Monthly Spend &amp; Trend Analytics
               </h3>
               {report && (
-                <span className={`px-2.5 py-0.5 rounded-full font-mono text-[10px] font-semibold border flex items-center gap-1 ${severityColor(report.trendSeverity)}`}>
+                <span className={`px-2.5 py-0.5 rounded-sm font-mono text-[10px] font-semibold uppercase tracking-wider border flex items-center gap-1 ${severityColor(report.trendSeverity)}`}>
                   {cleanText(report.trendStatus)}
                 </span>
               )}
@@ -337,7 +337,7 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
 
         <div className="flex items-center gap-2">
           {report?.updatedAt && (
-            <span className="font-mono text-[10px] font-medium text-text-muted bg-bg-primary px-2.5 py-1 rounded-md border border-border-subtle">
+            <span className="font-mono text-[10px] font-medium text-text-muted bg-bg-primary px-2.5 py-1 rounded-sm border border-border-subtle uppercase tracking-wider">
               {isCached ? `Cached (${formattedDate})` : "Updated"}
             </span>
           )}
@@ -345,7 +345,7 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
             type="button"
             onClick={() => fetchAnalytics(true)}
             disabled={loading || refreshing}
-            className="cursor-pointer rounded-md border border-border-subtle bg-bg-card px-3 py-1.5 text-[11.5px] font-semibold text-text-primary shadow-2xs transition-all hover:bg-bg-primary hover:border-border-hover disabled:opacity-50 flex items-center gap-1.5"
+            className="cursor-pointer rounded-sm border border-border-subtle bg-bg-card px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-wider text-text-primary shadow-2xs transition-all hover:bg-bg-primary hover:border-border-hover disabled:opacity-50 flex items-center gap-1.5"
           >
             <RotateCw size={12} className={refreshing ? "animate-spin" : ""} />
             <span>{refreshing ? "Updating..." : "Refresh Analytics"}</span>
@@ -361,7 +361,7 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
       )}
 
       {error && !report && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-600 dark:text-amber-400">
+        <div className="flex items-center gap-2 rounded-sm border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-600 dark:text-amber-400">
           <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400" />
           <span>{error}</span>
         </div>
@@ -369,12 +369,12 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
 
       {report && (
         <div className="flex flex-col gap-4 text-xs">
-          <div className="border-l-2 border-l-border-hover pl-3.5 py-1 text-text-secondary text-[12.5px] leading-relaxed italic">
+          <div className="border-l-2 border-l-accent-terracotta pl-3.5 py-1 text-text-secondary text-[12.5px] leading-relaxed italic">
             <p className="font-medium text-text-primary">{cleanText(report.executiveSummary)}</p>
           </div>
 
           {report.topCategories && report.topCategories.length > 0 && (
-            <div className="rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4">
+            <div className="rounded-sm border border-border-subtle bg-bg-primary/40 p-4">
               <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary block mb-3">
                 TOP CATEGORY BURN BREAKDOWN
               </span>
@@ -387,12 +387,12 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
                         {currency}{cat.amount.toLocaleString("en-IN")} ({cat.percentage}%)
                       </span>
                     </div>
-                    <div className="h-1.5 w-full rounded-full bg-border-subtle/30 overflow-hidden">
+                    <div className="h-1.5 w-full rounded-xs bg-border-subtle/30 overflow-hidden">
                       <div
-                        className="h-full rounded-full transition-all duration-300"
+                        className="h-full rounded-xs transition-all duration-300"
                         style={{
                           width: `${Math.min(100, cat.percentage)}%`,
-                          backgroundColor: idx === 0 ? "var(--text-primary)" : "var(--text-muted)",
+                          backgroundColor: idx === 0 ? "var(--accent-terracotta)" : "var(--text-muted)",
                         }}
                       />
                     </div>
@@ -403,8 +403,8 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
           )}
 
           {report.safeSpendAdvice && (
-            <div className="flex items-start gap-3 rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-3.5 text-text-primary">
-              <ShieldCheck size={16} className="shrink-0 text-text-secondary mt-0.5" />
+            <div className="flex items-start gap-3 rounded-sm border border-border-subtle bg-bg-primary/40 p-3.5 text-text-primary">
+              <ShieldCheck size={16} className="shrink-0 text-accent-terracotta mt-0.5" />
               <div className="leading-snug">
                 <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary block mb-1">
                   MONTHLY SPEND PACE GUIDANCE
@@ -416,7 +416,7 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
 
           <div className="grid grid-cols-2 gap-4 max-md:grid-cols-1">
             {report.spendTrends && report.spendTrends.length > 0 && (
-              <div className="rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4">
+              <div className="rounded-sm border border-border-subtle bg-bg-primary/40 p-4">
                 <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary flex items-center gap-1.5 mb-2.5">
                   <TrendingUp size={13} className="text-emerald-600 dark:text-emerald-400" /> MONTHLY SPEND TRENDS
                 </span>
@@ -432,7 +432,7 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
             )}
 
             {report.anomalies && report.anomalies.length > 0 && (
-              <div className="rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4">
+              <div className="rounded-sm border border-border-subtle bg-bg-primary/40 p-4">
                 <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary flex items-center gap-1.5 mb-2.5">
                   <AlertTriangle size={13} className="text-rose-500 dark:text-rose-400" /> CATEGORY ANOMALIES &amp; SPIKES
                 </span>
@@ -449,7 +449,7 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
           </div>
 
           {report.savingOpportunities && report.savingOpportunities.length > 0 && (
-            <div className="rounded-xl border border-border-subtle/70 bg-bg-primary/30 p-4">
+            <div className="rounded-sm border border-border-subtle bg-bg-primary/40 p-4">
               <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.8px] text-text-secondary flex items-center gap-1.5 mb-2.5">
                 <Lightbulb size={13} className="text-text-primary" /> ACTIONABLE MONTHLY SAVINGS STRATEGY
               </span>
@@ -669,26 +669,26 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border-subtle pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-serif text-3xl italic font-normal tracking-wide text-text-primary">
+              <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">
                 Financial Health
               </h1>
               {!isProUser && (
-                <span className="inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-text-muted uppercase">
+                <span className="inline-flex shrink-0 items-center rounded-sm border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-text-muted uppercase">
                   Pro
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-text-secondary">
+            <p className="mt-1 text-sm text-text-muted">
               Target-driven daily spending limits, pay-cycle pace, cash reconciliation, and liquidity runway.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            <div className="flex items-center gap-1 rounded-full bg-bg-secondary p-1 border border-border-subtle/40 shadow-2xs">
+            <div className="flex items-center gap-1 rounded-sm bg-bg-secondary p-1 border border-border-subtle shadow-2xs">
               <button
                 type="button"
                 onClick={() => setHealthView("overview")}
-                className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer bg-transparent text-text-secondary hover:text-text-primary"
+                className="flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs uppercase tracking-wider font-medium transition-all duration-150 cursor-pointer bg-transparent text-text-secondary hover:text-text-primary"
               >
                 <HeartPulse size={13} />
                 <span>Overview &amp; Burn Rate</span>
@@ -696,19 +696,19 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
               <button
                 type="button"
                 onClick={() => setHealthView("analytics")}
-                className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
+                className="flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs uppercase tracking-wider font-semibold transition-all duration-150 cursor-pointer bg-bg-card text-text-primary shadow-xs border border-border-subtle/80"
               >
-                <BarChart3 size={13} />
+                <BarChart3 size={13} className="text-accent-terracotta" />
                 <span>Cycle &amp; Monthly Analytics</span>
                 {!isProUser && (
-                  <span className="font-mono text-[9px] font-bold text-text-muted px-1.5 py-0.2 bg-bg-primary rounded-full border border-border-subtle">
+                  <span className="font-mono text-[9px] font-bold text-text-muted px-1.5 py-0.2 bg-bg-primary rounded-xs border border-border-subtle">
                     PRO
                   </span>
                 )}
               </button>
             </div>
 
-            <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-full border border-border-subtle/50 shadow-2xs">
+            <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-sm border border-border-subtle shadow-2xs uppercase tracking-wider">
               Cycle {fmtDate(payCycle.startStr)} – {fmtDate(payCycle.endStr)}
             </span>
           </div>
@@ -738,50 +738,50 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           <div className="flex items-center gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-serif text-3xl italic font-normal tracking-wide text-text-primary">
+                <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">
                   Financial Health
                 </h1>
-                <span className="inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-text-muted uppercase">
+                <span className="inline-flex shrink-0 items-center rounded-sm border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-text-muted uppercase">
                   Pro
                 </span>
               </div>
-              <p className="mt-1 text-sm text-text-secondary">
+              <p className="mt-1 text-sm text-text-muted">
                 Target-driven daily spending limits, pay-cycle pace, cash reconciliation, and liquidity runway.
               </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <div className="flex items-center gap-1 rounded-full bg-bg-secondary p-1 border border-border-subtle/40 shadow-2xs">
+            <div className="flex items-center gap-1 rounded-sm bg-bg-secondary p-1 border border-border-subtle shadow-2xs">
               <button
                 type="button"
                 onClick={() => setHealthView("overview")}
-                className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
+                className="flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs uppercase tracking-wider font-semibold transition-all duration-150 cursor-pointer bg-bg-card text-text-primary shadow-xs border border-border-subtle/80"
               >
-                <HeartPulse size={13} />
+                <HeartPulse size={13} className="text-accent-terracotta" />
                 <span>Overview &amp; Burn Rate</span>
               </button>
               <button
                 type="button"
                 onClick={() => setHealthView("analytics")}
-                className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer bg-transparent text-text-secondary hover:text-text-primary"
+                className="flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs uppercase tracking-wider font-medium transition-all duration-150 cursor-pointer bg-transparent text-text-secondary hover:text-text-primary"
               >
                 <BarChart3 size={13} />
                 <span>Cycle &amp; Monthly Analytics</span>
-                <span className="font-mono text-[9px] font-bold text-text-muted px-1.5 py-0.2 bg-bg-primary rounded-full border border-border-subtle">
+                <span className="font-mono text-[9px] font-bold text-text-muted px-1.5 py-0.2 bg-bg-primary rounded-xs border border-border-subtle">
                   PRO
                 </span>
               </button>
             </div>
-            <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-full border border-border-subtle/50 shadow-2xs flex items-center gap-1.5">
+            <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-sm border border-border-subtle shadow-2xs flex items-center gap-1.5 uppercase tracking-wider">
               <span className="h-1.5 w-1.5 rounded-full bg-text-muted" />
               Sample Preview · Mock Data
             </span>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 sm:p-7 shadow-subtle flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative overflow-hidden">
+        <div className="rounded-sm border border-border-subtle bg-bg-card p-5 sm:p-7 shadow-subtle flex flex-col md:flex-row items-start md:items-center justify-between gap-5 relative overflow-hidden">
           <div className="flex flex-col gap-2 max-w-2xl">
-            <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[1.2px] text-text-muted">
+            <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[1.2px] text-accent-terracotta">
               Supporter Feature
             </span>
             <h2 className="font-serif text-2xl italic font-normal tracking-tight text-text-primary">
@@ -796,7 +796,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             <button
               type="button"
               onClick={onClaimPro}
-              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-text-primary bg-text-primary px-6 py-2.5 text-xs font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 active:scale-95"
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-sm border border-accent-terracotta bg-accent-terracotta px-5 py-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#FAF8F5] shadow-xs transition-all duration-150 hover:opacity-90 active:scale-95"
             >
               <span>Unlock with Pro</span>
               <span className="text-xs">→</span>
@@ -805,7 +805,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
               href="https://github.com/fal3n-4ngel/Continuum-Home#readme"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-border-subtle bg-bg-secondary px-5 py-2.5 text-xs font-medium text-text-secondary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover"
+              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-border-subtle bg-bg-secondary px-4 py-2 font-mono text-xs font-semibold uppercase tracking-wider text-text-secondary shadow-2xs transition-all duration-150 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover"
             >
               <span>Self-Host Free</span>
               <span className="font-mono text-[10px]">↗</span>
@@ -818,7 +818,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             <span className="font-mono text-[10px] font-semibold uppercase tracking-[1px] text-text-muted">
               Feature Preview
             </span>
-            <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-secondary">
+            <span className="rounded-sm border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-secondary uppercase">
               Simulated Example
             </span>
           </div>
@@ -828,10 +828,10 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
+          <div className="rounded-sm border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-primary text-text-primary">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-border-subtle bg-bg-primary text-text-primary">
                   <CalendarCheck size={18} />
                 </div>
                 <div>
@@ -843,17 +843,17 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                   </h3>
                 </div>
               </div>
-              <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+              <span className="rounded-sm border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted uppercase">
                 Pace Calibration
               </span>
             </div>
             <p className="text-xs text-text-secondary leading-relaxed">
               Dynamically calculates your safe daily allowance based on elapsed days, committed subscriptions, and your target savings percentage.
             </p>
-            <div className="rounded-xl border border-dashed border-border-subtle bg-bg-primary/40 p-3 flex items-center justify-between text-xs">
+            <div className="rounded-sm border border-dashed border-border-subtle bg-bg-primary/40 p-3 flex items-center justify-between text-xs">
               <div className="flex items-center gap-1.5">
                 <span className="text-text-muted">Today&apos;s Safe Allowance</span>
-                <span className="rounded border border-border-subtle bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-text-muted">
+                <span className="rounded-xs border border-border-subtle bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-text-muted">
                   Sample
                 </span>
               </div>
@@ -861,10 +861,10 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
+          <div className="rounded-sm border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-primary text-text-primary">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-border-subtle bg-bg-primary text-text-primary">
                   <Wallet size={18} />
                 </div>
                 <div>
@@ -876,17 +876,17 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                   </h3>
                 </div>
               </div>
-              <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+              <span className="rounded-sm border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted uppercase">
                 Leak Detection
               </span>
             </div>
             <p className="text-xs text-text-secondary leading-relaxed">
               Verify your physical bank balance against projected net cash at payday. Automatically records unaccounted gaps into your ledger.
             </p>
-            <div className="rounded-xl border border-dashed border-border-subtle bg-bg-primary/40 p-3 flex items-center justify-between text-xs">
+            <div className="rounded-sm border border-dashed border-border-subtle bg-bg-primary/40 p-3 flex items-center justify-between text-xs">
               <div className="flex items-center gap-1.5">
                 <span className="text-text-muted">Cycle Audit Status</span>
-                <span className="rounded border border-border-subtle bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-text-muted">
+                <span className="rounded-xs border border-border-subtle bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-text-muted">
                   Sample
                 </span>
               </div>
@@ -894,10 +894,10 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
+          <div className="rounded-sm border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-primary text-text-primary">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-border-subtle bg-bg-primary text-text-primary">
                   <ShieldCheck size={18} />
                 </div>
                 <div>
@@ -909,17 +909,17 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                   </h3>
                 </div>
               </div>
-              <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+              <span className="rounded-sm border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted uppercase">
                 Asset Weighted
               </span>
             </div>
             <p className="text-xs text-text-secondary leading-relaxed">
               Measures emergency runway in months, applying tiered liquidity discounts across bank deposits, mutual funds, gold, and equity holdings.
             </p>
-            <div className="rounded-xl border border-dashed border-border-subtle bg-bg-primary/40 p-3 flex items-center justify-between text-xs">
+            <div className="rounded-sm border border-dashed border-border-subtle bg-bg-primary/40 p-3 flex items-center justify-between text-xs">
               <div className="flex items-center gap-1.5">
                 <span className="text-text-muted">Liquid Reserve Health</span>
-                <span className="rounded border border-border-subtle bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-text-muted">
+                <span className="rounded-xs border border-border-subtle bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-text-muted">
                   Sample
                 </span>
               </div>
@@ -927,10 +927,10 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             </div>
           </div>
 
-          <div className="rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
+          <div className="rounded-sm border border-border-subtle bg-bg-card p-5 shadow-subtle flex flex-col justify-between gap-4">
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-primary text-text-primary">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-border-subtle bg-bg-primary text-text-primary">
                   {aiOptOut ? <Shield size={18} className="text-emerald-600 dark:text-emerald-400" /> : <Sparkles size={18} />}
                 </div>
                 <div>
@@ -942,7 +942,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                   </h3>
                 </div>
               </div>
-              <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+              <span className="rounded-sm border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted uppercase">
                 {aiOptOut ? "Opted Out" : "Zero Cloud Leak"}
               </span>
             </div>
@@ -951,10 +951,10 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                 ? "AI features are disabled. Financial calculations, category analysis, and safe daily limits run strictly locally and offline."
                 : "Analyzes category anomalies, monthly burn trajectory, and generates actionable steps to preserve savings without touching raw ledger entries."}
             </p>
-            <div className="rounded-xl border border-dashed border-border-subtle bg-bg-primary/40 p-3 flex items-center justify-between text-xs">
+            <div className="rounded-sm border border-dashed border-border-subtle bg-bg-primary/40 p-3 flex items-center justify-between text-xs">
               <div className="flex items-center gap-1.5">
                 <span className="text-text-muted">Model Execution</span>
-                <span className="rounded border border-border-subtle bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-text-muted">
+                <span className="rounded-xs border border-border-subtle bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-text-muted">
                   {aiOptOut ? "Local" : "Sample"}
                 </span>
               </div>
@@ -965,7 +965,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           </div>
         </div>
 
-        <div className="rounded-xl border border-border-subtle bg-bg-secondary/40 p-4 text-[11px] leading-relaxed text-text-muted flex flex-wrap items-center justify-between gap-2">
+        <div className="rounded-sm border border-border-subtle bg-bg-secondary/40 p-4 text-[11px] leading-relaxed text-text-muted flex flex-wrap items-center justify-between gap-2">
           <span>
             Continuum is 100% open-source under the MIT license. All Pro capabilities are permanently unlocked for self-hosted instances.
           </span>
@@ -992,33 +992,33 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1 rounded-full bg-bg-secondary p-1 border border-border-subtle/40 shadow-2xs">
+          <div className="flex items-center gap-1 rounded-sm bg-bg-secondary p-1 border border-border-subtle shadow-2xs">
             <button
               type="button"
               onClick={() => setHealthView("overview")}
-              className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
+              className="flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs uppercase tracking-wider font-semibold transition-all duration-150 cursor-pointer bg-bg-card text-text-primary shadow-xs border border-border-subtle/80"
             >
-              <HeartPulse size={13} />
+              <HeartPulse size={13} className="text-accent-terracotta" />
               <span>Overview &amp; Burn Rate</span>
             </button>
             <button
               type="button"
               onClick={() => setHealthView("analytics")}
-              className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer bg-transparent text-text-secondary hover:text-text-primary"
+              className="flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs uppercase tracking-wider font-medium transition-all duration-150 cursor-pointer bg-transparent text-text-secondary hover:text-text-primary"
             >
               <BarChart3 size={13} />
               <span>Cycle &amp; Monthly Analytics</span>
             </button>
           </div>
-          <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-full border border-border-subtle/50 shadow-2xs">
+          <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-sm border border-border-subtle shadow-2xs uppercase tracking-wider">
             Cycle {fmtDate(payCycle.startStr)} – {fmtDate(payCycle.endStr)}
           </span>
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-subtle bg-bg-card p-4 shadow-subtle">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-sm border border-border-subtle bg-bg-card p-4 shadow-subtle">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-bg-secondary text-text-secondary shadow-2xs">
+          <div className="flex h-9 w-9 items-center justify-center rounded-sm border border-border-subtle bg-bg-secondary text-accent-terracotta shadow-2xs">
             <PiggyBank size={18} />
           </div>
           <div>
@@ -1028,7 +1028,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center gap-1 rounded-full bg-bg-secondary p-1 border border-border-subtle/40 shadow-2xs">
+          <div className="flex items-center gap-1 rounded-sm bg-bg-secondary p-1 border border-border-subtle shadow-2xs">
             {[0, 0.1, 0.2, 0.3].map((pct) => {
               const amount = Math.round(payCycle.totalIncome * pct);
               const isActive = targetSavingsGoal === amount || (pct === 0 && targetSavingsGoal === 0);
@@ -1038,9 +1038,9 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                   key={pct}
                   type="button"
                   onClick={() => handleTargetSavingsChange(amount)}
-                  className={`cursor-pointer rounded-full border-none px-3.5 py-1 text-xs font-semibold transition-all duration-200 ${
+                  className={`cursor-pointer rounded-sm border-none px-3.5 py-1 font-mono text-xs font-semibold uppercase tracking-wider transition-all duration-150 ${
                     isActive
-                      ? "bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
+                      ? "bg-bg-card text-text-primary shadow-xs border border-border-subtle/80 font-bold"
                       : "bg-transparent text-text-secondary hover:text-text-primary"
                   }`}
                 >
@@ -1051,14 +1051,14 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           </div>
 
           <div className="relative w-32">
-            <span className="absolute inset-y-0 left-3 flex items-center text-xs font-semibold text-text-muted">{currency}</span>
+            <span className="absolute inset-y-0 left-3 flex items-center font-mono text-xs font-semibold text-text-muted">{currency}</span>
             <input
               type="number"
               min="0"
               value={targetSavingsGoal || ""}
               onChange={(e) => handleTargetSavingsChange(parseFloat(e.target.value) || 0)}
               placeholder="Target Goal"
-              className="w-full rounded-full border border-border-subtle bg-bg-card py-1 pr-3 pl-7 text-xs font-bold text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus shadow-2xs"
+              className="w-full rounded-sm border border-border-subtle bg-bg-card py-1 pr-3 pl-7 font-mono text-xs font-bold text-text-primary outline-none transition-all duration-150 focus:border-accent-terracotta shadow-2xs"
             />
           </div>
         </div>
@@ -1094,12 +1094,12 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             <div className="flex items-center justify-between gap-1">
               <span className={LABEL_MONO}>SAFE TODAY</span>
               <span
-                className={`font-mono text-[9.5px] font-semibold px-2 py-0.5 rounded-full border ${
+                className={`font-mono text-[9.5px] font-semibold px-2 py-0.5 rounded-sm border ${
                   isBehindTarget
                     ? "text-text-muted bg-bg-secondary border-border-subtle"
                     : todaySpent > grossDailyLimit
                     ? "text-text-muted bg-bg-secondary border-border-subtle"
-                    : "text-text-secondary bg-bg-secondary border-border-subtle"
+                    : "text-accent-terracotta bg-bg-secondary border-border-subtle"
                 }`}
               >
                 {isBehindTarget
@@ -1130,12 +1130,12 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             <div className="flex items-center justify-between gap-1">
               <span className={LABEL_MONO}>SAFE THIS WEEK</span>
               <span
-                className={`font-mono text-[9.5px] font-semibold px-2 py-0.5 rounded-full border ${
+                className={`font-mono text-[9.5px] font-semibold px-2 py-0.5 rounded-sm border ${
                   isBehindTarget
                     ? "text-text-muted bg-bg-secondary border-border-subtle"
                     : todaySpent > grossWeekLimit
                     ? "text-text-muted bg-bg-secondary border-border-subtle"
-                    : "text-text-secondary bg-bg-secondary border-border-subtle"
+                    : "text-accent-terracotta bg-bg-secondary border-border-subtle"
                 }`}
               >
                 {isBehindTarget
@@ -1195,9 +1195,9 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             </div>
 
             <div className="mt-4">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-bg-secondary">
+              <div className="h-1.5 w-full overflow-hidden rounded-xs bg-bg-secondary border border-border-subtle/50">
                 <div
-                  className="h-full rounded-full bg-text-primary transition-all duration-500"
+                  className="h-full rounded-xs bg-accent-terracotta transition-all duration-500"
                   style={{ width: `${Math.min(100, (payCycle.elapsedDays / payCycle.totalDays) * 100)}%` }}
                 />
               </div>
@@ -1301,24 +1301,24 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         <div className={`${BENTO_CARD} border-t-2 border-t-border-subtle`}>
           <div>
             <div className="flex items-center justify-between border-b border-border-subtle pb-3">
-              <div className="flex items-center gap-1 rounded-full bg-bg-secondary p-1 border border-border-subtle/40 shadow-2xs">
+              <div className="flex items-center gap-1 rounded-sm bg-bg-secondary p-1 border border-border-subtle shadow-2xs">
                 <button
                   type="button"
                   onClick={() => setRightTab("reconcile")}
-                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                  className={`flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs font-semibold uppercase tracking-wider transition-all duration-150 cursor-pointer ${
                     rightTab === "reconcile"
-                      ? "bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
+                      ? "bg-bg-card text-text-primary shadow-xs border border-border-subtle/80 font-bold"
                       : "bg-transparent text-text-secondary hover:text-text-primary"
                   }`}
                 >
-                  <ScanSearch size={14} /> Reconcile Cash
+                  <ScanSearch size={14} className="text-accent-terracotta" /> Reconcile Cash
                 </button>
                 <button
                   type="button"
                   onClick={() => setRightTab("income")}
-                  className={`flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                  className={`flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs font-semibold uppercase tracking-wider transition-all duration-150 cursor-pointer ${
                     rightTab === "income"
-                      ? "bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
+                      ? "bg-bg-card text-text-primary shadow-xs border border-border-subtle/80 font-bold"
                       : "bg-transparent text-text-secondary hover:text-text-primary"
                   }`}
                 >

@@ -30,12 +30,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       onClick={() => setShowOnboarding(false)}
     >
       <div
-        className="flex max-h-[88vh] w-full max-w-[540px] flex-col gap-5 overflow-y-auto rounded-2xl border border-border-subtle bg-bg-card p-6 sm:p-7 shadow-subtle animate-[fadeInScale_0.15s_ease]"
+        className="flex max-h-[88vh] w-full max-w-[540px] flex-col gap-5 overflow-y-auto rounded-sm border border-border-subtle bg-bg-card p-6 sm:p-7 shadow-subtle animate-[fadeInScale_0.15s_ease]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4 border-b border-border-subtle pb-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-secondary text-text-primary shadow-2xs">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm border border-border-subtle bg-bg-secondary text-text-primary shadow-2xs">
               <LogoMark size={22} className="text-text-primary" />
             </div>
             <div>
@@ -43,7 +43,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 <h2 className="font-serif text-2xl font-normal italic tracking-tight text-text-primary">
                   Welcome to Continuum
                 </h2>
-                <span className="inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-text-muted uppercase">
+                <span className="inline-flex shrink-0 items-center rounded-xs border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-text-muted uppercase">
                   Hub
                 </span>
               </div>
@@ -55,7 +55,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           <button
             type="button"
             onClick={() => setShowOnboarding(false)}
-            className="flex h-8 w-8 min-w-[32px] min-h-[32px] aspect-square p-0 shrink-0 cursor-pointer items-center justify-center rounded-full border border-border-subtle bg-bg-secondary text-text-muted transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover shadow-2xs"
+            className="flex h-8 w-8 min-w-[32px] min-h-[32px] aspect-square p-0 shrink-0 cursor-pointer items-center justify-center rounded-xs border border-border-subtle bg-bg-secondary text-text-muted transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover shadow-2xs"
             aria-label="Close"
           >
             <X size={14} className="shrink-0" />
@@ -111,14 +111,14 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           ].map((f) => (
             <div
               key={f.title}
-              className={`group flex items-start gap-3 rounded-xl border transition-all duration-200 ${
+              className={`group flex items-start gap-3 rounded-sm border transition-all duration-200 ${
                 f.featured
                   ? "border-border-subtle bg-bg-secondary/60 p-3 shadow-2xs"
                   : "border-transparent p-2 hover:bg-bg-secondary/40"
               }`}
             >
               <div
-                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border shadow-2xs transition-colors ${
+                className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xs border shadow-2xs transition-colors ${
                   f.featured
                     ? "border-border-subtle bg-bg-primary text-text-primary"
                     : "border-border-subtle/70 bg-bg-secondary/50 text-text-secondary group-hover:text-text-primary group-hover:bg-bg-secondary"
@@ -132,7 +132,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                     {f.title}
                   </p>
                   {f.featured && (
-                    <span className="rounded-full border border-border-subtle bg-bg-primary px-2 py-0.2 font-mono text-[9px] font-semibold tracking-wider text-text-secondary uppercase shadow-2xs">
+                    <span className="rounded-xs border border-border-subtle bg-bg-primary px-2 py-0.2 font-mono text-[9px] font-semibold tracking-wider text-text-secondary uppercase shadow-2xs">
                       Flagship
                     </span>
                   )}
@@ -149,13 +149,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           <button
             type="button"
             onClick={() => setShowOnboarding(false)}
-            className="cursor-pointer rounded-full border border-border-subtle bg-bg-secondary px-5 py-2 text-xs font-semibold text-text-secondary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover"
+            className="cursor-pointer rounded-sm border border-border-subtle bg-bg-secondary px-5 py-2 text-xs font-mono uppercase tracking-wider font-medium text-text-secondary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover"
           >
             Skip for now
           </button>
           <a
             href="/assistant"
-            className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-text-primary bg-text-primary px-5 py-2 text-xs font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 active:scale-95 no-underline"
+            className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-text-primary bg-text-primary px-5 py-2 text-xs font-mono uppercase tracking-wider font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 active:scale-95 no-underline"
           >
             <Bot size={13} />
             <span>Connect AI Agent</span>

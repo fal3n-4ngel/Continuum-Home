@@ -31,11 +31,11 @@ interface SettingsTabProps {
 
 type SettingsSubTab = "general" |  "appearance" | "notifications" | "account";
 
-const BENTO_CARD = "rounded-2xl border border-border-subtle bg-bg-card shadow-subtle overflow-hidden";
+const BENTO_CARD = "rounded-sm border border-border-subtle bg-bg-card shadow-subtle overflow-hidden";
 const CARD_HEADER = "flex items-center justify-between border-b border-border-subtle bg-bg-primary/30 px-5 py-3.5";
 const CARD_BODY = "flex flex-col gap-4 p-5 max-sm:p-4";
 const FIELD_LABEL = "mb-1.5 block text-[11px] font-semibold text-text-secondary uppercase font-mono tracking-[0.5px]";
-const SELECT_CLASS = "w-full rounded-full border border-border-subtle bg-bg-card px-3.5 py-2 text-xs font-semibold text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus shadow-2xs cursor-pointer";
+const SELECT_CLASS = "w-full rounded-sm border border-border-subtle bg-bg-card px-3.5 py-2 text-xs font-mono text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus shadow-2xs cursor-pointer";
 
 const CURRENCIES = [
   { symbol: "₹", label: "INR (₹)" },
@@ -186,7 +186,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
         <div className={`${BENTO_CARD} border-t-2 border-t-accent-yellow animate-[fadeIn_0.3s_ease_forwards]`}>
           <div className={CARD_HEADER}>
             <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-yellow/20 text-text-primary border border-border-subtle shadow-2xs">
+              <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-accent-yellow/20 text-text-primary border border-border-subtle shadow-2xs">
                 <Palette size={14} />
               </div>
               Appearance &amp; Color Theme
@@ -195,7 +195,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <button
                 type="button"
                 onClick={() => setThemeFilter("all")}
-                className={`px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider rounded-full border transition-all cursor-pointer ${
+                className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider rounded-xs border transition-all cursor-pointer ${
                   themeFilter === "all"
                     ? "border-text-primary bg-text-primary text-bg-card"
                     : "border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-primary"
@@ -206,7 +206,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <button
                 type="button"
                 onClick={() => setThemeFilter("light")}
-                className={`px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider rounded-full border transition-all cursor-pointer ${
+                className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider rounded-xs border transition-all cursor-pointer ${
                   themeFilter === "light"
                     ? "border-text-primary bg-text-primary text-bg-card"
                     : "border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-primary"
@@ -217,7 +217,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               <button
                 type="button"
                 onClick={() => setThemeFilter("dark")}
-                className={`px-2.5 py-0.5 text-[10px] font-mono font-bold uppercase tracking-wider rounded-full border transition-all cursor-pointer ${
+                className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider rounded-xs border transition-all cursor-pointer ${
                   themeFilter === "dark"
                     ? "border-text-primary bg-text-primary text-bg-card"
                     : "border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-primary"
@@ -240,7 +240,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     key={t.id}
                     type="button"
                     onClick={() => setTheme(t.id)}
-                    className={`flex flex-col items-start gap-2.5 p-3.5 rounded-xl border-2 text-left transition-all cursor-pointer ${
+                    className={`flex flex-col items-start gap-2.5 p-3.5 rounded-sm border-2 text-left transition-all cursor-pointer ${
                       isActive
                         ? "border-text-primary bg-bg-primary/50 shadow-sm"
                         : "border-border-subtle bg-bg-card hover:border-border-hover hover:bg-bg-primary/20"
@@ -249,12 +249,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                     <div className="flex items-center justify-between w-full">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-bold text-text-primary">{t.name}</span>
-                        <span className="font-mono text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border border-border-subtle bg-bg-primary/40 text-text-secondary">
+                        <span className="font-mono text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-xs border border-border-subtle bg-bg-primary/40 text-text-secondary">
                           {t.type}
                         </span>
                       </div>
                       {isActive && (
-                        <div className="flex h-5 w-5 items-center justify-center rounded-full bg-text-primary text-bg-card">
+                        <div className="flex h-5 w-5 items-center justify-center rounded-xs bg-text-primary text-bg-card">
                           <Check size={11} strokeWidth={3} />
                         </div>
                       )}
@@ -287,7 +287,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           <div className={`${BENTO_CARD} border-t-2 border-t-accent-blue`}>
             <div className={CARD_HEADER}>
               <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-blue/20 text-text-primary border border-border-subtle shadow-2xs">
+                <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-accent-blue/20 text-text-primary border border-border-subtle shadow-2xs">
                   <Coins size={14} />
                 </div>
                 Display Currency
@@ -313,7 +313,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           <div className={`${BENTO_CARD} border-t-2 border-t-accent-yellow`}>
             <div className={CARD_HEADER}>
               <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-yellow/20 text-text-primary border border-border-subtle shadow-2xs">
+                <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-accent-yellow/20 text-text-primary border border-border-subtle shadow-2xs">
                   <CalendarClock size={14} />
                 </div>
                 Income &amp; Pay Cycle
@@ -382,7 +382,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           <div className={`${BENTO_CARD} border-t-2 border-t-emerald-600 dark:border-t-emerald-400`}>
             <div className={CARD_HEADER}>
               <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-500/20 text-text-primary border border-border-subtle shadow-2xs">
+                <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-emerald-500/20 text-text-primary border border-border-subtle shadow-2xs">
                   <Shield size={14} />
                 </div>
                 AI Privacy &amp; Cloud Intelligence
@@ -401,7 +401,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   <span className="text-xs font-semibold text-text-primary">
                     {aiOptOut ? "AI Features Disabled (Privacy First)" : "AI Features Enabled"}
                   </span>
-                  <span className={`font-mono text-[9.5px] font-bold px-2 py-0.5 rounded-full border ${
+                  <span className={`font-mono text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-xs border ${
                     aiOptOut
                       ? "border-border-subtle bg-bg-secondary text-text-muted"
                       : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
@@ -425,7 +425,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           <div className={`${BENTO_CARD} border-t-2 border-t-accent-flame`}>
             <div className={CARD_HEADER}>
               <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-flame/20 text-text-primary border border-border-subtle shadow-2xs">
+                <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-accent-flame/20 text-text-primary border border-border-subtle shadow-2xs">
                   <Mail size={14} />
                 </div>
                 Email Notifications
@@ -435,7 +435,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
               {EMAIL_ROWS.map((row) => (
                 <div key={row.key} className="flex items-center justify-between gap-4 px-5 py-4 max-sm:px-4 max-sm:py-3.5">
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className={`flex h-8 w-8 items-center justify-center rounded-full shrink-0 shadow-2xs ${row.badgeClass}`}>
+                    <div className={`flex h-8 w-8 items-center justify-center rounded-sm shrink-0 shadow-2xs ${row.badgeClass}`}>
                       {row.icon}
                     </div>
                     <div className="min-w-0">
@@ -462,7 +462,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             <div className={`${BENTO_CARD} border-t-2 border-t-accent-blue`}>
               <div className={CARD_HEADER}>
                 <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent-blue/15 text-accent-blue border border-border-subtle shadow-2xs">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-accent-blue/15 text-accent-blue border border-border-subtle shadow-2xs">
                     <Shield size={14} />
                   </div>
                   Admin Control Panel
@@ -478,7 +478,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <button
                   type="button"
                   onClick={onOpenAdmin}
-                  className="shrink-0 rounded-full border border-border-subtle bg-bg-primary px-4 py-2 text-xs font-semibold text-text-primary shadow-xs transition-all duration-200 hover:border-border-hover active:scale-95 cursor-pointer"
+                  className="shrink-0 rounded-sm border border-border-subtle bg-bg-primary px-4 py-2 text-xs font-mono uppercase tracking-wider font-semibold text-text-primary shadow-xs transition-all duration-200 hover:border-border-hover active:scale-95 cursor-pointer"
                 >
                   Open Admin
                 </button>
@@ -489,7 +489,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           <div className={BENTO_CARD}>
             <div className={CARD_HEADER}>
               <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-text-primary/10 text-text-primary border border-border-subtle shadow-2xs">
+                <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-text-primary/10 text-text-primary border border-border-subtle shadow-2xs">
                   <ExternalLink size={14} />
                 </div>
                 Resources &amp; Support
@@ -524,7 +524,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
           <div className={`${BENTO_CARD} border-t-2 border-t-[#b3666b]`}>
             <div className={CARD_HEADER}>
               <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-[#b3666b]">
-                <div className="flex h-7 w-7 items-center justify-center rounded-full bg-[#b3666b]/15 text-[#b3666b] border border-[#b3666b]/30 shadow-2xs">
+                <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-[#b3666b]/15 text-[#b3666b] border border-[#b3666b]/30 shadow-2xs">
                   <Trash2 size={14} />
                 </div>
                 Danger Zone
@@ -541,7 +541,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <button
                   type="button"
                   onClick={onDeleteAccount}
-                  className="shrink-0 rounded-full border border-[#b3666b] bg-[#b3666b] px-4 py-2 text-xs font-semibold text-white shadow-xs transition-all duration-200 hover:bg-[#991b1b] active:scale-95 cursor-pointer"
+                  className="shrink-0 rounded-sm border border-[#b3666b] bg-[#b3666b] px-4 py-2 text-xs font-mono uppercase tracking-wider font-semibold text-white shadow-xs transition-all duration-200 hover:bg-[#991b1b] active:scale-95 cursor-pointer"
                 >
                   Delete Account
                 </button>

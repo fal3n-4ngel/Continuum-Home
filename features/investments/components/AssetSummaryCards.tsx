@@ -14,9 +14,9 @@ interface AssetSummaryCardsProps {
   todaysPnlPct: number;
 }
 
-const STAT_CARD = "flex flex-col gap-1 rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
+const STAT_CARD = "flex flex-col gap-1 rounded-sm border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-150 hover:border-border-hover";
 const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
-const STAT_VALUE = "text-[28px] font-bold tracking-[-0.5px] text-text-primary";
+const STAT_VALUE = "text-[28px] font-bold tracking-tight text-text-primary";
 const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
 
 export const AssetSummaryCards: React.FC<AssetSummaryCardsProps> = ({

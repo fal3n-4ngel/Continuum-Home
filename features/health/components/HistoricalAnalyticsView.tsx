@@ -30,27 +30,27 @@ interface HistoricalAnalyticsViewProps {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Food: "#1A1A1A",
-  Dining: "#1A1A1A",
+  Food: "#E07A5F",
+  Dining: "#E07A5F",
   Housing: "#C5BFA0",
   Rent: "#C5BFA0",
-  Transport: "#556B2F",
-  Travel: "#556B2F",
-  Shopping: "#E58C4A",
-  Leisure: "#C9D438",
+  Transport: "#7C98A6",
+  Travel: "#7C98A6",
+  Shopping: "#D99419",
+  Leisure: "#8B5CF6",
   Entertainment: "#8B5CF6",
-  Utilities: "#6A7B82",
-  Groceries: "#A0C4E2",
+  Utilities: "#556B2F",
+  Groceries: "#E58C4A",
   Health: "#10B981",
   Other: "#9E9C94",
 };
 
 const PALETTE = [
-  "#1A1A1A",
+  "#E07A5F",
   "#C5BFA0",
+  "#7C98A6",
+  "#D99419",
   "#556B2F",
-  "#E58C4A",
-  "#C9D438",
   "#6A7B82",
   "#8B5CF6",
   "#10B981",
@@ -419,7 +419,7 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
             <button
               type="button"
               onClick={onBackToOverview}
-              className="flex h-8 w-8 min-w-[32px] min-h-[32px] aspect-square p-0 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-bg-secondary text-text-secondary hover:text-text-primary hover:bg-bg-primary hover:border-border-hover transition-all shadow-2xs cursor-pointer"
+              className="flex h-8 w-8 min-w-[32px] min-h-[32px] aspect-square p-0 shrink-0 items-center justify-center rounded-sm border border-border-subtle bg-bg-secondary text-text-secondary hover:text-text-primary hover:bg-bg-primary hover:border-border-hover transition-all shadow-2xs cursor-pointer"
               title="Back to Overview"
               aria-label="Back to Overview"
             >
@@ -428,38 +428,38 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
           )}
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-serif text-2xl font-bold tracking-tight text-text-primary">
+              <h2 className="font-serif text-2xl sm:text-3xl italic font-medium tracking-wide text-text-primary">
                 Historical Analytics
               </h2>
               {!isProUser && (
-                <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-bold tracking-wider text-text-muted uppercase">
+                <span className="rounded-sm border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-bold tracking-wider text-text-muted uppercase">
                   Sample Preview
                 </span>
               )}
             </div>
-            <p className="text-xs text-text-secondary">
+            <p className="mt-1 text-xs text-text-muted">
               Historical pay cycle and monthly spend distribution
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-secondary p-1 shadow-2xs self-start sm:self-auto">
+        <div className="flex items-center gap-1 rounded-sm border border-border-subtle bg-bg-secondary p-1 shadow-2xs self-start sm:self-auto">
           <button
             onClick={() => setDimension("cycle")}
-            className={`rounded-full px-3.5 py-1 text-xs font-semibold transition-all ${
+            className={`rounded-sm px-3.5 py-1 font-mono text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
               dimension === "cycle"
-                ? "bg-text-primary text-bg-primary shadow-xs"
-                : "text-text-secondary hover:text-text-primary"
+                ? "bg-bg-card text-text-primary border border-border-subtle/80 shadow-xs"
+                : "bg-transparent text-text-secondary hover:text-text-primary"
             }`}
           >
             Pay Cycle
           </button>
           <button
             onClick={() => setDimension("month")}
-            className={`rounded-full px-3.5 py-1 text-xs font-semibold transition-all ${
+            className={`rounded-sm px-3.5 py-1 font-mono text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
               dimension === "month"
-                ? "bg-text-primary text-bg-primary shadow-xs"
-                : "text-text-secondary hover:text-text-primary"
+                ? "bg-bg-card text-text-primary border border-border-subtle/80 shadow-xs"
+                : "bg-transparent text-text-secondary hover:text-text-primary"
             }`}
           >
             Month
@@ -468,9 +468,9 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
       </div>
 
       {!isProUser && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-dashed border-border-subtle bg-bg-card/70 p-4 shadow-2xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-sm border border-dashed border-border-subtle bg-bg-card/70 p-4 shadow-2xs">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border-subtle bg-bg-secondary text-text-primary">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-border-subtle bg-bg-secondary text-accent-terracotta">
               <BarChart3 className="h-4.5 w-4.5" />
             </div>
             <div>
@@ -484,7 +484,7 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
           </div>
           <button
             onClick={onClaimPro}
-            className="rounded-full border border-text-primary bg-text-primary px-4 py-1.5 text-xs font-semibold text-bg-primary hover:opacity-90 transition-all shrink-0 self-start sm:self-auto shadow-xs"
+            className="rounded-sm border border-accent-terracotta bg-accent-terracotta px-4 py-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-[#FAF8F5] hover:opacity-90 transition-all shrink-0 self-start sm:self-auto shadow-xs"
           >
             Claim Pro Upgrade
           </button>
@@ -492,14 +492,14 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
       )}
 
       {currentSelection && (
-        <div className="flex flex-col gap-6 rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-xs">
+        <div className="flex flex-col gap-6 rounded-sm border border-border-subtle bg-bg-card p-6 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-subtle/60 pb-4">
             <div className="flex items-center flex-wrap gap-2">
               <h2 className="font-serif text-xl sm:text-2xl font-bold tracking-tight text-text-primary leading-snug">
                 {currentSelection.fullLabel}
               </h2>
               {currentSelection.isCurrent && (
-                <span className="rounded bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-bold uppercase text-text-secondary shrink-0">
+                <span className="rounded-xs bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-text-secondary shrink-0">
                   Current
                 </span>
               )}
@@ -573,9 +573,9 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
       )}
 
       {aiOptOut ? (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-2xl border border-dashed border-border-subtle bg-bg-card/60 p-5 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-sm border border-dashed border-border-subtle bg-bg-card/60 p-5 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-border-subtle bg-bg-secondary text-text-primary">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-sm border border-border-subtle bg-bg-secondary text-accent-terracotta">
               <Shield size={18} className="text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
@@ -583,7 +583,7 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
                 <h3 className="font-serif text-base font-bold tracking-tight text-text-primary">
                   AI Historical Spend Intelligence Disabled
                 </h3>
-                <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted">
+                <span className="rounded-sm border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold text-text-muted uppercase">
                   Opted Out
                 </span>
               </div>
@@ -596,7 +596,7 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
             <button
               type="button"
               onClick={onOpenSettings}
-              className="cursor-pointer rounded-full border border-border-subtle bg-bg-primary hover:bg-bg-secondary px-4 py-1.5 text-xs font-semibold text-text-primary transition-all shadow-xs shrink-0 self-start sm:self-auto"
+              className="cursor-pointer rounded-sm border border-border-subtle bg-bg-primary hover:bg-bg-secondary px-4 py-1.5 font-mono text-xs font-semibold uppercase tracking-wider text-text-primary transition-all shadow-xs shrink-0 self-start sm:self-auto"
             >
               Manage in Settings →
             </button>
@@ -613,7 +613,7 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
         />
       )}
 
-      <div className="flex flex-col gap-4 rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-xs">
+      <div className="flex flex-col gap-4 rounded-sm border border-border-subtle bg-bg-card p-6 shadow-xs">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-border-subtle/60 pb-3">
           <div>
             <h3 className="font-serif text-lg font-bold tracking-tight text-text-primary">
@@ -624,12 +624,12 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
             </p>
           </div>
 
-          <div className="flex items-center gap-1 rounded-full border border-border-subtle bg-bg-secondary p-0.5 self-start sm:self-auto shrink-0">
+          <div className="flex items-center gap-1 rounded-sm border border-border-subtle bg-bg-secondary p-0.5 self-start sm:self-auto shrink-0 shadow-2xs">
             <button
               onClick={() => setChartMode("percentage")}
-              className={`rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase transition-all ${
+              className={`rounded-sm px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider transition-all ${
                 chartMode === "percentage"
-                  ? "bg-text-primary text-bg-primary shadow-xs"
+                  ? "bg-bg-card text-text-primary shadow-xs border border-border-subtle/80"
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >
@@ -637,9 +637,9 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
             </button>
             <button
               onClick={() => setChartMode("amount")}
-              className={`rounded-full px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase transition-all ${
+              className={`rounded-sm px-2.5 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider transition-all ${
                 chartMode === "amount"
-                  ? "bg-text-primary text-bg-primary shadow-xs"
+                  ? "bg-bg-card text-text-primary shadow-xs border border-border-subtle/80"
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >
@@ -658,7 +658,7 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
       </div>
 
       {currentSelection && currentSelection.segments.length > 0 && (
-        <div className="flex flex-col gap-3 rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-xs">
+        <div className="flex flex-col gap-3 rounded-sm border border-border-subtle bg-bg-card p-6 shadow-xs">
           <div className="flex items-center justify-between border-b border-border-subtle/60 pb-3">
             <h3 className="font-serif text-base font-bold tracking-tight text-text-primary">
               Category Breakdown · {currentSelection.fullLabel}

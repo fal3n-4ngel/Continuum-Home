@@ -22,9 +22,9 @@ interface IntegrationsTabProps {
   isSyncingTrakt?: boolean;
 }
 
-const BENTO_CARD = "rounded-2xl border border-border-subtle bg-bg-card p-5 shadow-subtle";
-const BTN_PRIMARY = "rounded-xl border border-text-primary bg-text-primary text-xs font-semibold text-bg-primary transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-60 cursor-pointer shadow-xs";
-const BTN_SECONDARY = "rounded-xl border border-border-subtle bg-bg-secondary text-xs font-semibold text-text-primary transition-all duration-200 hover:bg-bg-primary hover:border-border-hover active:scale-[0.98] disabled:opacity-60 cursor-pointer shadow-2xs";
+const BENTO_CARD = "rounded-sm border border-border-subtle bg-bg-card p-5 shadow-subtle";
+const BTN_PRIMARY = "rounded-sm border border-text-primary bg-text-primary text-xs font-mono uppercase tracking-wider text-bg-primary transition-all duration-200 hover:opacity-90 active:scale-[0.98] disabled:opacity-60 cursor-pointer shadow-xs";
+const BTN_SECONDARY = "rounded-sm border border-border-subtle bg-bg-secondary text-xs font-mono uppercase tracking-wider text-text-primary transition-all duration-200 hover:bg-bg-primary hover:border-border-hover active:scale-[0.98] disabled:opacity-60 cursor-pointer shadow-2xs";
 
 export const IntegrationsTab = ({
   watchlist,
@@ -95,7 +95,7 @@ export const IntegrationsTab = ({
           <div className="mt-4 flex items-center justify-between gap-2 border-t border-border-subtle/70 pt-3.5">
             {anilistUser ? (
               <>
-                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-xs font-medium">Active</span>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   {syncAnilist && (
                     <button onClick={syncAnilist} disabled={isSyncingAnilist} className="text-xs font-semibold text-text-primary hover:underline bg-transparent border-none cursor-pointer">
@@ -145,7 +145,7 @@ export const IntegrationsTab = ({
           <div className="mt-4 flex items-center justify-between gap-2 border-t border-border-subtle/70 pt-3.5">
             {traktUser ? (
               <>
-                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-xs font-medium">Active</span>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   {syncTrakt && (
                     <button onClick={syncTrakt} disabled={isSyncingTrakt} className="text-xs font-semibold text-text-primary hover:underline bg-transparent border-none cursor-pointer">
@@ -182,7 +182,7 @@ export const IntegrationsTab = ({
           <div className="mt-4 flex items-center justify-between gap-2 border-t border-border-subtle/70 pt-3.5">
             {letterboxdUsername ? (
               <>
-                <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full font-semibold">Active</span>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-xs font-medium">Active</span>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                   <button onClick={handleLetterboxdImport} disabled={isImportingLetterboxd} className="text-xs font-semibold text-text-primary hover:underline bg-transparent border-none cursor-pointer">
                     {isImportingLetterboxd ? "Syncing..." : "Sync"}

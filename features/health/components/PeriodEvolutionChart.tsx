@@ -38,7 +38,7 @@ export const PeriodEvolutionChart: React.FC<PeriodEvolutionChartProps> = ({
 
   if (!displayPeriods || displayPeriods.length === 0) {
     return (
-      <div className="flex h-64 w-full items-center justify-center rounded-xl border border-dashed border-border-subtle bg-bg-primary/40 text-xs text-text-muted">
+      <div className="flex h-64 w-full items-center justify-center rounded-sm border border-dashed border-border-subtle bg-bg-primary/40 text-xs text-text-muted">
         No historical cycle data available.
       </div>
     );

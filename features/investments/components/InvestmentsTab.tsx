@@ -58,14 +58,14 @@ interface InvestmentsTabProps {
   selectSuggestion: (s: InvestmentQuote) => void;
 }
 
-const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
+const STAT_CARD = "flex flex-col gap-1 rounded-sm border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-150 hover:border-border-hover";
 const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
-const STAT_VALUE = "text-[28px] font-bold tracking-[-0.5px] text-text-primary";
+const STAT_VALUE = "text-[28px] font-bold tracking-tight text-text-primary";
 const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
-const BENTO_CARD = "rounded-2xl border border-border-subtle bg-bg-card p-6 shadow-subtle";
-const BTN_PRIMARY = "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-xs font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 disabled:opacity-60";
-const BTN_SECONDARY = "cursor-pointer rounded-full border border-border-subtle bg-bg-card px-4 py-2 text-xs font-semibold text-text-primary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:border-border-hover disabled:opacity-50";
-const INPUT_CLASS = "w-full rounded-full border border-border-subtle bg-bg-card px-3.5 py-2 text-xs font-medium text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus shadow-2xs";
+const BENTO_CARD = "rounded-sm border border-border-subtle bg-bg-card p-6 shadow-subtle";
+const BTN_PRIMARY = "cursor-pointer rounded-sm border border-accent-terracotta bg-accent-terracotta px-4 py-2 font-mono text-xs font-semibold uppercase tracking-wider text-[#FAF8F5] shadow-xs transition-all duration-150 hover:opacity-90 disabled:opacity-50";
+const BTN_SECONDARY = "cursor-pointer rounded-sm border border-border-subtle bg-bg-card px-4 py-2 font-mono text-xs font-semibold uppercase tracking-wider text-text-primary shadow-2xs transition-all duration-150 hover:bg-bg-primary hover:border-border-hover disabled:opacity-50";
+const INPUT_CLASS = "w-full rounded-sm border border-border-subtle bg-bg-card px-3.5 py-2 font-mono text-xs font-medium text-text-primary outline-none transition-all duration-150 focus:border-accent-terracotta shadow-2xs";
 const LEDGER_TH = "border-b border-border-subtle bg-bg-card px-3.5 py-3.5 font-mono text-[10px] font-bold tracking-[0.8px] text-text-secondary uppercase";
 const LEDGER_TD = "border-b border-border-subtle px-3.5 py-4 align-middle text-[13px] text-text-primary";
 
@@ -550,7 +550,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
 
           {activeInvestments.length > 0 && (
             <div className="mt-5 grid grid-cols-2 gap-3 pt-4 border-t border-border-subtle">
-              <div className="rounded-xl bg-[#E6F4EA]/60 border border-[#2e7d32]/20 p-3 flex flex-col gap-0.5">
+              <div className="rounded-sm bg-[#E6F4EA]/60 border border-[#2e7d32]/20 p-3 flex flex-col gap-0.5">
                 <span className="text-[9px] font-mono font-bold tracking-[0.5px] text-[#2e7d32] uppercase">Best Return</span>
                 <span className="truncate text-[13px] font-bold text-text-primary leading-tight">{bestPerformer.name}</span>
                 <span className="text-[12px] font-bold text-[#2e7d32] mt-1 font-mono">
@@ -558,7 +558,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                 </span>
               </div>
               {worstPerformer && (
-                <div className={`rounded-xl p-3 flex flex-col gap-0.5 border ${
+                <div className={`rounded-sm p-3 flex flex-col gap-0.5 border ${
                   worstPerformer.pct < 0 ? "bg-[#FDF6F0] border-[#e39282]/40" : "bg-bg-primary border-border-subtle"
                 }`}>
                   <span className={`text-[9px] font-mono font-bold tracking-[0.5px] uppercase ${
@@ -660,7 +660,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                 })}
               </div>
 
-              <div className="mt-2 rounded-xl bg-bg-primary/40 border border-border-subtle p-3 text-[11px] leading-relaxed text-text-secondary flex items-start gap-2">
+              <div className="mt-2 rounded-sm bg-bg-primary/40 border border-border-subtle p-3 text-[11px] leading-relaxed text-text-secondary flex items-start gap-2">
                 <Info className="h-4.5 w-4.5 shrink-0 text-text-muted mt-0.5" />
                 <span>
                   {selectedRiskProfile === "conservative" && "Conservative models favor high stability. Recommended for preserving capital, avoiding heavy stock market drawdowns, or when cash is needed in <2 years."}
@@ -1094,7 +1094,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
 
       {mounted && showSellModal && createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-xs transition-opacity animate-[fadeIn_0.15s_ease-out]">
-          <div className="w-full max-w-md rounded-xl border border-border-subtle bg-bg-card p-6 shadow-2xl animate-[fadeIn_0.2s_ease-out]">
+          <div className="w-full max-w-md rounded-sm border border-border-subtle bg-bg-card p-6 shadow-2xl animate-[fadeIn_0.2s_ease-out]">
             <h3 className="text-sm font-bold text-text-primary mb-2 flex items-center gap-2">
               <Tag className="h-4.5 w-4.5 text-[#16a34a]" /> Confirm Asset Sale
             </h3>

@@ -352,7 +352,7 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border-subtle bg-bg-card p-6 sm:p-8 shadow-subtle flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+        <div className="rounded-sm border border-border-subtle bg-bg-card p-6 sm:p-8 shadow-subtle flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
           <div className="flex flex-col gap-2.5 max-w-2xl">
             <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[1.2px] text-text-muted">
               Supporter Feature
@@ -387,7 +387,7 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
             <button
               type="button"
               onClick={onOpenUpgrade}
-              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-text-primary bg-text-primary px-7 py-3 text-xs font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 active:scale-95"
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-sm border border-text-primary bg-text-primary px-7 py-3 text-xs font-mono uppercase tracking-wider font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 active:scale-95"
             >
               <span>Unlock with Pro</span>
               <span className="text-xs">→</span>
@@ -396,7 +396,7 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
               href="https://github.com/fal3n-4ngel/Continuum-Home#readme"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-border-subtle bg-bg-secondary px-5 py-2.5 text-xs font-medium text-text-secondary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover text-center"
+              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-border-subtle bg-bg-secondary px-5 py-2.5 text-xs font-mono uppercase tracking-wider font-medium text-text-secondary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover text-center"
             >
               <span>Self-Host Free</span>
             </a>
@@ -428,7 +428,7 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
             type="button"
             onClick={handleReset}
             title="Clear Chat History"
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border-subtle bg-bg-card hover:bg-bg-primary text-text-secondary hover:text-text-primary transition-colors cursor-pointer text-xs font-medium"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xs border border-border-subtle bg-bg-card hover:bg-bg-primary text-text-secondary hover:text-text-primary transition-colors cursor-pointer text-xs font-mono uppercase tracking-wider font-medium"
           >
             <RotateCcw className="h-3.5 w-3.5" />
             <span>Reset</span>
@@ -436,10 +436,10 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
         </div>
       </div>
 
-      <div className="relative flex flex-col h-[calc(100dvh-155px)] min-h-[540px] max-md:h-[calc(100dvh-185px)] max-md:min-h-[420px] w-full rounded-2xl border border-border-subtle bg-bg-card shadow-subtle overflow-hidden">
+      <div className="relative flex flex-col h-[calc(100dvh-155px)] min-h-[540px] max-md:h-[calc(100dvh-185px)] max-md:min-h-[420px] w-full rounded-sm border border-border-subtle bg-bg-card shadow-subtle overflow-hidden">
         {aiOptOut ? (
           <div className="flex flex-1 flex-col items-center justify-center p-8 text-center max-w-md mx-auto animate-[fadeIn_0.3s_ease]">
-            <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-border-subtle bg-bg-secondary text-text-primary mb-4 shadow-subtle">
+            <div className="flex h-12 w-12 items-center justify-center rounded-sm border border-border-subtle bg-bg-secondary text-text-primary mb-4 shadow-subtle">
               <Shield size={22} className="text-emerald-600 dark:text-emerald-400" />
             </div>
             <h3 className="font-serif text-xl font-bold tracking-tight text-text-primary mb-2">
@@ -452,7 +452,7 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
               <button
                 type="button"
                 onClick={onOpenSettings}
-                className="rounded-full border border-border-subtle bg-bg-primary hover:bg-bg-secondary px-4 py-1.5 text-xs font-semibold text-text-primary transition-all shadow-xs cursor-pointer"
+                className="rounded-sm border border-border-subtle bg-bg-primary hover:bg-bg-secondary px-4 py-1.5 text-xs font-mono uppercase tracking-wider font-semibold text-text-primary transition-all shadow-xs cursor-pointer"
               >
                 Open Settings →
               </button>
@@ -486,7 +486,7 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
                       key={idx}
                       type="button"
                       onClick={() => handleSend(prompt.text)}
-                      className="flex flex-col items-start gap-1 p-3 rounded-xl border border-border-subtle bg-bg-primary/40 hover:bg-bg-primary hover:border-text-primary/30 transition-all text-left cursor-pointer shadow-2xs group"
+                      className="flex flex-col items-start gap-1 p-3 rounded-sm border border-border-subtle bg-bg-primary/40 hover:bg-bg-primary hover:border-text-primary/30 transition-all text-left cursor-pointer shadow-2xs group"
                     >
                       <div className="flex items-center gap-1.5 font-mono text-[10px] font-semibold text-text-muted group-hover:text-text-primary transition-colors">
                         <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -514,21 +514,21 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
                   }`}
                 >
                   {msg.sender === "user" ? (
-                    <div className="max-w-[75%] max-sm:max-w-[85%] px-4.5 py-2.5 rounded-2xl rounded-br-xs bg-text-primary text-bg-primary shadow-xs">
+                    <div className="max-w-[75%] max-sm:max-w-[85%] px-4.5 py-2.5 rounded-sm rounded-br-none bg-text-primary text-bg-primary shadow-xs">
                       <p className="text-[13.5px] sm:text-[14px] leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                       <div className="text-[10px] text-bg-primary/60 text-right mt-1 font-mono">
                         {msg.timestamp}
                       </div>
                     </div>
                   ) : msg.sender === "system" ? (
-                    <div className="max-w-md rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-center text-xs font-medium text-rose-600 dark:text-rose-400">
+                    <div className="max-w-md rounded-sm border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-center text-xs font-medium text-rose-600 dark:text-rose-400">
                       {msg.text}
                     </div>
                   ) : (
                     <div className="flex items-start gap-3 max-w-[85%] max-sm:max-w-[90%]">
                       <KirokuSeal className="h-7 w-7 text-xs shrink-0 mt-0.5" />
                       <div className="flex flex-col gap-1.5 min-w-0">
-                        <div className="rounded-2xl rounded-tl-xs border border-border-subtle/80 bg-bg-primary/60 px-5 py-3.5 text-text-primary shadow-xs">
+                        <div className="rounded-sm rounded-tl-none border border-border-subtle/80 bg-bg-primary/60 px-5 py-3.5 text-text-primary shadow-xs">
                           {renderMarkdown(msg.text)}
                         </div>
 
@@ -580,7 +580,7 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
               {loading && (
                 <div className="flex items-start gap-3 max-w-[85%]">
                   <KirokuSeal className="h-7 w-7 text-xs shrink-0 mt-0.5" />
-                  <div className="rounded-2xl rounded-tl-xs border border-border-subtle/80 bg-bg-primary/60 px-4 py-3 text-text-muted flex items-center gap-2 shadow-xs">
+                  <div className="rounded-sm rounded-tl-none border border-border-subtle/80 bg-bg-primary/60 px-4 py-3 text-text-muted flex items-center gap-2 shadow-xs">
                     <span className="h-1.5 w-1.5 rounded-full bg-text-secondary/60 animate-bounce" style={{ animationDelay: "0ms" }} />
                     <span className="h-1.5 w-1.5 rounded-full bg-text-secondary/60 animate-bounce" style={{ animationDelay: "150ms" }} />
                     <span className="h-1.5 w-1.5 rounded-full bg-text-secondary/60 animate-bounce" style={{ animationDelay: "300ms" }} />
@@ -594,7 +594,7 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
 
         <footer className="border-t border-border-subtle bg-bg-card/90 backdrop-blur-md p-3 sm:p-4">
           <div className="max-w-5xl mx-auto flex flex-col gap-1.5">
-            <div className="relative flex items-center gap-2 rounded-2xl sm:rounded-full border border-border-subtle bg-bg-primary px-3.5 py-1.5 focus-within:border-border-hover focus-within:ring-1 focus-within:ring-text-primary/10 transition-all shadow-inner">
+            <div className="relative flex items-center gap-2 rounded-sm border border-border-subtle bg-bg-primary px-3.5 py-1.5 focus-within:border-border-hover focus-within:ring-1 focus-within:ring-text-primary/10 transition-all shadow-inner">
               <textarea
                 ref={textareaRef}
                 rows={1}
@@ -611,7 +611,7 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
                   type="button"
                   onClick={handleToggleVoice}
                   title={isListening ? "Listening... click to stop" : "Voice input"}
-                  className={`shrink-0 flex h-8 w-8 min-w-[32px] min-h-[32px] aspect-square p-0 items-center justify-center rounded-full transition-all cursor-pointer ${
+                  className={`shrink-0 flex h-8 w-8 min-w-[32px] min-h-[32px] aspect-square p-0 items-center justify-center rounded-xs transition-all cursor-pointer ${
                     isListening
                       ? "bg-rose-500/20 text-rose-600 animate-pulse"
                       : "text-text-secondary hover:bg-bg-secondary hover:text-text-primary"
@@ -625,7 +625,7 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
                   onClick={() => handleSend()}
                   disabled={loading || !input.trim() || !idToken}
                   aria-label="Send message"
-                  className={`shrink-0 flex h-8 w-8 min-w-[32px] min-h-[32px] aspect-square p-0 items-center justify-center rounded-full transition-all ${
+                  className={`shrink-0 flex h-8 w-8 min-w-[32px] min-h-[32px] aspect-square p-0 items-center justify-center rounded-xs transition-all ${
                     !input.trim() || loading || !idToken
                       ? "bg-bg-secondary text-text-muted cursor-not-allowed opacity-50"
                       : "bg-text-primary text-bg-primary shadow-xs hover:opacity-90 active:scale-95 cursor-pointer"

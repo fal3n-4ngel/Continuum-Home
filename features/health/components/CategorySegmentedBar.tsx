@@ -23,7 +23,7 @@ export const CategorySegmentedBar: React.FC<CategorySegmentedBarProps> = ({
   if (!segments || segments.length === 0) {
     return (
       <div
-        className="w-full rounded-full bg-bg-secondary border border-border-subtle"
+        className="w-full rounded-sm bg-bg-secondary border border-border-subtle"
         style={{ height: `${height}px` }}
       />
     );
@@ -32,7 +32,7 @@ export const CategorySegmentedBar: React.FC<CategorySegmentedBarProps> = ({
   return (
     <div className="flex flex-col gap-3 w-full">
       <div
-        className="flex w-full overflow-hidden rounded-full border border-border-subtle/60 bg-bg-secondary p-0.5 shadow-2xs"
+        className="flex w-full overflow-hidden rounded-sm border border-border-subtle/60 bg-bg-secondary p-0.5 shadow-2xs"
         style={{ height: `${height}px` }}
       >
         {segments.map((s, idx) => (
@@ -42,7 +42,7 @@ export const CategorySegmentedBar: React.FC<CategorySegmentedBarProps> = ({
               width: `${Math.max(1.5, s.percentage)}%`,
               backgroundColor: s.color,
             }}
-            className="h-full first:rounded-l-full last:rounded-r-full transition-all duration-300 relative group"
+            className="h-full first:rounded-l-xs last:rounded-r-xs transition-all duration-300 relative group"
             title={`${s.category}: ${currency}${s.amount.toLocaleString("en-IN")} (${s.percentage}%)`}
           />
         ))}
