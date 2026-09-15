@@ -325,3 +325,13 @@ export async function deleteWatchlistItem(session: Session, id: string) {
   await cacheInvalidate(watchlistCacheKey(session));
   return { id };
 }
+
+export async function getWatchlistItem(session: Session, id: string): Promise<WatchlistItem | null> {
+  try {
+    assertDocId(id, "watchlist item");
+    const all = await listWatchlist(session);
+    return all.find((r) => r.id === id) || null;
+  } catch {
+    return null;
+  }
+}

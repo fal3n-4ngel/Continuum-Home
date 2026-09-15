@@ -209,3 +209,13 @@ export async function archiveExpense(session: Session, id: string) {
   await cacheInvalidate(expenseCacheKey(session));
   return { id };
 }
+
+export async function getExpense(session: Session, id: string): Promise<ExpenseRecord | null> {
+  try {
+    assertDocId(id, "expense");
+    const all = await getRawExpenses(session);
+    return all.find((r) => r.id === id) || null;
+  } catch {
+    return null;
+  }
+}

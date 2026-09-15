@@ -36,6 +36,7 @@ export async function GET(req: NextRequest) {
       recordDomainEvent({
         eventType: DOMAIN_EVENTS.USER_CREATED,
         userId: session.uid,
+        entityId: session.uid,
         userEmail: session.user.email,
         payload: {
           displayName: session.user.displayName,
@@ -81,6 +82,7 @@ export async function PATCH(req: NextRequest) {
       recordDomainEvent({
         eventType: DOMAIN_EVENTS.SALARY_UPDATED,
         userId: session.uid,
+        entityId: session.uid,
         userEmail: session.user.email,
         payload: {
           monthlySalary: patch.monthlySalary,
@@ -93,6 +95,7 @@ export async function PATCH(req: NextRequest) {
       recordDomainEvent({
         eventType: DOMAIN_EVENTS.SALARY_LOGGED,
         userId: session.uid,
+        entityId: session.uid,
         userEmail: session.user.email,
         payload: {
           entriesCount: Object.keys(patch.salaryLog || {}).length,
@@ -113,6 +116,7 @@ export async function DELETE(req: NextRequest) {
     recordDomainEvent({
       eventType: DOMAIN_EVENTS.USER_DELETED,
       userId: session.uid,
+      entityId: session.uid,
       userEmail: session.user.email,
       payload: {
         timestamp: Date.now(),

@@ -7,7 +7,6 @@ import {
   toFields,
   fromFields,
   userPath,
-  docsRoot,
 } from "../client";
 
 export type FdCompounding = "monthly" | "quarterly" | "half_yearly" | "yearly";
@@ -222,4 +221,14 @@ export async function updatePortfolioValuationHistory(
     body: JSON.stringify({ fields: toFields(docData) }),
   });
   await cacheInvalidate(portfolioCacheKey(session));
+}
+
+export async function getPortfolioAsset(session: Session, id: string): Promise<InvestmentAsset | null> {
+  try {
+    assertDocId(id, "portfolio asset");
+    const p = await getPortfolio(session);
+    return p?.assets?.find((a) => a.id === id) || null;
+  } catch {
+    return null;
+  }
 }

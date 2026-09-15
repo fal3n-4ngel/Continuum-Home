@@ -144,10 +144,21 @@ export async function refreshIdToken(
     throw new ApiError(401, "Invalid or expired authentication token.");
   }
 
+  let email: string | null = null;
+  let displayName: string | null = null;
+  try {
+    const parts = idToken.split(".");
+    if (parts.length === 3) {
+      const payload = JSON.parse(Buffer.from(parts[1], "base64url").toString("utf-8"));
+      email = payload.email || null;
+      displayName = payload.name || null;
+    }
+  } catch {}
+
   const user: AuthedUser = {
     uid,
-    email: null,
-    displayName: null,
+    email,
+    displayName,
   };
 
   const result = { idToken, user };

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/utils";
-import { updateWatchlistItem, deleteWatchlistItem } from "@/lib/firebase";
+import { updateWatchlistItem, deleteWatchlistItem, getWatchlistItem } from "@/lib/firebase";
 import { validateWatchlistPatch } from "@/lib/firebase";
 import { recordDomainEvent, DOMAIN_EVENTS } from "@/lib/domain-events";
 
@@ -22,6 +22,7 @@ export async function PATCH(
       throw new ApiError(400, "Invalid JSON body");
     }
 
+    const existing = await getWatchlistItem(session, id);
     const patch = validateWatchlistPatch(body);
     const result = await updateWatchlistItem(session, id, patch);
 
@@ -30,7 +31,14 @@ export async function PATCH(
       userId: session.uid,
       entityId: id,
       userEmail: session.user.email,
-      payload: { fields: Object.keys(patch), ...(patch.title ? { title: patch.title } : {}), status: patch.status },
+      payload: {
+        fields: Object.keys(patch),
+        title: patch.title ?? existing?.title,
+        type: patch.type ?? existing?.type,
+        status: patch.status ?? existing?.status,
+        rating: patch.rating !== undefined ? patch.rating : existing?.rating,
+        progress: patch.progress !== undefined ? patch.progress : existing?.progress,
+      },
     });
 
     return NextResponse.json({ success: true, ...result });
@@ -46,6 +54,7 @@ export async function DELETE(
   try {
     const session = await requireUser(req);
     const { id } = await params;
+    const existing = await getWatchlistItem(session, id);
     const result = await deleteWatchlistItem(session, id);
 
     recordDomainEvent({
@@ -53,6 +62,19 @@ export async function DELETE(
       userId: session.uid,
       entityId: id,
       userEmail: session.user.email,
+      payload: {
+        ...(existing
+          ? {
+              title: existing.title,
+              type: existing.type,
+              status: existing.status,
+              rating: existing.rating,
+              year: existing.year,
+              progress: existing.progress,
+            }
+          : {}),
+        deletedAt: Date.now(),
+      },
     });
 
     return NextResponse.json({ success: true, ...result });

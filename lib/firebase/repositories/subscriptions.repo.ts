@@ -104,3 +104,13 @@ export async function updateSubscription(session: Session, id: string, updates: 
 
   await cacheInvalidate(subscriptionCacheKey(session));
 }
+
+export async function getSubscription(session: Session, id: string): Promise<SubscriptionRecord | null> {
+  try {
+    assertDocId(id, "subscription");
+    const all = await listSubscriptions(session);
+    return all.find((r) => r.id === id) || null;
+  } catch {
+    return null;
+  }
+}

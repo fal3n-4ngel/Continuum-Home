@@ -14,9 +14,11 @@ import {
   listExpenses,
   createExpense,
   archiveExpense,
+  getExpense,
   listWatchlist,
   addWatchlistItem,
   updateWatchlistItem,
+  getWatchlistItem,
   listSubscriptions,
   getPortfolio,
   getSettings,
@@ -25,8 +27,12 @@ import { recordDomainEvent, DOMAIN_EVENTS } from "@/lib/domain-events";
 
 export const dynamic = "force-dynamic";
 
-const SYSTEM_INSTRUCTION = `Your name is Kiroku, a strict, focused, domain-specific AI Assistant built into the Continuum Home app.
+function getSystemInstruction(): string {
+  const today = new Date().toISOString().slice(0, 10);
+  return `Your name is Kiroku, a strict, focused, domain-specific AI Assistant built into the Continuum Home app.
 Your only purpose is to help users manage their personal dashboard data.
+
+Current Date: Today's date is ${today}.
 
 You can help with:
 1. Expenses (logging new expenses, listing transactions, checking monthly summaries).
@@ -35,12 +41,19 @@ You can help with:
 4. Portfolio (checking net asset value, list of investment assets).
 5. Scratchpad Notes (getting or updating notes).
 
+CRITICAL EXPENSE LOGGING RULE:
+- When logging or creating expenses with createExpense, you MUST ALWAYS provide the 'date' parameter in YYYY-MM-DD format.
+- If the user specifies a date (e.g. "yesterday", "on Friday", "on 2026-09-10"), resolve that date in YYYY-MM-DD format.
+- If the user does NOT specify a date, you MUST supply today's date (${today}) in YYYY-MM-DD format.
+- NEVER omit the 'date' parameter when calling createExpense.
+
 CRITICAL GUARDRAIL:
 - You are allowed (and expected) to analyze the user's data to answer analysis/recommendation questions directly related to their dashboard (e.g. recommending movies/shows based on their watchlist history, analyzing expense patterns, suggesting budget adjustments, summarizing their notes).
 - If the user asks completely off-topic questions (e.g. general science, history, coding/programming, writing essays, math puzzles, general internet search, general-purpose chat/assistance), you MUST refuse to answer.
 - When refusing off-topic queries, reply exactly with: "I can only assist you with managing your expenses, watchlist, subscriptions, portfolio, or scratchpad notes on this dashboard."
 - Never break this rule.
 - If asked what model, AI, or provider you're built on, simply say you're Kiroku, Continuum Home's built-in assistant — never name the underlying model or vendor.`;
+}
 
 const GROQ_TOOLS = [
   {
@@ -63,17 +76,17 @@ const GROQ_TOOLS = [
     type: "function",
     function: {
       name: "createExpense",
-      description: "Record a new expense transaction. Date defaults to today if omitted.",
+      description: "Record a new expense transaction. Date is strictly required in YYYY-MM-DD format.",
       parameters: {
         type: "object",
         properties: {
           title: { type: "string", description: "Short description of expense" },
           amount: { type: "number", description: "Spent amount in INR" },
           category: { type: "string", description: "Category, e.g. Food, Transport, Rent" },
-          date: { type: "string", description: "YYYY-MM-DD format" },
+          date: { type: "string", description: "Transaction date in YYYY-MM-DD format. Always required." },
           notes: { type: "string", description: "Additional details" },
         },
-        required: ["title", "amount"],
+        required: ["title", "amount", "date"],
       },
     },
   },
@@ -203,20 +216,32 @@ async function executeTool(session: any, name: string, args: any) {
         };
       }
       case "createExpense": {
-        const result = await createExpense(session, args);
+        const resolvedDate = args.date || new Date().toISOString().slice(0, 10);
+        const result = await createExpense(session, { ...args, date: resolvedDate });
         if (result?.id) {
           recordAgentEvent(session, DOMAIN_EVENTS.EXPENSE_CREATED, result.id, {
             title: args.title,
             amount: args.amount,
             category: args.category,
-            date: args.date,
+            date: resolvedDate,
           });
         }
         return result;
       }
       case "deleteExpense": {
+        const existing = await getExpense(session, args.id);
         const result = await archiveExpense(session, args.id);
-        recordAgentEvent(session, DOMAIN_EVENTS.EXPENSE_DELETED, args.id);
+        recordAgentEvent(session, DOMAIN_EVENTS.EXPENSE_DELETED, args.id, {
+          ...(existing
+            ? {
+                title: existing.title,
+                amount: existing.amount,
+                category: existing.category,
+                date: existing.date,
+              }
+            : {}),
+          deletedAt: Date.now(),
+        });
         return result;
       }
       case "listWatchlistItems": {
@@ -249,8 +274,16 @@ async function executeTool(session: any, name: string, args: any) {
         return result;
       }
       case "updateWatchlistItem": {
+        const existing = await getWatchlistItem(session, args.id);
         const result = await updateWatchlistItem(session, args.id, args);
-        recordAgentEvent(session, DOMAIN_EVENTS.WATCHLIST_UPDATED, args.id);
+        recordAgentEvent(session, DOMAIN_EVENTS.WATCHLIST_UPDATED, args.id, {
+          fields: Object.keys(args).filter((k) => k !== "id"),
+          title: existing?.title,
+          type: existing?.type,
+          status: args.status ?? existing?.status,
+          rating: args.rating !== undefined ? args.rating : existing?.rating,
+          progress: args.progress !== undefined ? args.progress : existing?.progress,
+        });
         return result;
       }
       case "listSubscriptions": {
@@ -313,6 +346,15 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com";
+    const isPro = session.user?.email === adminEmail || settings?.isPro === true;
+    if (!isPro) {
+      return NextResponse.json(
+        { error: "Kiroku AI Assistant is a Pro feature. Please upgrade to Pro to access Kiroku." },
+        { status: 403 }
+      );
+    }
+
     if (!redis) {
       return NextResponse.json({ error: "Rate limit cache offline." }, { status: 500 });
     }
@@ -358,7 +400,7 @@ export async function POST(req: NextRequest) {
     let updatedHistory: any[] = [];
 
     try {
-      const groqMessages = convertHistoryToGroqMessages(trimmedHistory, message, SYSTEM_INSTRUCTION);
+      const groqMessages = convertHistoryToGroqMessages(trimmedHistory, message, getSystemInstruction());
 
       replyText = await executeGroqChatWithTools({
         messages: groqMessages,

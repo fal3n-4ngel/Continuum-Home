@@ -30,13 +30,15 @@ export async function POST(req: NextRequest) {
 
     const assets = validatePortfolioAssets(body);
     await updatePortfolio(session, assets);
+    const totalAmount = assets.reduce((sum, a) => sum + (a.amount || 0), 0);
 
     recordDomainEvent({
       eventType: DOMAIN_EVENTS.INVESTMENT_UPDATED,
       userId: session.uid,
+      entityId: session.uid,
       userEmail: session.user.email,
       itemCount: assets.length,
-      payload: { wholePortfolio: true },
+      payload: { wholePortfolio: true, amount: totalAmount },
     });
 
     return NextResponse.json({ success: true });
@@ -70,7 +72,13 @@ export async function PATCH(req: NextRequest) {
         userId: session.uid,
         userEmail: session.user.email,
         entityId: b.id,
-        payload: { fields: Object.keys(patch) },
+        payload: {
+          fields: Object.keys(patch),
+          ...(patch.name ? { name: patch.name } : {}),
+          ...(patch.category ? { category: patch.category } : {}),
+          ...(patch.amount !== undefined ? { amount: patch.amount } : {}),
+          ...(patch.investedAmount !== undefined ? { investedAmount: patch.investedAmount } : {}),
+        },
       });
 
       return NextResponse.json({ success: true, ...result });
@@ -79,13 +87,15 @@ export async function PATCH(req: NextRequest) {
     if (Array.isArray(b.assets)) {
       const assets = validatePortfolioAssets(body);
       await updatePortfolio(session, assets);
+      const totalAmount = assets.reduce((sum, a) => sum + (a.amount || 0), 0);
 
       recordDomainEvent({
         eventType: DOMAIN_EVENTS.INVESTMENT_UPDATED,
         userId: session.uid,
+        entityId: session.uid,
         userEmail: session.user.email,
         itemCount: assets.length,
-        payload: { wholePortfolio: true },
+        payload: { wholePortfolio: true, amount: totalAmount },
       });
 
       return NextResponse.json({ success: true });

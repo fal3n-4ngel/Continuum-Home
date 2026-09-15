@@ -79,7 +79,7 @@ async function dispatchPostback(event: DomainEvent): Promise<boolean> {
     eventId: event.eventId || crypto.randomUUID(),
     eventType: event.eventType,
     userId: event.userId,
-    entityId: event.entityId,
+    entityId: event.entityId || event.userId,
     itemCount: event.itemCount ?? 1,
     timestamp: Date.now(),
     payload: {
