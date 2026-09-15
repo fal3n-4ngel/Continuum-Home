@@ -1,6 +1,6 @@
 import { Session } from "@/lib/auth";
 import { ApiError, cacheGet, cacheSet } from "@/lib/utils";
-import { docsRoot, fsFetch, FirestoreDocument, toFields, fromFields, userPath } from "../client";
+import { fsFetch, FirestoreDocument, toFields, fromFields, userPath } from "../client";
 
 export interface DailyRecommendation {
   type: "movie" | "show" | "anime" | "book";

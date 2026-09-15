@@ -7,7 +7,6 @@ import {
   toFields,
   fromFields,
   userPath,
-  docsRoot,
 } from "../client";
 
 export type FdCompounding = "monthly" | "quarterly" | "half_yearly" | "yearly";
@@ -228,7 +227,7 @@ export async function getPortfolioAsset(session: Session, id: string): Promise<I
   try {
     assertDocId(id, "portfolio asset");
     const p = await getPortfolio(session);
-    return p.assets.find((a) => a.id === id) || null;
+    return p?.assets?.find((a) => a.id === id) || null;
   } catch {
     return null;
   }

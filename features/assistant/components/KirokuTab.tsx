@@ -328,6 +328,8 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
         </p>
       );
     });
+  };
+
   if (!isProUser) {
     return (
       <div className="flex flex-col gap-6 w-full mx-auto animate-[fadeIn_0.3s_ease_forwards]">

@@ -43,6 +43,7 @@ export async function POST(req: NextRequest) {
         billingCycle: entry.billingCycle,
         nextBillingDate: entry.nextBillingDate,
       },
+    });
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {
