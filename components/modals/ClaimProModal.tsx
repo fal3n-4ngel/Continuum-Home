@@ -190,8 +190,8 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
                       onClick={() => setPlatform(p)}
                       className={`flex-1 rounded-xs py-1.5 text-xs font-mono uppercase tracking-wider font-semibold transition-all cursor-pointer ${
                         platform === p
-                          ? "bg-text-primary text-bg-primary shadow-xs"
-                          : "bg-transparent text-text-secondary hover:text-text-primary"
+                          ? "bg-bg-card text-text-primary shadow-xs border border-border-subtle"
+                          : "bg-transparent text-text-secondary hover:text-text-primary border border-transparent"
                       }`}
                     >
                       {p === "github" ? "GitHub Sponsors" : "Buy Me a Coffee"}

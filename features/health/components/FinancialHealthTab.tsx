@@ -669,26 +669,26 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
         <div className="flex flex-wrap items-end justify-between gap-3 border-b border-border-subtle pb-4">
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="font-serif text-3xl italic font-normal tracking-wide text-text-primary">
+              <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">
                 Financial Health
               </h1>
               {!isProUser && (
-                <span className="inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-text-muted uppercase">
+                <span className="inline-flex shrink-0 items-center rounded-sm border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-text-muted uppercase">
                   Pro
                 </span>
               )}
             </div>
-            <p className="mt-1 text-sm text-text-secondary">
+            <p className="mt-1 text-sm text-text-muted">
               Target-driven daily spending limits, pay-cycle pace, cash reconciliation, and liquidity runway.
             </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2.5">
-            <div className="flex items-center gap-1 rounded-full bg-bg-secondary p-1 border border-border-subtle/40 shadow-2xs">
+            <div className="flex items-center gap-1 rounded-sm bg-bg-secondary p-1 border border-border-subtle shadow-2xs">
               <button
                 type="button"
                 onClick={() => setHealthView("overview")}
-                className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer bg-transparent text-text-secondary hover:text-text-primary"
+                className="flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs uppercase tracking-wider font-medium transition-all duration-150 cursor-pointer bg-transparent text-text-secondary hover:text-text-primary"
               >
                 <HeartPulse size={13} />
                 <span>Overview &amp; Burn Rate</span>
@@ -696,19 +696,19 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
               <button
                 type="button"
                 onClick={() => setHealthView("analytics")}
-                className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
+                className="flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs uppercase tracking-wider font-semibold transition-all duration-150 cursor-pointer bg-bg-card text-text-primary shadow-xs border border-border-subtle/80"
               >
-                <BarChart3 size={13} />
+                <BarChart3 size={13} className="text-accent-terracotta" />
                 <span>Cycle &amp; Monthly Analytics</span>
                 {!isProUser && (
-                  <span className="font-mono text-[9px] font-bold text-text-muted px-1.5 py-0.2 bg-bg-primary rounded-full border border-border-subtle">
+                  <span className="font-mono text-[9px] font-bold text-text-muted px-1.5 py-0.2 bg-bg-primary rounded-xs border border-border-subtle">
                     PRO
                   </span>
                 )}
               </button>
             </div>
 
-            <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-full border border-border-subtle/50 shadow-2xs">
+            <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-sm border border-border-subtle shadow-2xs uppercase tracking-wider">
               Cycle {fmtDate(payCycle.startStr)} – {fmtDate(payCycle.endStr)}
             </span>
           </div>
@@ -738,41 +738,41 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
           <div className="flex items-center gap-3">
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="font-serif text-3xl italic font-normal tracking-wide text-text-primary">
+                <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary">
                   Financial Health
                 </h1>
-                <span className="inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-text-muted uppercase">
+                <span className="inline-flex shrink-0 items-center rounded-sm border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-text-muted uppercase">
                   Pro
                 </span>
               </div>
-              <p className="mt-1 text-sm text-text-secondary">
+              <p className="mt-1 text-sm text-text-muted">
                 Target-driven daily spending limits, pay-cycle pace, cash reconciliation, and liquidity runway.
               </p>
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
-            <div className="flex items-center gap-1 rounded-full bg-bg-secondary p-1 border border-border-subtle/40 shadow-2xs">
+            <div className="flex items-center gap-1 rounded-sm bg-bg-secondary p-1 border border-border-subtle shadow-2xs">
               <button
                 type="button"
                 onClick={() => setHealthView("overview")}
-                className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer bg-bg-card text-text-primary shadow-[0_2px_4px_rgba(0,0,0,0.06)] font-bold"
+                className="flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs uppercase tracking-wider font-semibold transition-all duration-150 cursor-pointer bg-bg-card text-text-primary shadow-xs border border-border-subtle/80"
               >
-                <HeartPulse size={13} />
+                <HeartPulse size={13} className="text-accent-terracotta" />
                 <span>Overview &amp; Burn Rate</span>
               </button>
               <button
                 type="button"
                 onClick={() => setHealthView("analytics")}
-                className="flex items-center gap-1.5 rounded-full px-3.5 py-1 text-xs font-semibold transition-all duration-200 cursor-pointer bg-transparent text-text-secondary hover:text-text-primary"
+                className="flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs uppercase tracking-wider font-medium transition-all duration-150 cursor-pointer bg-transparent text-text-secondary hover:text-text-primary"
               >
                 <BarChart3 size={13} />
                 <span>Cycle &amp; Monthly Analytics</span>
-                <span className="font-mono text-[9px] font-bold text-text-muted px-1.5 py-0.2 bg-bg-primary rounded-full border border-border-subtle">
+                <span className="font-mono text-[9px] font-bold text-text-muted px-1.5 py-0.2 bg-bg-primary rounded-xs border border-border-subtle">
                   PRO
                 </span>
               </button>
             </div>
-            <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-full border border-border-subtle/50 shadow-2xs flex items-center gap-1.5">
+            <span className="font-mono text-[10.5px] font-semibold text-text-secondary bg-bg-secondary px-3 py-1 rounded-sm border border-border-subtle shadow-2xs flex items-center gap-1.5 uppercase tracking-wider">
               <span className="h-1.5 w-1.5 rounded-full bg-text-muted" />
               Sample Preview · Mock Data
             </span>

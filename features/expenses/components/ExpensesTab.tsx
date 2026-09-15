@@ -639,24 +639,24 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       {expenseTab === "ledger" && (
         <div className="flex flex-col gap-7 animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]"> <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">Expenses Ledger</h1>
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 max-md:grid-cols-2 max-md:gap-2.5">
-            <div className={`${STAT_CARD} border-t-2 border-t-accent-blue`}>
+            <div className={`${STAT_CARD} border-t-2 border-t-accent-blue/80`}>
               <span className={LABEL_MONO}>Total Spent</span>
               <span className={STAT_VALUE}>{currency}{totalSpent.toLocaleString()}</span>
               <span className={STAT_SUBTEXT}>
                 {timeFilter === "all" ? "All time" : timeFilter === "salary" ? `Cycle (${currentPayCycle.startStr} – ${currentPayCycle.endStr})` : `Last ${timeFilter} days`}
               </span>
             </div>
-            <div className={`${STAT_CARD} border-t-2 border-t-accent-yellow`}>
+            <div className={`${STAT_CARD} border-t-2 border-t-accent-yellow/80`}>
               <span className={LABEL_MONO}>Charges Logged</span>
               <span className={STAT_VALUE}>{filteredExpenses.length}</span>
               <span className={STAT_SUBTEXT}>Transactions</span>
             </div>
-            <div className={`${STAT_CARD} border-t-2 border-t-accent-flame`}>
+            <div className={`${STAT_CARD} border-t-2 border-t-accent-terracotta/80`}>
               <span className={LABEL_MONO}>Largest Charge</span>
-              <span className={`${STAT_VALUE} overflow-hidden text-ellipsis whitespace-nowrap text-accent-flame`}>{currency}{largestCharge.toLocaleString()}</span>
+              <span className={`${STAT_VALUE} overflow-hidden text-ellipsis whitespace-nowrap text-accent-terracotta`}>{currency}{largestCharge.toLocaleString()}</span>
               <span className={`${STAT_SUBTEXT} overflow-hidden text-ellipsis whitespace-nowrap`}>{largestItem?.title || "—"}</span>
             </div>
-            <div className={`${STAT_CARD} border-t-2 border-t-border-hover`}>
+            <div className={`${STAT_CARD} border-t-2 border-t-border-subtle`}>
               <span className={LABEL_MONO}>Top Category</span>
               <span className={`${STAT_VALUE} mt-2 overflow-hidden text-ellipsis whitespace-nowrap text-[22px]`}>{topCategory}</span>
               <span className={STAT_SUBTEXT}>Highest share</span>
@@ -681,9 +681,16 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                 {Object.entries(chartCatBreakdown).slice(0, 8).map(([cat, total], idx) => {
                   const maxAmt = Math.max(...Object.values(chartCatBreakdown), 1);
                   const pct = (total / maxAmt) * 100;
-                  const colors = isDark
-                    ? ["#b3666b", "#e39282", "#e5e0d8", "#a8a29e", "#d1b89a", "#f4f0ea", "#9c9a92", "#c4c2ba"]
-                    : ["#b3666b", "#e39282", "#1c1b18", "#6e6c64", "#d1b89a", "#eae8e0", "#9c9a92", "#c4c2ba"];
+                  const colors = [
+                    "#E07A5F",
+                    "#D99419",
+                    "#7C98A6",
+                    "#556B2F",
+                    "#C5BFA0",
+                    "#E58C4A",
+                    "#8B5CF6",
+                    "#10B981",
+                  ];
                   const isSelected = ledgerCategoryFilter === cat;
                   const isInactive = ledgerCategoryFilter !== "" && !isSelected;
                   return (
@@ -705,6 +712,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                           className="w-full rounded-t-md transition-all duration-500 ease-in-out"
                           style={{
                             height: `${pct}%`,
+                            minHeight: total > 0 ? "4px" : "0px",
                             backgroundColor: colors[idx % colors.length],
                             opacity: isInactive ? 0.25 : 1,
                           }}
@@ -712,7 +720,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                       </div>
                       <span
                         className={`w-full overflow-hidden text-ellipsis whitespace-nowrap text-center font-mono text-[9px] uppercase transition-colors duration-200 ${
-                          isSelected ? "font-bold text-text-primary" : "text-text-muted"
+                          isSelected ? "font-bold text-text-primary" : "text-text-secondary"
                         }`}
                         title={cat}
                       >
@@ -836,7 +844,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                         onClick={() => setExpenseCategory(c)}
                         className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold transition-all cursor-pointer ${
                           expenseCategory === c
-                            ? "border-text-primary bg-text-primary text-bg-primary"
+                            ? "border-accent-terracotta bg-accent-terracotta text-[#FAF8F5] shadow-xs"
                             : "border-border-subtle bg-bg-secondary/60 text-text-secondary hover:border-border-hover hover:bg-bg-secondary"
                         }`}
                       >

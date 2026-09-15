@@ -30,27 +30,27 @@ interface HistoricalAnalyticsViewProps {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Food: "#1A1A1A",
-  Dining: "#1A1A1A",
+  Food: "#E07A5F",
+  Dining: "#E07A5F",
   Housing: "#C5BFA0",
   Rent: "#C5BFA0",
-  Transport: "#556B2F",
-  Travel: "#556B2F",
-  Shopping: "#E58C4A",
-  Leisure: "#C9D438",
+  Transport: "#7C98A6",
+  Travel: "#7C98A6",
+  Shopping: "#D99419",
+  Leisure: "#8B5CF6",
   Entertainment: "#8B5CF6",
-  Utilities: "#6A7B82",
-  Groceries: "#A0C4E2",
+  Utilities: "#556B2F",
+  Groceries: "#E58C4A",
   Health: "#10B981",
   Other: "#9E9C94",
 };
 
 const PALETTE = [
-  "#1A1A1A",
+  "#E07A5F",
   "#C5BFA0",
+  "#7C98A6",
+  "#D99419",
   "#556B2F",
-  "#E58C4A",
-  "#C9D438",
   "#6A7B82",
   "#8B5CF6",
   "#10B981",
@@ -419,7 +419,7 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
             <button
               type="button"
               onClick={onBackToOverview}
-              className="flex h-8 w-8 min-w-[32px] min-h-[32px] aspect-square p-0 shrink-0 items-center justify-center rounded-full border border-border-subtle bg-bg-secondary text-text-secondary hover:text-text-primary hover:bg-bg-primary hover:border-border-hover transition-all shadow-2xs cursor-pointer"
+              className="flex h-8 w-8 min-w-[32px] min-h-[32px] aspect-square p-0 shrink-0 items-center justify-center rounded-sm border border-border-subtle bg-bg-secondary text-text-secondary hover:text-text-primary hover:bg-bg-primary hover:border-border-hover transition-all shadow-2xs cursor-pointer"
               title="Back to Overview"
               aria-label="Back to Overview"
             >
@@ -428,38 +428,38 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
           )}
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="font-serif text-2xl font-bold tracking-tight text-text-primary">
+              <h2 className="font-serif text-2xl sm:text-3xl italic font-medium tracking-wide text-text-primary">
                 Historical Analytics
               </h2>
               {!isProUser && (
-                <span className="rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-bold tracking-wider text-text-muted uppercase">
+                <span className="rounded-sm border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-bold tracking-wider text-text-muted uppercase">
                   Sample Preview
                 </span>
               )}
             </div>
-            <p className="text-xs text-text-secondary">
+            <p className="mt-1 text-xs text-text-muted">
               Historical pay cycle and monthly spend distribution
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-secondary p-1 shadow-2xs self-start sm:self-auto">
+        <div className="flex items-center gap-1 rounded-sm border border-border-subtle bg-bg-secondary p-1 shadow-2xs self-start sm:self-auto">
           <button
             onClick={() => setDimension("cycle")}
-            className={`rounded-full px-3.5 py-1 text-xs font-semibold transition-all ${
+            className={`rounded-sm px-3.5 py-1 font-mono text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
               dimension === "cycle"
-                ? "bg-text-primary text-bg-primary shadow-xs"
-                : "text-text-secondary hover:text-text-primary"
+                ? "bg-bg-card text-text-primary border border-border-subtle/80 shadow-xs"
+                : "bg-transparent text-text-secondary hover:text-text-primary"
             }`}
           >
             Pay Cycle
           </button>
           <button
             onClick={() => setDimension("month")}
-            className={`rounded-full px-3.5 py-1 text-xs font-semibold transition-all ${
+            className={`rounded-sm px-3.5 py-1 font-mono text-xs font-semibold uppercase tracking-wider transition-all cursor-pointer ${
               dimension === "month"
-                ? "bg-text-primary text-bg-primary shadow-xs"
-                : "text-text-secondary hover:text-text-primary"
+                ? "bg-bg-card text-text-primary border border-border-subtle/80 shadow-xs"
+                : "bg-transparent text-text-secondary hover:text-text-primary"
             }`}
           >
             Month

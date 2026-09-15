@@ -19,7 +19,7 @@ export const THEMES: ThemeDefinition[] = [
     name: 'Obsidian Noir',
     description: 'Deep volcanic obsidian with silver mist text and crisp slate borders',
     type: 'dark',
-    swatches: ['#0C0D0E', '#18191D', '#25272E', '#60A5FA', '#F4F5F7'],
+    swatches: ['#0C0D0E', '#18191D', '#25272E', '#7C98A6', '#F4F5F7'],
   },
   {
     id: 'amoled-pure',

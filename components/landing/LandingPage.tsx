@@ -1,12 +1,13 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { AUTHOR, SITE_NAME } from "@/lib/utils";
+import Link from "next/link";
+import { AUTHOR } from "@/lib/utils";
 import { LogoMark } from "@/components/Logo";
 import { ArchitectureFlowDiagram } from "@/components/landing/ArchitectureFlowDiagram";
 import { FeaturesShowcase } from "@/components/landing/FeaturesShowcase";
 import { AiAgentShowcase } from "@/components/landing/AiAgentShowcase";
-import { Sun, Moon, Terminal, Shield, Lock, ExternalLink, ChevronDown, Check, ArrowRight } from "lucide-react";
+import { Sun, Moon, ExternalLink, ChevronDown, ArrowRight } from "lucide-react";
 import { THEMES } from "@/lib/theme/themes";
 
 interface LandingPageProps {
@@ -124,12 +125,12 @@ export default function LandingPage({
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8">
           
           {/* Logo & Product Name */}
-          <a href="/" className="group flex items-center gap-2.5 no-underline">
+          <Link href="/" className="group flex items-center gap-2.5 no-underline">
             <LogoMark size={26} className="text-[#1C1B18] dark:text-[#F4F5F7] transition-transform duration-200 group-hover:scale-105" />
             <span className="font-semibold text-lg tracking-tight text-[#1C1B18] dark:text-[#F4F5F7]">
               Continuum
             </span>
-          </a>
+          </Link>
 
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-7 text-xs font-medium uppercase tracking-wider text-[#6D635C] dark:text-[#9BA1B0]">
@@ -646,7 +647,7 @@ export default function LandingPage({
               <a href="#pricing" className="hover:text-[#1C1B18] dark:hover:text-[#F4F5F7] no-underline">Pricing</a>
               <a href="#self-host" className="hover:text-[#1C1B18] dark:hover:text-[#F4F5F7] no-underline">Deploy</a>
               <a href="https://github.com/fal3n-4ngel/Continuum-Home" target="_blank" rel="noopener noreferrer" className="hover:text-[#1C1B18] dark:hover:text-[#F4F5F7] no-underline">GitHub</a>
-              <a href="/privacy" className="hover:text-[#1C1B18] dark:hover:text-[#F4F5F7] no-underline">Privacy</a>
+              <Link href="/privacy" className="hover:text-[#1C1B18] dark:hover:text-[#F4F5F7] no-underline">Privacy</Link>
             </div>
 
           </div>

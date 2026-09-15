@@ -602,7 +602,7 @@ export function FeaturesShowcase() {
                     <div className="mt-3 pt-2.5 border-t border-dashed border-[#DDD5CB] dark:border-[#25272E] flex items-center justify-between font-mono text-[9px] text-[#9C9288] uppercase">
                       <div className="flex items-center gap-1.5">
                         <span className="text-[#9E5D48] dark:text-[#E07A5F] font-semibold">fig. 0{idx + 1}</span>
-                        <span>// {feat.figTitle}</span>
+                        <span>{"// "}{feat.figTitle}</span>
                       </div>
                       <span className="text-[#D99419] hidden sm:inline">100% PRIVATE ARCHITECTURE</span>
                     </div>
