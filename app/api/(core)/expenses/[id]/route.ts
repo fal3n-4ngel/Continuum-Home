@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/utils";
-import { updateExpense, archiveExpense } from "@/lib/firebase";
+import { updateExpense, archiveExpense, getExpense } from "@/lib/firebase";
 import { validateExpensePatch } from "@/lib/firebase";
 import { recordDomainEvent, DOMAIN_EVENTS } from "@/lib/domain-events";
+import { isCustomGptRequest } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +23,7 @@ export async function PATCH(
       throw new ApiError(400, "Invalid JSON body");
     }
 
+    const existing = await getExpense(session, id);
     const patch = validateExpensePatch(body);
     const result = await updateExpense(session, id, patch);
 
@@ -32,10 +34,11 @@ export async function PATCH(
       userEmail: session.user.email,
       payload: {
         fields: Object.keys(patch),
-        ...(patch.title ? { title: patch.title } : {}),
-        ...(patch.amount !== undefined ? { amount: patch.amount } : {}),
-        ...(patch.category ? { category: patch.category } : {}),
-        ...(patch.date ? { date: patch.date } : {}),
+        title: patch.title ?? existing?.title,
+        amount: patch.amount ?? existing?.amount,
+        category: patch.category ?? existing?.category,
+        date: patch.date ?? existing?.date,
+        channel: isCustomGptRequest(req) ? "custom_gpt" : "web",
       },
     });
 
@@ -52,6 +55,7 @@ export async function DELETE(
   try {
     const session = await requireUser(req);
     const { id } = await params;
+    const existing = await getExpense(session, id);
     const result = await archiveExpense(session, id);
 
     recordDomainEvent({
@@ -59,6 +63,18 @@ export async function DELETE(
       userId: session.uid,
       entityId: id,
       userEmail: session.user.email,
+      payload: {
+        ...(existing
+          ? {
+              title: existing.title,
+              amount: existing.amount,
+              category: existing.category,
+              date: existing.date,
+            }
+          : {}),
+        deletedAt: Date.now(),
+        channel: isCustomGptRequest(req) ? "custom_gpt" : "web",
+      },
     });
 
     return NextResponse.json({ success: true, ...result });

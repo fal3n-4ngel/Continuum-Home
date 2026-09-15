@@ -75,7 +75,7 @@ export async function GET() {
           "x-openai-isConsequential": false,
           description:
             "Record a single expense, or several at once by sending { \"items\": [...] }. " +
-            "Omitted dates default to today. Amounts are in the user's currency (INR).",
+            "Omitted dates default to today, but AI assistants should always explicitly supply date in YYYY-MM-DD. Amounts are in the user's currency (INR).",
           requestBody: {
             required: true,
             content: {
@@ -87,7 +87,7 @@ export async function GET() {
                     title: { type: "string", description: "Title of the expense (ignored if items is provided)" },
                     amount: { type: "number", description: "Expense amount (ignored if items is provided)" },
                     category: { type: "string", description: "Category name (ignored if items is provided)" },
-                    date: { type: "string", format: "date", description: "YYYY-MM-DD date string (ignored if items is provided)" },
+                    date: { type: "string", format: "date", description: "YYYY-MM-DD date string. Always supply today's date if unspecified (ignored if items is provided)" },
                     notes: { type: "string", description: "Additional notes (ignored if items is provided)" },
                     items: {
                       type: "array",
@@ -579,7 +579,7 @@ export async function GET() {
             title: { type: "string", maxLength: 200, description: "Short description of the transaction", examples: ["Uber Ride"] },
             amount: { type: "number", description: "Amount spent (INR)", examples: [350.5] },
             category: { type: "string", maxLength: 100, description: "Category name, e.g. Transport, Food, Rent", examples: ["Transport"] },
-            date: { type: "string", format: "date", description: "Transaction date (YYYY-MM-DD). Defaults to today.", examples: ["2026-07-20"] },
+            date: { type: "string", format: "date", description: "Transaction date (YYYY-MM-DD). AI assistants must always provide this field.", examples: ["2026-07-20"] },
             notes: { type: "string", maxLength: 1000, description: "Optional free-form notes", examples: ["Ride back from airport"] },
           },
         },

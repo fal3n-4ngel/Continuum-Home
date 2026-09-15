@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/utils";
-import { deletePortfolioAsset, updatePortfolioAsset } from "@/lib/firebase";
+import { deletePortfolioAsset, updatePortfolioAsset, getPortfolioAsset } from "@/lib/firebase";
 import { validatePortfolioAssetPatch } from "@/lib/firebase";
 import { recordDomainEvent, DOMAIN_EVENTS } from "@/lib/domain-events";
 
@@ -22,6 +22,7 @@ export async function PATCH(
       throw new ApiError(400, "Invalid JSON body");
     }
 
+    const existing = await getPortfolioAsset(session, id);
     const patch = validatePortfolioAssetPatch(body);
     const result = await updatePortfolioAsset(session, id, patch);
 
@@ -30,7 +31,13 @@ export async function PATCH(
       userId: session.uid,
       entityId: id,
       userEmail: session.user.email,
-      payload: { fields: Object.keys(patch) },
+      payload: {
+        fields: Object.keys(patch),
+        name: patch.name ?? existing?.name,
+        category: patch.category ?? existing?.category,
+        amount: patch.amount !== undefined ? patch.amount : existing?.amount,
+        investedAmount: patch.investedAmount !== undefined ? patch.investedAmount : existing?.investedAmount,
+      },
     });
 
     return NextResponse.json({ success: true, ...result });
@@ -46,6 +53,7 @@ export async function DELETE(
   try {
     const session = await requireUser(req);
     const { id } = await params;
+    const existing = await getPortfolioAsset(session, id);
     const result = await deletePortfolioAsset(session, id);
 
     recordDomainEvent({
@@ -53,6 +61,17 @@ export async function DELETE(
       userId: session.uid,
       entityId: id,
       userEmail: session.user.email,
+      payload: {
+        ...(existing
+          ? {
+              name: existing.name,
+              category: existing.category,
+              amount: existing.amount,
+              investedAmount: existing.investedAmount,
+            }
+          : {}),
+        deletedAt: Date.now(),
+      },
     });
 
     return NextResponse.json({ success: true, ...result });

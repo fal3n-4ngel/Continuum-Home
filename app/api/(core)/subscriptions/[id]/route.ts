@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/utils";
-import { deleteSubscription, updateSubscription } from "@/lib/firebase";
+import { deleteSubscription, updateSubscription, getSubscription } from "@/lib/firebase";
 import { validateSubscriptionPatch } from "@/lib/firebase";
 import { recordDomainEvent, DOMAIN_EVENTS } from "@/lib/domain-events";
 
@@ -11,6 +11,7 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
   try {
     const { id } = await params;
     const session = await requireUser(req);
+    const existing = await getSubscription(session, id);
     await deleteSubscription(session, id);
 
     recordDomainEvent({
@@ -18,6 +19,18 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       userId: session.uid,
       entityId: id,
       userEmail: session.user.email,
+      payload: {
+        ...(existing
+          ? {
+              name: existing.name,
+              cost: existing.cost,
+              amount: existing.cost,
+              billingCycle: existing.billingCycle,
+              nextBillingDate: existing.nextBillingDate,
+            }
+          : {}),
+        deletedAt: Date.now(),
+      },
     });
 
     return NextResponse.json({ success: true });
@@ -38,15 +51,24 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       throw new ApiError(400, "Invalid JSON body");
     }
 
+    const existing = await getSubscription(session, id);
     const patch = validateSubscriptionPatch(body);
     await updateSubscription(session, id, patch);
 
+    const finalCost = patch.cost ?? existing?.cost;
     recordDomainEvent({
       eventType: DOMAIN_EVENTS.SUBSCRIPTION_UPDATED,
       userId: session.uid,
       entityId: id,
       userEmail: session.user.email,
-      payload: { fields: Object.keys(patch), ...(patch.name ? { name: patch.name } : {}), cost: patch.cost },
+      payload: {
+        fields: Object.keys(patch),
+        name: patch.name ?? existing?.name,
+        cost: finalCost,
+        amount: finalCost,
+        billingCycle: patch.billingCycle ?? existing?.billingCycle,
+        nextBillingDate: patch.nextBillingDate ?? existing?.nextBillingDate,
+      },
     });
 
     return NextResponse.json({ success: true });

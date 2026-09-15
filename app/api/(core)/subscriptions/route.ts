@@ -36,8 +36,13 @@ export async function POST(req: NextRequest) {
       userId: session.uid,
       entityId: result.id,
       userEmail: session.user.email,
-      payload: { name: entry.name, cost: entry.cost, billingCycle: entry.billingCycle },
-    });
+      payload: {
+        name: entry.name,
+        cost: entry.cost,
+        amount: entry.cost,
+        billingCycle: entry.billingCycle,
+        nextBillingDate: entry.nextBillingDate,
+      },
 
     return NextResponse.json({ success: true, ...result });
   } catch (error) {

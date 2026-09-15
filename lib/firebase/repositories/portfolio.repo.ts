@@ -223,3 +223,13 @@ export async function updatePortfolioValuationHistory(
   });
   await cacheInvalidate(portfolioCacheKey(session));
 }
+
+export async function getPortfolioAsset(session: Session, id: string): Promise<InvestmentAsset | null> {
+  try {
+    assertDocId(id, "portfolio asset");
+    const p = await getPortfolio(session);
+    return p.assets.find((a) => a.id === id) || null;
+  } catch {
+    return null;
+  }
+}

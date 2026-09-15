@@ -48,6 +48,7 @@ export async function POST(req: NextRequest) {
         recordDomainEvent({
           eventType: DOMAIN_EVENTS.EXPENSE_CREATED,
           userId: session.uid,
+          userEmail: session.user.email,
           itemCount: added,
           payload: { batch: true, submitted: entries.length },
         });
@@ -57,7 +58,8 @@ export async function POST(req: NextRequest) {
     }
 
     const entry = validateExpenseEntry(body);
-    const result = await createExpense(session, entry);
+    const resolvedDate = entry.date || new Date().toISOString().slice(0, 10);
+    const result = await createExpense(session, { ...entry, date: resolvedDate });
 
     recordDomainEvent({
       eventType: DOMAIN_EVENTS.EXPENSE_CREATED,
@@ -68,7 +70,7 @@ export async function POST(req: NextRequest) {
         title: entry.title,
         amount: entry.amount,
         category: entry.category,
-        date: entry.date,
+        date: resolvedDate,
         channel: isCustomGptRequest(req) ? "custom_gpt" : "web",
       },
     });

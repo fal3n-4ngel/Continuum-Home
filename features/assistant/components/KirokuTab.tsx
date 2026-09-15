@@ -328,7 +328,81 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
         </p>
       );
     });
-  };
+  if (!isProUser) {
+    return (
+      <div className="flex flex-col gap-6 w-full mx-auto animate-[fadeIn_0.3s_ease_forwards]">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2.5">
+            <KirokuSeal className="h-8 w-8 text-[13px]" />
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="font-serif text-2xl sm:text-3xl italic font-medium tracking-wide text-text-primary leading-none">
+                  Kiroku
+                </h1>
+                <span className="inline-flex shrink-0 items-center rounded-full border border-border-subtle bg-bg-secondary px-2 py-0.5 font-mono text-[9px] font-semibold tracking-wider text-text-muted uppercase">
+                  PRO
+                </span>
+              </div>
+              <p className="mt-1 text-xs text-text-secondary">
+                記録 • Dedicated AI Assistant for Continuum Home
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border-subtle bg-bg-card p-6 sm:p-8 shadow-subtle flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+          <div className="flex flex-col gap-2.5 max-w-2xl">
+            <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[1.2px] text-text-muted">
+              Supporter Feature
+            </span>
+            <h2 className="font-serif text-2xl sm:text-3xl italic font-normal tracking-tight text-text-primary">
+              Conversational Intelligence for Your Life &amp; Finances
+            </h2>
+            <p className="text-[13.5px] leading-relaxed text-text-secondary">
+              Kiroku is your built-in, private AI copilot. Instantly log daily expenses in plain English (&quot;spent 450 on lunch&quot;), track your watchlist progress, ask about your monthly spending trajectory, and manage your portfolio with speech or text.
+            </p>
+            <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-text-secondary">
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-500 font-bold">✓</span>
+                <span>Natural language expense &amp; salary logging</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-500 font-bold">✓</span>
+                <span>Watchlist management &amp; media recommendations</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-500 font-bold">✓</span>
+                <span>Portfolio valuation &amp; subscription cost audits</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-500 font-bold">✓</span>
+                <span>Voice input &amp; spoken audio responses</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-stretch gap-3 shrink-0 w-full sm:w-auto">
+            <button
+              type="button"
+              onClick={onOpenUpgrade}
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-full border border-text-primary bg-text-primary px-7 py-3 text-xs font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 active:scale-95"
+            >
+              <span>Unlock with Pro</span>
+              <span className="text-xs">→</span>
+            </button>
+            <a
+              href="https://github.com/fal3n-4ngel/Continuum-Home#readme"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-full border border-border-subtle bg-bg-secondary px-5 py-2.5 text-xs font-medium text-text-secondary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover text-center"
+            >
+              <span>Self-Host Free</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3.5 w-full  mx-auto animate-[fadeIn_0.3s_ease_forwards]">
