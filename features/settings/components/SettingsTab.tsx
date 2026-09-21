@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Mail, Wallet, TrendingUp, RefreshCw, Coins, CalendarClock, Banknote, Trash2, Palette, Check, Shield, ExternalLink } from "lucide-react";
-import { useTheme } from "@/lib/theme/use-theme";
+import { Mail, Wallet, TrendingUp, RefreshCw, Coins, CalendarClock, Banknote, Trash2, Palette, Check, Shield, ExternalLink, Sliders, Type, Sparkles, Square, Layers } from "lucide-react";
+import { useTheme, CardRadiusOption, CardShadowOption, HeadingFontOption } from "@/lib/theme/use-theme";
 import { AUTHOR } from "@/lib/utils";
 
 export interface EmailSubscriptions {
@@ -77,6 +77,25 @@ const EMAIL_ROWS: { key: keyof EmailSubscriptions; icon: React.ReactNode; badgeC
   },
 ];
 
+const RADIUS_OPTIONS: { id: CardRadiusOption; label: string; px: string; desc: string }[] = [
+  { id: "sharp", label: "Sharp", px: "0px", desc: "Clean architectural 90° edges" },
+  { id: "subtle", label: "Subtle", px: "4px", desc: "Balanced classic curve (Default)" },
+  { id: "rounded", label: "Rounded", px: "8px", desc: "Contemporary smooth look" },
+  { id: "soft", label: "Soft", px: "14px", desc: "Pillowy organic cards" },
+];
+
+const SHADOW_OPTIONS: { id: CardShadowOption; label: string; desc: string }[] = [
+  { id: "flat", label: "Flat", desc: "Clean borders with zero shadow" },
+  { id: "subtle", label: "Subtle", desc: "Soft tactile depth (Default)" },
+  { id: "elevated", label: "Elevated", desc: "Expressive ambient floating cards" },
+];
+
+const FONT_OPTIONS: { id: HeadingFontOption; label: string; fontName: string; desc: string; sampleClass: string }[] = [
+  { id: "serif", label: "Editorial Serif", fontName: "Playfair Display", desc: "Literary, warm & distinguished (Default)", sampleClass: "font-serif italic" },
+  { id: "sans", label: "Modern Sans", fontName: "Plus Jakarta Sans", desc: "Crisp, clean & contemporary", sampleClass: "font-sans font-bold" },
+  { id: "mono", label: "Technical Mono", fontName: "Monospace", desc: "Precision, data-dense & analytical", sampleClass: "font-mono font-semibold" },
+];
+
 export const SettingsTab: React.FC<SettingsTabProps> = ({
   emailSubscriptions,
   setEmailSubscriptions,
@@ -94,9 +113,19 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   isAdmin,
   onOpenAdmin,
 }) => {
-  const { themeId, setTheme, themes } = useTheme();
+  const {
+    themeId,
+    setTheme,
+    themes,
+    cardRadius,
+    setCardRadius,
+    cardShadow,
+    setCardShadow,
+    headingFont,
+    setHeadingFont,
+  } = useTheme();
   const [activeSubTab, setActiveSubTab] = useState<SettingsSubTab>("general");
-  const [themeFilter, setThemeFilter] = useState<"all" | "light" | "dark">("all");
+  const [themeFilter, setThemeFilter] = useState<"all" | "light" | "dark" | "colored">("all");
 
   const [salaryDraft, setSalaryDraft] = useState<string>(monthlySalary ? String(monthlySalary) : "");
   const [additionalIncomeDraft, setAdditionalIncomeDraft] = useState<string>(additionalIncome ? String(additionalIncome) : "");
@@ -116,7 +145,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
   const displayedThemes = themeFilter === "all" ? themes : themes.filter((t) => t.type === themeFilter);
 
   return (
-    <div className="flex flex-col gap-6 max-w-2xl animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]">
+    <div className="flex flex-col gap-6 w-full max-w-7xl animate-[fadeIn_0.4s_cubic-bezier(0.16,1,0.3,1)_forwards]">
       <div>
         <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-1">Settings</h1>
         <p className="text-[13px] text-text-muted">Manage your preferences, appearance, and notifications.</p>
@@ -183,237 +212,458 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
       </div>
 
       {activeSubTab === "appearance" && (
-        <div className={`${BENTO_CARD} border-t-2 border-t-accent-yellow animate-[fadeIn_0.3s_ease_forwards]`}>
-          <div className={CARD_HEADER}>
-            <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
-              <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-accent-yellow/20 text-text-primary border border-border-subtle shadow-2xs">
-                <Palette size={14} />
-              </div>
-              Appearance &amp; Color Theme
-            </h2>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setThemeFilter("all")}
-                className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider rounded-xs border transition-all cursor-pointer ${
-                  themeFilter === "all"
-                    ? "border-text-primary bg-text-primary text-bg-card"
-                    : "border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-primary"
-                }`}
-              >
-                All ({themes.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setThemeFilter("light")}
-                className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider rounded-xs border transition-all cursor-pointer ${
-                  themeFilter === "light"
-                    ? "border-text-primary bg-text-primary text-bg-card"
-                    : "border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-primary"
-                }`}
-              >
-                Light ({themes.filter((t) => t.type === "light").length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setThemeFilter("dark")}
-                className={`px-2.5 py-1 text-[10px] font-mono font-bold uppercase tracking-wider rounded-xs border transition-all cursor-pointer ${
-                  themeFilter === "dark"
-                    ? "border-text-primary bg-text-primary text-bg-card"
-                    : "border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-primary"
-                }`}
-              >
-                Dark ({themes.filter((t) => t.type === "dark").length})
-              </button>
-            </div>
-          </div>
-          <div className={CARD_BODY}>
-            <p className="text-[12px] leading-relaxed text-text-secondary">
-              Select your preferred color palette. Changes take effect across your entire dashboard immediately.
-            </p>
-
-            <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
-              {displayedThemes.map((t) => {
-                const isActive = t.id === themeId;
-                return (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start animate-[fadeIn_0.3s_ease_forwards]">
+          {/* Column 1 (Left): Color Themes */}
+          <div className="flex flex-col gap-6">
+            <div className={`${BENTO_CARD} border-t-2 border-t-accent-yellow`}>
+              <div className={CARD_HEADER}>
+                <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-accent-yellow/20 text-text-primary border border-border-subtle shadow-2xs">
+                    <Palette size={14} />
+                  </div>
+                  Appearance &amp; Color Theme
+                </h2>
+                <div className="flex items-center gap-1.5 max-sm:flex-wrap">
                   <button
-                    key={t.id}
                     type="button"
-                    onClick={() => setTheme(t.id)}
-                    className={`flex flex-col items-start gap-2.5 p-3.5 rounded-sm border-2 text-left transition-all cursor-pointer ${
-                      isActive
-                        ? "border-text-primary bg-bg-primary/50 shadow-sm"
-                        : "border-border-subtle bg-bg-card hover:border-border-hover hover:bg-bg-primary/20"
+                    onClick={() => setThemeFilter("all")}
+                    className={`px-2 py-0.5 text-[9.5px] font-mono font-bold uppercase tracking-wider rounded-xs border transition-all cursor-pointer ${
+                      themeFilter === "all"
+                        ? "border-text-primary bg-text-primary text-bg-card"
+                        : "border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-primary"
                     }`}
                   >
-                    <div className="flex items-center justify-between w-full">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-text-primary">{t.name}</span>
-                        <span className="font-mono text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-xs border border-border-subtle bg-bg-primary/40 text-text-secondary">
-                          {t.type}
-                        </span>
-                      </div>
-                      {isActive && (
-                        <div className="flex h-5 w-5 items-center justify-center rounded-xs bg-text-primary text-bg-card">
-                          <Check size={11} strokeWidth={3} />
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 w-full py-0.5">
-                      {t.swatches.map((color, idx) => (
-                        <div
-                          key={idx}
-                          className="h-4 flex-1 rounded-sm border border-black/10 shadow-2xs"
-                          style={{ backgroundColor: color }}
-                          title={color}
-                        />
-                      ))}
-                    </div>
-
-                    <span className="text-[11px] leading-snug text-text-muted">
-                      {t.description}
-                    </span>
+                    All ({themes.length})
                   </button>
-                );
-              })}
+                  <button
+                    type="button"
+                    onClick={() => setThemeFilter("light")}
+                    className={`px-2 py-0.5 text-[9.5px] font-mono font-bold uppercase tracking-wider rounded-xs border transition-all cursor-pointer ${
+                      themeFilter === "light"
+                        ? "border-text-primary bg-text-primary text-bg-card"
+                        : "border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-primary"
+                    }`}
+                  >
+                    Light ({themes.filter((t) => t.type === "light").length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setThemeFilter("dark")}
+                    className={`px-2 py-0.5 text-[9.5px] font-mono font-bold uppercase tracking-wider rounded-xs border transition-all cursor-pointer ${
+                      themeFilter === "dark"
+                        ? "border-text-primary bg-text-primary text-bg-card"
+                        : "border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-primary"
+                    }`}
+                  >
+                    Dark ({themes.filter((t) => t.type === "dark").length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setThemeFilter("colored")}
+                    className={`px-2 py-0.5 text-[9.5px] font-mono font-bold uppercase tracking-wider rounded-xs border transition-all cursor-pointer ${
+                      themeFilter === "colored"
+                        ? "border-text-primary bg-text-primary text-bg-card"
+                        : "border-border-subtle bg-bg-primary/40 text-text-muted hover:text-text-primary"
+                    }`}
+                  >
+                    Colored ({themes.filter((t) => t.type === "colored").length})
+                  </button>
+                </div>
+              </div>
+              <div className={CARD_BODY}>
+                <p className="text-[12px] leading-relaxed text-text-secondary">
+                  Select your preferred color palette. Changes take effect across your entire dashboard immediately.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {displayedThemes.map((t) => {
+                    const isActive = t.id === themeId;
+                    return (
+                      <button
+                        key={t.id}
+                        type="button"
+                        onClick={() => setTheme(t.id)}
+                        className={`flex flex-col items-start gap-2 p-3 rounded-sm border-2 text-left transition-all cursor-pointer ${
+                          isActive
+                            ? "border-text-primary bg-bg-primary/50 shadow-sm"
+                            : "border-border-subtle bg-bg-card hover:border-border-hover hover:bg-bg-primary/20"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-text-primary">{t.name}</span>
+                            <span className="font-mono text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-xs border border-border-subtle bg-bg-primary/40 text-text-secondary">
+                              {t.type}
+                            </span>
+                          </div>
+                          {isActive && (
+                            <div className="flex h-4.5 w-4.5 items-center justify-center rounded-xs bg-text-primary text-bg-card">
+                              <Check size={10} strokeWidth={3} />
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 w-full py-0.5">
+                          {t.swatches.map((color, idx) => (
+                            <div
+                              key={idx}
+                              className="h-3.5 flex-1 rounded-sm border border-black/10 shadow-2xs"
+                              style={{ backgroundColor: color }}
+                              title={color}
+                            />
+                          ))}
+                        </div>
+
+                        <span className="text-[10.5px] leading-snug text-text-muted line-clamp-2">
+                          {t.description}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Column 2 (Right): Interface Controls & Live Preview */}
+          <div className="flex flex-col gap-6">
+            {/* Card 2: Interface Geometry & Depth */}
+            <div className={`${BENTO_CARD} border-t-2 border-t-accent-blue`}>
+              <div className={CARD_HEADER}>
+                <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-accent-blue/20 text-text-primary border border-border-subtle shadow-2xs">
+                    <Sliders size={14} />
+                  </div>
+                  Interface Geometry &amp; Depth
+                </h2>
+              </div>
+              <div className={CARD_BODY}>
+                {/* Corner Radius */}
+                <div>
+                  <label className={FIELD_LABEL}>Card Corner Geometry</label>
+                  <p className="text-[11.5px] text-text-muted mb-2.5">
+                    Controls curvature across dashboard cards, modals, and interactive buttons.
+                  </p>
+                  <div className="grid grid-cols-4 gap-2 max-sm:grid-cols-2">
+                    {RADIUS_OPTIONS.map((opt) => {
+                      const isCurrent = cardRadius === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setCardRadius(opt.id)}
+                          className={`flex flex-col items-center gap-1.5 p-2.5 rounded-sm border-2 text-center transition-all cursor-pointer ${
+                            isCurrent
+                              ? "border-text-primary bg-bg-primary/50 shadow-sm"
+                              : "border-border-subtle bg-bg-card hover:border-border-hover hover:bg-bg-primary/20"
+                          }`}
+                        >
+                          <div className="flex h-7 w-10 items-center justify-center border-2 border-dashed border-text-muted/60 bg-bg-primary/30" style={{ borderRadius: opt.px }}>
+                            <span className="text-[9.5px] font-mono font-bold text-text-secondary">{opt.px}</span>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-center gap-1">
+                              <span className="text-[11.5px] font-bold text-text-primary">{opt.label}</span>
+                              {isCurrent && <Check size={10} strokeWidth={3} className="text-text-primary" />}
+                            </div>
+                            <span className="text-[9.5px] text-text-muted leading-tight block mt-0.5">{opt.desc}</span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Shadow Elevation */}
+                <div className="pt-2 border-t border-border-subtle">
+                  <label className={FIELD_LABEL}>Card Elevation &amp; Shadows</label>
+                  <p className="text-[11.5px] text-text-muted mb-2.5">
+                    Adjusts tactile depth, ambient drop shadows, and visual hierarchy.
+                  </p>
+                  <div className="grid grid-cols-3 gap-2 max-sm:grid-cols-1">
+                    {SHADOW_OPTIONS.map((opt) => {
+                      const isCurrent = cardShadow === opt.id;
+                      return (
+                        <button
+                          key={opt.id}
+                          type="button"
+                          onClick={() => setCardShadow(opt.id)}
+                          className={`flex flex-col items-start gap-1 p-2.5 rounded-sm border-2 text-left transition-all cursor-pointer ${
+                            isCurrent
+                              ? "border-text-primary bg-bg-primary/50 shadow-sm"
+                              : "border-border-subtle bg-bg-card hover:border-border-hover hover:bg-bg-primary/20"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between w-full">
+                            <span className="text-[11.5px] font-bold text-text-primary">{opt.label}</span>
+                            {isCurrent && (
+                              <div className="flex h-3.5 w-3.5 items-center justify-center rounded-xs bg-text-primary text-bg-card">
+                                <Check size={9} strokeWidth={3} />
+                              </div>
+                            )}
+                          </div>
+                          <span className="text-[10px] text-text-muted leading-snug">{opt.desc}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Card 3: Heading Typography */}
+            <div className={`${BENTO_CARD} border-t-2 border-t-accent-flame`}>
+              <div className={CARD_HEADER}>
+                <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-accent-flame/20 text-text-primary border border-border-subtle shadow-2xs">
+                    <Type size={14} />
+                  </div>
+                  Heading Typography
+                </h2>
+              </div>
+              <div className={CARD_BODY}>
+                <p className="text-[11.5px] text-text-muted">
+                  Choose the font family applied to titles, headers, and major balance metrics throughout Continuum.
+                </p>
+                <div className="grid grid-cols-3 gap-2 max-sm:grid-cols-1">
+                  {FONT_OPTIONS.map((opt) => {
+                    const isCurrent = headingFont === opt.id;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setHeadingFont(opt.id)}
+                        className={`flex flex-col items-start gap-1.5 p-3 rounded-sm border-2 text-left transition-all cursor-pointer ${
+                          isCurrent
+                            ? "border-text-primary bg-bg-primary/50 shadow-sm"
+                            : "border-border-subtle bg-bg-card hover:border-border-hover hover:bg-bg-primary/20"
+                        }`}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-xs font-bold text-text-primary">{opt.label}</span>
+                          {isCurrent && (
+                            <div className="flex h-3.5 w-3.5 items-center justify-center rounded-xs bg-text-primary text-bg-card">
+                              <Check size={9} strokeWidth={3} />
+                            </div>
+                          )}
+                        </div>
+                        <div className="py-1">
+                          <span className={`text-lg text-text-primary block ${opt.sampleClass}`}>
+                            Aa Bb 12
+                          </span>
+                          <span className="text-[9.5px] font-mono text-text-muted">{opt.fontName}</span>
+                        </div>
+                        <span className="text-[10px] text-text-muted leading-snug">{opt.desc}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Card 4: Live Preview & Test Bench */}
+            <div className={`${BENTO_CARD} border-t-2 border-t-accent-green`}>
+              <div className={CARD_HEADER}>
+                <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-accent-green/20 text-text-primary border border-border-subtle shadow-2xs">
+                    <Sparkles size={14} />
+                  </div>
+                  Live Interface &amp; Style Preview
+                </h2>
+                <span className="text-[9.5px] font-mono uppercase tracking-wider text-text-muted">Real-time render</span>
+              </div>
+              <div className={CARD_BODY}>
+                <p className="text-[11.5px] leading-relaxed text-text-secondary">
+                  Live simulation of active palette, card radius, shadow elevation, and typography:
+                </p>
+
+                <div
+                  className="p-4 border border-border-subtle bg-bg-card transition-all"
+                  style={{
+                    borderRadius: "var(--radius-card, 4px)",
+                    boxShadow: "var(--shadow-subtle)",
+                  }}
+                >
+                  <div className="flex items-center justify-between pb-2.5 border-b border-border-subtle mb-3">
+                    <div>
+                      <span className="text-[9.5px] font-mono font-semibold text-text-muted uppercase tracking-wider">Continuum Preview</span>
+                      <h3 className="font-serif text-base font-bold text-text-primary mt-0.5">Financial Snapshot</h3>
+                    </div>
+                    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9.5px] font-mono font-semibold bg-accent-green/15 text-accent-green border border-accent-green/30">
+                      <span className="h-1.5 w-1.5 rounded-full bg-accent-green animate-pulse" />
+                      Active
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2.5 mb-3 max-sm:grid-cols-1">
+                    <div className="p-2.5 border border-border-subtle bg-bg-primary/40" style={{ borderRadius: "var(--radius-button, 2px)" }}>
+                      <span className="text-[9.5px] font-mono text-text-muted block">Net Worth</span>
+                      <span className="text-sm font-mono font-bold text-text-primary">$124,580</span>
+                    </div>
+                    <div className="p-2.5 border border-border-subtle bg-bg-primary/40" style={{ borderRadius: "var(--radius-button, 2px)" }}>
+                      <span className="text-[9.5px] font-mono text-text-muted block">Monthly Savings</span>
+                      <span className="text-sm font-mono font-bold text-accent-green">+34.2%</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 pt-1 max-sm:flex-col max-sm:items-start">
+                    <div className="flex items-center gap-1.5">
+                      <div className="h-2.5 w-2.5 rounded-full border border-border-subtle" style={{ backgroundColor: "var(--accent-primary, #A84832)" }} />
+                      <span className="text-[10px] font-mono text-text-secondary">
+                        <strong className="text-text-primary">{cardRadius}</strong> · <strong className="text-text-primary">{cardShadow}</strong> · <strong className="text-text-primary">{headingFont}</strong>
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      className="px-2.5 py-1 text-[10.5px] font-semibold text-white bg-text-primary hover:opacity-90 transition-all cursor-pointer shadow-xs"
+                      style={{ borderRadius: "var(--radius-button, 2px)" }}
+                    >
+                      Sample Action
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       )}
 
       {activeSubTab === "general" && (
-        <div className="flex flex-col gap-6 animate-[fadeIn_0.3s_ease_forwards]">
-          <div className={`${BENTO_CARD} border-t-2 border-t-accent-blue`}>
-            <div className={CARD_HEADER}>
-              <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
-                <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-accent-blue/20 text-text-primary border border-border-subtle shadow-2xs">
-                  <Coins size={14} />
-                </div>
-                Display Currency
-              </h2>
-            </div>
-            <div className={CARD_BODY}>
-              <div className="max-w-xs">
-                <label className={FIELD_LABEL}>Currency Symbol</label>
-                <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={SELECT_CLASS}>
-                  {CURRENCIES.map((c) => (
-                    <option key={c.symbol} value={c.symbol}>
-                      {c.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <p className="text-[11px] leading-relaxed text-text-muted">
-                Changes the symbol shown next to amounts across the dashboard. Amounts themselves are not converted.
-              </p>
-            </div>
-          </div>
-
-          <div className={`${BENTO_CARD} border-t-2 border-t-accent-yellow`}>
-            <div className={CARD_HEADER}>
-              <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
-                <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-accent-yellow/20 text-text-primary border border-border-subtle shadow-2xs">
-                  <CalendarClock size={14} />
-                </div>
-                Income &amp; Pay Cycle
-              </h2>
-            </div>
-            <div className={CARD_BODY}>
-              <div className="max-w-xs">
-                <label className={FIELD_LABEL}>Payday</label>
-                <select value={salaryDay} onChange={(e) => setSalaryDay(parseInt(e.target.value, 10))} className={SELECT_CLASS}>
-                  {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
-                    <option key={day} value={day}>
-                      {day}
-                      {day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th"} of month
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
-                <div>
-                  <label className={FIELD_LABEL}>Usual Salary</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-3.5 flex items-center text-xs font-bold text-text-muted">{currency}</span>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={salaryDraft}
-                      onChange={(e) => setSalaryDraft(e.target.value)}
-                      onBlur={(e) => {
-                        const val = Math.max(0, parseFloat(e.target.value) || 0);
-                        setSalaryDraft(String(val) || "");
-                        setMonthlySalary(val);
-                      }}
-                      className={`${SELECT_CLASS} pl-7`}
-                    />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-[fadeIn_0.3s_ease_forwards] items-start">
+          <div className="flex flex-col gap-6">
+            <div className={`${BENTO_CARD} border-t-2 border-t-accent-blue`}>
+              <div className={CARD_HEADER}>
+                <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-accent-blue/20 text-text-primary border border-border-subtle shadow-2xs">
+                    <Coins size={14} />
                   </div>
-                </div>
-                <div>
-                  <label className={FIELD_LABEL}>Additional Income</label>
-                  <div className="relative">
-                    <span className="absolute inset-y-0 left-3.5 flex items-center text-xs font-bold text-text-muted">{currency}</span>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="0"
-                      value={additionalIncomeDraft}
-                      onChange={(e) => setAdditionalIncomeDraft(e.target.value)}
-                      onBlur={(e) => {
-                        const val = Math.max(0, parseFloat(e.target.value) || 0);
-                        setAdditionalIncomeDraft(String(val) || "");
-                        setAdditionalIncome(val);
-                      }}
-                      className={`${SELECT_CLASS} pl-7`}
-                    />
-                  </div>
-                </div>
+                  Display Currency
+                </h2>
               </div>
-              <p className="text-[11px] leading-relaxed text-text-muted">
-                <Banknote size={11} className="mr-1 inline-block align-[-1px]" />
-                Used to build your salary-cycle view in Expenses and your baseline income in Financial Health.
-              </p>
-            </div>
-          </div>
-
-          <div className={`${BENTO_CARD} border-t-2 border-t-emerald-600 dark:border-t-emerald-400`}>
-            <div className={CARD_HEADER}>
-              <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
-                <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-emerald-500/20 text-text-primary border border-border-subtle shadow-2xs">
-                  <Shield size={14} />
+              <div className={CARD_BODY}>
+                <div className="max-w-xs">
+                  <label className={FIELD_LABEL}>Currency Symbol</label>
+                  <select value={currency} onChange={(e) => setCurrency(e.target.value)} className={SELECT_CLASS}>
+                    {CURRENCIES.map((c) => (
+                      <option key={c.symbol} value={c.symbol}>
+                        {c.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
-                AI Privacy &amp; Cloud Intelligence
-              </h2>
-              {setAiOptOut && (
-                <Toggle
-                  checked={!aiOptOut}
-                  onChange={() => setAiOptOut(!aiOptOut)}
-                  label="Enable AI Features"
-                />
-              )}
-            </div>
-            <div className={CARD_BODY}>
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-text-primary">
-                    {aiOptOut ? "AI Features Disabled (Privacy First)" : "AI Features Enabled"}
-                  </span>
-                  <span className={`font-mono text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-xs border ${
-                    aiOptOut
-                      ? "border-border-subtle bg-bg-secondary text-text-muted"
-                      : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
-                  }`}>
-                    {aiOptOut ? "Opted Out" : "Active"}
-                  </span>
-                </div>
-                <p className="text-[11px] leading-relaxed text-text-muted mt-1">
-                  {aiOptOut
-                    ? "Disables all external AI features across Continuum Home (Kiroku chat assistant, health analytics advisory, and historical spend intelligence). No transaction or library data will be sent to external LLM services. All financial analysis runs strictly locally using deterministic private math."
-                    : "External AI assistant features are active (Kiroku chat assistant, health trajectory advisory, and daily media recommendations) powered privately by Groq with zero data retention."}
+                <p className="text-[11px] leading-relaxed text-text-muted">
+                  Changes the symbol shown next to amounts across the dashboard. Amounts themselves are not converted.
                 </p>
+              </div>
+            </div>
+
+            <div className={`${BENTO_CARD} border-t-2 border-t-accent-yellow`}>
+              <div className={CARD_HEADER}>
+                <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-accent-yellow/20 text-text-primary border border-border-subtle shadow-2xs">
+                    <CalendarClock size={14} />
+                  </div>
+                  Income &amp; Pay Cycle
+                </h2>
+              </div>
+              <div className={CARD_BODY}>
+                <div className="max-w-xs">
+                  <label className={FIELD_LABEL}>Payday</label>
+                  <select value={salaryDay} onChange={(e) => setSalaryDay(parseInt(e.target.value, 10))} className={SELECT_CLASS}>
+                    {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
+                      <option key={day} value={day}>
+                        {day}
+                        {day === 1 ? "st" : day === 2 ? "nd" : day === 3 ? "rd" : "th"} of month
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 max-sm:grid-cols-1">
+                  <div>
+                    <label className={FIELD_LABEL}>Usual Salary</label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-3.5 flex items-center text-xs font-bold text-text-muted">{currency}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={salaryDraft}
+                        onChange={(e) => setSalaryDraft(e.target.value)}
+                        onBlur={(e) => {
+                          const val = Math.max(0, parseFloat(e.target.value) || 0);
+                          setSalaryDraft(String(val) || "");
+                          setMonthlySalary(val);
+                        }}
+                        className={`${SELECT_CLASS} pl-7`}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={FIELD_LABEL}>Additional Income</label>
+                    <div className="relative">
+                      <span className="absolute inset-y-0 left-3.5 flex items-center text-xs font-bold text-text-muted">{currency}</span>
+                      <input
+                        type="number"
+                        min="0"
+                        placeholder="0"
+                        value={additionalIncomeDraft}
+                        onChange={(e) => setAdditionalIncomeDraft(e.target.value)}
+                        onBlur={(e) => {
+                          const val = Math.max(0, parseFloat(e.target.value) || 0);
+                          setAdditionalIncomeDraft(String(val) || "");
+                          setAdditionalIncome(val);
+                        }}
+                        className={`${SELECT_CLASS} pl-7`}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <p className="text-[11px] leading-relaxed text-text-muted">
+                  <Banknote size={11} className="mr-1 inline-block align-[-1px]" />
+                  Used to build your salary-cycle view in Expenses and your baseline income in Financial Health.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-6">
+            <div className={`${BENTO_CARD} border-t-2 border-t-emerald-600 dark:border-t-emerald-400`}>
+              <div className={CARD_HEADER}>
+                <h2 className="flex items-center gap-2.5 text-[13px] font-bold tracking-tight text-text-primary">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-sm bg-emerald-500/20 text-text-primary border border-border-subtle shadow-2xs">
+                    <Shield size={14} />
+                  </div>
+                  AI Privacy &amp; Cloud Intelligence
+                </h2>
+                {setAiOptOut && (
+                  <Toggle
+                    checked={!aiOptOut}
+                    onChange={() => setAiOptOut(!aiOptOut)}
+                    label="Enable AI Features"
+                  />
+                )}
+              </div>
+              <div className={CARD_BODY}>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-semibold text-text-primary">
+                      {aiOptOut ? "AI Features Disabled (Privacy First)" : "AI Features Enabled"}
+                    </span>
+                    <span className={`font-mono text-[9.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-xs border ${
+                      aiOptOut
+                        ? "border-border-subtle bg-bg-secondary text-text-muted"
+                        : "border-emerald-500/30 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    }`}>
+                      {aiOptOut ? "Opted Out" : "Active"}
+                    </span>
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-text-muted mt-1">
+                    {aiOptOut
+                      ? "Disables all external AI features across Continuum Home (Kiroku chat assistant, health analytics advisory, and historical spend intelligence). No transaction or library data will be sent to external LLM services. All financial analysis runs strictly locally using deterministic private math."
+                      : "External AI assistant features are active (Kiroku chat assistant, health trajectory advisory, and daily media recommendations) powered privately by Groq with zero data retention."}
+                  </p>
+                </div>
               </div>
             </div>
           </div>

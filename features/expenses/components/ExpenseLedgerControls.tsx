@@ -48,6 +48,7 @@ export const ExpenseLedgerControls: React.FC<ExpenseLedgerControlsProps> = ({
       <input
         type="text"
         placeholder="Search..."
+        aria-label="Search expenses"
         value={expenseSearch}
         onChange={(e) => setExpenseSearch(e.target.value)}
         className={`${INPUT_CLASS} w-[115px] shrink-0 px-2 py-1 text-[11px]`}
@@ -55,6 +56,7 @@ export const ExpenseLedgerControls: React.FC<ExpenseLedgerControlsProps> = ({
       <select
         value={ledgerCategoryFilter}
         onChange={(e) => setLedgerCategoryFilter(e.target.value)}
+        aria-label="Filter by category"
         className={`${INPUT_CLASS} shrink-0 cursor-pointer px-2 py-1 text-[11px]`}
       >
         <option value="">All Categories</option>
@@ -100,6 +102,7 @@ export const ExpenseLedgerControls: React.FC<ExpenseLedgerControlsProps> = ({
       <input
         type="number"
         placeholder={`Min (${currency})`}
+        aria-label={`Minimum amount in ${currency}`}
         value={ledgerMinAmount}
         onChange={(e) => setLedgerMinAmount(e.target.value)}
         className={`${INPUT_CLASS} w-[84px] shrink-0 px-2 py-1 text-[11px]`}
@@ -107,6 +110,7 @@ export const ExpenseLedgerControls: React.FC<ExpenseLedgerControlsProps> = ({
       <input
         type="number"
         placeholder={`Max (${currency})`}
+        aria-label={`Maximum amount in ${currency}`}
         value={ledgerMaxAmount}
         onChange={(e) => setLedgerMaxAmount(e.target.value)}
         className={`${INPUT_CLASS} w-[84px] shrink-0 px-2 py-1 text-[11px]`}
@@ -116,6 +120,7 @@ export const ExpenseLedgerControls: React.FC<ExpenseLedgerControlsProps> = ({
           value={ledgerSortField}
           onChange={(e) => setLedgerSortField(e.target.value as typeof ledgerSortField)}
           title="Sort by"
+          aria-label="Sort by"
           className={`${INPUT_CLASS} cursor-pointer px-2 py-1 text-[11px]`}
         >
           <option value="date">Date</option>
@@ -127,6 +132,7 @@ export const ExpenseLedgerControls: React.FC<ExpenseLedgerControlsProps> = ({
           type="button"
           onClick={() => setLedgerSortDir(ledgerSortDir === "asc" ? "desc" : "asc")}
           title={ledgerSortDir === "asc" ? "Ascending — click for descending" : "Descending — click for ascending"}
+          aria-label={ledgerSortDir === "asc" ? "Sort ascending — click for descending" : "Sort descending — click for ascending"}
           className="cursor-pointer rounded-md border border-border-subtle bg-bg-card px-2 py-1 text-[11px] font-semibold text-text-primary transition-all duration-200 hover:bg-bg-primary"
         >
           {ledgerSortDir === "asc" ? "↑" : "↓"}
