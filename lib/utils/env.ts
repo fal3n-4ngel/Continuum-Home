@@ -78,6 +78,21 @@ export const env = {
   get ADMIN_EMAIL(): string {
     return process.env.ADMIN_EMAIL || process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com";
   },
+
+  get DISCORD_WEBHOOK_URL(): string {
+    return process.env.DISCORD_WEBHOOK_URL || "";
+  },
+  get DISCORD_ALERTS_WEBHOOK_URL(): string {
+    return process.env.DISCORD_ALERTS_WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL || "";
+  },
+  get DISCORD_EVENTS_WEBHOOK_URL(): string {
+    return (
+      process.env.DISCORD_EVENTS_WEBHOOK_URL ||
+      process.env.DISCORD_ADMIN_WEBHOOK_URL ||
+      process.env.DISCORD_WEBHOOK_URL ||
+      ""
+    );
+  },
 };
 
 function emailOverride(): string {

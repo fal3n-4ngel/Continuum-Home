@@ -61,6 +61,7 @@ vi.mock("@/lib/auth", () => ({
       throw { message: "Unauthorized", status: 401 };
     }
     return {
+      uid: "admin123",
       user: {
         uid: "admin123",
         email: "adiad.dev@gmail.com",

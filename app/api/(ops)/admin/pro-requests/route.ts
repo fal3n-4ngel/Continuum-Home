@@ -4,8 +4,7 @@ import { ApiError, toErrorResponse } from "@/lib/utils";
 import { getAdminDb } from "@/lib/firebase/firebase-admin";
 import { cacheInvalidate } from "@/lib/utils";
 import { env } from "@/lib/utils";
-import { waitUntil } from "@vercel/functions";
-import { sendDiscordEmbed } from "@/lib/integrations";
+import { notifyProClaimDecision } from "@/lib/alerts";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +40,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    await assertAdmin(req);
+    const session = await assertAdmin(req);
 
     let body: unknown;
     try {
@@ -76,20 +75,36 @@ export async function POST(req: NextRequest) {
 
     if (action === "approve") {
       const uid = claimData.uid as string;
-      const settingsRef = db.collection("settings").doc(uid);
+      const settingsRef = db.collection("users").doc(uid).collection("settings").doc("preferences");
       const settingsSnap = await settingsRef.get();
 
       if (settingsSnap.exists) {
-        await settingsRef.update({ isPro: true, updatedAt: Date.now() });
+        await settingsRef.set({ isPro: true, updatedAt: Date.now() }, { merge: true });
       } else {
-        await settingsRef.set({
-          isPro: true,
-          timeFilter: "all",
-          salaryDay: 1,
-          monthlySalary: 0,
-          additionalIncome: 0,
-          updatedAt: Date.now(),
-        });
+        const legacyRef = db.collection("settings").doc(uid);
+        const legacySnap = await legacyRef.get();
+        if (legacySnap.exists) {
+          await settingsRef.set(
+            {
+              ...legacySnap.data(),
+              isPro: true,
+              updatedAt: Date.now(),
+            },
+            { merge: true }
+          );
+        } else {
+          await settingsRef.set(
+            {
+              isPro: true,
+              timeFilter: "all",
+              salaryDay: 1,
+              monthlySalary: 0,
+              additionalIncome: 0,
+              updatedAt: Date.now(),
+            },
+            { merge: true }
+          );
+        }
       }
 
       try {
@@ -102,12 +117,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    waitUntil(sendDiscordEmbed(
-      "Admin Audit Log",
-      `Admin **${action === "approve" ? "APPROVED" : "DENIED"}** Pro claim for user: \`${claimData.email || claimData.uid}\``,
-      action === "approve" ? 5763719 : 15548997,
-      "Continuum Dashboard • Admin Audit"
-    ));
+    notifyProClaimDecision({
+      uid: claimData.uid as string,
+      email: claimData.email as string || null,
+      action: action as "approve" | "deny",
+      adminEmail: session.user.email,
+    });
 
     return NextResponse.json({
       success: true,

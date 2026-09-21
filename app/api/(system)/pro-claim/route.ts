@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/utils";
 import { getAdminDb } from "@/lib/firebase/firebase-admin";
-import { waitUntil } from "@vercel/functions";
-import { sendDiscordEmbed } from "@/lib/integrations";
+import { notifyProClaimSubmitted } from "@/lib/alerts";
 
 export const dynamic = "force-dynamic";
 
@@ -46,7 +45,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const settingsDoc = await db.collection("settings").doc(session.uid).get();
+    let settingsDoc = await db
+      .collection("users")
+      .doc(session.uid)
+      .collection("settings")
+      .doc("preferences")
+      .get();
+
+    if (!settingsDoc.exists) {
+      settingsDoc = await db.collection("settings").doc(session.uid).get();
+    }
+
     if (settingsDoc.exists && settingsDoc.data()?.isPro === true) {
       return NextResponse.json({ error: "Your account is already a Pro account." }, { status: 409 });
     }
@@ -63,12 +72,13 @@ export async function POST(req: NextRequest) {
       reviewedAt: null,
     });
 
-    waitUntil(sendDiscordEmbed(
-      "Admin Audit Log",
-      `🔔 **NEW PRO REQUEST**\nUser \`${session.user.email || session.uid}\` requested Pro status via ${platform} (Handle: ${sanitizedHandle}).\nCheck the Admin Panel to approve or deny.`,
-      16776960,
-      "Continuum Dashboard • Admin Audit"
-    ));
+    notifyProClaimSubmitted({
+      uid: session.uid,
+      email: session.user.email,
+      platform: String(platform),
+      handle: sanitizedHandle,
+      note: sanitizedNote || undefined,
+    });
 
     return NextResponse.json({ success: true, message: "Your Pro request has been submitted. We'll review it shortly!" });
   } catch (error) {

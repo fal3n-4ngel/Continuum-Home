@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { toErrorResponse } from "@/lib/utils";
 
+import { postDiscordEmbed, resolveWebhookUrl, ALERT_COLORS, type AlertChannel } from "@/lib/alerts";
+
 export async function POST(req: NextRequest) {
   try {
     const { user } = await requireUser(req);
@@ -11,42 +13,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    const { message } = await req.json();
+    const { message, channel } = await req.json().catch(() => ({}));
     if (!message || typeof message !== "string") {
       return NextResponse.json({ error: "Invalid message payload" }, { status: 400 });
     }
 
-    const webhookUrl = process.env.DISCORD_WEBHOOK_URL;
+    const targetChannel: AlertChannel = channel === "alerts" ? "alerts" : "events";
+    const webhookUrl = resolveWebhookUrl(targetChannel);
     if (!webhookUrl) {
-      return NextResponse.json({ error: "Discord webhook URL is not configured." }, { status: 500 });
+      return NextResponse.json(
+        { error: `Discord webhook URL for channel '${targetChannel}' is not configured.` },
+        { status: 500 }
+      );
     }
 
-    const payload = {
-      username: "Continuum Alerts",
-      embeds: [
-        {
-          title: "System Notification",
-          description: message,
-          color: 13944497,
-          timestamp: new Date().toISOString(),
-          footer: {
-            text: "Continuum Dashboard • Manual Trigger"
-          }
-        }
-      ]
-    };
+    await postDiscordEmbed(
+      {
+        title: "System Notification",
+        description: message,
+        color: ALERT_COLORS.BLUE,
+        footer: {
+          text: "Continuum Dashboard • Manual Trigger",
+        },
+      },
+      targetChannel
+    );
 
-    const res = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!res.ok) {
-      throw new Error(`Discord API returned ${res.status}`);
-    }
-
-    return NextResponse.json({ success: true, message: "Discord alert dispatched." });
+    return NextResponse.json({ success: true, message: `Discord alert dispatched to '${targetChannel}' channel.` });
   } catch (error) {
     return toErrorResponse(error, "POST /api/admin/discord");
   }

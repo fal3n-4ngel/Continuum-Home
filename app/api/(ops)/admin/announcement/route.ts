@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAdmin } from "@/lib/utils/route-handlers";
 import { listAllUsers } from "@/lib/firebase/firebase-admin";
-import { waitUntil } from "@vercel/functions";
-import { sendDiscordEmbed } from "@/lib/integrations";
+import { notifyAdminAnnouncement } from "@/lib/alerts";
 import { env, resolveEmailRecipient } from "@/lib/utils";
 import { buildAnnouncementEmail } from "@/emails/templates/announcement";
 
@@ -78,12 +77,12 @@ export const POST = withAdmin("POST /api/admin/announcement", async (req) => {
     const successCount = results.filter((r) => r.success).length;
     const failedCount = results.length - successCount;
 
-    waitUntil(sendDiscordEmbed(
-      "Admin Audit Log",
-      `Admin broadcasted an announcement: **${subject}**\nDelivered to ${successCount} users (${failedCount} failed).`,
-      10181046,
-      "Continuum Dashboard • Admin Audit"
-    ));
+    notifyAdminAnnouncement({
+      subject: String(subject),
+      total: validEmails.length,
+      successCount,
+      failedCount,
+    });
 
     return NextResponse.json({
       success: true,

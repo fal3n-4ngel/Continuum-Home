@@ -80,7 +80,10 @@ export async function listAllUsers(): Promise<AdminUser[]> {
   const activeUsers: AdminUser[] = [];
   for (const u of rawUsers) {
     try {
-      const doc = await db.collection("settings").doc(u.uid).get();
+      let doc = await db.collection("users").doc(u.uid).collection("settings").doc("preferences").get();
+      if (!doc.exists) {
+        doc = await db.collection("settings").doc(u.uid).get();
+      }
       if (doc.exists && doc.data()?.deleted === true) {
         continue;
       }
@@ -175,7 +178,7 @@ export async function adminReEncryptExpense(
   entry: { title: string; amount: number | null; category: string | null; notes: string | null }
 ): Promise<void> {
   const db = getAdminDb();
-  await db.collection("expenses").doc(id).set(
+  await db.collection("users").doc(uid).collection("expenses").doc(id).set(
     {
       userId: uid,
       title: encrypt(entry.title),
@@ -226,7 +229,7 @@ export async function adminGetEmailSubscriptions(uid: string): Promise<EmailSubs
 
 export async function adminSetEmailSubscriptions(uid: string, updates: Partial<EmailSubscriptions>): Promise<void> {
   const db = getAdminDb();
-  await db.collection("settings").doc(uid).set({ emailSubscriptions: updates, updatedAt: Date.now() }, { merge: true });
+  await db.collection("users").doc(uid).collection("settings").doc("preferences").set({ emailSubscriptions: updates, updatedAt: Date.now() }, { merge: true });
 }
 
 export async function adminSaveDailyRecommendation(
@@ -273,6 +276,7 @@ export async function adminPurgeUserData(uid: string): Promise<void> {
   if (!recsEntries.empty) await recsBatch.commit();
   await db.collection("recommendations").doc(uid).delete().catch(() => {});
 
+  await db.collection("users").doc(uid).collection("settings").doc("preferences").delete().catch(() => {});
   await db.collection("settings").doc(uid).delete().catch(() => {});
 
   await db.collection("notes").doc(uid).delete().catch(() => {});

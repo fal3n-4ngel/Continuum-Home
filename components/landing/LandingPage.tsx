@@ -66,14 +66,9 @@ export default function LandingPage({
     let shouldBeDark = false;
     try {
       const savedLanding = typeof window !== "undefined" ? sessionStorage.getItem("landing_theme") : null;
-      const storedTheme = typeof window !== "undefined" ? localStorage.getItem("continuum_theme") : null;
+      // Landing page defaults to light mode ("continuum") unless explicitly toggled in this session
       if (savedLanding) {
         shouldBeDark = savedLanding === "continuum-dark";
-      } else if (storedTheme) {
-        const themeDef = THEMES.find((t) => t.id === storedTheme);
-        shouldBeDark = themeDef ? themeDef.type === "dark" : storedTheme.includes("dark");
-      } else if (typeof window !== "undefined" && window.matchMedia) {
-        shouldBeDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
       }
     } catch {}
 
@@ -99,7 +94,6 @@ export default function LandingPage({
     document.documentElement.setAttribute("data-theme", themeName);
     try {
       sessionStorage.setItem("landing_theme", themeName);
-      localStorage.setItem("continuum_theme", themeName);
     } catch {}
   };
 
