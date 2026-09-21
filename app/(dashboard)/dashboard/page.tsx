@@ -46,7 +46,9 @@ import {
   DataCorrectionModal,
   DeleteAccountModal,
   ReleaseNotesModal,
+  GoodreadsModal,
 } from "@/components/modals";
+import { parseGoodreadsCsv } from "@/features/media/lib/goodreads-csv";
 import type { ReleaseNote } from "@/types";
 import { KirokuTab } from "@/features/assistant";
 
@@ -96,6 +98,9 @@ export default function Dashboard() {
     showLetterboxdModal, setShowLetterboxdModal,
     letterboxdUsername, setLetterboxdUsername,
     isImportingLetterboxd, setIsImportingLetterboxd,
+    showGoodreadsModal, setShowGoodreadsModal,
+    goodreadsUserId, setGoodreadsUserId,
+    isImportingGoodreads, setIsImportingGoodreads,
     bookQuery, setBookQuery,
     isSearchingBooks, setIsSearchingBooks,
     bookResults, setBookResults,
@@ -372,6 +377,12 @@ export default function Dashboard() {
     localStorage.removeItem("letterboxd_username");
     setLetterboxdUsername("");
     patchSettings({ integrations: { letterboxd: null } });
+  }
+
+  function disconnectGoodreads() {
+    localStorage.removeItem("goodreads_user_id");
+    setGoodreadsUserId("");
+    patchSettings({ integrations: { goodreads: null } });
   }
 
   const [isSyncingAnilist, setIsSyncingAnilist] = useState(false);
@@ -1010,6 +1021,9 @@ export default function Dashboard() {
 
     const lbUser = localStorage.getItem("letterboxd_username");
     if (lbUser) setLetterboxdUsername(lbUser);
+
+    const grUser = localStorage.getItem("goodreads_user_id");
+    if (grUser) setGoodreadsUserId(grUser);
   }, [user]);
 
   const fetchExpenses = async () => {
@@ -1163,6 +1177,15 @@ export default function Dashboard() {
             localStorage.removeItem("letterboxd_username");
             setLetterboxdUsername("");
           }
+
+          const goodreads = data.integrations?.goodreads;
+          if (goodreads?.userId) {
+            localStorage.setItem("goodreads_user_id", goodreads.userId);
+            setGoodreadsUserId(goodreads.userId);
+          } else if (goodreads === null) {
+            localStorage.removeItem("goodreads_user_id");
+            setGoodreadsUserId("");
+          }
         }
 
         // Auto-migrate local storage integrations to cloud if missing in cloud
@@ -1170,6 +1193,7 @@ export default function Dashboard() {
         const localTrAcc = typeof window !== "undefined" ? localStorage.getItem("trakt_access_token") : null;
         const localTrRef = typeof window !== "undefined" ? localStorage.getItem("trakt_refresh_token") : null;
         const localLb = typeof window !== "undefined" ? localStorage.getItem("letterboxd_username") : null;
+        const localGr = typeof window !== "undefined" ? localStorage.getItem("goodreads_user_id") : null;
 
         const toSync: Record<string, unknown> = {};
         if (localAni && !data.integrations?.anilist?.token) {
@@ -1180,6 +1204,9 @@ export default function Dashboard() {
         }
         if (localLb && !data.integrations?.letterboxd?.username) {
           toSync.letterboxd = { username: localLb };
+        }
+        if (localGr && !data.integrations?.goodreads?.userId) {
+          toSync.goodreads = { userId: localGr };
         }
         if (Object.keys(toSync).length > 0) {
           patchSettings({ integrations: toSync });
@@ -1558,6 +1585,120 @@ export default function Dashboard() {
       triggerAlert("Sync Failed", err?.message || "Failed to parse RSS feed", "danger");
     } finally {
       setIsImportingLetterboxd(false);
+    }
+  };
+
+  const handleGoodreadsSync = async () => {
+    if (!goodreadsUserId.trim()) return;
+    setIsImportingGoodreads(true);
+    try {
+      const res = await fetch(`/api/watchlist/goodreads?userId=${encodeURIComponent(goodreadsUserId.trim())}`, {
+        headers: getHeaders(),
+      });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || "Failed to fetch Goodreads RSS shelves.");
+      }
+
+      const { books } = await res.json();
+      if (!books || books.length === 0) {
+        throw new Error("No books found in this Goodreads account's public shelves.");
+      }
+
+      const { newItems, updatedItems, newCount, updatedCount } = diffSyncEntries(books, (e) =>
+        watchlist.find((w) => w.type === "book" && w.title.toLowerCase().trim() === e.title.toLowerCase().trim())
+      );
+
+      if (newCount === 0 && updatedCount === 0) {
+        triggerAlert("Goodreads Sync", "Your book library already matches Goodreads — nothing to sync.", "info");
+        return;
+      }
+
+      const applyGoodreadsSync = async () => {
+        setSyncPreview((prev) => ({ ...prev, isApplying: true }));
+        setIsImportingGoodreads(true);
+        try {
+          const syncRes = await fetch("/api/watchlist/sync", {
+            method: "POST",
+            headers: getHeaders(),
+            body: JSON.stringify({ source: "goodreads", entries: books }),
+          });
+          if (syncRes.ok) {
+            const result = await syncRes.json();
+            setShowGoodreadsModal(false);
+            localStorage.setItem("goodreads_user_id", goodreadsUserId.trim());
+            patchSettings({ integrations: { goodreads: { userId: goodreadsUserId.trim() } } });
+            fetchWatchlist();
+            setSyncPreview((prev) => ({ ...prev, isOpen: false }));
+            triggerAlert("Goodreads Sync Complete", `Successfully synced ${result.added || 0} new and ${result.updated || 0} updated books!`, "success");
+          } else {
+            throw new Error("Server rejected sync payload.");
+          }
+        } catch (err: any) {
+          triggerAlert("Sync Failed", err?.message || "Failed to sync Goodreads feed.", "danger");
+        } finally {
+          setIsImportingGoodreads(false);
+          setSyncPreview((prev) => ({ ...prev, isApplying: false }));
+        }
+      };
+
+      setSyncPreview({ isOpen: true, title: "Sync Goodreads", newItems, updatedItems, onConfirm: applyGoodreadsSync });
+    } catch (err: any) {
+      triggerAlert("Sync Failed", err?.message || "Failed to parse Goodreads feed", "danger");
+    } finally {
+      setIsImportingGoodreads(false);
+    }
+  };
+
+  const handleGoodreadsCsvImport = async (file: File) => {
+    setIsImportingGoodreads(true);
+    try {
+      const text = await file.text();
+      const { books } = parseGoodreadsCsv(text);
+      if (!books || books.length === 0) {
+        throw new Error("No valid book entries found in the uploaded CSV file.");
+      }
+
+      const { newItems, updatedItems, newCount, updatedCount } = diffSyncEntries(books, (e) =>
+        watchlist.find((w) => w.type === "book" && w.title.toLowerCase().trim() === e.title.toLowerCase().trim())
+      );
+
+      if (newCount === 0 && updatedCount === 0) {
+        triggerAlert("Goodreads CSV Import", "Your library already contains all books from this CSV — nothing to sync.", "info");
+        return;
+      }
+
+      const applyGoodreadsCsv = async () => {
+        setSyncPreview((prev) => ({ ...prev, isApplying: true }));
+        setIsImportingGoodreads(true);
+        try {
+          const syncRes = await fetch("/api/watchlist/sync", {
+            method: "POST",
+            headers: getHeaders(),
+            body: JSON.stringify({ source: "goodreads_csv", entries: books }),
+          });
+          if (syncRes.ok) {
+            const result = await syncRes.json();
+            setShowGoodreadsModal(false);
+            fetchWatchlist();
+            setSyncPreview((prev) => ({ ...prev, isOpen: false }));
+            triggerAlert("Goodreads CSV Import Complete", `Successfully imported ${result.added || 0} new and ${result.updated || 0} updated books!`, "success");
+          } else {
+            throw new Error("Server rejected sync payload.");
+          }
+        } catch (err: any) {
+          triggerAlert("Import Failed", err?.message || "Failed to import Goodreads CSV.", "danger");
+        } finally {
+          setIsImportingGoodreads(false);
+          setSyncPreview((prev) => ({ ...prev, isApplying: false }));
+        }
+      };
+
+      setSyncPreview({ isOpen: true, title: "Import Goodreads CSV", newItems, updatedItems, onConfirm: applyGoodreadsCsv });
+    } catch (err: any) {
+      triggerAlert("Import Failed", err?.message || "Failed to parse Goodreads CSV file.", "danger");
+    } finally {
+      setIsImportingGoodreads(false);
     }
   };
 
@@ -2071,6 +2212,7 @@ export default function Dashboard() {
                     isEnrichingBookCovers={isEnrichingBookCovers}
                     onItemClick={setSelectedMediaItem}
                     idToken={user?.idToken}
+                    openGoodreadsModal={() => setShowGoodreadsModal(true)}
                   />
                 )}
 
@@ -2094,6 +2236,11 @@ export default function Dashboard() {
                     disconnectTrakt={disconnectTrakt}
                     syncTrakt={syncTrakt}
                     isSyncingTrakt={isSyncingTrakt}
+                    goodreadsUserId={goodreadsUserId}
+                    setShowGoodreadsModal={setShowGoodreadsModal}
+                    handleGoodreadsSync={handleGoodreadsSync}
+                    isSyncingGoodreads={isImportingGoodreads}
+                    disconnectGoodreads={disconnectGoodreads}
                   />
                 )}
               </>
@@ -2311,6 +2458,16 @@ export default function Dashboard() {
         isOpen={showReleaseNotesModal}
         onClose={handleDismissReleaseNotes}
         releaseNote={activeReleaseNote}
+      />
+
+      <GoodreadsModal
+        isOpen={showGoodreadsModal}
+        onClose={() => setShowGoodreadsModal(false)}
+        userId={goodreadsUserId}
+        setUserId={setGoodreadsUserId}
+        onRssSync={handleGoodreadsSync}
+        onCsvImport={handleGoodreadsCsvImport}
+        isSyncing={isImportingGoodreads}
       />
     </div>
   );

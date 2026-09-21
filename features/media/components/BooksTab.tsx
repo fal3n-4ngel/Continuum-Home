@@ -21,6 +21,7 @@ interface BooksTabProps {
   onItemClick: (item: WatchlistItem) => void;
   idToken?: string;
   openDataCorrection?: () => void;
+  openGoodreadsModal?: () => void;
 }
 
 const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
@@ -64,6 +65,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
   onItemClick,
   idToken,
   openDataCorrection,
+  openGoodreadsModal,
 }) => {
   const [titleSearch, setTitleSearch] = React.useState("");
   const [sortBy, setSortBy] = React.useState<"title" | "year_new" | "year_old">("title");
@@ -551,6 +553,17 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                 title="Clean up duplicate entries"
               >
                 Clean Duplicates
+              </button>
+            )}
+
+            {openGoodreadsModal && (
+              <button
+                onClick={openGoodreadsModal}
+                className="flex h-[28px] cursor-pointer items-center gap-1.5 rounded-md border border-[#785433]/30 bg-[#785433]/10 dark:bg-[#785433]/20 px-3 text-[11px] font-semibold text-[#785433] dark:text-[#d4ba9f] transition-all hover:bg-[#785433]/20 shadow-2xs"
+                title="Sync from Goodreads RSS or import Goodreads CSV"
+              >
+                <span className="font-serif font-bold text-xs leading-none">g</span>
+                <span>Goodreads</span>
               </button>
             )}
 

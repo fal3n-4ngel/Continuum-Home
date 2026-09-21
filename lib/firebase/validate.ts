@@ -319,6 +319,17 @@ export function validateSettingsPatch(body: unknown): Partial<Omit<DashboardSett
         }
       }
 
+      if (ints.goodreads !== undefined) {
+        if (ints.goodreads === null) {
+          validatedInts.goodreads = null;
+        } else {
+          const gr = requireObject(ints.goodreads, "integrations.goodreads");
+          validatedInts.goodreads = {
+            userId: asTrimmedString(gr.userId, "integrations.goodreads.userId", 200, false),
+          };
+        }
+      }
+
       patch.integrations = validatedInts;
     }
   }

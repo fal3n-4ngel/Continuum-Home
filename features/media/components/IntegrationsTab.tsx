@@ -20,6 +20,11 @@ interface IntegrationsTabProps {
   disconnectTrakt?: () => void;
   syncTrakt?: () => void;
   isSyncingTrakt?: boolean;
+  goodreadsUserId?: string;
+  setShowGoodreadsModal?: (show: boolean) => void;
+  handleGoodreadsSync?: () => void;
+  isSyncingGoodreads?: boolean;
+  disconnectGoodreads?: () => void;
 }
 
 const BENTO_CARD = "rounded-sm border border-border-subtle bg-bg-card p-5 shadow-subtle";
@@ -45,6 +50,11 @@ export const IntegrationsTab = ({
   disconnectTrakt,
   syncTrakt,
   isSyncingTrakt,
+  goodreadsUserId,
+  setShowGoodreadsModal,
+  handleGoodreadsSync,
+  isSyncingGoodreads,
+  disconnectGoodreads,
 }: IntegrationsTabProps) => {
   const exportLetterboxdCSV = () => {
     const movies = watchlist.filter((item) => item.type === "movie" && item.status === "completed");
@@ -192,6 +202,63 @@ export const IntegrationsTab = ({
               </>
             ) : (
               <button onClick={() => setShowLetterboxdModal(true)} className={`${BTN_PRIMARY} h-8.5 px-4 w-full`}>Connect</button>
+            )}
+          </div>
+        </div>
+
+        <div className={`${BENTO_CARD} flex flex-col justify-between min-h-[165px]`}>
+          <div className="flex items-start gap-3.5">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#f4f1ea] text-[#382110] border border-[#d6cfbe] shadow-2xs font-serif font-bold text-lg leading-none">
+              g
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-text-primary">
+                {goodreadsUserId ? "Goodreads Connected" : "Connect Goodreads"}
+              </p>
+              <p className="text-xs text-text-muted mt-1 leading-relaxed font-normal" title={goodreadsUserId || undefined}>
+                {goodreadsUserId ? `User ${goodreadsUserId}` : "Sync reading shelves via RSS or import library CSV."}
+              </p>
+            </div>
+          </div>
+          <div className="mt-4 flex items-center justify-between gap-2 border-t border-border-subtle/70 pt-3.5">
+            {goodreadsUserId ? (
+              <>
+                <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-xs font-medium">Active</span>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                  {handleGoodreadsSync && (
+                    <button
+                      onClick={handleGoodreadsSync}
+                      disabled={isSyncingGoodreads}
+                      className="text-xs font-semibold text-text-primary hover:underline bg-transparent border-none cursor-pointer"
+                    >
+                      {isSyncingGoodreads ? "Syncing..." : "Sync"}
+                    </button>
+                  )}
+                  {setShowGoodreadsModal && (
+                    <button
+                      onClick={() => setShowGoodreadsModal(true)}
+                      className="text-xs font-semibold text-text-muted hover:text-text-primary hover:underline bg-transparent border-none cursor-pointer"
+                    >
+                      CSV
+                    </button>
+                  )}
+                  {disconnectGoodreads && (
+                    <button
+                      onClick={disconnectGoodreads}
+                      className="text-xs font-semibold text-rose-500 hover:underline bg-transparent border-none cursor-pointer"
+                    >
+                      Disconnect
+                    </button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <button
+                onClick={() => setShowGoodreadsModal && setShowGoodreadsModal(true)}
+                className={`${BTN_PRIMARY} h-8.5 px-4 w-full`}
+              >
+                Connect
+              </button>
             )}
           </div>
         </div>

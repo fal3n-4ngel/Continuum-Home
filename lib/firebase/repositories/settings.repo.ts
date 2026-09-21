@@ -13,6 +13,9 @@ export interface UserIntegrations {
   letterboxd?: {
     username?: string;
   } | null;
+  goodreads?: {
+    userId?: string;
+  } | null;
 }
 
 export interface DashboardSettings {
@@ -91,6 +94,12 @@ export async function getSettings(session: Session): Promise<DashboardSettings |
           username: l.username ? String(l.username) : undefined,
         };
       }
+      if (raw.goodreads && typeof raw.goodreads === "object") {
+        const g = raw.goodreads as Record<string, unknown>;
+        parsed.goodreads = {
+          userId: g.userId ? String(g.userId) : undefined,
+        };
+      }
       integrations = parsed;
     }
 
@@ -145,6 +154,9 @@ export async function updateSettings(session: Session, updates: Partial<Omit<Das
     if (existing.letterboxd?.username) {
       merged.letterboxd = { username: existing.letterboxd.username };
     }
+    if (existing.goodreads?.userId) {
+      merged.goodreads = { userId: existing.goodreads.userId };
+    }
 
     // Apply updates
     if (updates.integrations.anilist !== undefined) {
@@ -171,6 +183,14 @@ export async function updateSettings(session: Session, updates: Partial<Omit<Das
         delete merged.letterboxd;
       } else if (updates.integrations.letterboxd.username) {
         merged.letterboxd = { username: updates.integrations.letterboxd.username };
+      }
+    }
+
+    if (updates.integrations.goodreads !== undefined) {
+      if (updates.integrations.goodreads === null) {
+        delete merged.goodreads;
+      } else if (updates.integrations.goodreads.userId) {
+        merged.goodreads = { userId: updates.integrations.goodreads.userId };
       }
     }
 
