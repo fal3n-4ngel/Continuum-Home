@@ -180,12 +180,12 @@ export default function LandingPage({
         
         {/* Architectural Tag Badge */}
         <div className="border border-[#DDD5CB] dark:border-[#25272E] px-3.5 py-1 font-mono text-[10.5px] tracking-widest text-[#9E5D48] dark:text-[#E07A5F] uppercase mb-5 bg-[#FAF8F5] dark:bg-[#18191D] rounded-sm shadow-2xs">
-          ⌜ SELF-HOSTABLE · OPEN SOURCE · AI-READY ⌟
+          ⌜ CONTINUUM HOME · OPEN SOURCE · AI-READY LIFE OS ⌟
         </div>
 
         {/* Headline */}
         <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-[#26211F] dark:text-[#F4F5F7] leading-[1.1] mb-4">
-       
+          <span className="sr-only">Continuum Home — </span>
           <span className="font-serif italic font-normal text-[#9E5D48] dark:text-[#E07A5F]">
             A dashboard for you. An API for your AI.
           </span>

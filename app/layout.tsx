@@ -12,21 +12,26 @@ export const metadata: Metadata = {
   description: SITE_DESCRIPTION,
   applicationName: SITE_NAME,
   keywords: [
-    "Adithya Krishnan",
-    "fal3n-4ngel",
-    "adithyakrishnan.com",
     "Continuum Home",
+    "Continuum",
+    "Continuum dashboard",
+    "Continuum personal dashboard",
+    "personal finance dashboard",
+    "self-hostable dashboard",
     "expense tracker",
-    "personal dashboard",
-    "watchlist tracker",
+    "portfolio tracker",
+    "mutual funds NAV tracker",
+    "subscriptions tracker",
+    "media watchlist",
     "AniList sync",
     "Trakt sync",
-    "book tracker",
-    "self-hostable dashboard",
+    "Letterboxd sync",
     "ChatGPT custom GPT",
-    "ChatGPT actions",
-    "OpenAPI schema",
-    "Firebase Firestore app",
+    "OpenAPI personal dashboard",
+    "AI agent dashboard",
+    "open source personal dashboard",
+    "Adithya Krishnan",
+    "fal3n-4ngel",
   ],
   authors: [{ name: AUTHOR.name, url: AUTHOR.url }],
   creator: AUTHOR.name,
@@ -59,6 +64,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  verification: {
+    google: "8ilmRZp7ck7HgkRLfPnMEMPMAKH8lS5jv2sf-URdjIA",
+  },
   manifest: "/manifest.webmanifest",
   formatDetection: {
     email: false,
@@ -74,18 +82,40 @@ const structuredData = {
   "@context": "https://schema.org",
   "@graph": [
     {
-      "@type": "WebApplication",
-      name: SITE_NAME,
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      url: SITE_URL,
+      name: "Continuum Home",
+      alternateName: ["Continuum", "Continuum Personal Dashboard", "Continuum Dashboard"],
+      description: SITE_DESCRIPTION,
+      publisher: {
+        "@type": "Person",
+        name: AUTHOR.name,
+        url: AUTHOR.url,
+      },
+    },
+    {
+      "@type": "SoftwareApplication",
+      name: "Continuum Home",
+      alternateName: "Continuum",
       url: SITE_URL,
       description: SITE_DESCRIPTION,
-      applicationCategory: "LifestyleApplication",
-      operatingSystem: "Web",
+      applicationCategory: "FinanceApplication, UtilitiesApplication",
+      operatingSystem: "Web, iOS, Android, macOS, Windows, Linux",
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      featureList: [
+        "Encrypted Personal Expense Ledger",
+        "Investment & Mutual Funds NAV Tracking",
+        "Subscription Management & Renewal Alerts",
+        "Letterboxd, Trakt & AniList Sync",
+        "ChatGPT Custom GPT & Claude OpenAPI Action Support",
+        "Self-hostable with Firebase and Next.js",
+      ],
       author: {
         "@type": "Person",
         name: AUTHOR.name,
         url: AUTHOR.url,
-        sameAs: [AUTHOR.github, AUTHOR.url],
+        sameAs: [AUTHOR.github, AUTHOR.url, AUTHOR.coffeeUrl],
       },
     },
     {
@@ -95,7 +125,7 @@ const structuredData = {
       url: AUTHOR.url,
       email: AUTHOR.email,
       sameAs: [AUTHOR.github, AUTHOR.url],
-      jobTitle: "Software Engineer & Creator of Continuum",
+      jobTitle: "Software Engineer & Creator of Continuum Home",
     },
   ],
 };
@@ -110,6 +140,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta name="google-site-verification" content="8ilmRZp7ck7HgkRLfPnMEMPMAKH8lS5jv2sf-URdjIA" />
         <link rel="author" href="/humans.txt" />
         <script
           dangerouslySetInnerHTML={{
