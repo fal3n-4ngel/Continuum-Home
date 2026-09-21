@@ -505,14 +505,36 @@ html.theme-transition,
 html.theme-transition *,
 html.theme-transition *::before,
 html.theme-transition *::after {
-  transition: background-color 250ms ease, border-color 250ms ease, color 200ms ease, fill 200ms ease, stroke 200ms ease, box-shadow 250ms ease !important;
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow !important;
+  transition-duration: 400ms !important;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1) !important;
   transition-delay: 0s !important;
 }
 
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 0.28s;
-  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 1;
+}
+
+::view-transition-new(root) {
+  z-index: 9999;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+  html.theme-transition,
+  html.theme-transition * {
+    transition: none !important;
+  }
 }
 
 @keyframes heroFadeUp {

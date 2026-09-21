@@ -142,7 +142,7 @@ export const PeriodEvolutionChart: React.FC<PeriodEvolutionChartProps> = ({
                             height: segHeight,
                             backgroundColor: seg.color,
                           }}
-                          className="w-full transition-all"
+                          className="w-full transition-all duration-500 ease-in-out"
                           title={`${seg.category}: ${currency}${Math.round(seg.amount).toLocaleString("en-IN")} (${seg.percentage}%)`}
                         />
                       );

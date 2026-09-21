@@ -53,6 +53,11 @@ function applyHeadingFont(f: HeadingFontOption) {
   document.documentElement.style.setProperty('--font-serif', font);
 }
 
+export interface ThemeTransitionOrigin {
+  x: number;
+  y: number;
+}
+
 export function useTheme() {
   const [themeId, setThemeIdState] = useState<string>(DEFAULT_THEME_ID);
   const [cardRadius, setCardRadiusState] = useState<CardRadiusOption>('subtle');
@@ -60,7 +65,7 @@ export function useTheme() {
   const [headingFont, setHeadingFontState] = useState<HeadingFontOption>('serif');
   const [mounted, setMounted] = useState(false);
 
-  const applyTheme = useCallback((id: string, animate = false) => {
+  const applyTheme = useCallback((id: string, animate = false, origin?: ThemeTransitionOrigin) => {
     if (typeof document === 'undefined') return;
     const mutateDom = () => {
       document.documentElement.setAttribute('data-theme', id);
@@ -77,11 +82,45 @@ export function useTheme() {
       return;
     }
 
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
     const doc = document as any;
-    if (typeof doc.startViewTransition === 'function') {
-      doc.startViewTransition(() => {
+    if (typeof doc.startViewTransition === 'function' && !prefersReducedMotion) {
+      const transition = doc.startViewTransition(() => {
         mutateDom();
       });
+
+      if (transition && typeof transition.ready?.then === 'function') {
+        transition.ready
+          .then(() => {
+            const x = origin?.x ?? (typeof window !== 'undefined' ? window.innerWidth / 2 : 0);
+            const y = origin?.y ?? (typeof window !== 'undefined' ? window.innerHeight / 2 : 0);
+            const endRadius = Math.hypot(
+              Math.max(x, window.innerWidth - x),
+              Math.max(y, window.innerHeight - y)
+            );
+
+            document.documentElement.animate(
+              {
+                clipPath: [
+                  `circle(0px at ${x}px ${y}px)`,
+                  `circle(${endRadius}px at ${x}px ${y}px)`,
+                ],
+              },
+              {
+                duration: 480,
+                easing: 'cubic-bezier(0.2, 0, 0, 1)',
+                pseudoElement: '::view-transition-new(root)',
+              }
+            );
+          })
+          .catch(() => {
+            // Ignored if transition aborted or cancelled
+          });
+      }
       return;
     }
 
@@ -89,7 +128,7 @@ export function useTheme() {
     mutateDom();
     window.setTimeout(() => {
       document.documentElement.classList.remove('theme-transition');
-    }, 300);
+    }, 400);
   }, []);
 
   useEffect(() => {
@@ -176,11 +215,21 @@ export function useTheme() {
     };
   }, [applyTheme]);
 
-  const setTheme = useCallback((id: string) => {
+  const setTheme = useCallback((id: string, originOrEvent?: React.MouseEvent | MouseEvent | ThemeTransitionOrigin, skipTransition = false) => {
     const target = getTheme(id).id;
     if (!THEMES.some((t) => t.id === target)) return;
     setThemeIdState(target);
-    applyTheme(target, true);
+
+    let origin: ThemeTransitionOrigin | undefined;
+    if (originOrEvent) {
+      if ('clientX' in originOrEvent && typeof originOrEvent.clientX === 'number') {
+        origin = { x: originOrEvent.clientX, y: originOrEvent.clientY };
+      } else if ('x' in originOrEvent && typeof originOrEvent.x === 'number') {
+        origin = originOrEvent;
+      }
+    }
+
+    applyTheme(target, !skipTransition, origin);
     try {
       localStorage.setItem(STORAGE_KEY, target);
       const def = getTheme(target);
@@ -218,7 +267,7 @@ export function useTheme() {
     window.dispatchEvent(new CustomEvent(APPEARANCE_EVENT_NAME));
   }, []);
 
-  const toggleTheme = useCallback(() => {
+  const toggleTheme = useCallback((originOrEvent?: React.MouseEvent | MouseEvent | ThemeTransitionOrigin) => {
     const current = getTheme(themeId);
     if (current.mode === 'light') {
       let preferredDark = 'continuum-dark';
@@ -231,9 +280,9 @@ export function useTheme() {
           }
         }
       } catch {}
-      setTheme(preferredDark);
+      setTheme(preferredDark, originOrEvent);
     } else {
-      setTheme('continuum');
+      setTheme('continuum', originOrEvent);
     }
   }, [themeId, setTheme]);
 

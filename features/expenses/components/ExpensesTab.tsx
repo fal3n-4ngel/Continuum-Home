@@ -8,6 +8,7 @@ import { useExpensesStore } from "@/lib/stores/expenses-store";
 import { useUiStore } from "@/lib/stores/ui-store";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { useTheme } from "@/lib/theme/use-theme";
+import { getThemeCategoryColor } from "@/lib/theme/themes";
 
 import { ExpenseRow } from "./ExpenseRow";
 import { ExpenseLedgerControls } from "./ExpenseLedgerControls";
@@ -143,7 +144,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     subscriptions, expenses, setExpenses, setIsAddingExpense, setSubscriptions
   } = useExpensesStore();
   const { user } = useAuthStore();
-  const { theme } = useTheme();
+  const { theme, themeId } = useTheme();
   const isDark = theme.type === "dark";
 
   const getHeaders = React.useCallback(() => getAuthHeaders(user?.idToken), [user]);
@@ -681,18 +682,9 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                 {Object.entries(chartCatBreakdown).slice(0, 8).map(([cat, total], idx) => {
                   const maxAmt = Math.max(...Object.values(chartCatBreakdown), 1);
                   const pct = (total / maxAmt) * 100;
-                  const colors = [
-                    "#E07A5F",
-                    "#D99419",
-                    "#7C98A6",
-                    "#556B2F",
-                    "#C5BFA0",
-                    "#E58C4A",
-                    "#8B5CF6",
-                    "#10B981",
-                  ];
                   const isSelected = ledgerCategoryFilter === cat;
                   const isInactive = ledgerCategoryFilter !== "" && !isSelected;
+                  const barColor = getThemeCategoryColor(themeId, cat, idx);
                   return (
                     <div
                       key={cat}
@@ -713,7 +705,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                           style={{
                             height: `${pct}%`,
                             minHeight: total > 0 ? "4px" : "0px",
-                            backgroundColor: colors[idx % colors.length],
+                            backgroundColor: barColor,
                             opacity: isInactive ? 0.25 : 1,
                           }}
                         ></div>
@@ -895,7 +887,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                           <span className="text-[11px] text-text-muted">{pct}%</span>
                         </div>
                         <div className="h-1 w-full overflow-hidden rounded-sm bg-bg-secondary">
-                          <div className="h-full bg-text-primary" style={{ width: `${pct}%` }}></div>
+                          <div className="h-full bg-text-primary transition-all duration-500 ease-in-out" style={{ width: `${pct}%` }}></div>
                         </div>
                       </div>
                     );

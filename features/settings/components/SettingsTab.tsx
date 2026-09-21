@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Mail, Wallet, TrendingUp, RefreshCw, Coins, CalendarClock, Banknote, Trash2, Palette, Check, Shield, ExternalLink, Sliders, Type, Sparkles, Square, Layers } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
+import { Mail, Wallet, TrendingUp, RefreshCw, Coins, CalendarClock, Banknote, Trash2, Palette, Check, Shield, ExternalLink, Sliders, Type, Sparkles, Square, Layers, Loader2 } from "lucide-react";
 import { useTheme, CardRadiusOption, CardShadowOption, HeadingFontOption } from "@/lib/theme/use-theme";
+import { ThemeDefinition } from "@/lib/theme/themes";
 import { AUTHOR } from "@/lib/utils";
 
 export interface EmailSubscriptions {
@@ -138,6 +140,60 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
     setAdditionalIncomeDraft(additionalIncome ? String(additionalIncome) : "");
   }, [additionalIncome]);
 
+  const [mounted, setMounted] = useState(false);
+  const [applyingThemeId, setApplyingThemeId] = useState<string | null>(null);
+  const [themeOverlay, setThemeOverlay] = useState<{
+    theme: ThemeDefinition;
+    stage: "entering" | "switching" | "leaving";
+  } | null>(null);
+  const overlayTimerRef = useRef<NodeJS.Timeout[]>([]);
+
+  const clearOverlayTimers = () => {
+    overlayTimerRef.current.forEach((t) => clearTimeout(t));
+    overlayTimerRef.current = [];
+  };
+
+  useEffect(() => {
+    setMounted(true);
+    return () => {
+      clearOverlayTimers();
+    };
+  }, []);
+
+  const handleSelectTheme = (targetId: string) => {
+    if (targetId === themeId || themeOverlay) return;
+    const targetTheme = themes.find((t) => t.id === targetId);
+    if (!targetTheme) return;
+
+    clearOverlayTimers();
+    setApplyingThemeId(targetId);
+
+    // Stage 1: Full-screen overlay fades in (covers screen)
+    setThemeOverlay({
+      theme: targetTheme,
+      stage: "entering",
+    });
+
+    // Stage 2: Screen is fully covered at 220ms -> swap theme cleanly in the background
+    const t1 = setTimeout(() => {
+      setTheme(targetId, undefined, true);
+      setThemeOverlay((prev) => (prev ? { ...prev, stage: "switching" } : null));
+    }, 220);
+
+    // Stage 3: After theme renders behind the veil (450ms), start smooth fade-out
+    const t2 = setTimeout(() => {
+      setThemeOverlay((prev) => (prev ? { ...prev, stage: "leaving" } : null));
+    }, 450);
+
+    // Stage 4: Fade out completes at 750ms -> unmount overlay
+    const t3 = setTimeout(() => {
+      setThemeOverlay(null);
+      setApplyingThemeId(null);
+    }, 750);
+
+    overlayTimerRef.current = [t1, t2, t3];
+  };
+
   const toggleEmail = (key: keyof EmailSubscriptions) => {
     setEmailSubscriptions({ ...emailSubscriptions, [key]: !emailSubscriptions[key] });
   };
@@ -271,24 +327,41 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 </div>
               </div>
               <div className={CARD_BODY}>
-                <p className="text-[12px] leading-relaxed text-text-secondary">
-                  Select your preferred color palette. Changes take effect across your entire dashboard immediately.
-                </p>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-[12px] leading-relaxed text-text-secondary">
+                    Select your preferred color palette. Changes take effect across your entire dashboard immediately.
+                  </p>
+                  {applyingThemeId && (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full font-mono text-[10px] font-semibold text-text-primary bg-bg-primary border border-border-subtle shrink-0 shadow-2xs">
+                      <Loader2 size={11} className="animate-spin text-text-primary" />
+                      Applying palette...
+                    </span>
+                  )}
+                </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                   {displayedThemes.map((t) => {
                     const isActive = t.id === themeId;
+                    const isApplying = applyingThemeId === t.id;
                     return (
                       <button
                         key={t.id}
                         type="button"
-                        onClick={() => setTheme(t.id)}
-                        className={`flex flex-col items-start gap-2 p-3 rounded-sm border-2 text-left transition-all cursor-pointer ${
+                        disabled={isApplying}
+                        onClick={() => handleSelectTheme(t.id)}
+                        className={`relative flex flex-col items-start gap-2 p-3 rounded-sm border-2 text-left transition-all duration-300 cursor-pointer overflow-hidden ${
                           isActive
                             ? "border-text-primary bg-bg-primary/50 shadow-sm"
+                            : isApplying
+                            ? "border-text-primary/70 bg-bg-primary/30 shadow-xs"
                             : "border-border-subtle bg-bg-card hover:border-border-hover hover:bg-bg-primary/20"
                         }`}
                       >
+                        {isApplying && (
+                          <div className="absolute top-0 inset-x-0 h-0.5 bg-text-primary/20 overflow-hidden">
+                            <div className="h-full w-full bg-text-primary animate-pulse" />
+                          </div>
+                        )}
                         <div className="flex items-center justify-between w-full">
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-bold text-text-primary">{t.name}</span>
@@ -296,11 +369,19 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                               {t.type}
                             </span>
                           </div>
-                          {isActive && (
-                            <div className="flex h-4.5 w-4.5 items-center justify-center rounded-xs bg-text-primary text-bg-card">
-                              <Check size={10} strokeWidth={3} />
-                            </div>
-                          )}
+                          <div className="flex items-center gap-1.5">
+                            {isApplying && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-xs font-mono text-[9px] font-bold uppercase tracking-wider text-text-primary bg-bg-primary/90 border border-border-subtle shadow-2xs">
+                                <Loader2 size={10} className="animate-spin text-text-primary" />
+                                Applying
+                              </span>
+                            )}
+                            {isActive && !isApplying && (
+                              <div className="flex h-4.5 w-4.5 items-center justify-center rounded-xs bg-text-primary text-bg-card animate-[fadeIn_0.2s_ease]">
+                                <Check size={10} strokeWidth={3} />
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         <div className="flex items-center gap-1.5 w-full py-0.5">
@@ -799,6 +880,69 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Full-Screen Theme Transition Scrim / Veil */}
+      {mounted && themeOverlay && typeof document !== "undefined" && createPortal(
+        <div
+          role="status"
+          aria-live="polite"
+          aria-label={`Applying ${themeOverlay.theme.name} theme`}
+          className={`fixed inset-0 z-[99999] flex flex-col items-center justify-center p-4 transition-all duration-300 ease-out select-none ${
+            themeOverlay.stage === "leaving"
+              ? "opacity-0 pointer-events-none"
+              : "opacity-100 pointer-events-auto"
+          }`}
+          style={{
+            backgroundColor: "rgba(9, 10, 14, 0.78)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+          }}
+        >
+          <div
+            className={`flex flex-col items-center gap-4 p-6 sm:p-8 rounded-card border border-white/15 bg-black/65 shadow-2xl backdrop-blur-2xl text-white max-w-[340px] w-full text-center transition-all duration-300 ease-out ${
+              themeOverlay.stage === "leaving" ? "scale-95 opacity-0" : "scale-100 opacity-100"
+            }`}
+          >
+            {/* Animated Ring Loader */}
+            <div className="relative flex h-14 w-14 items-center justify-center rounded-full bg-white/10 border border-white/20 shadow-inner">
+              <Loader2 className="h-7 w-7 animate-spin text-white" />
+              <span className="absolute inset-0 rounded-full border border-white/35 animate-ping opacity-25" />
+            </div>
+
+            {/* Typography */}
+            <div className="flex flex-col items-center gap-1">
+              <span className="font-mono text-[9.5px] uppercase font-bold tracking-[1.5px] text-white/60">
+                Applying Palette
+              </span>
+              <h3 className="font-serif text-2xl font-bold tracking-wide text-white">
+                {themeOverlay.theme.name}
+              </h3>
+              <p className="text-[11.5px] text-white/70 line-clamp-2 mt-0.5 leading-relaxed">
+                {themeOverlay.theme.description}
+              </p>
+            </div>
+
+            {/* Swatches preview */}
+            <div className="flex items-center gap-1.5 w-full pt-1">
+              {themeOverlay.theme.swatches.map((color, i) => (
+                <div
+                  key={i}
+                  className="h-3 flex-1 rounded-xs border border-white/25 shadow-xs"
+                  style={{ backgroundColor: color }}
+                  title={color}
+                />
+              ))}
+            </div>
+
+            {/* Status indicator */}
+            <div className="flex items-center gap-2 pt-1 font-mono text-[10px] text-white/60 font-medium">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>Synchronizing workspace palette...</span>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
   );

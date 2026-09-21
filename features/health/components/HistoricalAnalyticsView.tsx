@@ -3,6 +3,8 @@
 import React, { useState, useMemo } from "react";
 import { ArrowLeft, BarChart3, Shield } from "lucide-react";
 import { resolvePayCycle } from "@/lib/utils/dates";
+import { useTheme } from "@/lib/theme/use-theme";
+import { getThemeCategoryColor } from "@/lib/theme/themes";
 import { CategorySegmentedBar, CategorySegment } from "./CategorySegmentedBar";
 import { PeriodEvolutionChart, PeriodEvolutionData } from "./PeriodEvolutionChart";
 import { HistoricalAiSummary } from "./HistoricalAiSummary";
@@ -29,41 +31,11 @@ interface HistoricalAnalyticsViewProps {
   onOpenSettings?: () => void;
 }
 
-const CATEGORY_COLORS: Record<string, string> = {
-  Food: "#E07A5F",
-  Dining: "#E07A5F",
-  Housing: "#C5BFA0",
-  Rent: "#C5BFA0",
-  Transport: "#7C98A6",
-  Travel: "#7C98A6",
-  Shopping: "#D99419",
-  Leisure: "#8B5CF6",
-  Entertainment: "#8B5CF6",
-  Utilities: "#556B2F",
-  Groceries: "#E58C4A",
-  Health: "#10B981",
-  Other: "#9E9C94",
+type SamplePeriodBase = Omit<PeriodEvolutionData, "segments"> & {
+  segments: Array<{ category: string; amount: number; percentage: number }>;
 };
 
-const PALETTE = [
-  "#E07A5F",
-  "#C5BFA0",
-  "#7C98A6",
-  "#D99419",
-  "#556B2F",
-  "#6A7B82",
-  "#8B5CF6",
-  "#10B981",
-  "#3B82F6",
-  "#B35C44",
-];
-
-function getColorForCategory(cat: string, index: number): string {
-  if (CATEGORY_COLORS[cat]) return CATEGORY_COLORS[cat];
-  return PALETTE[index % PALETTE.length];
-}
-
-const SAMPLE_PERIODS: PeriodEvolutionData[] = [
+const SAMPLE_PERIODS_BASE: SamplePeriodBase[] = [
   {
     id: "sample-1",
     label: "JAN",
@@ -71,11 +43,11 @@ const SAMPLE_PERIODS: PeriodEvolutionData[] = [
     totalSpend: 42100,
     incomeOrBudget: 55000,
     segments: [
-      { category: "Housing", amount: 16840, percentage: 40, color: "#1A1A1A" },
-      { category: "Food", amount: 10525, percentage: 25, color: "#C5BFA0" },
-      { category: "Transport", amount: 6315, percentage: 15, color: "#556B2F" },
-      { category: "Shopping", amount: 4210, percentage: 10, color: "#E58C4A" },
-      { category: "Leisure", amount: 4210, percentage: 10, color: "#C9D438" },
+      { category: "Housing", amount: 16840, percentage: 40 },
+      { category: "Food", amount: 10525, percentage: 25 },
+      { category: "Transport", amount: 6315, percentage: 15 },
+      { category: "Shopping", amount: 4210, percentage: 10 },
+      { category: "Leisure", amount: 4210, percentage: 10 },
     ],
   },
   {
@@ -85,11 +57,11 @@ const SAMPLE_PERIODS: PeriodEvolutionData[] = [
     totalSpend: 39500,
     incomeOrBudget: 55000,
     segments: [
-      { category: "Housing", amount: 15800, percentage: 40, color: "#1A1A1A" },
-      { category: "Food", amount: 9875, percentage: 25, color: "#C5BFA0" },
-      { category: "Transport", amount: 7900, percentage: 20, color: "#556B2F" },
-      { category: "Shopping", amount: 3950, percentage: 10, color: "#E58C4A" },
-      { category: "Leisure", amount: 1975, percentage: 5, color: "#C9D438" },
+      { category: "Housing", amount: 15800, percentage: 40 },
+      { category: "Food", amount: 9875, percentage: 25 },
+      { category: "Transport", amount: 7900, percentage: 20 },
+      { category: "Shopping", amount: 3950, percentage: 10 },
+      { category: "Leisure", amount: 1975, percentage: 5 },
     ],
   },
   {
@@ -99,11 +71,11 @@ const SAMPLE_PERIODS: PeriodEvolutionData[] = [
     totalSpend: 44200,
     incomeOrBudget: 55000,
     segments: [
-      { category: "Housing", amount: 17680, percentage: 40, color: "#1A1A1A" },
-      { category: "Food", amount: 11050, percentage: 25, color: "#C5BFA0" },
-      { category: "Transport", amount: 6630, percentage: 15, color: "#556B2F" },
-      { category: "Shopping", amount: 5304, percentage: 12, color: "#E58C4A" },
-      { category: "Leisure", amount: 3536, percentage: 8, color: "#C9D438" },
+      { category: "Housing", amount: 17680, percentage: 40 },
+      { category: "Food", amount: 11050, percentage: 25 },
+      { category: "Transport", amount: 6630, percentage: 15 },
+      { category: "Shopping", amount: 5304, percentage: 12 },
+      { category: "Leisure", amount: 3536, percentage: 8 },
     ],
   },
   {
@@ -113,11 +85,11 @@ const SAMPLE_PERIODS: PeriodEvolutionData[] = [
     totalSpend: 41800,
     incomeOrBudget: 55000,
     segments: [
-      { category: "Housing", amount: 16720, percentage: 40, color: "#1A1A1A" },
-      { category: "Food", amount: 10450, percentage: 25, color: "#C5BFA0" },
-      { category: "Transport", amount: 8360, percentage: 20, color: "#556B2F" },
-      { category: "Shopping", amount: 4180, percentage: 10, color: "#E58C4A" },
-      { category: "Leisure", amount: 2090, percentage: 5, color: "#C9D438" },
+      { category: "Housing", amount: 16720, percentage: 40 },
+      { category: "Food", amount: 10450, percentage: 25 },
+      { category: "Transport", amount: 8360, percentage: 20 },
+      { category: "Shopping", amount: 4180, percentage: 10 },
+      { category: "Leisure", amount: 2090, percentage: 5 },
     ],
   },
   {
@@ -127,11 +99,11 @@ const SAMPLE_PERIODS: PeriodEvolutionData[] = [
     totalSpend: 43000,
     incomeOrBudget: 55000,
     segments: [
-      { category: "Housing", amount: 17200, percentage: 40, color: "#1A1A1A" },
-      { category: "Food", amount: 10750, percentage: 25, color: "#C5BFA0" },
-      { category: "Transport", amount: 6450, percentage: 15, color: "#556B2F" },
-      { category: "Shopping", amount: 4300, percentage: 10, color: "#E58C4A" },
-      { category: "Leisure", amount: 4300, percentage: 10, color: "#C9D438" },
+      { category: "Housing", amount: 17200, percentage: 40 },
+      { category: "Food", amount: 10750, percentage: 25 },
+      { category: "Transport", amount: 6450, percentage: 15 },
+      { category: "Shopping", amount: 4300, percentage: 10 },
+      { category: "Leisure", amount: 4300, percentage: 10 },
     ],
   },
   {
@@ -141,11 +113,11 @@ const SAMPLE_PERIODS: PeriodEvolutionData[] = [
     totalSpend: 45600,
     incomeOrBudget: 55000,
     segments: [
-      { category: "Housing", amount: 18240, percentage: 40, color: "#1A1A1A" },
-      { category: "Food", amount: 11400, percentage: 25, color: "#C5BFA0" },
-      { category: "Transport", amount: 6840, percentage: 15, color: "#556B2F" },
-      { category: "Shopping", amount: 4560, percentage: 10, color: "#E58C4A" },
-      { category: "Leisure", amount: 4560, percentage: 10, color: "#C9D438" },
+      { category: "Housing", amount: 18240, percentage: 40 },
+      { category: "Food", amount: 11400, percentage: 25 },
+      { category: "Transport", amount: 6840, percentage: 15 },
+      { category: "Shopping", amount: 4560, percentage: 10 },
+      { category: "Leisure", amount: 4560, percentage: 10 },
     ],
   },
   {
@@ -155,11 +127,11 @@ const SAMPLE_PERIODS: PeriodEvolutionData[] = [
     totalSpend: 42800,
     incomeOrBudget: 55000,
     segments: [
-      { category: "Housing", amount: 17120, percentage: 40, color: "#1A1A1A" },
-      { category: "Food", amount: 10700, percentage: 25, color: "#C5BFA0" },
-      { category: "Transport", amount: 8560, percentage: 20, color: "#556B2F" },
-      { category: "Shopping", amount: 4280, percentage: 10, color: "#E58C4A" },
-      { category: "Leisure", amount: 2140, percentage: 5, color: "#C9D438" },
+      { category: "Housing", amount: 17120, percentage: 40 },
+      { category: "Food", amount: 10700, percentage: 25 },
+      { category: "Transport", amount: 8560, percentage: 20 },
+      { category: "Shopping", amount: 4280, percentage: 10 },
+      { category: "Leisure", amount: 2140, percentage: 5 },
     ],
   },
   {
@@ -169,11 +141,11 @@ const SAMPLE_PERIODS: PeriodEvolutionData[] = [
     totalSpend: 41200,
     incomeOrBudget: 55000,
     segments: [
-      { category: "Housing", amount: 16480, percentage: 40, color: "#1A1A1A" },
-      { category: "Food", amount: 10300, percentage: 25, color: "#C5BFA0" },
-      { category: "Transport", amount: 6180, percentage: 15, color: "#556B2F" },
-      { category: "Shopping", amount: 4944, percentage: 12, color: "#E58C4A" },
-      { category: "Leisure", amount: 3296, percentage: 8, color: "#C9D438" },
+      { category: "Housing", amount: 16480, percentage: 40 },
+      { category: "Food", amount: 10300, percentage: 25 },
+      { category: "Transport", amount: 6180, percentage: 15 },
+      { category: "Shopping", amount: 4944, percentage: 12 },
+      { category: "Leisure", amount: 3296, percentage: 8 },
     ],
   },
   {
@@ -184,11 +156,11 @@ const SAMPLE_PERIODS: PeriodEvolutionData[] = [
     incomeOrBudget: 55000,
     isCurrent: true,
     segments: [
-      { category: "Housing", amount: 17400, percentage: 40, color: "#1A1A1A" },
-      { category: "Food", amount: 10875, percentage: 25, color: "#C5BFA0" },
-      { category: "Transport", amount: 6525, percentage: 15, color: "#556B2F" },
-      { category: "Shopping", amount: 4350, percentage: 10, color: "#E58C4A" },
-      { category: "Leisure", amount: 4350, percentage: 10, color: "#C9D438" },
+      { category: "Housing", amount: 17400, percentage: 40 },
+      { category: "Food", amount: 10875, percentage: 25 },
+      { category: "Transport", amount: 6525, percentage: 15 },
+      { category: "Shopping", amount: 4350, percentage: 10 },
+      { category: "Leisure", amount: 4350, percentage: 10 },
     ],
   },
   {
@@ -198,11 +170,11 @@ const SAMPLE_PERIODS: PeriodEvolutionData[] = [
     totalSpend: 42000,
     incomeOrBudget: 55000,
     segments: [
-      { category: "Housing", amount: 16800, percentage: 40, color: "#1A1A1A" },
-      { category: "Food", amount: 10500, percentage: 25, color: "#C5BFA0" },
-      { category: "Transport", amount: 6300, percentage: 15, color: "#556B2F" },
-      { category: "Shopping", amount: 5040, percentage: 12, color: "#E58C4A" },
-      { category: "Leisure", amount: 3360, percentage: 8, color: "#C9D438" },
+      { category: "Housing", amount: 16800, percentage: 40 },
+      { category: "Food", amount: 10500, percentage: 25 },
+      { category: "Transport", amount: 6300, percentage: 15 },
+      { category: "Shopping", amount: 5040, percentage: 12 },
+      { category: "Leisure", amount: 3360, percentage: 8 },
     ],
   },
   {
@@ -212,11 +184,11 @@ const SAMPLE_PERIODS: PeriodEvolutionData[] = [
     totalSpend: 44800,
     incomeOrBudget: 55000,
     segments: [
-      { category: "Housing", amount: 17920, percentage: 40, color: "#1A1A1A" },
-      { category: "Food", amount: 11200, percentage: 25, color: "#C5BFA0" },
-      { category: "Transport", amount: 6720, percentage: 15, color: "#556B2F" },
-      { category: "Shopping", amount: 4480, percentage: 10, color: "#E58C4A" },
-      { category: "Leisure", amount: 4480, percentage: 10, color: "#C9D438" },
+      { category: "Housing", amount: 17920, percentage: 40 },
+      { category: "Food", amount: 11200, percentage: 25 },
+      { category: "Transport", amount: 6720, percentage: 15 },
+      { category: "Shopping", amount: 4480, percentage: 10 },
+      { category: "Leisure", amount: 4480, percentage: 10 },
     ],
   },
   {
@@ -226,11 +198,11 @@ const SAMPLE_PERIODS: PeriodEvolutionData[] = [
     totalSpend: 46200,
     incomeOrBudget: 55000,
     segments: [
-      { category: "Housing", amount: 18480, percentage: 40, color: "#1A1A1A" },
-      { category: "Food", amount: 11550, percentage: 25, color: "#C5BFA0" },
-      { category: "Transport", amount: 6930, percentage: 15, color: "#556B2F" },
-      { category: "Shopping", amount: 5544, percentage: 12, color: "#E58C4A" },
-      { category: "Leisure", amount: 3696, percentage: 8, color: "#C9D438" },
+      { category: "Housing", amount: 18480, percentage: 40 },
+      { category: "Food", amount: 11550, percentage: 25 },
+      { category: "Transport", amount: 6930, percentage: 15 },
+      { category: "Shopping", amount: 5544, percentage: 12 },
+      { category: "Leisure", amount: 3696, percentage: 8 },
     ],
   },
 ];
@@ -248,6 +220,7 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
   aiOptOut,
   onOpenSettings,
 }) => {
+  const { themeId } = useTheme();
   const [dimension, setDimension] = useState<"cycle" | "month">("cycle");
   const [chartMode, setChartMode] = useState<"percentage" | "amount">("percentage");
   const [selectedId, setSelectedId] = useState<string>("");
@@ -284,7 +257,7 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
           category: cat,
           amount: amt,
           percentage: totalSpend > 0 ? Math.round((amt / totalSpend) * 100) : 0,
-          color: getColorForCategory(cat, idx),
+          color: getThemeCategoryColor(themeId, cat, idx),
         }));
 
         const sDate = new Date(`${c.startStr}T00:00:00`);
@@ -353,7 +326,7 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
           category: cat,
           amount: amt,
           percentage: totalSpend > 0 ? Math.round((amt / totalSpend) * 100) : 0,
-          color: getColorForCategory(cat, idx),
+          color: getThemeCategoryColor(themeId, cat, idx),
         }));
 
         const label = d.toLocaleString("en-US", { month: "short" }).toUpperCase();
@@ -372,9 +345,19 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
     }
 
     return results;
-  }, [expenses, dimension, salaryDay, salaryLog, totalBaselineIncome]);
+  }, [expenses, dimension, salaryDay, salaryLog, totalBaselineIncome, themeId]);
 
-  const activePeriods = isProUser ? realPeriods : SAMPLE_PERIODS;
+  const samplePeriods = useMemo<PeriodEvolutionData[]>(() => {
+    return SAMPLE_PERIODS_BASE.map((p) => ({
+      ...p,
+      segments: p.segments.map((s, idx) => ({
+        ...s,
+        color: getThemeCategoryColor(themeId, s.category, idx),
+      })),
+    }));
+  }, [themeId]);
+
+  const activePeriods = isProUser ? realPeriods : samplePeriods;
 
   const currentSelection = useMemo(() => {
     if (!activePeriods || activePeriods.length === 0) return null;
