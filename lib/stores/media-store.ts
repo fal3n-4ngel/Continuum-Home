@@ -29,6 +29,13 @@ interface MediaState {
   isImportingLetterboxd: boolean;
   setIsImportingLetterboxd: (is: boolean) => void;
 
+  showGoodreadsModal: boolean;
+  setShowGoodreadsModal: (show: boolean) => void;
+  goodreadsUserId: string;
+  setGoodreadsUserId: (u: string) => void;
+  isImportingGoodreads: boolean;
+  setIsImportingGoodreads: (is: boolean) => void;
+
   bookQuery: string;
   setBookQuery: (s: string) => void;
   isSearchingBooks: boolean;
@@ -76,6 +83,13 @@ export const useMediaStore = create<MediaState>((set) => ({
   setLetterboxdUsername: (letterboxdUsername) => set({ letterboxdUsername }),
   isImportingLetterboxd: false,
   setIsImportingLetterboxd: (isImportingLetterboxd) => set({ isImportingLetterboxd }),
+
+  showGoodreadsModal: false,
+  setShowGoodreadsModal: (showGoodreadsModal) => set({ showGoodreadsModal }),
+  goodreadsUserId: "",
+  setGoodreadsUserId: (goodreadsUserId) => set({ goodreadsUserId }),
+  isImportingGoodreads: false,
+  setIsImportingGoodreads: (isImportingGoodreads) => set({ isImportingGoodreads }),
 
   bookQuery: "",
   setBookQuery: (bookQuery) => set({ bookQuery }),

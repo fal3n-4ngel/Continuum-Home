@@ -594,7 +594,7 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
 
         <footer className="border-t border-border-subtle bg-bg-card/90 backdrop-blur-md p-3 sm:p-4">
           <div className="max-w-5xl mx-auto flex flex-col gap-1.5">
-            <div className="relative flex items-center gap-2 rounded-sm border border-border-subtle bg-bg-primary px-3.5 py-1.5 focus-within:border-border-hover focus-within:ring-1 focus-within:ring-text-primary/10 transition-all shadow-inner">
+            <div className="relative flex items-center gap-2 rounded-sm border border-border-subtle bg-bg-primary px-3.5 py-2 focus-within:border-border-hover focus-within:ring-1 focus-within:ring-text-primary/10 transition-all shadow-inner">
               <textarea
                 ref={textareaRef}
                 rows={1}
@@ -603,7 +603,13 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
                 onKeyDown={handleKeyDown}
                 disabled={loading || !idToken}
                 placeholder={!idToken ? "Sign in to query Kiroku..." : "Ask Kiroku about expenses, watchlist, subscriptions..."}
-                className="flex-1 min-w-0 bg-transparent border-none text-[13.5px] sm:text-[14px] text-text-primary placeholder:text-text-muted outline-none resize-none px-1 py-1 leading-relaxed max-h-[120px]"
+                className="seamless-input flex-1 min-w-0 !bg-transparent !border-0 !border-none !rounded-none !shadow-none !ring-0 !outline-none text-[13.5px] sm:text-[14px] text-text-primary placeholder:text-text-muted/70 resize-none py-1 leading-relaxed max-h-[120px]"
+                style={{
+                  border: "none",
+                  outline: "none",
+                  boxShadow: "none",
+                  background: "transparent",
+                }}
               />
 
               <div className="flex items-center gap-1.5 shrink-0 self-end pb-0.5">
@@ -640,8 +646,9 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
               </div>
             </div>
 
-            <div className="flex items-center justify-between px-2 text-[10.5px] text-text-muted font-mono">
-              <span className="truncate">Kiroku • 自然言語アシスタント</span>
+            <div className="flex items-center justify-between px-2 text-[10.5px] text-text-muted">
+              <span className="truncate">Kiroku (記録) • Dedicated AI Assistant</span>
+              <span className="font-mono text-[9.5px]">Shift + Enter for new line</span>
             </div>
           </div>
         </footer>

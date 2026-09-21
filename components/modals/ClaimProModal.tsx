@@ -33,6 +33,17 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!handle.trim()) return;
@@ -61,12 +72,14 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
 
   const modal = (
     <div
-      className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center"
-      style={{ backgroundColor: "rgba(26,26,26,0.45)", backdropFilter: "blur(8px)" }}
+      className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center bg-black/45 backdrop-blur-sm apple-backdrop-fade"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="relative w-full max-h-[92dvh] overflow-y-auto rounded-t-sm sm:rounded-sm sm:w-[460px] sm:max-w-[92vw] border-x border-t border-border-subtle sm:border bg-bg-card shadow-[0_-8px_32px_rgba(0,0,0,0.1)] sm:shadow-[0_16px_48px_rgba(0,0,0,0.12)] flex flex-col"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="claim-pro-title"
+        className="relative w-full max-h-[92dvh] overflow-y-auto rounded-t-sm sm:rounded-sm sm:w-[460px] sm:max-w-[92vw] border-x border-t border-border-subtle sm:border bg-bg-card shadow-[0_-8px_32px_rgba(0,0,0,0.1)] sm:shadow-[0_16px_48px_rgba(0,0,0,0.12)] flex flex-col apple-modal-spring max-sm:apple-sheet-spring"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
@@ -78,7 +91,7 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
         <div className="flex items-start justify-between px-7 pt-6 pb-5 border-b border-border-subtle">
           <div>
             <p className="font-mono text-[9px] font-bold uppercase tracking-[1.2px] text-text-muted mb-1.5">Pro Access</p>
-            <h2 className="font-serif text-[22px] italic font-medium text-text-primary leading-tight">
+            <h2 id="claim-pro-title" className="font-serif text-[22px] italic font-medium text-text-primary leading-tight">
               Claim your upgrade
             </h2>
           </div>
@@ -88,7 +101,7 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
             aria-label="Close"
             className="mt-0.5 flex h-7 w-7 min-w-[28px] min-h-[28px] aspect-square p-0 shrink-0 items-center justify-center rounded-xs border border-transparent text-text-muted transition-all hover:border-border-subtle hover:text-text-primary cursor-pointer"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+            <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
@@ -98,7 +111,7 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
           {submitState === "success" ? (
             <div className="flex flex-col items-center gap-5 py-4 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-sm border border-border-subtle bg-bg-primary">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="text-text-primary">
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className="text-text-primary">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
@@ -109,6 +122,7 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
                 </p>
               </div>
               <button
+                type="button"
                 onClick={onClose}
                 className="rounded-sm border border-text-primary bg-text-primary px-6 py-2.5 text-xs font-mono uppercase tracking-wider font-semibold text-bg-primary transition-all hover:opacity-90 cursor-pointer"
               >
@@ -118,7 +132,7 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
           ) : submitState === "already_pending" ? (
             <div className="flex flex-col items-center gap-5 py-4 text-center">
               <div className="flex h-12 w-12 items-center justify-center rounded-sm border border-border-subtle bg-bg-primary">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-secondary">
+                <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-secondary">
                   <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
                 </svg>
               </div>
@@ -129,6 +143,7 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
                 </p>
               </div>
               <button
+                type="button"
                 onClick={onClose}
                 className="rounded-sm border border-text-primary bg-text-primary px-6 py-2.5 text-xs font-mono uppercase tracking-wider font-semibold text-bg-primary transition-all hover:opacity-90 cursor-pointer"
               >
@@ -138,7 +153,7 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
-              <div className="flex flex-col gap-2 rounded-sm border border-border-subtle bg-bg-primary px-4 py-3.5">
+              <div className="flex flex-col gap-2 rounded-sm border border-border-subtle/50 surface-container-subtle px-4 py-3.5">
                 <p className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted mb-0.5">Included with Pro</p>
                 {[
                   "Financial Health tab with pay-cycle budgeting",
@@ -161,7 +176,7 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
                     rel="noopener noreferrer"
                     className="flex flex-1 items-center justify-center gap-2 rounded-sm border border-border-subtle bg-transparent py-2 text-xs font-mono uppercase tracking-wider font-medium text-text-secondary no-underline transition-all hover:border-border-hover hover:text-text-primary"
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-text-muted">
+                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="currentColor" className="text-text-muted">
                       <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
                     </svg>
                     GitHub Sponsors
@@ -172,7 +187,7 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
                     rel="noopener noreferrer"
                     className="flex flex-1 items-center justify-center gap-2 rounded-sm border border-border-subtle bg-transparent py-2 text-xs font-mono uppercase tracking-wider font-medium text-text-secondary no-underline transition-all hover:border-border-hover hover:text-text-primary"
                   >
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-muted">
+                    <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-text-muted">
                       <path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>
                     </svg>
                     Buy Me a Coffee

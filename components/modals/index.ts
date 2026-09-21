@@ -6,3 +6,4 @@ export * from "./MediaDetailsModal";
 export * from "./OnboardingModal";
 export * from "./SyncPreviewModal";
 export * from "./ReleaseNotesModal";
+export * from "./GoodreadsModal";

@@ -42,7 +42,7 @@ export const CategorySegmentedBar: React.FC<CategorySegmentedBarProps> = ({
               width: `${Math.max(1.5, s.percentage)}%`,
               backgroundColor: s.color,
             }}
-            className="h-full first:rounded-l-xs last:rounded-r-xs transition-all duration-300 relative group"
+            className="h-full first:rounded-l-xs last:rounded-r-xs transition-all duration-500 ease-in-out relative group"
             title={`${s.category}: ${currency}${s.amount.toLocaleString("en-IN")} (${s.percentage}%)`}
           />
         ))}
@@ -52,7 +52,7 @@ export const CategorySegmentedBar: React.FC<CategorySegmentedBarProps> = ({
         {segments.map((s) => (
           <div key={s.category} className="flex items-center gap-1.5">
             <span
-              className="h-2 w-2 rounded-full shrink-0 shadow-2xs"
+              className="h-2 w-2 rounded-full shrink-0 shadow-2xs transition-colors duration-500 ease-in-out"
               style={{ backgroundColor: s.color }}
             />
             <span className="font-medium text-text-primary text-[11.5px]">{s.category}</span>

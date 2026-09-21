@@ -47,11 +47,11 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby="release-notes-title"
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-[fadeIn_0.2s_ease-out_both]"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm apple-backdrop-fade"
       onClick={onClose}
     >
       <div
-        className="flex max-h-[88vh] w-full max-w-[560px] flex-col overflow-hidden rounded-sm border border-border-subtle bg-bg-card shadow-2xl animate-[fadeInScale_0.2s_ease]"
+        className="flex max-h-[88vh] w-full max-w-[560px] flex-col overflow-hidden rounded-sm border border-border-subtle bg-bg-card shadow-2xl apple-modal-spring"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4 border-b border-border-subtle p-6 pb-4 bg-bg-primary/40">

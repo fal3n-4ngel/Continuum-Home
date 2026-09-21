@@ -410,8 +410,8 @@ export const MediaDetailsModal: React.FC<MediaDetailsModalProps> = ({ item, onCl
   }, [item, user.idToken]);
 
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="flex w-[500px] max-w-[90%] flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-6 shadow-2xl text-text-primary relative max-h-[85vh] overflow-y-auto">
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/45 backdrop-blur-sm apple-backdrop-fade">
+      <div className="flex w-[500px] max-w-[90%] flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-6 shadow-2xl text-text-primary relative max-h-[85vh] overflow-y-auto apple-modal-spring">
         <button
           onClick={onClose}
           className="absolute top-4.5 right-4.5 cursor-pointer border-none bg-transparent p-1 text-base text-text-secondary hover:text-text-primary transition-colors"

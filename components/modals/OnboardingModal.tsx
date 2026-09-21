@@ -26,11 +26,11 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 p-4 backdrop-blur-sm apple-backdrop-fade"
       onClick={() => setShowOnboarding(false)}
     >
       <div
-        className="flex max-h-[88vh] w-full max-w-[540px] flex-col gap-5 overflow-y-auto rounded-sm border border-border-subtle bg-bg-card p-6 sm:p-7 shadow-subtle animate-[fadeInScale_0.15s_ease]"
+        className="flex max-h-[88vh] w-full max-w-[540px] flex-col gap-5 overflow-y-auto rounded-sm border border-border-subtle bg-bg-card p-6 sm:p-7 shadow-subtle apple-modal-spring"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-4 border-b border-border-subtle pb-4">
@@ -113,7 +113,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               key={f.title}
               className={`group flex items-start gap-3 rounded-sm border transition-all duration-200 ${
                 f.featured
-                  ? "border-border-subtle bg-bg-secondary/60 p-3 shadow-2xs"
+                  ? "border-border-subtle surface-container-subtle p-3 shadow-2xs"
                   : "border-transparent p-2 hover:bg-bg-secondary/40"
               }`}
             >
