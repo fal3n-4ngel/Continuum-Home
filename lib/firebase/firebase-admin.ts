@@ -175,7 +175,7 @@ export async function adminReEncryptExpense(
   entry: { title: string; amount: number | null; category: string | null; notes: string | null }
 ): Promise<void> {
   const db = getAdminDb();
-  await db.collection("expenses").doc(id).set(
+  await db.collection("users").doc(uid).collection("expenses").doc(id).set(
     {
       userId: uid,
       title: encrypt(entry.title),

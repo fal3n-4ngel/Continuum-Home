@@ -7,7 +7,11 @@ service cloud.firestore {
     }
 
     function isEncrypted(val) {
-      return val is string && val.matches('^v1:[0-9a-f]+:[0-9a-f]+:[0-9a-f]+$');
+      return val is string && val.matches('^(v1:)?[0-9a-f]+:[0-9a-f]+:[0-9a-f]+$');
+    }
+
+    function isEncryptedOrNull(data, field) {
+      return !(field in data) || data[field] == null || isEncrypted(data[field]);
     }
 
     match /users/{userId} {
@@ -20,8 +24,8 @@ service cloud.firestore {
         allow create, update: if isOwner(userId)
                               && isEncrypted(request.resource.data.title)
                               && isEncrypted(request.resource.data.amount)
-                              && (request.resource.data.category == null || isEncrypted(request.resource.data.category))
-                              && (request.resource.data.notes == null || isEncrypted(request.resource.data.notes));
+                              && isEncryptedOrNull(request.resource.data, 'category')
+                              && isEncryptedOrNull(request.resource.data, 'notes');
       }
 
       match /subscriptions/{subscriptionId} {
