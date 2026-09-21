@@ -66,10 +66,10 @@ export function ArchitectureFlowDiagram() {
         <text x="605" y="22" textAnchor="middle" fontFamily="monospace" fontSize="9.5" fontWeight="600" letterSpacing="0.14em" className="fill-[#9C9288] uppercase">
           3. CONTINUUM CORE
         </text>
-        <text x="730" y="22" fontFamily="monospace" fontSize="9.5" fontWeight="600" letterSpacing="0.14em" className="fill-[#9C9288] uppercase">
+        <text x="725" y="22" fontFamily="monospace" fontSize="9.5" fontWeight="600" letterSpacing="0.14em" className="fill-[#9C9288] uppercase">
           4. AI CORE &amp; ANALYTICS
         </text>
-        <line x1="40" y1="32" x2="930" y2="32" stroke="#DDD5CB" strokeWidth="0.8" strokeDasharray="3 3" className="dark:stroke-[#25272E]" />
+        <line x1="40" y1="32" x2="955" y2="32" stroke="#DDD5CB" strokeWidth="0.8" strokeDasharray="3 3" className="dark:stroke-[#25272E]" />
 
         {/* ================= CONNECTING BEZIER PATHS ================= */}
 
@@ -118,7 +118,7 @@ export function ArchitectureFlowDiagram() {
           strokeDasharray="4 4"
         />
 
-        {/* Col 2.1 (Trakt Sync) -> Center Continuum Core */}
+        {/* Col 2.1 (Media) -> Center Continuum Core */}
         <path
           d="M 480 76 C 520 76, 520 166, 560 166"
           fill="none"
@@ -127,18 +127,15 @@ export function ArchitectureFlowDiagram() {
           strokeDasharray="4 4"
         />
 
-        {/* Col 2.2 (AniList & Books) -> Center Continuum Core */}
-        <line
-          x1="480"
-          y1="166"
-          x2="560"
-          y2="166"
-          stroke="#9E5D48"
+        {/* Col 2.2 (Books/Manga) -> Center Continuum Core */}
+        <path
+          d="M 480 166 L 560 166"
+          stroke="#10B981"
           strokeWidth="1.5"
           strokeDasharray="4 4"
         />
 
-        {/* Col 2.3 (Market Feeds) -> Center Continuum Core */}
+        {/* Col 2.3 (Market Prices) -> Center Continuum Core */}
         <path
           d="M 480 256 C 520 256, 520 166, 560 166"
           fill="none"
@@ -149,7 +146,7 @@ export function ArchitectureFlowDiagram() {
 
         {/* Center Continuum Core -> Col 4.1 (Financial Analytics) */}
         <path
-          d="M 650 166 C 690 166, 690 76, 730 76"
+          d="M 650 166 C 685 166, 685 76, 725 76"
           fill="none"
           stroke="#9E5D48"
           strokeWidth="1.75"
@@ -160,7 +157,7 @@ export function ArchitectureFlowDiagram() {
         <line
           x1="650"
           y1="166"
-          x2="730"
+          x2="725"
           y2="166"
           stroke="#10B981"
           strokeWidth="1.75"
@@ -169,7 +166,7 @@ export function ArchitectureFlowDiagram() {
 
         {/* Center Continuum Core -> Col 4.3 (Conversational Copilot) */}
         <path
-          d="M 650 166 C 690 166, 690 256, 730 256"
+          d="M 650 166 C 685 166, 685 256, 725 256"
           fill="none"
           stroke="#3B82F6"
           strokeWidth="1.75"
@@ -179,14 +176,14 @@ export function ArchitectureFlowDiagram() {
         {/* Animated Flying Particles */}
         <circle r="2.8" fill="#10B981">
           <animateMotion
-            path="M 230 231 C 395 231, 395 166, 560 166 L 650 166 L 730 166"
+            path="M 230 231 C 395 231, 395 166, 560 166 L 650 166 L 725 166"
             dur="3.8s"
             repeatCount="indefinite"
           />
         </circle>
         <circle r="2.8" fill="#D99419">
           <animateMotion
-            path="M 230 101 C 255 101, 255 76, 280 76 C 520 76, 520 166, 560 166 L 650 166 C 690 166, 690 76, 730 76"
+            path="M 230 101 C 255 101, 255 76, 280 76 C 520 76, 520 166, 560 166 L 650 166 C 685 166, 685 76, 725 76"
             dur="4.5s"
             begin="1.8s"
             repeatCount="indefinite"
@@ -330,51 +327,51 @@ export function ArchitectureFlowDiagram() {
         {/* ================= COLUMN 4: AI CORE & ANALYTICS ================= */}
 
         {/* Card 4.1: Financial Analytics */}
-        <g transform="translate(730, 49)" className="cursor-pointer">
-          <rect x="0" y="0" width="200" height="54" rx="3" filter="url(#arch-card-shadow)" className="fill-[#FAF8F5] dark:fill-[#18191D] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="1" />
+        <g transform="translate(725, 49)" className="cursor-pointer">
+          <rect x="0" y="0" width="230" height="54" rx="3" filter="url(#arch-card-shadow)" className="fill-[#FAF8F5] dark:fill-[#18191D] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="1" />
           
           <rect x="10" y="11" width="32" height="32" rx="2" className="fill-[#F3EFEA] dark:fill-[#121316] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="0.8" />
           <rect x="18" y="26" width="3.5" height="10" fill="#9E5D48" />
           <rect x="24" y="20" width="3.5" height="16" fill="#D99419" />
           <rect x="30" y="16" width="3.5" height="20" fill="#9E5D48" />
 
-          <text x="50" y="26" fontFamily="sans-serif" fontSize="11" fontWeight="600" className="fill-[#26211F] dark:fill-[#F4F5F7]">Financial Analytics</text>
-          <text x="50" y="38" fontFamily="sans-serif" fontSize="9" className="fill-[#6D635C] dark:fill-[#9BA1B0]">Runway &amp; salary cycles</text>
+          <text x="48" y="26" fontFamily="sans-serif" fontSize="10.5" fontWeight="600" className="fill-[#26211F] dark:fill-[#F4F5F7]">Financial Analytics</text>
+          <text x="48" y="38" fontFamily="sans-serif" fontSize="8.5" className="fill-[#6D635C] dark:fill-[#9BA1B0]">Runway &amp; salary cycles</text>
 
-          <rect x="144" y="19" width="46" height="15" rx="1.5" className="fill-[#F3EFEA] dark:fill-[#121316] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="0.8" />
-          <text x="167" y="30" textAnchor="middle" fontFamily="monospace" fontSize="7.5" fontWeight="600" fill="#9E5D48">METRICS</text>
+          <rect x="174" y="19" width="44" height="15" rx="1.5" className="fill-[#F3EFEA] dark:fill-[#121316] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="0.8" />
+          <text x="196" y="30" textAnchor="middle" fontFamily="monospace" fontSize="7" fontWeight="600" fill="#9E5D48">METRICS</text>
         </g>
 
         {/* Card 4.2: AI Core (If Enabled) */}
-        <g transform="translate(730, 139)" className="cursor-pointer">
-          <rect x="0" y="0" width="200" height="54" rx="3" filter="url(#arch-card-shadow)" className="fill-[#FAF8F5] dark:fill-[#18191D] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="1" />
+        <g transform="translate(725, 139)" className="cursor-pointer">
+          <rect x="0" y="0" width="230" height="54" rx="3" filter="url(#arch-card-shadow)" className="fill-[#FAF8F5] dark:fill-[#18191D] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="1" />
           
           <rect x="10" y="11" width="32" height="32" rx="2" className="fill-[#F3EFEA] dark:fill-[#121316] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="0.8" />
           {/* Sparkles / AI Core Icon */}
           <path d="M 26 17 L 27.5 22 L 32 23.5 L 27.5 25 L 26 30 L 24.5 25 L 20 23.5 L 24.5 22 Z" fill="#10B981" />
           <path d="M 18 18 L 19 20 L 21 21 L 19 22 L 18 24 L 17 22 L 15 21 L 17 20 Z" fill="#D99419" />
 
-          <text x="50" y="26" fontFamily="sans-serif" fontSize="11" fontWeight="600" className="fill-[#26211F] dark:fill-[#F4F5F7]">AI Analytics Core</text>
-          <text x="50" y="38" fontFamily="sans-serif" fontSize="9" className="fill-[#6D635C] dark:fill-[#9BA1B0]">Daily advice &bull; If enabled</text>
+          <text x="48" y="26" fontFamily="sans-serif" fontSize="10.5" fontWeight="600" className="fill-[#26211F] dark:fill-[#F4F5F7]">AI Analytics Core</text>
+          <text x="48" y="38" fontFamily="sans-serif" fontSize="8.5" className="fill-[#6D635C] dark:fill-[#9BA1B0]">Daily advice &bull; If enabled</text>
 
           {/* Prominent OPT-IN Badge */}
-          <rect x="134" y="19" width="56" height="15" rx="1.5" className="fill-[#F3EFEA] dark:fill-[#121316] stroke-[#10B981]/50" strokeWidth="0.8" />
-          <circle cx="141" cy="26.5" r="2" fill="#10B981" />
-          <text x="165" y="30" textAnchor="middle" fontFamily="monospace" fontSize="7" fontWeight="bold" fill="#10B981">IF ENABLED</text>
+          <rect x="166" y="19" width="52" height="15" rx="1.5" className="fill-[#F3EFEA] dark:fill-[#121316] stroke-[#10B981]/50" strokeWidth="0.8" />
+          <circle cx="172" cy="26.5" r="1.8" fill="#10B981" />
+          <text x="194" y="30" textAnchor="middle" fontFamily="monospace" fontSize="6.5" fontWeight="bold" fill="#10B981">IF ENABLED</text>
         </g>
 
         {/* Card 4.3: Conversational Copilot */}
-        <g transform="translate(730, 229)" className="cursor-pointer">
-          <rect x="0" y="0" width="200" height="54" rx="3" filter="url(#arch-card-shadow)" className="fill-[#FAF8F5] dark:fill-[#18191D] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="1" />
+        <g transform="translate(725, 229)" className="cursor-pointer">
+          <rect x="0" y="0" width="230" height="54" rx="3" filter="url(#arch-card-shadow)" className="fill-[#FAF8F5] dark:fill-[#18191D] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="1" />
           
           <rect x="10" y="11" width="32" height="32" rx="2" className="fill-[#F3EFEA] dark:fill-[#121316] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="0.8" />
           <path d="M 17 21 C 17 19 19 17 21 17 H 31 C 33 17 35 19 35 21 V 27 C 35 29 33 31 31 31 H 23 L 18 34 V 31 H 21" stroke="#3B82F6" strokeWidth="1.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
 
-          <text x="50" y="26" fontFamily="sans-serif" fontSize="11" fontWeight="600" className="fill-[#26211F] dark:fill-[#F4F5F7]">Assistant Copilot</text>
-          <text x="50" y="38" fontFamily="sans-serif" fontSize="9" className="fill-[#6D635C] dark:fill-[#9BA1B0]">Gemini &amp; Groq Q&amp;A</text>
+          <text x="48" y="26" fontFamily="sans-serif" fontSize="10.5" fontWeight="600" className="fill-[#26211F] dark:fill-[#F4F5F7]">Assistant Copilot</text>
+          <text x="48" y="38" fontFamily="sans-serif" fontSize="8.5" className="fill-[#6D635C] dark:fill-[#9BA1B0]">Gemini &amp; Groq Q&amp;A</text>
 
-          <rect x="144" y="19" width="46" height="15" rx="1.5" className="fill-[#F3EFEA] dark:fill-[#121316] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="0.8" />
-          <text x="167" y="30" textAnchor="middle" fontFamily="monospace" fontSize="7.5" fontWeight="600" fill="#3B82F6">ASSISTANT</text>
+          <rect x="170" y="19" width="48" height="15" rx="1.5" className="fill-[#F3EFEA] dark:fill-[#121316] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="0.8" />
+          <text x="194" y="30" textAnchor="middle" fontFamily="monospace" fontSize="7" fontWeight="600" fill="#3B82F6">ASSISTANT</text>
         </g>
 
       </svg>

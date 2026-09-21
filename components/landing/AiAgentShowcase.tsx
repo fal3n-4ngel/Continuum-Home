@@ -113,24 +113,24 @@ export function AiAgentShowcase() {
           {/* Right Column: Realistic Mobile ChatGPT Vector directly shown (no outer box) */}
           <div className="lg:col-span-6 flex items-center justify-center relative py-4">
             {/* Subtle ambient glow behind phone for depth */}
-            <div className="absolute w-64 h-80 bg-gradient-to-tr from-[#9E5D48]/15 via-[#D99419]/10 to-transparent blur-3xl -z-10 pointer-events-none rounded-full" />
+            <div className="absolute w-72 h-[600px] bg-gradient-to-tr from-[#9E5D48]/15 via-[#D99419]/10 to-transparent blur-3xl -z-10 pointer-events-none rounded-full" />
 
-            {/* Realistic Mobile ChatGPT Vector Frame */}
-            <div className="w-full max-w-[315px] sm:max-w-[335px] relative">
+            {/* Realistic Mobile ChatGPT Vector Frame (19.5:9 authentic smartphone proportion) */}
+            <div className="w-full max-w-[310px] sm:max-w-[325px] relative">
               {/* Physical Side Buttons on Outer Edge */}
-              <div className="absolute -left-[5px] top-20 w-[3px] h-7 bg-[#B8AFA6] dark:bg-[#3E414B] rounded-l-xs" />
-              <div className="absolute -left-[5px] top-30 w-[3px] h-10 bg-[#B8AFA6] dark:bg-[#3E414B] rounded-l-xs" />
-              <div className="absolute -left-[5px] top-42 w-[3px] h-10 bg-[#B8AFA6] dark:bg-[#3E414B] rounded-l-xs" />
-              <div className="absolute -right-[5px] top-28 w-[3px] h-14 bg-[#B8AFA6] dark:bg-[#3E414B] rounded-r-xs" />
+              <div className="absolute -left-[5px] top-28 w-[3px] h-8 bg-[#B8AFA6] dark:bg-[#3E414B] rounded-l-xs" />
+              <div className="absolute -left-[5px] top-40 w-[3px] h-12 bg-[#B8AFA6] dark:bg-[#3E414B] rounded-l-xs" />
+              <div className="absolute -left-[5px] top-56 w-[3px] h-12 bg-[#B8AFA6] dark:bg-[#3E414B] rounded-l-xs" />
+              <div className="absolute -right-[5px] top-40 w-[3px] h-16 bg-[#B8AFA6] dark:bg-[#3E414B] rounded-r-xs" />
 
               {/* Phone Chassis */}
-              <div className="rounded-[42px] p-[10px] bg-gradient-to-b from-[#2E2A27] via-[#1E1C1A] to-[#121110] dark:from-[#2B2C33] dark:via-[#191A1E] dark:to-[#0D0E10] shadow-2xl ring-1 ring-black/20 dark:ring-white/10">
+              <div className="rounded-[46px] p-[10px] bg-gradient-to-b from-[#2E2A27] via-[#1E1C1A] to-[#121110] dark:from-[#2B2C33] dark:via-[#191A1E] dark:to-[#0D0E10] shadow-[0_25px_60px_-15px_rgba(0,0,0,0.35)] ring-1 ring-black/20 dark:ring-white/10">
                 {/* Smartphone Screen Inner Bezel */}
-                <div className="rounded-[32px] overflow-hidden bg-[#FFFFFF] dark:bg-[#111215] border border-[#E7E2DA] dark:border-[#22242B] flex flex-col justify-between shadow-inner text-[#1C1B18] dark:text-[#F4F5F7] min-h-[470px]">
+                <div className="rounded-[36px] overflow-hidden bg-[#FFFFFF] dark:bg-[#111215] border border-[#E7E2DA] dark:border-[#22242B] flex flex-col justify-between shadow-inner text-[#1C1B18] dark:text-[#F4F5F7] h-[640px] sm:h-[660px]">
                   {/* Top Notch / Dynamic Island & Status Bar */}
                   <div className="pt-2 px-5 bg-inherit z-10">
                     {/* Dynamic Island */}
-                    <div className="relative w-24 h-5 bg-black rounded-full mx-auto flex items-center justify-between px-2 shadow-xs">
+                    <div className="relative w-26 h-5.5 bg-black rounded-full mx-auto flex items-center justify-between px-2.5 shadow-xs">
                       <div className="w-2.5 h-2.5 rounded-full bg-[#1A1A1A] border border-[#222] flex items-center justify-center">
                         <div className="w-1 h-1 rounded-full bg-[#0a2540]" />
                       </div>
@@ -174,7 +174,7 @@ export function AiAgentShowcase() {
                   </div>
 
                   {/* Chat Messages Timeline: Clean Expense Logging */}
-                  <div className="flex-1 p-3.5 flex flex-col gap-3 justify-start overflow-hidden">
+                  <div className="flex-1 p-3.5 flex flex-col gap-3.5 justify-start overflow-hidden">
                     {/* Today timestamp */}
                     <div className="text-center my-0.5">
                       <span className="text-[9px] font-mono uppercase text-[#A39B92] dark:text-[#6C7280]">
@@ -184,13 +184,13 @@ export function AiAgentShowcase() {
 
                     {/* User Message Bubble */}
                     <div className="flex justify-end">
-                      <div className="rounded-2xl rounded-br-xs bg-[#1C1B18] dark:bg-[#2A2B32] text-[#FAF8F5] dark:text-[#F4F5F7] px-3.5 py-2 text-[12px] font-medium max-w-[85%] shadow-xs leading-snug">
+                      <div className="rounded-2xl rounded-br-xs bg-[#1C1B18] dark:bg-[#2A2B32] text-[#FAF8F5] dark:text-[#F4F5F7] px-3.5 py-2.5 text-[12px] font-medium max-w-[85%] shadow-xs leading-snug">
                         spent ₹450 on lunch at Blue Tokai
                       </div>
                     </div>
 
                     {/* Assistant Response Message */}
-                    <div className="flex flex-col gap-2 items-start mt-1">
+                    <div className="flex flex-col gap-2.5 items-start mt-0.5">
                       {/* ChatGPT Action Tool Call Pill */}
                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F3EFEA] dark:bg-[#191A20] border border-[#E0DACF] dark:border-[#252833] text-[10px] text-[#6D635C] dark:text-[#9BA1B0] font-mono">
                         <Sparkles size={11} className="text-[#D99419]" />
@@ -237,29 +237,34 @@ export function AiAgentShowcase() {
                           <span className="text-[#D99419]">EXPENSES API</span>
                         </div>
                       </div>
+
+                      {/* Natural ChatGPT conversational response */}
+                      <div className="text-[12px] leading-relaxed text-[#26211F] dark:text-[#E2E4E9] px-1 mt-0.5">
+                        Logged <span className="font-semibold text-[#9E5D48] dark:text-[#E07A5F]">₹450.00</span> under <span className="font-semibold">Food &amp; Dining</span>. Your monthly runway and category totals have been updated.
+                      </div>
                     </div>
                   </div>
 
                   {/* ChatGPT Bottom Mobile Input Bar */}
-                  <div className="p-2.5 bg-inherit border-t border-[#EFECE6] dark:border-[#1E2026]">
+                  <div className="p-3 bg-inherit border-t border-[#EFECE6] dark:border-[#1E2026]">
                     <div className="flex items-center gap-2">
                       {/* Plus button */}
-                      <div className="w-7 h-7 rounded-full bg-[#F0ECE4] dark:bg-[#1E2026] text-[#6D635C] dark:text-[#9BA1B0] flex items-center justify-center shrink-0">
+                      <div className="w-7.5 h-7.5 rounded-full bg-[#F0ECE4] dark:bg-[#1E2026] text-[#6D635C] dark:text-[#9BA1B0] flex items-center justify-center shrink-0">
                         <Plus size={14} />
                       </div>
                       {/* Input pill */}
-                      <div className="flex-1 flex items-center justify-between px-3 py-1.5 rounded-full bg-[#F3EFEA] dark:bg-[#1A1B20] border border-[#E5DFD7] dark:border-[#262830] text-[11px] text-[#A39B92] dark:text-[#6C7280]">
+                      <div className="flex-1 flex items-center justify-between px-3.5 py-2 rounded-full bg-[#F3EFEA] dark:bg-[#1A1B20] border border-[#E5DFD7] dark:border-[#262830] text-[11px] text-[#A39B92] dark:text-[#6C7280]">
                         <span>Message Continuum...</span>
                         <Mic size={13} className="text-[#6D635C] dark:text-[#9BA1B0]" />
                       </div>
                       {/* Voice mode circle */}
-                      <div className="w-7 h-7 rounded-full bg-[#1C1B18] dark:bg-[#F4F5F7] text-[#FAF8F5] dark:text-[#0C0D0E] flex items-center justify-center shrink-0 shadow-xs">
+                      <div className="w-7.5 h-7.5 rounded-full bg-[#1C1B18] dark:bg-[#F4F5F7] text-[#FAF8F5] dark:text-[#0C0D0E] flex items-center justify-center shrink-0 shadow-xs">
                         <Headphones size={13} />
                       </div>
                     </div>
 
                     {/* iOS Home Indicator Bar */}
-                    <div className="w-24 h-1 bg-[#26211F]/20 dark:bg-[#F4F5F7]/25 rounded-full mx-auto mt-2" />
+                    <div className="w-28 h-1 bg-[#26211F]/20 dark:bg-[#F4F5F7]/25 rounded-full mx-auto mt-2.5" />
                   </div>
                 </div>
               </div>
