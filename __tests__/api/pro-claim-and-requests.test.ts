@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NextRequest } from "next/server";
 import { GET as getProClaim, POST as postProClaim } from "@/app/api/(system)/pro-claim/route";
 import { GET as getAdminProRequests, POST as postAdminProRequests } from "@/app/api/(ops)/admin/pro-requests/route";
+import { GET as getAdminProUsers, POST as postAdminProUsers } from "@/app/api/(ops)/admin/pro-users/route";
 import * as firebaseAdmin from "@/lib/firebase/firebase-admin";
 import * as alerts from "@/lib/alerts";
 
@@ -85,6 +86,19 @@ describe("Pro Claim & Pro Requests API (Schema v2 Path-Isolation)", () => {
             }),
           }),
           where: vi.fn((field: string, _op: string, val: any) => ({
+            get: vi.fn(async () => {
+              const colData = store[colName] || {};
+              const matches = Object.entries(colData)
+                .filter(([_, d]) => d[field] === val)
+                .map(([id, d]) => ({
+                  id,
+                  data: () => d,
+                }));
+              return {
+                docs: matches,
+                empty: matches.length === 0,
+              };
+            }),
             limit: vi.fn(() => ({
               get: vi.fn(async () => {
                 const colData = store[colName] || {};
@@ -139,7 +153,28 @@ describe("Pro Claim & Pro Requests API (Schema v2 Path-Isolation)", () => {
       }),
     };
 
+    const mockAuth = {
+      listUsers: vi.fn(async () => ({
+        users: [
+          { uid: "pro_user_1", email: "pro1@example.com", displayName: "Pro One", metadata: { creationTime: "2026-01-01" } },
+          { uid: "free_user_2", email: "free2@example.com", displayName: "Free Two", metadata: { creationTime: "2026-02-01" } },
+        ],
+        pageToken: undefined,
+      })),
+      getUserByEmail: vi.fn(async (email: string) => {
+        if (email === "free2@example.com") return { uid: "free_user_2", email: "free2@example.com" };
+        if (email === "pro1@example.com") return { uid: "pro_user_1", email: "pro1@example.com" };
+        throw new Error("User not found");
+      }),
+      getUser: vi.fn(async (uid: string) => {
+        if (uid === "free_user_2") return { uid: "free_user_2", email: "free2@example.com" };
+        if (uid === "pro_user_1") return { uid: "pro_user_1", email: "pro1@example.com" };
+        throw new Error("User not found");
+      }),
+    };
+
     vi.spyOn(firebaseAdmin, "getAdminDb").mockReturnValue(mockDb as any);
+    vi.spyOn(firebaseAdmin, "getAdminAuth").mockReturnValue(mockAuth as any);
   });
 
   describe("POST /api/pro-claim", () => {
@@ -385,4 +420,163 @@ describe("Pro Claim & Pro Requests API (Schema v2 Path-Isolation)", () => {
       );
     });
   });
+
+  describe("GET /api/admin/pro-users", () => {
+    it("returns only users who have isPro: true in settings", async () => {
+      mockCollections.setDocData("users/pro_user_1/settings", "preferences", {
+        isPro: true,
+        updatedAt: 1700000000,
+      });
+
+      mockCollections.setDocData("users/free_user_2/settings", "preferences", {
+        isPro: false,
+      });
+
+      mockCollections.setDocData("pro_claims", "claim_pro_1", {
+        uid: "pro_user_1",
+        platform: "github",
+        handle: "pro_coder",
+        status: "approved",
+        submittedAt: 1699999999,
+      });
+
+      const req = new NextRequest("http://localhost:3000/api/admin/pro-users", {
+        method: "GET",
+        headers: { Authorization: "Bearer admin-token" },
+      });
+
+      const res = await getAdminProUsers(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data.totalCount).toBe(1);
+      expect(data.proUsers).toHaveLength(1);
+      expect(data.proUsers[0]).toEqual(
+        expect.objectContaining({
+          uid: "pro_user_1",
+          email: "pro1@example.com",
+          displayName: "Pro One",
+          isPro: true,
+          claimSource: expect.objectContaining({
+            platform: "github",
+            handle: "pro_coder",
+          }),
+        })
+      );
+    });
+
+    it("falls back to legacy settings/{uid} if v2 preferences document is missing", async () => {
+      mockCollections.setDocData("settings", "pro_user_1", {
+        isPro: true,
+        updatedAt: 1710000000,
+      });
+
+      const req = new NextRequest("http://localhost:3000/api/admin/pro-users", {
+        method: "GET",
+        headers: { Authorization: "Bearer admin-token" },
+      });
+
+      const res = await getAdminProUsers(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data.proUsers).toHaveLength(1);
+      expect(data.proUsers[0].uid).toBe("pro_user_1");
+      expect(data.proUsers[0].isPro).toBe(true);
+    });
+  });
+
+  describe("POST /api/admin/pro-users", () => {
+    it("grants Pro access by email and sends audit notification to admin channel", async () => {
+      const notifySpy = vi.spyOn(alerts, "postDiscordEmbed").mockResolvedValue(undefined);
+
+      const req = new NextRequest("http://localhost:3000/api/admin/pro-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer admin-token" },
+        body: JSON.stringify({ action: "grant", emailOrUid: "free2@example.com" }),
+      });
+
+      const res = await postAdminProUsers(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.isPro).toBe(true);
+      expect(data.uid).toBe("free_user_2");
+
+      const prefs = mockCollections.getDocData("users/free_user_2/settings", "preferences");
+      expect(prefs).toBeDefined();
+      expect(prefs.isPro).toBe(true);
+
+      expect(notifySpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: expect.stringContaining("Pro Access Granted"),
+          fields: expect.arrayContaining([
+            expect.objectContaining({ name: "Target User", value: "free2@example.com" }),
+          ]),
+        }),
+        "admin"
+      );
+    });
+
+    it("revokes Pro access by UID and sends audit notification to admin channel", async () => {
+      mockCollections.setDocData("users/pro_user_1/settings", "preferences", {
+        isPro: true,
+      });
+
+      const notifySpy = vi.spyOn(alerts, "postDiscordEmbed").mockResolvedValue(undefined);
+
+      const req = new NextRequest("http://localhost:3000/api/admin/pro-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer admin-token" },
+        body: JSON.stringify({ action: "revoke", uid: "pro_user_1" }),
+      });
+
+      const res = await postAdminProUsers(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(data.success).toBe(true);
+      expect(data.isPro).toBe(false);
+
+      const prefs = mockCollections.getDocData("users/pro_user_1/settings", "preferences");
+      expect(prefs.isPro).toBe(false);
+
+      expect(notifySpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: expect.stringContaining("Pro Access Revoked"),
+        }),
+        "admin"
+      );
+    });
+
+    it("rejects unknown action", async () => {
+      const req = new NextRequest("http://localhost:3000/api/admin/pro-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer admin-token" },
+        body: JSON.stringify({ action: "invalid_action", uid: "pro_user_1" }),
+      });
+
+      const res = await postAdminProUsers(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(400);
+      expect(data.message).toContain("action must be 'grant' or 'revoke'");
+    });
+
+    it("returns 404 when granting Pro to non-existent user", async () => {
+      const req = new NextRequest("http://localhost:3000/api/admin/pro-users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer admin-token" },
+        body: JSON.stringify({ action: "grant", emailOrUid: "nonexistent@example.com" }),
+      });
+
+      const res = await postAdminProUsers(req);
+      const data = await res.json();
+
+      expect(res.status).toBe(404);
+      expect(data.message).toContain("User not found in Firebase Auth");
+    });
+  });
 });
+

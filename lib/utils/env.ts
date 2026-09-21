@@ -85,11 +85,17 @@ export const env = {
   get DISCORD_ALERTS_WEBHOOK_URL(): string {
     return process.env.DISCORD_ALERTS_WEBHOOK_URL || process.env.DISCORD_WEBHOOK_URL || "";
   },
+  get DISCORD_ADMIN_WEBHOOK_URL(): string {
+    return (
+      process.env.DISCORD_ADMIN_WEBHOOK_URL ||
+      process.env.DISCORD_EVENTS_WEBHOOK_URL ||
+      ""
+    );
+  },
   get DISCORD_EVENTS_WEBHOOK_URL(): string {
     return (
-      process.env.DISCORD_EVENTS_WEBHOOK_URL ||
       process.env.DISCORD_ADMIN_WEBHOOK_URL ||
-      process.env.DISCORD_WEBHOOK_URL ||
+      process.env.DISCORD_EVENTS_WEBHOOK_URL ||
       ""
     );
   },

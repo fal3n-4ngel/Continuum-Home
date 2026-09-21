@@ -66,19 +66,28 @@ describe("Alerts Subsystem — Multi-Channel Webhook Routing", () => {
       expect(resolveWebhookUrl("alerts")).toBe("https://discord.com/api/webhooks/legacy");
     });
 
-    it("resolves specific events webhook when configured", () => {
+    it("resolves specific admin webhook when configured", () => {
+      process.env.DISCORD_ADMIN_WEBHOOK_URL = "https://discord.com/api/webhooks/admin";
+      process.env.DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/legacy";
+      expect(resolveWebhookUrl("admin")).toBe("https://discord.com/api/webhooks/admin");
+    });
+
+    it("resolves events webhook alias when DISCORD_EVENTS_WEBHOOK_URL is configured", () => {
       process.env.DISCORD_EVENTS_WEBHOOK_URL = "https://discord.com/api/webhooks/events";
       process.env.DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/legacy";
       expect(resolveWebhookUrl("events")).toBe("https://discord.com/api/webhooks/events");
+      expect(resolveWebhookUrl("admin")).toBe("https://discord.com/api/webhooks/events");
     });
 
-    it("falls back to legacy DISCORD_WEBHOOK_URL for events when no event webhook is set", () => {
+    it("does NOT fall back to legacy DISCORD_WEBHOOK_URL for admin or events (strictly isolated from alerts)", () => {
       process.env.DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/legacy";
-      expect(resolveWebhookUrl("events")).toBe("https://discord.com/api/webhooks/legacy");
+      expect(resolveWebhookUrl("admin")).toBeNull();
+      expect(resolveWebhookUrl("events")).toBeNull();
     });
 
     it("returns null when no webhook is set for either channel", () => {
       expect(resolveWebhookUrl("alerts")).toBeNull();
+      expect(resolveWebhookUrl("admin")).toBeNull();
       expect(resolveWebhookUrl("events")).toBeNull();
     });
   });
@@ -86,6 +95,7 @@ describe("Alerts Subsystem — Multi-Channel Webhook Routing", () => {
   describe("postDiscordEmbed routing and defensive payload safety", () => {
     beforeEach(() => {
       process.env.DISCORD_ALERTS_WEBHOOK_URL = "https://discord.com/api/webhooks/alerts";
+      process.env.DISCORD_ADMIN_WEBHOOK_URL = "https://discord.com/api/webhooks/admin";
       process.env.DISCORD_EVENTS_WEBHOOK_URL = "https://discord.com/api/webhooks/events";
     });
 
@@ -99,14 +109,14 @@ describe("Alerts Subsystem — Multi-Channel Webhook Routing", () => {
       expect(call.body.embeds[0].title).toBe("Alert Test");
     });
 
-    it("routes to events webhook with default Continuum Events username", async () => {
-      await postDiscordEmbed({ title: "Event Test", color: ALERT_COLORS.GREEN }, "events");
+    it("routes to admin webhook with default Continuum Admin username", async () => {
+      await postDiscordEmbed({ title: "Admin Action", color: ALERT_COLORS.GREEN }, "admin");
 
       expect(fetchSpy).toHaveBeenCalledOnce();
       const call = lastCall(fetchSpy)!;
-      expect(call.url).toBe("https://discord.com/api/webhooks/events");
-      expect(call.body.username).toBe("Continuum Events");
-      expect(call.body.embeds[0].title).toBe("Event Test");
+      expect(call.url).toBe("https://discord.com/api/webhooks/admin");
+      expect(call.body.username).toBe("Continuum Admin");
+      expect(call.body.embeds[0].title).toBe("Admin Action");
     });
 
     it("clamps oversized fields and values to Discord limits", async () => {
@@ -174,32 +184,32 @@ describe("Alerts Subsystem — Multi-Channel Webhook Routing", () => {
   describe("Events & Admin Lifecycle: Event Notifiers", () => {
     beforeEach(() => {
       process.env.DISCORD_ALERTS_WEBHOOK_URL = "https://discord.com/api/webhooks/alerts";
-      process.env.DISCORD_EVENTS_WEBHOOK_URL = "https://discord.com/api/webhooks/events";
+      process.env.DISCORD_ADMIN_WEBHOOK_URL = "https://discord.com/api/webhooks/admin";
     });
 
-    it("routes notifyNewUserRegistration to events webhook", async () => {
+    it("routes notifyNewUserRegistration to admin webhook", async () => {
       notifyNewUserRegistration({ uid: "user-123", email: "newuser@example.com", displayName: "New User" });
       await flush();
 
       expect(fetchSpy).toHaveBeenCalledOnce();
       const call = lastCall(fetchSpy)!;
-      expect(call.url).toBe("https://discord.com/api/webhooks/events");
-      expect(call.body.username).toBe("Continuum Events");
+      expect(call.url).toBe("https://discord.com/api/webhooks/admin");
+      expect(call.body.username).toBe("Continuum Admin");
       expect(call.body.embeds[0].title).toContain("New User Registration");
       expect(call.body.embeds[0].color).toBe(ALERT_COLORS.GREEN);
     });
 
-    it("routes notifyUserDeletion to events webhook", async () => {
+    it("routes notifyUserDeletion to admin webhook", async () => {
       notifyUserDeletion({ uid: "user-456", email: "deleted@example.com" });
       await flush();
 
       expect(fetchSpy).toHaveBeenCalledOnce();
       const call = lastCall(fetchSpy)!;
-      expect(call.url).toBe("https://discord.com/api/webhooks/events");
+      expect(call.url).toBe("https://discord.com/api/webhooks/admin");
       expect(call.body.embeds[0].title).toContain("User Account Deleted");
     });
 
-    it("routes notifyProClaimSubmitted to events webhook", async () => {
+    it("routes notifyProClaimSubmitted to admin webhook", async () => {
       notifyProClaimSubmitted({
         uid: "pro-user",
         email: "pro@example.com",
@@ -211,42 +221,54 @@ describe("Alerts Subsystem — Multi-Channel Webhook Routing", () => {
 
       expect(fetchSpy).toHaveBeenCalledOnce();
       const call = lastCall(fetchSpy)!;
-      expect(call.url).toBe("https://discord.com/api/webhooks/events");
+      expect(call.url).toBe("https://discord.com/api/webhooks/admin");
       expect(call.body.embeds[0].title).toContain("New Pro Request");
       expect(call.body.embeds[0].color).toBe(ALERT_COLORS.GOLD);
     });
 
-    it("routes notifyProClaimDecision to events webhook with appropriate colors", async () => {
+    it("routes notifyProClaimDecision to admin webhook with appropriate colors", async () => {
       notifyProClaimDecision({ uid: "pro-user", email: "pro@example.com", action: "approve" });
       await flush();
 
+      expect(fetchSpy).toHaveBeenCalledOnce();
       const call = lastCall(fetchSpy)!;
-      expect(call.url).toBe("https://discord.com/api/webhooks/events");
+      expect(call.url).toBe("https://discord.com/api/webhooks/admin");
       expect(call.body.embeds[0].title).toContain("Approved");
       expect(call.body.embeds[0].color).toBe(ALERT_COLORS.GREEN);
     });
 
-    it("routes notifyAdminAnnouncement to events webhook", async () => {
+    it("routes notifyAdminAnnouncement to admin webhook", async () => {
       notifyAdminAnnouncement({ subject: "Release 2.5 is live!", total: 10, successCount: 10, failedCount: 0 });
       await flush();
 
+      expect(fetchSpy).toHaveBeenCalledOnce();
       const call = lastCall(fetchSpy)!;
-      expect(call.url).toBe("https://discord.com/api/webhooks/events");
+      expect(call.url).toBe("https://discord.com/api/webhooks/admin");
       expect(call.body.embeds[0].title).toContain("Announcement Broadcast");
     });
 
-    it("routes notifyAdminCacheFlush and notifyAdminCronTrigger to events webhook", async () => {
+    it("routes notifyAdminCacheFlush and notifyAdminCronTrigger to admin webhook", async () => {
       notifyAdminCacheFlush("admin@example.com");
       await flush();
-      expect(lastCall(fetchSpy)!.url).toBe("https://discord.com/api/webhooks/events");
+      expect(lastCall(fetchSpy)!.url).toBe("https://discord.com/api/webhooks/admin");
 
       notifyAdminCronTrigger({ task: "subscriptions", adminEmail: "admin@example.com" });
       await flush();
-      expect(lastCall(fetchSpy)!.url).toBe("https://discord.com/api/webhooks/events");
+      expect(lastCall(fetchSpy)!.url).toBe("https://discord.com/api/webhooks/admin");
     });
 
-    it("auto-routes sendDiscordEmbed with Admin Audit footer to events webhook", async () => {
+    it("auto-routes sendDiscordEmbed with Admin Audit footer to admin webhook", async () => {
       await sendDiscordEmbed("Admin Audit Log", "Admin took an action", 12345, "Continuum Dashboard • Admin Audit");
+      expect(lastCall(fetchSpy)!.url).toBe("https://discord.com/api/webhooks/admin");
+      expect(lastCall(fetchSpy)!.body.username).toBe("Continuum Admin");
+    });
+
+    it("falls back to DISCORD_EVENTS_WEBHOOK_URL when DISCORD_ADMIN_WEBHOOK_URL is unset", async () => {
+      delete process.env.DISCORD_ADMIN_WEBHOOK_URL;
+      process.env.DISCORD_EVENTS_WEBHOOK_URL = "https://discord.com/api/webhooks/events";
+
+      notifyAdminCacheFlush("admin@example.com");
+      await flush();
       expect(lastCall(fetchSpy)!.url).toBe("https://discord.com/api/webhooks/events");
     });
   });

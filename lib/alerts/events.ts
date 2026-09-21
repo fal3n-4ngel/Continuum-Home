@@ -21,7 +21,7 @@ export function notifyNewUserRegistration(user: {
         ],
         footer: { text: "Continuum Events • User Lifecycle" },
       },
-      "events"
+      "admin"
     );
   });
 }
@@ -43,7 +43,7 @@ export function notifyUserDeletion(user: {
         ],
         footer: { text: "Continuum Events • User Lifecycle" },
       },
-      "events"
+      "admin"
     );
   });
 }
@@ -69,7 +69,7 @@ export function notifyProClaimSubmitted(claim: {
         ],
         footer: { text: "Continuum Dashboard • Admin Audit" },
       },
-      "events"
+      "admin"
     );
   });
 }
@@ -94,7 +94,7 @@ export function notifyProClaimDecision(decision: {
         ],
         footer: { text: "Continuum Dashboard • Admin Audit" },
       },
-      "events"
+      "admin"
     );
   });
 }
@@ -118,7 +118,7 @@ export function notifyAdminAnnouncement(announcement: {
         ],
         footer: { text: "Continuum Dashboard • Admin Audit" },
       },
-      "events"
+      "admin"
     );
   });
 }
@@ -136,7 +136,7 @@ export function notifyAdminCacheFlush(adminEmail?: string | null): void {
         ],
         footer: { text: "Continuum Dashboard • Admin Audit" },
       },
-      "events"
+      "admin"
     );
   });
 }
@@ -157,7 +157,7 @@ export function notifyAdminCronTrigger(trigger: {
         ],
         footer: { text: "Continuum Dashboard • Admin Audit" },
       },
-      "events"
+      "admin"
     );
   });
 }
@@ -174,7 +174,7 @@ export function notifyAdminCustomAlert(message: string, adminEmail?: string | nu
         ],
         footer: { text: "Continuum Dashboard • Manual Trigger" },
       },
-      "events"
+      "admin"
     );
   });
 }

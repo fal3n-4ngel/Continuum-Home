@@ -5,7 +5,7 @@ import { env } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
-export const POST = withAdmin("POST /api/admin/cron", async (req) => {
+export const POST = withAdmin("POST /api/admin/cron", async (req, session) => {
   const body = await req.json();
   const triggerType = body?.triggerType || body?.task;
 
@@ -43,7 +43,7 @@ export const POST = withAdmin("POST /api/admin/cron", async (req) => {
     return NextResponse.json({ error: data.error || "Cron trigger failed" }, { status: cronRes.status });
   }
 
-    notifyAdminCronTrigger({ task: String(triggerType) });
+    notifyAdminCronTrigger({ task: String(triggerType), adminEmail: session.user.email });
 
   return NextResponse.json({ success: true, response: data });
 });

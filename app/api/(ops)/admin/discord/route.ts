@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid message payload" }, { status: 400 });
     }
 
-    const targetChannel: AlertChannel = channel === "alerts" ? "alerts" : "events";
+    const targetChannel: AlertChannel = channel === "alerts" ? "alerts" : "admin";
     const webhookUrl = resolveWebhookUrl(targetChannel);
     if (!webhookUrl) {
       return NextResponse.json(

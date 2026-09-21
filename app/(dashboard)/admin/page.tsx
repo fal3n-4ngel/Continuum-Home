@@ -139,16 +139,43 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg-primary p-10 max-md:p-5">
-      <div className="mx-auto max-w-[900px] flex flex-col gap-6">
-        <div className="flex items-center justify-end gap-3 border-b-2 border-border-subtle pb-4">
-          <Link href="/" className="flex items-center gap-1.5 rounded-none border-2 border-border-subtle bg-bg-card px-4 py-2 text-xs font-bold uppercase tracking-wide text-text-primary hover:bg-bg-primary no-underline transition-all">
-            <Home className="h-3.5 w-3.5" /> Dashboard
-          </Link>
-          <button onClick={logout} className="flex items-center gap-1.5 cursor-pointer rounded-none border-2 border-border-subtle bg-bg-card px-4 py-2 text-xs font-bold uppercase tracking-wide text-[#dc2626] hover:bg-[#fef2f2] hover:border-[#dc2626] transition-all">
-            <LogOut className="h-3.5 w-3.5" /> Sign Out
-          </button>
-        </div>
+    <div className="min-h-screen bg-bg-primary p-3 sm:p-6 md:p-8">
+      <div className="mx-auto max-w-[1080px] flex flex-col gap-5 sm:gap-6">
+        <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b-2 border-border-subtle pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="h-8 w-8 rounded-none border-2 border-border-subtle bg-bg-card flex items-center justify-center text-text-primary">
+              <Shield className="h-4 w-4 text-text-primary" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-serif text-sm font-semibold italic text-text-primary">Continuum Command Hub</span>
+                <span className="rounded-none border border-border-subtle bg-bg-primary px-1.5 py-0.5 text-[9px] font-mono font-bold uppercase text-text-secondary">
+                  ADMIN
+                </span>
+              </div>
+              <p className="text-[11px] font-mono text-text-muted truncate max-w-[280px] sm:max-w-none">
+                {user.email}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 rounded-none border-2 border-border-subtle bg-bg-card px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-text-primary hover:bg-bg-primary hover:border-text-primary no-underline transition-all"
+            >
+              <Home className="h-3.5 w-3.5" />
+              <span>Dashboard</span>
+            </Link>
+            <button
+              onClick={logout}
+              className="flex items-center gap-1.5 cursor-pointer rounded-none border-2 border-border-subtle bg-bg-card px-3.5 py-1.5 text-xs font-bold uppercase tracking-wider text-[#dc2626] hover:bg-[#fef2f2] hover:border-[#dc2626] transition-all"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </header>
 
         <AdminTab user={user} />
       </div>

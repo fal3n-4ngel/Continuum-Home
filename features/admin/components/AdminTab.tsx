@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { FirebaseUser, ProClaim } from "@/types";
+import { FirebaseUser, ProClaim, ProUserRecord } from "@/types";
 import { getAuthHeaders } from "@/lib/utils";
 import {
   Shield,
@@ -60,6 +60,9 @@ export function AdminTab({ user }: AdminTabProps) {
   const [proClaimsFilter, setProClaimsFilter] = useState<"pending" | "approved" | "denied" | "all">("pending");
   const [proActionLoading, setProActionLoading] = useState<string | null>(null);
 
+  const [proUsers, setProUsers] = useState<ProUserRecord[]>([]);
+  const [proUsersLoading, setProUsersLoading] = useState(false);
+
   const [annSubject, setAnnSubject] = useState("Rebranding Notice: PHub is now Continuum");
   const [annTitle, setAnnTitle] = useState("PHub has officially rebranded to Continuum");
   const [annContent, setAnnContent] = useState(`We are excited to share that PHub has officially rebranded to Continuum.
@@ -95,6 +98,7 @@ Thank you for being part of our journey!`);
   } | null>(null);
 
   const [discordMsg, setDiscordMsg] = useState("");
+  const [discordChannel, setDiscordChannel] = useState<"admin" | "alerts">("admin");
   const [discordSending, setDiscordSending] = useState(false);
 
   const handleDiscordSend = async () => {
@@ -104,7 +108,7 @@ Thank you for being part of our journey!`);
       const res = await fetch("/api/admin/discord", {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify({ message: discordMsg }),
+        body: JSON.stringify({ message: discordMsg, channel: discordChannel }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -128,7 +132,10 @@ Thank you for being part of our journey!`);
       const res = await fetch("/api/admin/discord", {
         method: "POST",
         headers: getHeaders(),
-        body: JSON.stringify({ message: "Admin Health Ping: Continuum operational check dispatched from Admin Control Hub." }),
+        body: JSON.stringify({
+          message: "Admin Health Ping: Continuum operational check dispatched from Admin Control Hub.",
+          channel: discordChannel,
+        }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -291,6 +298,60 @@ Thank you for being part of our journey!`);
     }
   };
 
+  const fetchProUsers = async () => {
+    setProUsersLoading(true);
+    try {
+      const res = await fetch("/api/admin/pro-users", { headers: getHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setProUsers(data.proUsers || []);
+      }
+    } catch (err) {
+      console.error("Failed to fetch pro users:", err);
+    } finally {
+      setProUsersLoading(false);
+    }
+  };
+
+  const handleGrantPro = async (emailOrUid: string) => {
+    try {
+      const res = await fetch("/api/admin/pro-users", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ action: "grant", emailOrUid }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatusMessage({ text: data.message || "Pro access granted successfully.", type: "success" });
+        await Promise.all([fetchProUsers(), fetchProClaims()]);
+        return { success: true };
+      } else {
+        return { success: false, error: data.error || "Failed to grant Pro access" };
+      }
+    } catch (err: any) {
+      return { success: false, error: err.message || "Network error occurred." };
+    }
+  };
+
+  const handleRevokePro = async (uid: string) => {
+    try {
+      const res = await fetch("/api/admin/pro-users", {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({ action: "revoke", uid }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setStatusMessage({ text: data.message || "Pro access revoked successfully.", type: "success" });
+        await Promise.all([fetchProUsers(), fetchProClaims()]);
+      } else {
+        setStatusMessage({ text: data.error || "Failed to revoke Pro access", type: "error" });
+      }
+    } catch {
+      setStatusMessage({ text: "Network error occurred.", type: "error" });
+    }
+  };
+
   const fetchActiveRelease = async () => {
     try {
       const res = await fetch("/api/admin/release-notes", { headers: getHeaders() });
@@ -309,6 +370,7 @@ Thank you for being part of our journey!`);
   useEffect(() => {
     fetchStats();
     fetchProClaims();
+    fetchProUsers();
     fetchActiveRelease();
   }, [user.idToken]);
 
@@ -405,7 +467,7 @@ Thank you for being part of our journey!`);
       const data = await res.json();
       if (res.ok) {
         setStatusMessage({ text: `Request ${action}d successfully.`, type: "success" });
-        fetchProClaims();
+        await Promise.all([fetchProClaims(), fetchProUsers()]);
       } else {
         setStatusMessage({ text: data.error || "Failed to update request", type: "error" });
       }
@@ -621,31 +683,46 @@ Thank you for being part of our journey!`);
           </div>
         </div>
 
-        <div className="flex gap-6 border-b border-border-subtle max-sm:gap-4 max-sm:overflow-x-auto max-sm:scrollbar-none max-sm:-mx-1 max-sm:px-1">
-          {["overview", "communications", "system", "pro-requests"].map((tab) => (
-            <button
-              key={tab}
-              onClick={() => {
-                setActiveTab(tab as any);
-                setStatusMessage(null);
-              }}
-              className={`relative pb-3 text-[13px] font-medium transition-all whitespace-nowrap capitalize ${
-                activeTab === tab
-                  ? "text-text-primary"
-                  : "text-text-muted hover:text-text-primary"
-              }`}
-            >
-              {tab.replace("-", " ")}
-              {tab === "pro-requests" && proClaims.filter((c) => c.status === "pending").length > 0 && (
-                <span className="ml-2 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold bg-amber-500/20 text-amber-600 border border-amber-500/30 rounded-none">
-                  {proClaims.filter((c) => c.status === "pending").length}
-                </span>
-              )}
-              {activeTab === tab && (
-                <span className="absolute bottom-0 left-0 right-0 h-[1.5px] bg-text-primary" />
-              )}
-            </button>
-          ))}
+        <div className="flex gap-2 sm:gap-6 border-b-2 border-border-subtle overflow-x-auto no-scrollbar py-0.5 -mx-1 px-1">
+          {[
+            { id: "overview", label: "Overview" },
+            { id: "communications", label: "Communications" },
+            { id: "system", label: "System Ops" },
+            { id: "pro-requests", label: "Pro Management" },
+          ].map(({ id: tab, label }) => {
+            const pendingCount = proClaims.filter((c) => c.status === "pending").length;
+            return (
+              <button
+                key={tab}
+                onClick={() => {
+                  setActiveTab(tab as any);
+                  setStatusMessage(null);
+                }}
+                className={`relative pb-3 text-xs sm:text-[13px] font-bold uppercase tracking-wider transition-all whitespace-nowrap flex items-center gap-1.5 shrink-0 ${
+                  activeTab === tab
+                    ? "text-text-primary"
+                    : "text-text-muted hover:text-text-primary"
+                }`}
+              >
+                <span>{label}</span>
+                {tab === "pro-requests" && (
+                  <span className="flex items-center gap-1">
+                    {pendingCount > 0 && (
+                      <span className="inline-flex items-center justify-center px-1.5 py-0.2 text-[9px] font-mono font-bold bg-amber-500 text-white rounded-none">
+                        {pendingCount}
+                      </span>
+                    )}
+                    <span className="inline-flex items-center justify-center px-1.5 py-0.2 text-[9px] font-mono font-bold bg-text-primary/10 text-text-primary rounded-none">
+                      {proUsers.length}★
+                    </span>
+                  </span>
+                )}
+                {activeTab === tab && (
+                  <span className="absolute bottom-0 left-0 right-0 h-[2px] bg-text-primary" />
+                )}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -925,6 +1002,34 @@ Thank you for being part of our journey!`);
             </h3>
             <div className="grid grid-cols-[1.2fr_1fr] gap-6 max-lg:grid-cols-1">
               <div className="flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Target Channel</label>
+                  <div className="inline-flex border border-border-subtle p-0.5 bg-bg-primary">
+                    <button
+                      type="button"
+                      onClick={() => setDiscordChannel("admin")}
+                      className={`px-3 py-1 text-[11px] font-mono font-bold uppercase tracking-wider transition-all ${
+                        discordChannel === "admin"
+                          ? "bg-text-primary text-bg-card"
+                          : "text-text-secondary hover:text-text-primary"
+                      }`}
+                    >
+                      Admin (#admin)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDiscordChannel("alerts")}
+                      className={`px-3 py-1 text-[11px] font-mono font-bold uppercase tracking-wider transition-all ${
+                        discordChannel === "alerts"
+                          ? "bg-text-primary text-bg-card"
+                          : "text-text-secondary hover:text-text-primary"
+                      }`}
+                    >
+                      Alerts (#alerts)
+                    </button>
+                  </div>
+                </div>
+
                 <div className="flex flex-col gap-1.5">
                   <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Custom Alert Message</label>
                   <textarea
@@ -941,7 +1046,7 @@ Thank you for being part of our journey!`);
                     onClick={handleDiscordSend}
                     className="rounded-none border-2 border-text-primary bg-text-primary px-5 py-2 text-xs font-bold uppercase tracking-wide text-bg-card transition-all hover:bg-bg-primary hover:text-text-primary disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {discordSending ? "Dispatching..." : "Send Discord Alert"}
+                    {discordSending ? "Dispatching..." : `Send to #${discordChannel}`}
                   </button>
                 </div>
               </div>
@@ -949,6 +1054,7 @@ Thank you for being part of our journey!`);
               <div className="flex flex-col gap-2 rounded-none border-2 border-border-subtle bg-bg-primary/20 p-4">
                 <div className="flex items-center justify-between border-b-2 border-border-subtle pb-2 mb-2">
                   <span className="font-mono text-[9px] font-bold text-text-secondary uppercase tracking-wider">LIVE DISCORD PREVIEW</span>
+                  <span className="font-mono text-[9px] text-text-secondary">#{discordChannel}</span>
                 </div>
 
                 <div className="flex-1 bg-[#313338] p-4 flex gap-3 overflow-hidden shadow-inner">
@@ -957,7 +1063,9 @@ Thank you for being part of our journey!`);
                   </div>
                   <div className="flex flex-col gap-1 min-w-0 flex-1">
                     <div className="flex items-baseline gap-2">
-                      <span className="text-white font-medium text-[15px]">Continuum Alerts</span>
+                      <span className="text-white font-medium text-[15px]">
+                        {discordChannel === "alerts" ? "Continuum Alerts" : "Continuum Admin"}
+                      </span>
                       <span className="text-[10px] bg-[#5865F2] text-white px-1 py-0.5 rounded-sm font-semibold tracking-wide">APP</span>
                       <span className="text-[#949BA4] text-[12px]">Today at {new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
                     </div>
@@ -1245,6 +1353,11 @@ Thank you for being part of our journey!`);
             fetchProClaims={fetchProClaims}
             proActionLoading={proActionLoading}
             handleProAction={handleProAction}
+            proUsers={proUsers}
+            proUsersLoading={proUsersLoading}
+            fetchProUsers={fetchProUsers}
+            handleGrantPro={handleGrantPro}
+            handleRevokePro={handleRevokePro}
           />
         </div>
       )}
