@@ -11,16 +11,28 @@ const GOODREADS_SHELVES = [
   { shelf: "to-read", status: "plan_to_watch" as const },
 ];
 
+const XML_ENTITY_MAP: Record<string, string> = {
+  "&amp;": "&",
+  "&lt;": "<",
+  "&gt;": ">",
+  "&quot;": '"',
+  "&#39;": "'",
+  "&apos;": "'",
+};
+
 function cleanXmlText(text: string | null | undefined): string | null {
   if (!text) return null;
-  return text
-    .replace(/<!\[CDATA\[([\s\S]*?)\]\]>/g, "$1")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    .trim() || null;
+  let cleaned = text;
+  if (cleaned.startsWith("<![CDATA[") && cleaned.endsWith("]]>")) {
+    cleaned = cleaned.slice(9, -3);
+  } else {
+    cleaned = cleaned.replace(/<!\[CDATA\[/g, "").replace(/\]\]>/g, "");
+  }
+  return (
+    cleaned
+      .replace(/&(?:amp|lt|gt|quot|apos|#39);/g, (match) => XML_ENTITY_MAP[match] || match)
+      .trim() || null
+  );
 }
 
 export function parseGoodreadsRssXml(xml: string, defaultStatus: "watching" | "completed" | "plan_to_watch"): SyncEntry[] {
@@ -77,11 +89,35 @@ export async function GET(req: NextRequest) {
       throw new ApiError(400, "Goodreads User ID query parameter is required (e.g. 12345678 or 12345678-username).");
     }
 
-    // Clean user ID: allow numeric or slug ID like 12345678-user-name
-    const userId = rawUserId.trim().replace(/^https?:\/\/(www\.)?goodreads\.com\/user\/show\//i, "").replace(/\/.*$/, "");
-    if (!userId || !/^[0-9]+[a-zA-Z0-9_-]*$/.test(userId)) {
+    let cleanedUserId = rawUserId.trim();
+    if (cleanedUserId.length > 200) {
+      throw new ApiError(400, "Goodreads User ID is too long.");
+    }
+
+    // Extract ID if a full profile URL was provided
+    if (cleanedUserId.startsWith("http://") || cleanedUserId.startsWith("https://")) {
+      try {
+        const parsed = new URL(cleanedUserId);
+        const segments = parsed.pathname.split("/").filter(Boolean);
+        cleanedUserId = segments[segments.length - 1] || "";
+      } catch {
+        const lastSlash = cleanedUserId.lastIndexOf("/");
+        if (lastSlash !== -1) {
+          cleanedUserId = cleanedUserId.slice(lastSlash + 1);
+        }
+      }
+    }
+
+    // Strip query parameters, hashes, or path segments without regex backtracking
+    cleanedUserId = cleanedUserId.split("/")[0].split("?")[0].split("#")[0].trim();
+
+    // Validate: must start with a digit followed by up to 99 safe characters.
+    // Non-overlapping character classes prevent polynomial ReDoS
+    if (!cleanedUserId || !/^[0-9][a-zA-Z0-9_-]{0,99}$/.test(cleanedUserId)) {
       throw new ApiError(400, "Invalid Goodreads User ID. Find your numeric user ID in your Goodreads profile URL.");
     }
+
+    const userId = cleanedUserId;
 
     // Fetch all 3 shelves in parallel
     const shelfResults = await Promise.allSettled(

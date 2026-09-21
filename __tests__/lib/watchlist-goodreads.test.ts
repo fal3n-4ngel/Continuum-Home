@@ -75,6 +75,25 @@ describe("Goodreads RSS Parser", () => {
     expect(toReadEntries[0].status).toBe("plan_to_watch");
     expect(toReadEntries[0].progress).toBe(0);
   });
+
+  it("safely unescapes entities in a single pass without double-unescaping", () => {
+    const mockXml = `
+      <rss>
+        <channel>
+          <item>
+            <title>Guns &amp;amp; Roses &amp;lt;Anthology&amp;gt;</title>
+            <book_published>2000</book_published>
+            <user_rating>3</user_rating>
+          </item>
+        </channel>
+      </rss>
+    `;
+
+    const entries = parseGoodreadsRssXml(mockXml, "completed");
+    // &amp;amp; should become &amp;, NOT unescaped twice into &
+    // &amp;lt; should become &lt;, NOT unescaped twice into <
+    expect(entries[0].title).toBe("Guns &amp; Roses &lt;Anthology&gt;");
+  });
 });
 
 describe("Goodreads CSV Parser", () => {
