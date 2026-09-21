@@ -1,4 +1,4 @@
-export type AlertChannel = "alerts" | "events";
+export type AlertChannel = "alerts" | "admin" | "events";
 
 export interface DiscordEmbedField {
   name: string;

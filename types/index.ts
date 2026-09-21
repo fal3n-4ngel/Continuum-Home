@@ -21,6 +21,22 @@ export interface ProClaim {
   submittedAt: number;
 }
 
+export interface ProUserRecord {
+  uid: string;
+  email: string;
+  displayName?: string | null;
+  photoURL?: string | null;
+  isPro: boolean;
+  proSince?: number | null;
+  createdAt?: string | null;
+  claimSource?: {
+    platform: string;
+    handle: string;
+    submittedAt: number;
+    claimId: string;
+  } | null;
+}
+
 export interface ReleaseNote {
   id: string;
   version: string;

@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import LandingPage from "@/components/landing/LandingPage";
+import { GoogleOneTap } from "@/components/auth/GoogleOneTap";
 import {
   isClientAuthSessionPresent,
   setClientAuthSession,
@@ -94,9 +95,12 @@ export default function MarketingPage() {
   }
 
   return (
-    <LandingPage
-      onLogin={() => router.push("/login")}
-      firebaseAuthReady={authReady}
-    />
+    <>
+      <GoogleOneTap disabled={!authReady} />
+      <LandingPage
+        onLogin={() => router.push("/login")}
+        firebaseAuthReady={authReady}
+      />
+    </>
   );
 }

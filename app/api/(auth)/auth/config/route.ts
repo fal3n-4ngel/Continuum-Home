@@ -24,6 +24,7 @@ export async function GET(req: NextRequest) {
       storageBucket: config.storageBucket,
       messagingSenderId: config.messagingSenderId,
       appId: config.appId,
+      googleClientId: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || null,
     };
 
     return NextResponse.json(publicConfig);

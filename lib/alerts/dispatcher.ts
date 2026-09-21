@@ -20,11 +20,10 @@ export function codeBlock(text: string, max: number = MAX_FIELD_VALUE): string {
 }
 
 export function resolveWebhookUrl(channel: AlertChannel): string | null {
-  if (channel === "events") {
+  if (channel === "admin" || channel === "events") {
     return (
-      process.env.DISCORD_EVENTS_WEBHOOK_URL ||
       process.env.DISCORD_ADMIN_WEBHOOK_URL ||
-      process.env.DISCORD_WEBHOOK_URL ||
+      process.env.DISCORD_EVENTS_WEBHOOK_URL ||
       null
     );
   }
@@ -63,7 +62,8 @@ export async function postDiscordEmbed(
     }));
   }
 
-  const defaultUsername = channel === "events" ? "Continuum Events" : "Continuum Alerts";
+  const defaultUsername =
+    channel === "admin" || channel === "events" ? "Continuum Admin" : "Continuum Alerts";
   const body: Record<string, unknown> = {
     username: options?.username || defaultUsername,
     embeds: [safeEmbed],
@@ -103,7 +103,7 @@ export async function sendDiscordEmbed(
 ): Promise<void> {
   const targetChannel: AlertChannel =
     channel ||
-    (/admin|audit|user/i.test(title) || /admin|audit/i.test(footer) ? "events" : "alerts");
+    (/admin|audit|user/i.test(title) || /admin|audit/i.test(footer) ? "admin" : "alerts");
 
   return postDiscordEmbed(
     { title, description: message, color, footer: { text: footer } },
