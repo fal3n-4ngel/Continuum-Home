@@ -59,6 +59,17 @@ This document provides a comprehensive technical breakdown of Continuum Home's s
 | **Encryption** | AES-256-GCM | Authenticated symmetric encryption on all financial records, amounts, categories, and portfolio assets. |
 | **AI Contract** | OpenAPI 3.1 | Machine-readable API schema enabling direct conversational execution with AI assistants. |
 
+### 1.2. Data Flow & Storage Matrix
+
+| Data Category | Persisted At | In-Memory / Redis Cache | Encryption Standard | Third Parties Contacted |
+| :--- | :--- | :--- | :--- | :--- |
+| **Expenses** (amounts, titles, categories, notes) | Firestore `/users/{uid}/expenses` | Encrypted ciphertext only | AES-256-GCM (v1, random 12-byte IV) | None |
+| **Portfolios** (assets, quantities, prices, history) | Firestore `/users/{uid}/portfolio` | Encrypted ciphertext only | AES-256-GCM (v1, random 12-byte IV) | None |
+| **Media Watchlists & Books** | Firestore `/users/{uid}/watchlists` | Plaintext (public catalog data) | None (public media IDs) | AniList, Trakt, OMDb, OpenLibrary |
+| **Market Quotes & NAV** | Upstash Redis | Plaintext (public tickers) | None (public financial tickers) | Yahoo Finance, AMFI India |
+| **Auth & Session Tokens** | Firebase Auth / Redis | Cryptographic session tokens | HTTPS / Google Identity Token | Google Identity Platform |
+| **Audit Logs & Telemetry** | Monolith Ingestion Service | Ephemeral queue | HTTPS (sanitized event metadata) | BigQuery (Internal telemetry) |
+
 ---
 
 ## 2. Multi-Tenant Isolation & Zero-Privilege Security

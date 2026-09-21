@@ -17,81 +17,25 @@
 
 ## What is Continuum?
 
-Continuum is a self-hostable personal data platform for tracking finances, investments, media, books, and subscriptions—with a unified REST API designed for both modern web apps and AI assistants.
+Continuum is a self-hostable personal dashboard for tracking daily expenses, investment portfolios, subscriptions, and media watchlists.
 
-```text
-                    Continuum
-                        │
-             ┌──────────┼──────────┐
-             │          │          │
-          Finance     Media       Life
-             │          │          │
-         Expenses     Movies     Notes
-         Portfolio    Anime      ...
-         Subs         Books
-             │          │
-             └──────────┼──────────┘
-                        │
-                  Continuum API
-                        │
-              ┌─────────┼─────────┐
-              │         │         │
-           Web App   ChatGPT    Other
-                                Clients
-```
-
-The API is the source of truth; AI clients interact through standard authenticated endpoints via an OpenAPI schema.
+It gives you a clean web dashboard for everyday tracking, backed by an OpenAPI specification so you can log expenses or query your data directly through AI assistants (like ChatGPT Actions or MCP tools).
 
 ---
 
 ## Features
 
-- **💰 Expense Ledger**: Transaction tracking with customizable pay cycles, multi-currency support, date range and category filtering, analytics, and CSV import/export.
-- **📈 Investment Portfolio**: Multi-asset tracking across Equities, Crypto, Mutual Funds (live NAV via AMFI), SIPs, Gold, Cash, and Fixed Deposits with live valuation and compounding calculators.
-- **🎬 Media Watchlist**: Unified tracking for movies, shows, and anime with progress tracking and integrations with AniList, Trakt, OMDb, and Letterboxd imports.
-- **📚 Book Library**: Personal book tracker with reading progress backed by OpenLibrary.
-- **💳 Subscription Tracker**: Normalize billing cycles across weekly, monthly, and annual renewals with effective monthly burn analysis.
-- **🤖 AI Native**: Manage data conversationally via OpenAPI 3.1 schema (`/api/openapi.json`) and OpenAI Custom GPT actions.
+- **💸 Expenses**: Quick-log cash and card spending, set salary-based pay cycles, filter by category/date, and export CSVs.
+- **📈 Portfolio**: Multi-asset tracker for stocks, mutual funds (live NAV via AMFI), SIPs, gold, fixed deposits, and crypto.
+- **🎬 Watchlist**: Unified tracking for movies, anime, and TV shows with Trakt, TMDB, and AniList sync.
+- **📚 Book Library**: Reading tracker with edition search and covers via OpenLibrary.
+- **💳 Subscriptions**: Normalize weekly, monthly, and annual renewals with monthly burn analysis.
+- **🤖 AI & API Ready**: Standard OpenAPI 3.1 endpoints (`/api/openapi.json`) and Custom GPT support to log entries or check balances in plain English.
+- **🔐 Encrypted at Rest**: Financial records and holdings are encrypted with your own master key (AES-256-GCM) before being stored.
 
 ---
 
-## Tech Stack & Architecture
-
-- **Frontend & Server**: Next.js 16 (App Router, Turbopack) + React 19 + TypeScript + Tailwind CSS
-- **Database & Auth**: Firebase (Google Sign-In + Firestore REST API)
-- **Security & Cryptography**: AES-256-GCM encryption at rest; ciphertext-only caching (Redis and process memory store only encrypted ciphertext); zero admin credentials in user-facing data routes (all user transactions and mutations execute strictly using the caller's Firebase ID token subject to Firestore security rules; privileged credentials are quarantined to headless background cron/admin maintenance boundaries); SSRF-guarded upstream integrations.
-- **Telemetry**: Audit events stream out to a dedicated ingestion service storing structured logs in BigQuery.
-
-![Continuum Architecture Diagram](architecture-diagram.svg)
-
-### 🔒 Privacy, Security & Data Flow Matrix
-
-Continuum implements **Server-Side AES-256-GCM Encryption with Ciphertext-Only Caching**. Instead of relying on blanket marketing claims, our exact data flow boundaries are documented below:
-
-| Data Category | Persisted At | In-Memory / Redis Cache | Encryption Standard | Third Parties Contacted |
-| :--- | :--- | :--- | :--- | :--- |
-| **Expenses** (amounts, titles, categories, notes) | Firestore `/users/{uid}/expenses` | Encrypted ciphertext only | AES-256-GCM (v1, random 12-byte IV) | None |
-| **Portfolios** (assets, quantities, prices, history) | Firestore `/users/{uid}/portfolio` | Encrypted ciphertext only | AES-256-GCM (v1, random 12-byte IV) | None |
-| **Media Watchlists & Books** | Firestore `/users/{uid}/watchlists` | Plaintext (public catalog data) | None (public media IDs) | AniList, Trakt, OMDb, OpenLibrary |
-| **Market Quotes & NAV** | Upstash Redis | Plaintext (public tickers) | None (public financial tickers) | Yahoo Finance, AMFI India |
-| **Auth & Session Tokens** | Firebase Auth / Redis | Cryptographic session tokens | HTTPS / Google Identity Token | Google Identity Platform |
-| **Audit Logs & Telemetry** | Monolith Ingestion Service | Ephemeral queue | HTTPS (sanitized event metadata) | BigQuery (Internal telemetry) |
-
-> [!IMPORTANT]
-> **Ciphertext-Only Cache Architecture**: Redis and local process memory store only `v1:iv:tag:ciphertext` blobs for financial records. Decryption occurs strictly in-memory per request right before returning responses to authorized callers over HTTPS. Even if the Redis cache is dumped or inspected, no financial figures, asset holdings, or notes are exposed in plaintext.
-
----
-
-## AI Integration (ChatGPT Actions)
-
-Continuum exposes an OpenAPI 3.1 specification at `/api/openapi.json`. This allows external AI clients or Custom GPTs to create transactions, look up assets, and log watchlist items via authenticated HTTP requests.
-
-- **Public GPT**: [Continuum Assistant](https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-Home-public)
-- **Self-Hosted Setup**: See [`docs/custom-agent-instructions.md`](docs/custom-agent-instructions.md) for step-by-step agent configuration, OpenAPI settings, and the system prompt.
-
----
-
-## Getting Started
+## Quick Start
 
 ### 1. Clone & Install
 
@@ -101,50 +45,53 @@ cd Continuum-Home
 npm ci
 ```
 
-### 2. Configure Environment & Cryptographic Keys
+### 2. Configure Environment
 
 Copy the example environment file:
 ```bash
 cp .env.example .env.local
 ```
 
-Generate a cryptographically secure 256-bit encryption key:
+Generate a 256-bit encryption key:
 ```bash
 openssl rand -base64 32
 ```
 
-Set required variables in `.env.local` (the application rejects weak, short, or placeholder keys fail-closed):
+Add your Firebase configuration and generated encryption key to `.env.local`:
 ```env
 FIREBASE_CONFIG={"apiKey":"...","authDomain":"...","projectId":"..."}
 ENCRYPTION_KEY="<output-from-openssl-rand-base64-32>"
 ```
 
-Deploy Firestore security rules and index optimizations:
+Deploy Firestore security rules and index overrides:
 ```bash
 firebase login
 firebase use <your-project-id>
 firebase deploy --only firestore:rules,firestore:indexes
 ```
 
-> [!NOTE]
-> For complete database architecture, subcollection directory maps, and migration utilities, refer to [`firebase-schema.md`](docs/firebase-schema.md). For end-to-end system topology, multi-tenant security specifications, and threat models, see [`docs/`](docs/).
-
-### 3. Verify Configuration & Run
+### 3. Run
 
 ```bash
-# Validate environment, crypto key entropy, and runtime invariants
-npm run verify:config
-
-# Run automated tests
-npm test
-
 # Development
 npm run dev
 
-# Production
+# Run tests
+npm test
+
+# Production build
 npm run build
 npm run start
 ```
+
+---
+
+## Documentation
+
+- **[System Architecture](docs/architecture.md)** — Topology, multi-tenant isolation, caching, and threat model.
+- **[Security & Encryption](docs/security.md)** — Cryptographic details, authentication flow, and token boundaries.
+- **[Database Schema](docs/firebase-schema.md)** — Subcollections, data models, and migration utilities.
+- **[AI Agent Setup](docs/custom-agent-instructions.md)** — Custom GPT instructions and action configuration.
 
 ---
 
@@ -164,18 +111,18 @@ npm run start
 
 ## License
 
-This project is open-source and available under the [MIT License](LICENSE). Contributions are welcome—see [CONTRIBUTING.md](CONTRIBUTING.md).
+This project is open-source under the [MIT License](LICENSE). Contributions are welcome—see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-## 📝 Authors' Note
+## 📝 Author's Note
 
 > Well, it's been a while since I worked on any public projects—mostly coz I rarely get time after work, and even when I do, it's usually personal APIs or portfolio updates.
 >
 > I already had a system to track my expenses and movies via my personal API, which I enhanced when ChatGPT released Custom GPTs so I could add stuff directly via chat (use AI without paying for an API). Instead of putting AI inside my API, I put my API inside AI (sounded cool in my head).
 >
-> Anyway, a friend saw it and wanted it too, so rather than handing over my personal API collection, I decided to build a proper dashboard instead,And here we are! Most of UI is just Antigravity, but fear not I did put a lot of effort and time in the core logic and flows so it's not a vibe coded 'slop'.
+> Anyway, a friend saw it and wanted it too, so rather than handing over my personal API collection, I decided to build a proper dashboard instead. Most of new UI themes and stuff are built with Antigravity on top of my legacy dashboard, but I did put a lot of effort and time into the core logic and flows.. so no worries , if something breaks or screws up it's totally on me.
 >
-> Anyways, hosting a custom gpt is kinda costly so not sure how long I might keep that up, feel free to host your own one or sponsor me via the button below :)
+> Hosting a custom GPT is kinda costly, so please do sponsor me via the button below  :)
 
 <a href="https://www.buymeacoffee.com/fal3n-4ngel" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" ></a>
