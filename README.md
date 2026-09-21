@@ -87,7 +87,7 @@ Continuum implements **Server-Side AES-256-GCM Encryption with Ciphertext-Only C
 Continuum exposes an OpenAPI 3.1 specification at `/api/openapi.json`. This allows external AI clients or Custom GPTs to create transactions, look up assets, and log watchlist items via authenticated HTTP requests.
 
 - **Public GPT**: [Continuum Assistant](https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-Home-public)
-- **Self-Hosted Setup**: See [`CUSTOM_GPT_INSTRUCTIONS.md`](CUSTOM_GPT_INSTRUCTIONS.md) for step-by-step GPT configuration, OAuth settings, and the system prompt.
+- **Self-Hosted Setup**: See [`docs/custom-agent-instructions.md`](docs/custom-agent-instructions.md) for step-by-step agent configuration, OpenAPI settings, and the system prompt.
 
 ---
 
