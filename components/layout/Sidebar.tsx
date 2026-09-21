@@ -130,11 +130,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </button>
         )}
 
+        <div className="my-2 border-t border-border-subtle" />
+
         <button
           type="button"
           onClick={() => setActiveTab("media")}
           aria-current={activeTab === "media" ? "page" : undefined}
-          className={`${navLinkClass(activeTab === "media")} mt-3 border-t border-border-subtle pt-4`}
+          className={navLinkClass(activeTab === "media")}
         >
           <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
           <span>Library</span>

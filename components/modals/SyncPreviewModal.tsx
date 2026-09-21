@@ -33,12 +33,11 @@ export const SyncPreviewModal: React.FC<SyncPreviewModalProps> = ({ preview, onC
   const total = preview.newItems.length + preview.updatedItems.length;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/45 backdrop-blur-sm apple-backdrop-fade" onClick={onClose}>
       <div
-        className="m-4 flex max-h-[80vh] w-full max-w-[480px] flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle animate-[fadeInScale_0.15s_ease]"
+        className="m-4 flex max-h-[80vh] w-full max-w-[480px] flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle apple-modal-spring"
         onClick={(e) => e.stopPropagation()}
       >
-        <style>{`@keyframes fadeInScale { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }`}</style>
 
         <div>
           <p className="text-[15px] font-bold">{preview.title}</p>

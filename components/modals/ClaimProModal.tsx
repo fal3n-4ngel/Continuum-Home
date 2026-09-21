@@ -72,15 +72,14 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
 
   const modal = (
     <div
-      className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center"
-      style={{ backgroundColor: "rgba(26,26,26,0.45)", backdropFilter: "blur(8px)" }}
+      className="fixed inset-0 z-[9999] flex items-end justify-center sm:items-center bg-black/45 backdrop-blur-sm apple-backdrop-fade"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="claim-pro-title"
-        className="relative w-full max-h-[92dvh] overflow-y-auto rounded-t-sm sm:rounded-sm sm:w-[460px] sm:max-w-[92vw] border-x border-t border-border-subtle sm:border bg-bg-card shadow-[0_-8px_32px_rgba(0,0,0,0.1)] sm:shadow-[0_16px_48px_rgba(0,0,0,0.12)] flex flex-col"
+        className="relative w-full max-h-[92dvh] overflow-y-auto rounded-t-sm sm:rounded-sm sm:w-[460px] sm:max-w-[92vw] border-x border-t border-border-subtle sm:border bg-bg-card shadow-[0_-8px_32px_rgba(0,0,0,0.1)] sm:shadow-[0_16px_48px_rgba(0,0,0,0.12)] flex flex-col apple-modal-spring max-sm:apple-sheet-spring"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex justify-center pt-3 pb-1 sm:hidden">
@@ -154,7 +153,7 @@ export function ClaimProModal({ isOpen, onClose, idToken }: ClaimProModalProps) 
           ) : (
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
 
-              <div className="flex flex-col gap-2 rounded-sm border border-border-subtle bg-bg-primary px-4 py-3.5">
+              <div className="flex flex-col gap-2 rounded-sm border border-border-subtle/50 surface-container-subtle px-4 py-3.5">
                 <p className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted mb-0.5">Included with Pro</p>
                 {[
                   "Financial Health tab with pay-cycle budgeting",

@@ -94,8 +94,8 @@ export const DataCorrectionModal: React.FC<DataCorrectionModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-bg-base/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative w-full max-w-2xl rounded-sm border border-border-subtle bg-bg-card p-6 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
+      <div className="absolute inset-0 bg-black/45 backdrop-blur-sm apple-backdrop-fade" onClick={onClose} />
+      <div className="relative w-full max-w-2xl rounded-sm border border-border-subtle bg-bg-card p-6 shadow-2xl overflow-hidden max-h-[85vh] flex flex-col apple-modal-spring">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex flex-col gap-1">
             <h2 className="text-xl font-bold tracking-tight text-text-primary flex items-center gap-2">
@@ -130,7 +130,7 @@ export const DataCorrectionModal: React.FC<DataCorrectionModalProps> = ({
               </div>
 
               {duplicateGroups.map(({ key, items }) => (
-                <div key={key} className="rounded-sm border border-border-subtle bg-bg-primary/30 p-4">
+                <div key={key} className="rounded-sm border border-border-subtle/50 surface-container-subtle p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold text-text-primary">{items[0].title} <span className="text-text-secondary text-xs uppercase ml-2 tracking-wider">({items[0].type})</span></h3>
                     <button

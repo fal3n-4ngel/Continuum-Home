@@ -17,6 +17,9 @@
   --color-accent-yellow: var(--accent-yellow);
   --color-accent-flame: var(--accent-flame);
   --color-accent-terracotta: var(--accent-terracotta);
+  --color-bg-surface-subtle: var(--bg-surface-subtle);
+  --color-bg-surface-high: var(--bg-surface-high);
+  --color-bg-surface-highest: var(--bg-surface-highest);
 
   --radius-xs: 2px;
   --radius-sm: 2px;
@@ -59,6 +62,10 @@
 
   --radius-card: 4px;
   --radius-button: 2px;
+
+  --bg-surface-subtle: color-mix(in srgb, var(--bg-secondary) 55%, var(--bg-card) 45%);
+  --bg-surface-high: var(--bg-secondary);
+  --bg-surface-highest: color-mix(in srgb, var(--bg-secondary) 75%, var(--text-primary) 6%);
 
   --font-body: 'Plus Jakarta Sans', sans-serif;
 }
@@ -129,27 +136,6 @@
   --radius-button: 0px;
 }
 
-[data-theme="cyberpunk-neo"] {
-  --bg-primary: #0A0A0E;
-  --bg-secondary: #101016;
-  --bg-card: #151620;
-  --bg-sidebar: #0E0E14;
-  --text-primary: #F0F4FC;
-  --text-secondary: #8E99B3;
-  --text-muted: #616C85;
-  --border-subtle: #25283B;
-  --border-hover: #3D4261;
-  --accent-blue: #00F0FF;
-  --accent-yellow: #FFE600;
-  --accent-flame: #FF0055;
-  --accent-terracotta: #7000FF;
-
-  --shadow-subtle: none;
-  --shadow-focus: 0 0 0 3px rgba(0, 240, 255, 0.25);
-  --radius-card: 0px;
-  --radius-button: 0px;
-}
-
 [data-theme="wabi-sabi"] {
   --bg-primary: #F4F1EA;
   --bg-secondary: #EBE6DC;
@@ -193,43 +179,22 @@
 }
 
 [data-theme="neo-brutalist"] {
-  --bg-primary: #E8E8EC;
-  --bg-secondary: #DFDFE4;
+  --bg-primary: #ECE7DE;
+  --bg-secondary: #DFD9CE;
   --bg-card: #FFFFFF;
-  --bg-sidebar: #E8E8EC;
-  --text-primary: #000000;
-  --text-secondary: #3F3F46;
-  --text-muted: #52525B;
-  --border-subtle: #18181B;
-  --border-hover: #000000;
-  --accent-blue: #0047FF;
-  --accent-yellow: #FFD600;
-  --accent-flame: #FF3B00;
-  --accent-terracotta: #000000;
+  --bg-sidebar: #ECE7DE;
+  --text-primary: #1C1B18;
+  --text-secondary: #4A463E;
+  --text-muted: #6B655B;
+  --border-subtle: #1C1B18;
+  --border-hover: #BC3C29;
+  --accent-blue: #BC3C29;
+  --accent-yellow: #C49746;
+  --accent-flame: #9C3322;
+  --accent-terracotta: #1C1B18;
 
   --shadow-subtle: none;
-  --shadow-focus: 0 0 0 3px rgba(0, 0, 0, 0.35);
-  --radius-card: 0px;
-  --radius-button: 0px;
-}
-
-[data-theme="industrial-monolith"] {
-  --bg-primary: #0E0F12;
-  --bg-secondary: #15161B;
-  --bg-card: #1B1C22;
-  --bg-sidebar: #131418;
-  --text-primary: #F4F4F5;
-  --text-secondary: #A1A1AA;
-  --text-muted: #71717A;
-  --border-subtle: #2F313D;
-  --border-hover: #484B5C;
-  --accent-blue: #38BDF8;
-  --accent-yellow: #FACC15;
-  --accent-flame: #FB923C;
-  --accent-terracotta: #E4E4E7;
-
-  --shadow-subtle: none;
-  --shadow-focus: 0 0 0 3px rgba(250, 204, 21, 0.25);
+  --shadow-focus: 0 0 0 3px rgba(188, 60, 41, 0.35);
   --radius-card: 0px;
   --radius-button: 0px;
 }
@@ -303,30 +268,6 @@
   --radius-button: 0px;
 }
 
-[data-theme="alpine-emerald"],
-[data-theme="pine-nocturne"],
-[data-theme="forest-night"],
-[data-theme="olive-umber"] {
-  --bg-primary: #09110E;
-  --bg-secondary: #0D1713;
-  --bg-card: #121F1A;
-  --bg-sidebar: #0C1512;
-  --text-primary: #EDF7F2;
-  --text-secondary: #8EA79B;
-  --text-muted: #637C70;
-  --border-subtle: #1E332B;
-  --border-hover: #2E4C40;
-  --accent-blue: #10B981;
-  --accent-yellow: #F59E0B;
-  --accent-flame: #F87171;
-  --accent-terracotta: #34D399;
-
-  --shadow-subtle: none;
-  --shadow-focus: 0 0 0 3px rgba(16, 185, 129, 0.25);
-  --radius-card: 0px;
-  --radius-button: 0px;
-}
-
 [data-theme="warm-sand"],
 [data-theme="parchment-academia"],
 [data-theme="travertine-stone"],
@@ -353,25 +294,46 @@
   --radius-button: 0px;
 }
 
-[data-theme="cobalt-blueprint"] {
-  --bg-primary: #0A101D;
-  --bg-secondary: #0E1527;
-  --bg-card: #131E34;
-  --bg-sidebar: #0C1322;
-  --text-primary: #EBF2FF;
-  --text-secondary: #8BA0C7;
-  --text-muted: #6277A0;
-  --border-subtle: #1F2E4D;
-  --border-hover: #2F4470;
-  --accent-blue: #38BDF8;
-  --accent-yellow: #FBBF24;
-  --accent-flame: #FB7185;
-  --accent-terracotta: #60A5FA;
+[data-theme="material-ui-light"] {
+  --bg-primary: #F7F2FA;
+  --bg-secondary: #EDE7F2;
+  --bg-card: #FFFFFF;
+  --bg-sidebar: #F3EDF7;
+  --text-primary: #1D1B20;
+  --text-secondary: #49454F;
+  --text-muted: #79747E;
+  --border-subtle: #E6E0E9;
+  --border-hover: #CAC4D0;
+  --accent-blue: #00639B;
+  --accent-yellow: #7D5260;
+  --accent-flame: #B3261E;
+  --accent-terracotta: #6750A4;
 
-  --shadow-subtle: none;
-  --shadow-focus: 0 0 0 3px rgba(56, 189, 248, 0.25);
-  --radius-card: 0px;
-  --radius-button: 0px;
+  --shadow-subtle: 0 1px 3px 1px rgba(0, 0, 0, 0.08);
+  --shadow-focus: 0 0 0 3px rgba(103, 80, 164, 0.25);
+  --radius-card: 14px;
+  --radius-button: 20px;
+}
+
+[data-theme="material-ui-dark"] {
+  --bg-primary: #141218;
+  --bg-secondary: #1D1B20;
+  --bg-card: #2B2930;
+  --bg-sidebar: #211F26;
+  --text-primary: #E6E0E9;
+  --text-secondary: #CAC4D0;
+  --text-muted: #938F99;
+  --border-subtle: #36343B;
+  --border-hover: #49454F;
+  --accent-blue: #9ECAFF;
+  --accent-yellow: #EFB8C8;
+  --accent-flame: #F2B8B5;
+  --accent-terracotta: #D0BCFF;
+
+  --shadow-subtle: 0 2px 6px 2px rgba(0, 0, 0, 0.35);
+  --shadow-focus: 0 0 0 3px rgba(208, 188, 255, 0.3);
+  --radius-card: 14px;
+  --radius-button: 20px;
 }
 
 :root.dark:not([data-theme]),
@@ -460,6 +422,23 @@ input:focus, select:focus, textarea:focus {
   box-shadow: var(--shadow-focus);
 }
 
+textarea.seamless-input,
+input.seamless-input {
+  border: none !important;
+  background-color: transparent !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+textarea.seamless-input:focus,
+input.seamless-input:focus {
+  border: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
 option {
   background-color: var(--bg-card);
   color: var(--text-primary);
@@ -535,6 +514,99 @@ html.theme-transition *::after {
   html.theme-transition * {
     transition: none !important;
   }
+}
+
+/* ==========================================================================
+   Apple HIG Spring Physics for Modals & Sheets
+   ========================================================================== */
+
+@keyframes appleModalSpringIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.93) translateY(10px);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.008) translateY(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes appleSheetSpringUp {
+  0% {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes appleBackdropFadeIn {
+  0% {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
+  }
+  100% {
+    opacity: 1;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.93) translateY(8px);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.008) translateY(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.apple-modal-spring {
+  animation: appleModalSpringIn 300ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.apple-sheet-spring {
+  animation: appleSheetSpringUp 320ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.apple-backdrop-fade {
+  animation: appleBackdropFadeIn 240ms ease-out both;
+}
+
+/* ==========================================================================
+   Google M3 Tonal Container Levels for Nested Cards
+   ========================================================================== */
+
+.surface-container-subtle {
+  background-color: var(--bg-surface-subtle);
+  border-radius: var(--radius-card, 4px);
+}
+
+.surface-container-high {
+  background-color: var(--bg-surface-high);
+  border-radius: var(--radius-card, 4px);
+}
+
+.surface-container-highest {
+  background-color: var(--bg-surface-highest);
+  border-radius: var(--radius-card, 4px);
 }
 
 @keyframes heroFadeUp {

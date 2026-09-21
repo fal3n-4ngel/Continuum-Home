@@ -38,15 +38,13 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-[fadeIn_0.15s_ease]"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/45 backdrop-blur-sm apple-backdrop-fade"
       onClick={onClose}
     >
       <div
-        className="m-4 flex w-full max-w-[420px] flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle animate-[fadeInScale_0.2s_cubic-bezier(0.16,1,0.3,1)]"
+        className="m-4 flex w-full max-w-[420px] flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle apple-modal-spring"
         onClick={(e) => e.stopPropagation()}
       >
-        <style>{`@keyframes fadeInScale { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }`}</style>
-
         <div className="flex items-center gap-3 border-b border-border-subtle pb-3.5">
           <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xs border border-border-subtle bg-bg-primary text-text-primary">
             <Trash2 size={16} />
@@ -58,7 +56,7 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
         </div>
 
         <div className="space-y-3">
-          <div className="flex items-start gap-2.5 rounded-xs border border-border-subtle bg-bg-primary/50 p-3 text-[12.5px] leading-relaxed text-text-muted">
+          <div className="flex items-start gap-2.5 rounded-xs surface-container-subtle border border-border-subtle/50 p-3.5 text-[12.5px] leading-relaxed text-text-muted">
             <AlertTriangle size={15} className="mt-0.5 shrink-0 text-text-secondary" />
             <span>
               This will permanently delete your account and immediately purge all stored expenses, portfolios, watchlists, and subscriptions. <strong className="font-semibold text-text-primary">This action cannot be undone.</strong>

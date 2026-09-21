@@ -71,14 +71,13 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/40 backdrop-blur-sm animate-[fadeIn_0.15s_ease]"
+      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/45 backdrop-blur-sm apple-backdrop-fade"
       onClick={onClose}
     >
       <div
-        className="m-4 flex w-full max-w-[440px] flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle animate-[fadeInScale_0.2s_cubic-bezier(0.16,1,0.3,1)]"
+        className="m-4 flex w-full max-w-[440px] flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle apple-modal-spring"
         onClick={(e) => e.stopPropagation()}
       >
-        <style>{`@keyframes fadeInScale { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }`}</style>
 
         <div className="flex items-center justify-between border-b border-border-subtle pb-3.5">
           <div className="flex items-center gap-2.5">

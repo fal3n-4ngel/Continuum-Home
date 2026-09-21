@@ -533,19 +533,19 @@ export const HistoricalAnalyticsView: React.FC<HistoricalAnalyticsViewProps> = (
           />
 
           <div className="grid grid-cols-3 gap-2 border-t border-border-subtle/60 pt-4 text-xs max-sm:grid-cols-1">
-            <div className="flex flex-col gap-0.5 rounded-lg border border-border-subtle/50 bg-bg-primary/40 p-2.5">
+            <div className="flex flex-col gap-0.5 rounded-lg border border-border-subtle/50 surface-container-subtle p-2.5">
               <span className="font-mono text-[9.5px] uppercase tracking-wider text-text-muted">Total Spent</span>
               <span className="font-mono text-sm font-semibold text-text-primary">
                 {currency}{Math.round(currentSelection.totalSpend).toLocaleString("en-IN")}
               </span>
             </div>
-            <div className="flex flex-col gap-0.5 rounded-lg border border-border-subtle/50 bg-bg-primary/40 p-2.5">
+            <div className="flex flex-col gap-0.5 rounded-lg border border-border-subtle/50 surface-container-subtle p-2.5">
               <span className="font-mono text-[9.5px] uppercase tracking-wider text-text-muted">Preserved Savings</span>
               <span className="font-mono text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                 +{currency}{Math.round(savedAmount).toLocaleString("en-IN")}
               </span>
             </div>
-            <div className="flex flex-col gap-0.5 rounded-lg border border-border-subtle/50 bg-bg-primary/40 p-2.5">
+            <div className="flex flex-col gap-0.5 rounded-lg border border-border-subtle/50 surface-container-subtle p-2.5">
               <span className="font-mono text-[9.5px] uppercase tracking-wider text-text-muted">Total Baseline</span>
               <span className="font-mono text-sm font-semibold text-text-primary">
                 {currency}{Math.round(currentSelection.incomeOrBudget).toLocaleString("en-IN")}
