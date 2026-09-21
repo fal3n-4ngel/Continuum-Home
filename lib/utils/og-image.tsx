@@ -42,10 +42,10 @@ export function SocialCard() {
 
       <div style={{ display: "flex", flexDirection: "column" }}>
         <div style={{ display: "flex", fontSize: "72px", fontWeight: 800, color: "#1c1b18", letterSpacing: "-3px", lineHeight: 1.05 }}>
-          One dashboard.
+          Everything personal,
         </div>
-        <div style={{ display: "flex", fontSize: "72px", fontWeight: 800, color: "#6e6c64", letterSpacing: "-3px", lineHeight: 1.05 }}>
-          Everything you track.
+        <div style={{ display: "flex", fontSize: "72px", fontWeight: 800, color: "#9E5D48", letterSpacing: "-3px", lineHeight: 1.05 }}>
+          connected.
         </div>
       </div>
 
