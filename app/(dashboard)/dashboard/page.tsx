@@ -231,6 +231,17 @@ export default function Dashboard() {
 
   const getHeaders = useCallback(() => getAuthHeaders(user?.idToken), [user]);
 
+  const patchSettings = useCallback(
+    (data: Record<string, unknown>) => {
+      if (user) {
+        fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify(data) }).catch((err) =>
+          console.error(err)
+        );
+      }
+    },
+    [user, getHeaders]
+  );
+
   const [firestoreLastSeenRelease, setFirestoreLastSeenRelease] = useState<string | null>(null);
 
   useEffect(() => {
@@ -317,6 +328,7 @@ export default function Dashboard() {
   function disconnectAnilist() {
     localStorage.removeItem("anilist_token");
     setAnilistUser(null);
+    patchSettings({ integrations: { anilist: null } });
   }
 
   async function loadTraktUser(accessToken: string, refreshToken: string, idToken: string | undefined) {
@@ -353,11 +365,13 @@ export default function Dashboard() {
     localStorage.removeItem("trakt_access_token");
     localStorage.removeItem("trakt_refresh_token");
     setTraktUser(null);
+    patchSettings({ integrations: { trakt: null } });
   }
 
   function disconnectLetterboxd() {
     localStorage.removeItem("letterboxd_username");
     setLetterboxdUsername("");
+    patchSettings({ integrations: { letterboxd: null } });
   }
 
   const [isSyncingAnilist, setIsSyncingAnilist] = useState(false);
@@ -1121,6 +1135,55 @@ export default function Dashboard() {
           setFirestoreLastSeenRelease(data.lastSeenRelease);
         }
         setIsProUser(data.isPro === true);
+
+        if (data.integrations) {
+          const { anilist, trakt, letterboxd } = data.integrations;
+          if (anilist?.token) {
+            localStorage.setItem("anilist_token", anilist.token);
+            loadAnilistUser(anilist.token);
+          } else if (anilist === null) {
+            localStorage.removeItem("anilist_token");
+            setAnilistUser(null);
+          }
+
+          if (trakt?.accessToken && trakt?.refreshToken) {
+            localStorage.setItem("trakt_access_token", trakt.accessToken);
+            localStorage.setItem("trakt_refresh_token", trakt.refreshToken);
+            loadTraktUser(trakt.accessToken, trakt.refreshToken, user?.idToken);
+          } else if (trakt === null) {
+            localStorage.removeItem("trakt_access_token");
+            localStorage.removeItem("trakt_refresh_token");
+            setTraktUser(null);
+          }
+
+          if (letterboxd?.username) {
+            localStorage.setItem("letterboxd_username", letterboxd.username);
+            setLetterboxdUsername(letterboxd.username);
+          } else if (letterboxd === null) {
+            localStorage.removeItem("letterboxd_username");
+            setLetterboxdUsername("");
+          }
+        }
+
+        // Auto-migrate local storage integrations to cloud if missing in cloud
+        const localAni = typeof window !== "undefined" ? localStorage.getItem("anilist_token") : null;
+        const localTrAcc = typeof window !== "undefined" ? localStorage.getItem("trakt_access_token") : null;
+        const localTrRef = typeof window !== "undefined" ? localStorage.getItem("trakt_refresh_token") : null;
+        const localLb = typeof window !== "undefined" ? localStorage.getItem("letterboxd_username") : null;
+
+        const toSync: Record<string, unknown> = {};
+        if (localAni && !data.integrations?.anilist?.token) {
+          toSync.anilist = { token: localAni };
+        }
+        if (localTrAcc && localTrRef && (!data.integrations?.trakt?.accessToken || !data.integrations?.trakt?.refreshToken)) {
+          toSync.trakt = { accessToken: localTrAcc, refreshToken: localTrRef };
+        }
+        if (localLb && !data.integrations?.letterboxd?.username) {
+          toSync.letterboxd = { username: localLb };
+        }
+        if (Object.keys(toSync).length > 0) {
+          patchSettings({ integrations: toSync });
+        }
       }
     } catch (err) {
       console.error(err);
@@ -1128,12 +1191,6 @@ export default function Dashboard() {
       setSettingsLoaded(true);
     }
   };
-
-  const patchSettings = useCallback((data: Record<string, unknown>) => {
-    if (user) {
-      fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify(data) }).catch((err) => console.error(err));
-    }
-  }, [user, getHeaders]);
 
   const setTimeFilter = (f: "7" | "30" | "90" | "salary" | "all") => {
     setTimeFilterState(f);
@@ -1481,6 +1538,7 @@ export default function Dashboard() {
             const result = await syncRes.json();
             setShowLetterboxdModal(false);
             localStorage.setItem("letterboxd_username", letterboxdUsername.trim());
+            patchSettings({ integrations: { letterboxd: { username: letterboxdUsername.trim() } } });
             fetchWatchlist();
             setSyncPreview((prev) => ({ ...prev, isOpen: false }));
             triggerAlert("Letterboxd Sync Complete", `Successfully synced ${result.added || 0} new and ${result.updated || 0} updated movies!`, "success");

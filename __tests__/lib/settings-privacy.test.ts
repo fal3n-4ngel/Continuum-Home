@@ -39,4 +39,29 @@ describe("Settings Privacy Validation", () => {
     expect(res.lastSeenRelease).toBeUndefined();
     expect(res.salaryDay).toBe(1);
   });
+
+  it("validates integrations for anilist, trakt, and letterboxd", () => {
+    const res = validateSettingsPatch({
+      integrations: {
+        anilist: { token: "ani_secret_token_123" },
+        trakt: { accessToken: "trakt_acc_token", refreshToken: "trakt_ref_token" },
+        letterboxd: { username: "cinephile99" },
+      },
+    });
+    expect(res.integrations?.anilist?.token).toBe("ani_secret_token_123");
+    expect(res.integrations?.trakt?.accessToken).toBe("trakt_acc_token");
+    expect(res.integrations?.trakt?.refreshToken).toBe("trakt_ref_token");
+    expect(res.integrations?.letterboxd?.username).toBe("cinephile99");
+  });
+
+  it("supports disconnecting individual integrations with null", () => {
+    const res = validateSettingsPatch({
+      integrations: {
+        anilist: null,
+        trakt: null,
+      },
+    });
+    expect(res.integrations?.anilist).toBeNull();
+    expect(res.integrations?.trakt).toBeNull();
+  });
 });

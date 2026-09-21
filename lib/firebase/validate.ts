@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { ApiError } from "@/lib/utils";
-import type { DashboardSettings, ExpenseEntry, InvestmentAsset, SubscriptionEntry, SubscriptionRecord, SyncEntry, SyncSource, WatchlistItem } from "./firebase";
+import type { DashboardSettings, ExpenseEntry, InvestmentAsset, SubscriptionEntry, SubscriptionRecord, SyncEntry, SyncSource, UserIntegrations, WatchlistItem } from "./firebase";
 
 const MEDIA_TYPES = ["movie", "show", "anime", "book"] as const;
 const MEDIA_STATUSES = ["plan_to_watch", "watching", "completed", "dropped", "paused"] as const;
@@ -277,6 +277,50 @@ export function validateSettingsPatch(body: unknown): Partial<Omit<DashboardSett
       portfolio: asBoolean(es.portfolio, "emailSubscriptions.portfolio"),
       subscriptions: asBoolean(es.subscriptions, "emailSubscriptions.subscriptions"),
     };
+  }
+  if (b.integrations !== undefined) {
+    if (b.integrations === null) {
+      patch.integrations = {};
+    } else {
+      const ints = requireObject(b.integrations, "integrations");
+      const validatedInts: UserIntegrations = {};
+
+      if (ints.anilist !== undefined) {
+        if (ints.anilist === null) {
+          validatedInts.anilist = null;
+        } else {
+          const ani = requireObject(ints.anilist, "integrations.anilist");
+          validatedInts.anilist = {
+            token: asTrimmedString(ani.token, "integrations.anilist.token", 2048, false),
+          };
+        }
+      }
+
+      if (ints.trakt !== undefined) {
+        if (ints.trakt === null) {
+          validatedInts.trakt = null;
+        } else {
+          const tr = requireObject(ints.trakt, "integrations.trakt");
+          validatedInts.trakt = {
+            accessToken: asTrimmedString(tr.accessToken, "integrations.trakt.accessToken", 2048, false),
+            refreshToken: asTrimmedString(tr.refreshToken, "integrations.trakt.refreshToken", 2048, false),
+          };
+        }
+      }
+
+      if (ints.letterboxd !== undefined) {
+        if (ints.letterboxd === null) {
+          validatedInts.letterboxd = null;
+        } else {
+          const lb = requireObject(ints.letterboxd, "integrations.letterboxd");
+          validatedInts.letterboxd = {
+            username: asTrimmedString(lb.username, "integrations.letterboxd.username", 200, false),
+          };
+        }
+      }
+
+      patch.integrations = validatedInts;
+    }
   }
   if (Object.keys(patch).length === 0) {
     badRequest("Patch body must include at least one valid settings field.");
