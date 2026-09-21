@@ -7,7 +7,7 @@ import { adminPurgeUserData } from "@/lib/firebase/firebase-admin";
 import { recordDomainEvent } from "@/lib/domain-events/client";
 import { DOMAIN_EVENTS } from "@/lib/domain-events/types";
 
-import { postDiscordEmbed, DISCORD_GREEN } from "@/lib/integrations/discord";
+import { notifyNewUserRegistration, notifyUserDeletion } from "@/lib/alerts";
 import { env } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -45,17 +45,11 @@ export async function GET(req: NextRequest) {
         },
       });
 
-      postDiscordEmbed({
-        title: "🎉 New User Registration!",
-        description: `A new user joined Continuum: **${session.user.displayName || session.user.email || session.uid}**`,
-        color: DISCORD_GREEN,
-        fields: [
-          { name: "Email", value: session.user.email || "N/A", inline: true },
-          { name: "User ID", value: session.uid, inline: true },
-          { name: "Environment", value: env.ENVIRONMENT || "production", inline: true },
-        ],
-        timestamp: new Date().toISOString(),
-      }).catch((err) => console.error("[DiscordAlert] Failed to dispatch new user alert:", err));
+      notifyNewUserRegistration({
+        uid: session.uid,
+        email: session.user.email,
+        displayName: session.user.displayName,
+      });
     }
 
     return NextResponse.json(settings || { timeFilter: "all", salaryDay: 1 });
@@ -122,6 +116,11 @@ export async function DELETE(req: NextRequest) {
         timestamp: Date.now(),
         action: "account_deleted",
       },
+    });
+
+    notifyUserDeletion({
+      uid: session.uid,
+      email: session.user.email,
     });
 
     await adminPurgeUserData(session.uid);

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { withAdmin } from "@/lib/utils/route-handlers";
-import { waitUntil } from "@vercel/functions";
-import { sendDiscordEmbed } from "@/lib/integrations";
+import { notifyAdminCronTrigger } from "@/lib/alerts";
 import { env } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -44,12 +43,7 @@ export const POST = withAdmin("POST /api/admin/cron", async (req) => {
     return NextResponse.json({ error: data.error || "Cron trigger failed" }, { status: cronRes.status });
   }
 
-  waitUntil(sendDiscordEmbed(
-    "Admin Audit Log",
-    `Admin manually triggered cron task: **${triggerType}**`,
-    3447003,
-    "Continuum Dashboard • Admin Audit"
-  ));
+    notifyAdminCronTrigger({ task: String(triggerType) });
 
   return NextResponse.json({ success: true, response: data });
 });
