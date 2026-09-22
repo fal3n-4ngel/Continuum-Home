@@ -11,3 +11,4 @@ export * from "./error-notifier";
 export * from "./site";
 export * from "./caller";
 export * from "./api/headers";
+export * from "./storage";

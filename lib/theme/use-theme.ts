@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { THEMES, DEFAULT_THEME_ID, getTheme, ThemeDefinition } from './themes';
+import { safeLocalStorage } from '@/lib/utils/storage';
 
 export type CardRadiusOption = 'sharp' | 'subtle' | 'rounded' | 'soft';
 export type CardShadowOption = 'flat' | 'subtle' | 'elevated';
@@ -136,7 +137,7 @@ export function useTheme() {
     let initial = DEFAULT_THEME_ID;
     try {
       const docAttr = typeof document !== 'undefined' ? document.documentElement.getAttribute('data-theme') : null;
-      const stored = localStorage.getItem(STORAGE_KEY);
+      const stored = safeLocalStorage.getItem(STORAGE_KEY);
       if (stored) {
         initial = getTheme(stored).id;
       } else if (docAttr) {
@@ -149,9 +150,9 @@ export function useTheme() {
         initial = prefersDark ? 'continuum-dark' : DEFAULT_THEME_ID;
       }
 
-      const storedRadius = (localStorage.getItem(RADIUS_KEY) as CardRadiusOption) || 'subtle';
-      const storedShadow = (localStorage.getItem(SHADOW_KEY) as CardShadowOption) || 'subtle';
-      const storedFont = (localStorage.getItem(FONT_KEY) as HeadingFontOption) || 'serif';
+      const storedRadius = (safeLocalStorage.getItem(RADIUS_KEY) as CardRadiusOption) || 'subtle';
+      const storedShadow = (safeLocalStorage.getItem(SHADOW_KEY) as CardShadowOption) || 'subtle';
+      const storedFont = (safeLocalStorage.getItem(FONT_KEY) as HeadingFontOption) || 'serif';
 
       if (['sharp', 'subtle', 'rounded', 'soft'].includes(storedRadius)) {
         setCardRadiusState(storedRadius);
@@ -182,9 +183,9 @@ export function useTheme() {
 
     const handleAppearanceSync = () => {
       try {
-        const r = (localStorage.getItem(RADIUS_KEY) as CardRadiusOption) || 'subtle';
-        const s = (localStorage.getItem(SHADOW_KEY) as CardShadowOption) || 'subtle';
-        const f = (localStorage.getItem(FONT_KEY) as HeadingFontOption) || 'serif';
+        const r = (safeLocalStorage.getItem(RADIUS_KEY) as CardRadiusOption) || 'subtle';
+        const s = (safeLocalStorage.getItem(SHADOW_KEY) as CardShadowOption) || 'subtle';
+        const f = (safeLocalStorage.getItem(FONT_KEY) as HeadingFontOption) || 'serif';
         setCardRadiusState(r);
         applyCardRadius(r);
         setCardShadowState(s);
@@ -231,10 +232,10 @@ export function useTheme() {
 
     applyTheme(target, !skipTransition, origin);
     try {
-      localStorage.setItem(STORAGE_KEY, target);
+      safeLocalStorage.setItem(STORAGE_KEY, target);
       const def = getTheme(target);
       if (def.mode === 'dark') {
-        localStorage.setItem(PREF_DARK_KEY, target);
+        safeLocalStorage.setItem(PREF_DARK_KEY, target);
       }
     } catch {}
     window.dispatchEvent(new CustomEvent(EVENT_NAME, { detail: target }));
@@ -244,7 +245,7 @@ export function useTheme() {
     setCardRadiusState(r);
     applyCardRadius(r);
     try {
-      localStorage.setItem(RADIUS_KEY, r);
+      safeLocalStorage.setItem(RADIUS_KEY, r);
     } catch {}
     window.dispatchEvent(new CustomEvent(APPEARANCE_EVENT_NAME));
   }, []);
@@ -253,7 +254,7 @@ export function useTheme() {
     setCardShadowState(s);
     applyCardShadow(s);
     try {
-      localStorage.setItem(SHADOW_KEY, s);
+      safeLocalStorage.setItem(SHADOW_KEY, s);
     } catch {}
     window.dispatchEvent(new CustomEvent(APPEARANCE_EVENT_NAME));
   }, []);
@@ -262,7 +263,7 @@ export function useTheme() {
     setHeadingFontState(f);
     applyHeadingFont(f);
     try {
-      localStorage.setItem(FONT_KEY, f);
+      safeLocalStorage.setItem(FONT_KEY, f);
     } catch {}
     window.dispatchEvent(new CustomEvent(APPEARANCE_EVENT_NAME));
   }, []);
@@ -272,7 +273,7 @@ export function useTheme() {
     if (current.mode === 'light') {
       let preferredDark = 'continuum-dark';
       try {
-        const storedDark = localStorage.getItem(PREF_DARK_KEY);
+        const storedDark = safeLocalStorage.getItem(PREF_DARK_KEY);
         if (storedDark) {
           const resolved = getTheme(storedDark);
           if (resolved.mode === 'dark') {

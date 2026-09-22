@@ -1,5 +1,6 @@
 "use client";
 import { SITE_NAME, getAuthHeaders } from "@/lib/utils";
+import { safeLocalStorage } from "@/lib/utils/storage";
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import {
@@ -142,7 +143,7 @@ export default function Dashboard() {
       const searchParams = new URLSearchParams(window.location.search);
       const tokenParam = searchParams.get("token");
       if (tokenParam) {
-        localStorage.setItem("phub_embedded_token", tokenParam);
+        safeLocalStorage.setItem("phub_embedded_token", tokenParam);
       }
 
       const queryTab = searchParams.get("tab");
@@ -163,8 +164,7 @@ export default function Dashboard() {
   }, []);
 
   const [currency, setCurrencyState] = useState<string>(() => {
-    if (typeof window === "undefined") return "₹";
-    const cached = window.localStorage.getItem("phub_currency");
+    const cached = safeLocalStorage.getItem("phub_currency");
     return getCurrencySymbol(cached);
   });
 
@@ -172,19 +172,16 @@ export default function Dashboard() {
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   const [timeFilter, setTimeFilterState] = useState<"7" | "30" | "90" | "salary" | "all">(() => {
-    if (typeof window === "undefined") return "all";
-    const cached = window.localStorage.getItem("phub_time_filter");
+    const cached = safeLocalStorage.getItem("phub_time_filter");
     return cached === "7" || cached === "30" || cached === "90" || cached === "salary" || cached === "all" ? cached : "all";
   });
   const [salaryDay, setSalaryDayState] = useState<number>(1);
   const [monthlySalary, setMonthlySalaryState] = useState<number>(() => {
-    if (typeof window === "undefined") return 0;
-    const cached = parseFloat(window.localStorage.getItem("phub_monthly_salary") || "0");
+    const cached = parseFloat(safeLocalStorage.getItem("phub_monthly_salary") || "0");
     return isNaN(cached) ? 0 : cached;
   });
   const [additionalIncome, setAdditionalIncomeState] = useState<number>(() => {
-    if (typeof window === "undefined") return 0;
-    const cached = parseFloat(window.localStorage.getItem("phub_additional_income") || "0");
+    const cached = parseFloat(safeLocalStorage.getItem("phub_additional_income") || "0");
     return isNaN(cached) ? 0 : cached;
   });
   const [reconciliations, setReconciliationsState] = useState<Record<string, number>>({});
@@ -195,8 +192,7 @@ export default function Dashboard() {
     subscriptions: true,
   });
   const [aiOptOut, setAiOptOutState] = useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return window.localStorage.getItem("phub_ai_opt_out") === "true";
+    return safeLocalStorage.getItem("phub_ai_opt_out") === "true";
   });
   const [showClaimPro, setShowClaimPro] = useState(false);
 
@@ -258,7 +254,7 @@ export default function Dashboard() {
       if (relData?.releaseNote && relData.releaseNote.active) {
         const note = relData.releaseNote as ReleaseNote;
         const firestoreSeen = settingsData?.lastSeenRelease;
-        const localSeen = typeof window !== "undefined" ? window.localStorage.getItem("continuum_last_seen_release") : null;
+        const localSeen = safeLocalStorage.getItem("continuum_last_seen_release");
         const lastSeen = firestoreSeen || localSeen;
         if (firestoreSeen) setFirestoreLastSeenRelease(firestoreSeen);
         if (lastSeen !== note.id && lastSeen !== note.version) {
@@ -272,9 +268,7 @@ export default function Dashboard() {
   const handleDismissReleaseNotes = useCallback(() => {
     if (activeReleaseNote) {
       const releaseId = activeReleaseNote.id || activeReleaseNote.version;
-      if (typeof window !== "undefined") {
-        window.localStorage.setItem("continuum_last_seen_release", releaseId);
-      }
+      safeLocalStorage.setItem("continuum_last_seen_release", releaseId);
       setFirestoreLastSeenRelease(releaseId);
       if (user) {
         fetch("/api/settings", {
@@ -331,7 +325,7 @@ export default function Dashboard() {
   }
 
   function disconnectAnilist() {
-    localStorage.removeItem("anilist_token");
+    safeLocalStorage.removeItem("anilist_token");
     setAnilistUser(null);
     patchSettings({ integrations: { anilist: null } });
   }
@@ -367,20 +361,20 @@ export default function Dashboard() {
   }
 
   function disconnectTrakt() {
-    localStorage.removeItem("trakt_access_token");
-    localStorage.removeItem("trakt_refresh_token");
+    safeLocalStorage.removeItem("trakt_access_token");
+    safeLocalStorage.removeItem("trakt_refresh_token");
     setTraktUser(null);
     patchSettings({ integrations: { trakt: null } });
   }
 
   function disconnectLetterboxd() {
-    localStorage.removeItem("letterboxd_username");
+    safeLocalStorage.removeItem("letterboxd_username");
     setLetterboxdUsername("");
     patchSettings({ integrations: { letterboxd: null } });
   }
 
   function disconnectGoodreads() {
-    localStorage.removeItem("goodreads_user_id");
+    safeLocalStorage.removeItem("goodreads_user_id");
     setGoodreadsUserId("");
     patchSettings({ integrations: { goodreads: null } });
   }
@@ -945,12 +939,12 @@ export default function Dashboard() {
     const traktRefreshToken = params.get("trakt_refresh_token");
 
     if (anilistToken) {
-      localStorage.setItem("anilist_token", anilistToken);
+      safeLocalStorage.setItem("anilist_token", anilistToken);
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
     if (traktAccessToken && traktRefreshToken) {
-      localStorage.setItem("trakt_access_token", traktAccessToken);
-      localStorage.setItem("trakt_refresh_token", traktRefreshToken);
+      safeLocalStorage.setItem("trakt_access_token", traktAccessToken);
+      safeLocalStorage.setItem("trakt_refresh_token", traktRefreshToken);
       window.history.replaceState(null, "", window.location.pathname + window.location.search);
     }
 
@@ -984,8 +978,8 @@ export default function Dashboard() {
           };
           setUser(u);
           setClientAuthSession();
-        } else if (typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("embedded") === "true" || localStorage.getItem("phub_embedded_token"))) {
-          const token = localStorage.getItem("phub_embedded_token") || "embedded_token";
+        } else if (typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("embedded") === "true" || safeLocalStorage.getItem("phub_embedded_token"))) {
+          const token = safeLocalStorage.getItem("phub_embedded_token") || "embedded_token";
           setUser({
             uid: "adiadithyakrishnan",
             email: "adiadithyakrishnan@gmail.com",
@@ -1012,17 +1006,17 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user) return;
-    const aniToken = localStorage.getItem("anilist_token");
+    const aniToken = safeLocalStorage.getItem("anilist_token");
     if (aniToken) loadAnilistUser(aniToken);
 
-    const trAcc = localStorage.getItem("trakt_access_token");
-    const trRef = localStorage.getItem("trakt_refresh_token");
+    const trAcc = safeLocalStorage.getItem("trakt_access_token");
+    const trRef = safeLocalStorage.getItem("trakt_refresh_token");
     if (trAcc && trRef) loadTraktUser(trAcc, trRef, user.idToken);
 
-    const lbUser = localStorage.getItem("letterboxd_username");
+    const lbUser = safeLocalStorage.getItem("letterboxd_username");
     if (lbUser) setLetterboxdUsername(lbUser);
 
-    const grUser = localStorage.getItem("goodreads_user_id");
+    const grUser = safeLocalStorage.getItem("goodreads_user_id");
     if (grUser) setGoodreadsUserId(grUser);
   }, [user]);
 
@@ -1107,7 +1101,7 @@ export default function Dashboard() {
         const data = await res.json();
         if (data.timeFilter) {
           setTimeFilterState(data.timeFilter);
-          localStorage.setItem("phub_time_filter", data.timeFilter);
+          safeLocalStorage.setItem("phub_time_filter", data.timeFilter);
           useExpensesStore.getState().setTimeFilter(data.timeFilter);
         }
         if (data.salaryDay) {
@@ -1116,16 +1110,16 @@ export default function Dashboard() {
         }
         if (data.monthlySalary !== undefined) {
           setMonthlySalaryState(data.monthlySalary);
-          localStorage.setItem("phub_monthly_salary", String(data.monthlySalary));
+          safeLocalStorage.setItem("phub_monthly_salary", String(data.monthlySalary));
         }
         if (data.additionalIncome !== undefined) {
           setAdditionalIncomeState(data.additionalIncome);
-          localStorage.setItem("phub_additional_income", String(data.additionalIncome));
+          safeLocalStorage.setItem("phub_additional_income", String(data.additionalIncome));
         }
         if (data.currency) {
           const sym = getCurrencySymbol(data.currency);
           setCurrencyState(sym);
-          localStorage.setItem("phub_currency", sym);
+          safeLocalStorage.setItem("phub_currency", sym);
         }
         if (data.reconciliations && typeof data.reconciliations === "object") {
           setReconciliationsState(data.reconciliations);
@@ -1143,7 +1137,7 @@ export default function Dashboard() {
         }
         if (data.aiOptOut !== undefined) {
           setAiOptOutState(data.aiOptOut === true);
-          localStorage.setItem("phub_ai_opt_out", String(data.aiOptOut === true));
+          safeLocalStorage.setItem("phub_ai_opt_out", String(data.aiOptOut === true));
         }
         if (data.lastSeenRelease) {
           setFirestoreLastSeenRelease(data.lastSeenRelease);
@@ -1153,47 +1147,47 @@ export default function Dashboard() {
         if (data.integrations) {
           const { anilist, trakt, letterboxd } = data.integrations;
           if (anilist?.token) {
-            localStorage.setItem("anilist_token", anilist.token);
+            safeLocalStorage.setItem("anilist_token", anilist.token);
             loadAnilistUser(anilist.token);
           } else if (anilist === null) {
-            localStorage.removeItem("anilist_token");
+            safeLocalStorage.removeItem("anilist_token");
             setAnilistUser(null);
           }
 
           if (trakt?.accessToken && trakt?.refreshToken) {
-            localStorage.setItem("trakt_access_token", trakt.accessToken);
-            localStorage.setItem("trakt_refresh_token", trakt.refreshToken);
+            safeLocalStorage.setItem("trakt_access_token", trakt.accessToken);
+            safeLocalStorage.setItem("trakt_refresh_token", trakt.refreshToken);
             loadTraktUser(trakt.accessToken, trakt.refreshToken, user?.idToken);
           } else if (trakt === null) {
-            localStorage.removeItem("trakt_access_token");
-            localStorage.removeItem("trakt_refresh_token");
+            safeLocalStorage.removeItem("trakt_access_token");
+            safeLocalStorage.removeItem("trakt_refresh_token");
             setTraktUser(null);
           }
 
           if (letterboxd?.username) {
-            localStorage.setItem("letterboxd_username", letterboxd.username);
+            safeLocalStorage.setItem("letterboxd_username", letterboxd.username);
             setLetterboxdUsername(letterboxd.username);
           } else if (letterboxd === null) {
-            localStorage.removeItem("letterboxd_username");
+            safeLocalStorage.removeItem("letterboxd_username");
             setLetterboxdUsername("");
           }
 
           const goodreads = data.integrations?.goodreads;
           if (goodreads?.userId) {
-            localStorage.setItem("goodreads_user_id", goodreads.userId);
+            safeLocalStorage.setItem("goodreads_user_id", goodreads.userId);
             setGoodreadsUserId(goodreads.userId);
           } else if (goodreads === null) {
-            localStorage.removeItem("goodreads_user_id");
+            safeLocalStorage.removeItem("goodreads_user_id");
             setGoodreadsUserId("");
           }
         }
 
         // Auto-migrate local storage integrations to cloud if missing in cloud
-        const localAni = typeof window !== "undefined" ? localStorage.getItem("anilist_token") : null;
-        const localTrAcc = typeof window !== "undefined" ? localStorage.getItem("trakt_access_token") : null;
-        const localTrRef = typeof window !== "undefined" ? localStorage.getItem("trakt_refresh_token") : null;
-        const localLb = typeof window !== "undefined" ? localStorage.getItem("letterboxd_username") : null;
-        const localGr = typeof window !== "undefined" ? localStorage.getItem("goodreads_user_id") : null;
+        const localAni = safeLocalStorage.getItem("anilist_token");
+        const localTrAcc = safeLocalStorage.getItem("trakt_access_token");
+        const localTrRef = safeLocalStorage.getItem("trakt_refresh_token");
+        const localLb = safeLocalStorage.getItem("letterboxd_username");
+        const localGr = safeLocalStorage.getItem("goodreads_user_id");
 
         const toSync: Record<string, unknown> = {};
         if (localAni && !data.integrations?.anilist?.token) {
@@ -1221,7 +1215,7 @@ export default function Dashboard() {
 
   const setTimeFilter = (f: "7" | "30" | "90" | "salary" | "all") => {
     setTimeFilterState(f);
-    localStorage.setItem("phub_time_filter", f);
+    safeLocalStorage.setItem("phub_time_filter", f);
     useExpensesStore.getState().setTimeFilter(f);
     patchSettings({ timeFilter: f });
   };
@@ -1236,21 +1230,21 @@ export default function Dashboard() {
   const setMonthlySalary = (val: number) => {
     if (val === monthlySalary) return;
     setMonthlySalaryState(val);
-    localStorage.setItem("phub_monthly_salary", String(val));
+    safeLocalStorage.setItem("phub_monthly_salary", String(val));
     patchSettings({ monthlySalary: val });
   };
 
   const setAdditionalIncome = (val: number) => {
     if (val === additionalIncome) return;
     setAdditionalIncomeState(val);
-    localStorage.setItem("phub_additional_income", String(val));
+    safeLocalStorage.setItem("phub_additional_income", String(val));
     patchSettings({ additionalIncome: val });
   };
 
   const setAiOptOut = (val: boolean) => {
     if (val === aiOptOut) return;
     setAiOptOutState(val);
-    localStorage.setItem("phub_ai_opt_out", String(val));
+    safeLocalStorage.setItem("phub_ai_opt_out", String(val));
     patchSettings({ aiOptOut: val });
   };
 
@@ -1275,7 +1269,7 @@ export default function Dashboard() {
   const setCurrency = (c: string) => {
     const symbol = getCurrencySymbol(c);
     setCurrencyState(symbol);
-    localStorage.setItem("phub_currency", symbol);
+    safeLocalStorage.setItem("phub_currency", symbol);
     patchSettings({ currency: symbol });
   };
 
@@ -1306,10 +1300,10 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (!user || !expensesLoaded) return;
-    if (localStorage.getItem("phub_onboarding_seen")) return;
-    localStorage.setItem("phub_onboarding_seen", "1");
+    if (safeLocalStorage.getItem("phub_onboarding_seen")) return;
+    safeLocalStorage.setItem("phub_onboarding_seen", "1");
 
-    const hasIntegration = !!localStorage.getItem("anilist_token") || !!localStorage.getItem("trakt_access_token");
+    const hasIntegration = !!safeLocalStorage.getItem("anilist_token") || !!safeLocalStorage.getItem("trakt_access_token");
     if (expenses.length === 0 && !hasIntegration) {
       setShowOnboarding(true);
     }
@@ -1564,7 +1558,7 @@ export default function Dashboard() {
           if (syncRes.ok) {
             const result = await syncRes.json();
             setShowLetterboxdModal(false);
-            localStorage.setItem("letterboxd_username", letterboxdUsername.trim());
+            safeLocalStorage.setItem("letterboxd_username", letterboxdUsername.trim());
             patchSettings({ integrations: { letterboxd: { username: letterboxdUsername.trim() } } });
             fetchWatchlist();
             setSyncPreview((prev) => ({ ...prev, isOpen: false }));
@@ -1626,7 +1620,7 @@ export default function Dashboard() {
           if (syncRes.ok) {
             const result = await syncRes.json();
             setShowGoodreadsModal(false);
-            localStorage.setItem("goodreads_user_id", goodreadsUserId.trim());
+            safeLocalStorage.setItem("goodreads_user_id", goodreadsUserId.trim());
             patchSettings({ integrations: { goodreads: { userId: goodreadsUserId.trim() } } });
             fetchWatchlist();
             setSyncPreview((prev) => ({ ...prev, isOpen: false }));
@@ -2445,7 +2439,7 @@ export default function Dashboard() {
             if (firebaseAuth?.auth) {
               await firebaseAuth.signOut(firebaseAuth.auth).catch(() => {});
             }
-            localStorage.clear();
+            safeLocalStorage.clear();
             window.location.reload();
           } else {
             const errData = await res.json().catch(() => ({}));

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { LogoMark } from "@/components/Logo";
 import { SITE_NAME } from "@/lib/utils";
+import { safeSessionStorage } from "@/lib/utils/storage";
 import { useTheme } from "@/lib/theme/use-theme";
 import type { Auth } from "firebase/auth";
 
@@ -62,7 +63,7 @@ export default function LoginPage() {
         try {
           const result = await signInWithPopup(auth, provider);
           if (result?.user) {
-            sessionStorage.removeItem("redirect_sent");
+            safeSessionStorage.removeItem("redirect_sent");
             window.location.replace("/dashboard");
             return;
           }
@@ -80,7 +81,7 @@ export default function LoginPage() {
             if (!isLocalhost) {
               // Fallback to redirect in production if popup was blocked
               setStatus("authenticating");
-              sessionStorage.setItem("redirect_sent", "1");
+              safeSessionStorage.setItem("redirect_sent", "1");
               await signInWithRedirect(auth, provider);
               return;
             } else {
@@ -93,7 +94,7 @@ export default function LoginPage() {
           throw popupErr;
         }
       } else {
-        sessionStorage.setItem("redirect_sent", "1");
+        safeSessionStorage.setItem("redirect_sent", "1");
         await signInWithRedirect(auth, provider);
       }
     } catch (err: any) {
@@ -119,7 +120,7 @@ export default function LoginPage() {
 
         // 1. If already logged in, redirect immediately
         if (auth.currentUser) {
-          sessionStorage.removeItem("redirect_sent");
+          safeSessionStorage.removeItem("redirect_sent");
           window.location.replace("/dashboard");
           return;
         }
@@ -127,7 +128,7 @@ export default function LoginPage() {
         // 2. Subscribe to auth changes
         const unsubscribe = onAuthStateChanged(auth, (user) => {
           if (user && !cancelled) {
-            sessionStorage.removeItem("redirect_sent");
+            safeSessionStorage.removeItem("redirect_sent");
             window.location.replace("/dashboard");
           }
         });
@@ -136,7 +137,7 @@ export default function LoginPage() {
         try {
           const result = await getRedirectResult(auth);
           if (result?.user && !cancelled) {
-            sessionStorage.removeItem("redirect_sent");
+            safeSessionStorage.removeItem("redirect_sent");
             window.location.replace("/dashboard");
             return;
           }
@@ -154,9 +155,9 @@ export default function LoginPage() {
         if (!hasTriggeredInitialRef.current) {
           hasTriggeredInitialRef.current = true;
 
-          const hadRedirectAttempt = sessionStorage.getItem("redirect_sent");
+          const hadRedirectAttempt = safeSessionStorage.getItem("redirect_sent");
           if (hadRedirectAttempt) {
-            sessionStorage.removeItem("redirect_sent");
+            safeSessionStorage.removeItem("redirect_sent");
           }
 
           // In local development, show the direct Google button immediately to prevent

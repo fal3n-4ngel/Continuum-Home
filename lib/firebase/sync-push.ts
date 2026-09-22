@@ -1,4 +1,5 @@
 import { anilistQuery, TO_ANILIST_STATUS_MAP, traktRequest } from "@/lib/integrations";
+import { safeLocalStorage } from "@/lib/utils/storage";
 import { WatchlistItem } from "./firebase";
 
 export async function pushWatchlistUpdate(
@@ -9,7 +10,7 @@ export async function pushWatchlistUpdate(
   const finalItem = { ...item, ...updates };
 
   if (item.type === "anime" && item.anilistId) {
-    const anilistToken = localStorage.getItem("anilist_token");
+    const anilistToken = safeLocalStorage.getItem("anilist_token");
     if (anilistToken) {
       try {
         const query = `
@@ -44,7 +45,7 @@ export async function pushWatchlistUpdate(
   }
 
   if (item.traktId && (item.type === "movie" || item.type === "show" || item.type === "anime")) {
-    const traktAccessToken = localStorage.getItem("trakt_access_token");
+    const traktAccessToken = safeLocalStorage.getItem("trakt_access_token");
     if (traktAccessToken) {
       try {
         if (updates.status === "completed" || (updates.progress && finalItem.status === "completed")) {

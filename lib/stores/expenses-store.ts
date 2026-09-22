@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { Expense, Subscription } from "@/types";
+import { safeLocalStorage } from "@/lib/utils/storage";
 
 interface ExpensesState {
   expenses: Expense[];
@@ -69,9 +70,9 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
   expensesLoaded: false,
   setExpensesLoaded: (loaded) => set({ expensesLoaded: loaded }),
 
-  timeFilter: (typeof window !== "undefined" && (window.localStorage.getItem("phub_time_filter") as any)) || "all",
+  timeFilter: (safeLocalStorage.getItem("phub_time_filter") as any) || "all",
   setTimeFilter: (timeFilter) => {
-    if (typeof window !== "undefined") window.localStorage.setItem("phub_time_filter", timeFilter);
+    safeLocalStorage.setItem("phub_time_filter", timeFilter);
     set({ timeFilter });
   },
   salaryDay: 1,

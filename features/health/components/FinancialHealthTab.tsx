@@ -27,6 +27,7 @@ import { InvestmentAsset } from "@/types";
 import { getEffectiveAmount } from "@/lib/finance";
 import { HealthAnalyticsReport } from "@/lib/firebase";
 import { toLocalDateStr } from "@/lib/utils/dates";
+import { safeLocalStorage } from "@/lib/utils/storage";
 import { HistoricalAnalyticsView } from "./HistoricalAnalyticsView";
 import { calculateDailyAndWeeklyLimits } from "../lib/financial-math";
 
@@ -615,19 +616,15 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   };
 
   const [targetSavingsGoal, setTargetSavingsGoal] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("continuum_target_savings_goal");
-      if (saved) return parseFloat(saved) || 0;
-    }
+    const saved = safeLocalStorage.getItem("continuum_target_savings_goal");
+    if (saved) return parseFloat(saved) || 0;
     return Math.max(0, Math.round(payCycle.totalIncome * 0.20));
   });
 
   const handleTargetSavingsChange = (val: number) => {
     const nextVal = Math.max(0, val);
     setTargetSavingsGoal(nextVal);
-    if (typeof window !== "undefined") {
-      localStorage.setItem("continuum_target_savings_goal", String(nextVal));
-    }
+    safeLocalStorage.setItem("continuum_target_savings_goal", String(nextVal));
   };
 
   const todayStr = toLocalDateStr(new Date());
