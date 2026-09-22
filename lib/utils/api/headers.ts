@@ -1,5 +1,7 @@
+import { safeLocalStorage } from "../storage";
+
 export function getAuthHeaders(idToken?: string): Record<string, string> {
-  const embeddedToken = typeof window !== "undefined" ? localStorage.getItem("phub_embedded_token") : null;
+  const embeddedToken = safeLocalStorage.getItem("phub_embedded_token");
   const token = (idToken && idToken !== "embedded_token") ? idToken : (embeddedToken || "");
   return {
     "Content-Type": "application/json",

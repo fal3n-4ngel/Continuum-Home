@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { getCurrencySymbol } from "@/lib/utils";
+import { safeLocalStorage } from "@/lib/utils/storage";
 import { ConfirmState } from "@/components/modals";
 
 interface UiState {
@@ -24,9 +25,9 @@ interface UiState {
 }
 
 export const useUiStore = create<UiState>((set) => ({
-  currency: typeof window === "undefined" ? "₹" : getCurrencySymbol(window.localStorage.getItem("phub_currency")),
+  currency: getCurrencySymbol(safeLocalStorage.getItem("phub_currency")),
   setCurrency: (c) => {
-    if (typeof window !== "undefined") window.localStorage.setItem("phub_currency", c);
+    safeLocalStorage.setItem("phub_currency", c);
     set({ currency: c });
   },
   expenseTab: "ledger",
