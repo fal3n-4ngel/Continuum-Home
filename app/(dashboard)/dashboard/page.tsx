@@ -49,6 +49,7 @@ import {
   ReleaseNotesModal,
   GoodreadsModal,
 } from "@/components/modals";
+import { InstallBanner } from "@/components/pwa";
 import { parseGoodreadsCsv } from "@/features/media/lib/goodreads-csv";
 import type { ReleaseNote } from "@/types";
 import { KirokuTab } from "@/features/assistant";
@@ -2463,6 +2464,8 @@ export default function Dashboard() {
         onCsvImport={handleGoodreadsCsvImport}
         isSyncing={isImportingGoodreads}
       />
+
+      <InstallBanner />
     </div>
   );
 }

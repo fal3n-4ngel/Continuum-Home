@@ -38,6 +38,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "swr": "^2.4.2",
+    "web-push": "^3.6.7",
     "zod": "^4.4.3",
     "zustand": "^5.0.15"
   },
@@ -51,6 +52,7 @@
     "@types/papaparse": "^5.5.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@types/web-push": "^3.6.4",
     "@vitejs/plugin-react": "^6.0.5",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",

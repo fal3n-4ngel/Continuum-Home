@@ -24,11 +24,8 @@ export async function GET(req: NextRequest) {
   const creds = await getCredentials(req);
   const firebaseConfig = parseFirebaseConfig(creds);
 
-  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
-  const domainFromHost = host ? host.split(":")[0] : null;
-  const isLocalhost = domainFromHost === "localhost" || domainFromHost === "127.0.0.1";
-  if (!isLocalhost && domainFromHost) {
-    firebaseConfig.authDomain = domainFromHost;
+  if (!firebaseConfig.authDomain) {
+    firebaseConfig.authDomain = `${firebaseConfig.projectId}.firebaseapp.com`;
   }
 
   const html = `
