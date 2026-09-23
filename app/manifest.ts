@@ -10,7 +10,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: isUat ? `[UAT Environment] ${SITE_DESCRIPTION}` : SITE_DESCRIPTION,
     start_url: "/dashboard",
     display: "standalone",
-    background_color: isUat ? "#18191D" : "#f4f3ec",
+    background_color: "#f4f3ec",
     theme_color: isUat ? "#DC2626" : "#1c1b18",
     icons: [
       { src: "/icon", sizes: "32x32", type: "image/png" },

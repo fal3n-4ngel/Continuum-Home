@@ -6,6 +6,7 @@ export const contentType = "image/png";
 
 export default function Icon() {
   const isUat = isUatDeployment();
+  const boxColor = isUat ? "#DC2626" : "#1c1b18";
 
   return new ImageResponse(
     (
@@ -18,17 +19,16 @@ export default function Icon() {
           alignItems: "center",
           justifyContent: "center",
           gap: "2px",
-          backgroundColor: isUat ? "#DC2626" : "#f4f3ec",
-          borderRadius: isUat ? "6px" : "0px",
+          backgroundColor: "#f4f3ec",
         }}
       >
         <div style={{ display: "flex", gap: "2px" }}>
-          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: isUat ? "#ffffff" : "#1c1b18", border: "none" }} />
-          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: isUat ? "#ffffff" : "#1c1b18", opacity: 0.55, border: "none" }} />
+          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: boxColor, border: "none" }} />
+          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: boxColor, opacity: 0.55, border: "none" }} />
         </div>
         <div style={{ display: "flex", gap: "2px" }}>
-          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: isUat ? "#ffffff" : "#1c1b18", opacity: 0.55, border: "none" }} />
-          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: isUat ? "#ffffff" : "#1c1b18", opacity: 0.85, border: "none" }} />
+          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: boxColor, opacity: 0.55, border: "none" }} />
+          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: boxColor, opacity: 0.85, border: "none" }} />
         </div>
       </div>
     ),

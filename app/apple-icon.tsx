@@ -6,6 +6,7 @@ export const contentType = "image/png";
 
 export default function AppleIcon() {
   const isUat = isUatDeployment();
+  const boxColor = isUat ? "#DC2626" : "#1c1b18";
 
   return new ImageResponse(
     (
@@ -17,19 +18,17 @@ export default function AppleIcon() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          position: "relative",
           gap: "10px",
-          backgroundColor: isUat ? "#18191D" : "#1c1b18",
-          border: isUat ? "6px solid #DC2626" : "none",
+          backgroundColor: "#f4f3ec",
         }}
       >
         <div style={{ display: "flex", gap: "10px" }}>
-          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "12px", backgroundColor: isUat ? "#DC2626" : "#ffffff", border: "none" }} />
-          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "12px", backgroundColor: isUat ? "#DC2626" : "#ffffff", opacity: 0.55, border: "none" }} />
+          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "12px", backgroundColor: boxColor, border: "none" }} />
+          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "12px", backgroundColor: boxColor, opacity: 0.55, border: "none" }} />
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
-          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "12px", backgroundColor: isUat ? "#DC2626" : "#ffffff", opacity: 0.55, border: "none" }} />
-          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "12px", backgroundColor: isUat ? "#DC2626" : "#ffffff", opacity: 0.85, border: "none" }} />
+          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "12px", backgroundColor: boxColor, opacity: 0.55, border: "none" }} />
+          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "12px", backgroundColor: boxColor, opacity: 0.85, border: "none" }} />
         </div>
       </div>
     ),

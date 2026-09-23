@@ -6,6 +6,7 @@ export const contentType = "image/png";
 
 export async function GET() {
   const isUat = isUatDeployment();
+  const boxColor = isUat ? "#DC2626" : "#1c1b18";
   const cell = 68;
   const gap = 12;
   const radius = 42;
@@ -20,19 +21,18 @@ export async function GET() {
           alignItems: "center",
           justifyContent: "center",
           position: "relative",
-          backgroundColor: isUat ? "#18191D" : "#f4f3ec",
+          backgroundColor: "#f4f3ec",
           borderRadius: radius,
-          border: isUat ? "5px solid #DC2626" : "none",
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap }}>
           <div style={{ display: "flex", gap }}>
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: isUat ? "#DC2626" : "#1c1b18" }} />
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: isUat ? "#DC2626" : "#1c1b18", opacity: 0.55 }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: boxColor }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: boxColor, opacity: 0.55 }} />
           </div>
           <div style={{ display: "flex", gap }}>
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: isUat ? "#DC2626" : "#1c1b18", opacity: 0.55 }} />
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: isUat ? "#DC2626" : "#1c1b18", opacity: 0.85 }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: boxColor, opacity: 0.55 }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: boxColor, opacity: 0.85 }} />
           </div>
         </div>
       </div>
