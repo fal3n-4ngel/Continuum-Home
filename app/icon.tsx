@@ -18,7 +18,7 @@ export default function Icon() {
           alignItems: "center",
           justifyContent: "center",
           gap: "2px",
-          backgroundColor: isUat ? "#D97706" : "#f4f3ec",
+          backgroundColor: isUat ? "#DC2626" : "#f4f3ec",
           borderRadius: isUat ? "6px" : "0px",
         }}
       >

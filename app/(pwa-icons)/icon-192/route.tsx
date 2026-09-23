@@ -22,38 +22,19 @@ export async function GET() {
           position: "relative",
           backgroundColor: isUat ? "#18191D" : "#f4f3ec",
           borderRadius: radius,
-          border: isUat ? "5px solid #D97706" : "none",
+          border: isUat ? "5px solid #DC2626" : "none",
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap }}>
           <div style={{ display: "flex", gap }}>
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: isUat ? "#D97706" : "#1c1b18" }} />
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: isUat ? "#D97706" : "#1c1b18", opacity: 0.55 }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: isUat ? "#DC2626" : "#1c1b18" }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: isUat ? "#DC2626" : "#1c1b18", opacity: 0.55 }} />
           </div>
           <div style={{ display: "flex", gap }}>
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: isUat ? "#D97706" : "#1c1b18", opacity: 0.55 }} />
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: isUat ? "#D97706" : "#1c1b18", opacity: 0.85 }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: isUat ? "#DC2626" : "#1c1b18", opacity: 0.55 }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 16, backgroundColor: isUat ? "#DC2626" : "#1c1b18", opacity: 0.85 }} />
           </div>
         </div>
-        {isUat && (
-          <div
-            style={{
-              position: "absolute",
-              bottom: "12px",
-              right: "14px",
-              backgroundColor: "#D97706",
-              color: "#ffffff",
-              fontSize: "16px",
-              fontWeight: 900,
-              padding: "2px 8px",
-              borderRadius: "6px",
-              letterSpacing: "1px",
-              fontFamily: "monospace",
-            }}
-          >
-            UAT
-          </div>
-        )}
       </div>
     ),
     { ...size }
