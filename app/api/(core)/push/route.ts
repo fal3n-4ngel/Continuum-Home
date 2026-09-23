@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const session = await requireUser(req);
     const publicKey = getVapidPublicKey();
     const isConfigured = isPushConfigured();
-    const existing = await getUserPushSubscriptions(session.uid);
+    const existing = await getUserPushSubscriptions(session);
 
     return NextResponse.json({
       vapidPublicKey: publicKey,

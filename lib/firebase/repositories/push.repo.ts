@@ -1,7 +1,15 @@
-import { getAdminDb } from "../firebase-admin";
-import type { UserSession } from "@/lib/auth";
-import crypto from "crypto";
+import type { Session } from "@/lib/auth";
+import { ApiError } from "@/lib/utils";
+import { createHash } from "crypto";
 import type { PushSubscription } from "web-push";
+import {
+  FirestoreDocument,
+  fromFields,
+  fsFetch,
+  listSubcollectionDocs,
+  toFields,
+  userPath,
+} from "../client";
 
 export interface StoredPushSubscription {
   id: string;
@@ -16,25 +24,26 @@ export interface StoredPushSubscription {
 }
 
 function hashEndpoint(endpoint: string): string {
-  return crypto.createHash("sha256").update(endpoint).digest("hex").slice(0, 32);
+  return createHash("sha256").update(endpoint).digest("hex").slice(0, 32);
 }
 
 export async function savePushSubscription(
-  session: UserSession,
+  session: Session,
   subscription: PushSubscription,
   userAgent?: string
 ): Promise<StoredPushSubscription> {
-  const db = getAdminDb();
   const id = hashEndpoint(subscription.endpoint);
   const now = Date.now();
+  const docPath = userPath(session, "push_subscriptions", id);
+  let existing: StoredPushSubscription | null = null;
 
-  const docRef = db
-    .collection("users")
-    .doc(session.uid)
-    .collection("push_subscriptions")
-    .doc(id);
+  try {
+    const document = await fsFetch<FirestoreDocument>(session, docPath);
+    existing = fromFields(document.fields) as unknown as StoredPushSubscription;
+  } catch (error) {
+    if (!(error instanceof ApiError) || error.status !== 404) throw error;
+  }
 
-  const existing = await docRef.get();
   const data: StoredPushSubscription = {
     id,
     endpoint: subscription.endpoint,
@@ -43,37 +52,38 @@ export async function savePushSubscription(
       auth: subscription.keys.auth,
     },
     userAgent: userAgent || "",
-    createdAt: existing.exists ? (existing.data()?.createdAt || now) : now,
+    createdAt: existing?.createdAt || now,
     updatedAt: now,
   };
 
-  await docRef.set(data, { merge: true });
+  await fsFetch(session, docPath, {
+    method: "PATCH",
+    body: JSON.stringify({ fields: toFields(data as unknown as Record<string, unknown>) }),
+  });
+
   return data;
 }
 
 export async function removePushSubscription(
-  session: UserSession,
+  session: Session,
   endpoint: string
 ): Promise<void> {
-  const db = getAdminDb();
   const id = hashEndpoint(endpoint);
-  await db
-    .collection("users")
-    .doc(session.uid)
-    .collection("push_subscriptions")
-    .doc(id)
-    .delete();
+  await fsFetch(session, `${userPath(session, "push_subscriptions", id)}?currentDocument.exists=true`, {
+    method: "DELETE",
+  });
 }
 
 export async function getUserPushSubscriptions(
-  uid: string
+  session: Session
 ): Promise<StoredPushSubscription[]> {
-  const db = getAdminDb();
-  const snapshot = await db
-    .collection("users")
-    .doc(uid)
-    .collection("push_subscriptions")
-    .get();
-
-  return snapshot.docs.map((d) => d.data() as StoredPushSubscription);
+  const documents = await listSubcollectionDocs(session, "push_subscriptions");
+  return documents.map(({ id, data }) => ({
+    id,
+    endpoint: data.endpoint as string,
+    keys: data.keys as StoredPushSubscription["keys"],
+    userAgent: data.userAgent as string | undefined,
+    createdAt: data.createdAt as number,
+    updatedAt: data.updatedAt as number,
+  }));
 }
