@@ -14,7 +14,10 @@ import {
   PieChart,
   CalendarClock,
   Shield,
+  ExternalLink,
+  Sparkles,
 } from "lucide-react";
+import Link from "next/link";
 import { useAuthStore } from "@/lib/stores/auth-store";
 
 interface KirokuTabProps {
@@ -400,6 +403,45 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
             >
               <span>Self-Host Free</span>
             </a>
+          </div>
+        </div>
+
+        {/* Free Custom GPT Alternative */}
+        <div className="rounded-sm border border-border-subtle bg-bg-card p-6 sm:p-8 shadow-subtle flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+          <div className="flex flex-col gap-2.5 max-w-2xl">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[1.2px] text-text-muted">
+                Free Alternative
+              </span>
+              <span className="font-mono text-[9px] text-text-muted">·</span>
+              <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[1.2px] text-text-muted">
+                GPT Store
+              </span>
+            </div>
+            <h3 className="font-serif text-2xl sm:text-3xl italic font-normal tracking-tight text-text-primary">
+              Use Our Official Continuum Custom GPT
+            </h3>
+            <p className="text-[13.5px] leading-relaxed text-text-secondary">
+              Don&apos;t have Pro? You can still chat with your Continuum workspace directly inside ChatGPT. Connect your account with secure OAuth 2.0 to log expenses, check spending, and manage watchlists from any device at zero cost.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-stretch gap-3 shrink-0 w-full sm:w-auto">
+            <a
+              href="https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-dashboard-public"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-sm border border-text-primary bg-text-primary px-7 py-3 text-xs font-mono uppercase tracking-wider font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 active:scale-95 text-center"
+            >
+              <span>Open in ChatGPT</span>
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+            <Link
+              href="/assistant"
+              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-border-subtle bg-bg-secondary px-5 py-2.5 text-xs font-mono uppercase tracking-wider font-medium text-text-secondary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover text-center"
+            >
+              <span>Setup &amp; Token Guide</span>
+            </Link>
           </div>
         </div>
       </div>
