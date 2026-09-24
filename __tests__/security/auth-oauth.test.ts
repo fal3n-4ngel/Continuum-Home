@@ -61,6 +61,7 @@ describe("Security Invariant: Auth & OAuth Security Controls", () => {
 
     it("permits registered OAuth redirect URIs", () => {
       expect(isAllowedOAuthRedirect("chatgpt", "https://chatgpt.com/aip/g-12345/oauth/callback")).toBe(true);
+      expect(isAllowedOAuthRedirect("chatgpt", "https://chatgpt.com/connector/oauth/m0NVCvO8mEhS")).toBe(true);
       expect(isAllowedOAuthRedirect("trusted-app", "https://trusted-app.example/callback")).toBe(true);
     });
 

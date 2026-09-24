@@ -319,7 +319,8 @@ export async function POST(req: NextRequest) {
 
     await redis.set(cacheKey, refreshToken, { ex: 300 });
 
-    const redirectUrl = `${redirectUri}?code=${authCode}&state=${state}`;
+    const separator = redirectUri.includes("?") ? "&" : "?";
+    const redirectUrl = `${redirectUri}${separator}code=${authCode}&state=${state}`;
 
     return NextResponse.json({ redirectUrl });
   } catch (error: any) {

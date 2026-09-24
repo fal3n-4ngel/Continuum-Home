@@ -27,14 +27,22 @@ function loadEntries(): OAuthClientEntry[] {
 }
 
 export function isAllowedOAuthRedirect(clientId: string, redirectUri: string): boolean {
-  // Allow OpenAI ChatGPT GPTs and Apps connector callbacks
-  if (
-    redirectUri === "https://chatgpt.com/connector_platform_oauth_redirect" ||
-    redirectUri.startsWith("https://chatgpt.com/aip/") ||
-    redirectUri.startsWith("https://chat.openai.com/aip/")
-  ) {
-    return true;
-  }
+  if (!redirectUri) return false;
+
+  // Allow OpenAI ChatGPT GPTs, Connectors, and Apps callbacks
+  try {
+    const url = new URL(redirectUri);
+    const host = url.hostname.toLowerCase();
+    const isChatGptOrOpenAi =
+      host === "chatgpt.com" ||
+      host.endsWith(".chatgpt.com") ||
+      host === "openai.com" ||
+      host.endsWith(".openai.com");
+
+    if (isChatGptOrOpenAi) {
+      return true;
+    }
+  } catch {}
 
   return loadEntries().some((entry) => {
     if (entry.clientId !== clientId) return false;
