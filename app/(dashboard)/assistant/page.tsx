@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { Auth, GoogleAuthProvider as GoogleAuthProviderClass, signInWithPopup as signInWithPopupFn } from "firebase/auth";
 import { SITE_URL, SITE_NAME } from "@/lib/utils";
 import { useOrigin } from "@/hooks/useOrigin";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { LogoMark } from "@/components/Logo";
 
 interface AgentUser {
@@ -24,6 +25,7 @@ export default function AssistantIntegrationPage() {
   const [user, setUser] = useState<AgentUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
+  const { enableGPTMigration } = useFeatureFlags();
 
   const origin = useOrigin();
   const [copied, setCopied] = useState<string>("");
@@ -194,12 +196,42 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
         <div className="border-b border-border-subtle pb-6">
           <p className="font-mono text-[9px] font-bold uppercase tracking-[1.2px] text-text-muted mb-2">Integration guide</p>
           <h1 className="font-serif text-[28px] italic font-medium text-text-primary leading-tight mb-2">
-            Connect a Custom GPT
+            {enableGPTMigration ? "Connect ChatGPT Plugin & AI Agents" : "Connect a Custom GPT"}
           </h1>
           <p className="text-[13px] leading-[1.7] text-text-secondary max-w-[560px]">
-            Link your dashboard to a Custom GPT on the GPT Store, or wire it up to any AI agent platform that supports OpenAPI schemas.
+            {enableGPTMigration
+              ? "Link your dashboard to our ChatGPT Plugin, a Custom GPT (active until Dec 11), or any AI agent platform via OpenAPI."
+              : "Link your dashboard to a Custom GPT on the GPT Store, or wire it up to any AI agent platform that supports OpenAPI schemas."}
           </p>
         </div>
+
+        {enableGPTMigration && (
+          <div className="rounded-sm border border-amber-500/30 bg-amber-500/5 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex flex-col gap-1 max-w-xl">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[9px] font-bold uppercase tracking-[1.2px] text-amber-600 dark:text-amber-400">
+                  OpenAI Notice
+                </span>
+                <span className="font-mono text-[9px] text-text-muted">·</span>
+                <span className="font-mono text-[9px] text-text-muted">
+                  Custom GPTs Retiring Dec 11, 2026
+                </span>
+              </div>
+              <p className="text-[13px] leading-relaxed text-text-secondary">
+                OpenAI is retiring Custom GPTs on <strong className="text-text-primary">December 11, 2026</strong> in favor of modular Plugins &amp; Skills. If you maintain a Custom GPT, migrate it via <span className="font-mono text-xs">ChatGPT &gt; My GPTs &gt; Migrate to plugin</span>. Your OpenAPI actions and OAuth 2.0 authentication below remain 100% compatible.
+              </p>
+            </div>
+            <a
+              href="https://help.openai.com/en/articles/20001519-custom-gpt-retirement-and-migration-faq"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex cursor-pointer shrink-0 items-center justify-center gap-1.5 rounded-sm border border-border-subtle bg-bg-card px-3.5 py-2 font-mono text-xs text-text-primary shadow-xs transition-all hover:bg-bg-secondary"
+            >
+              <span>Migration FAQ</span>
+              <span className="text-xs">↗</span>
+            </a>
+          </div>
+        )}
 
         {authError && (
           <div className="rounded-sm border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-[12.5px] text-rose-600 dark:text-rose-400">
@@ -209,16 +241,21 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
 
         <div className={CARD}>
           <div className="mb-3 flex items-center gap-2">
-            <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">Recommended</span>
+            <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">
+              {enableGPTMigration ? "Plugins & Skills" : "Recommended"}
+            </span>
             <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">·</span>
-            <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">Easiest</span>
+            <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">
+              {enableGPTMigration ? "Migration Ready" : "Easiest"}
+            </span>
           </div>
           <h2 className="font-serif text-[18px] italic font-medium text-text-primary mb-2 leading-snug">
-            Use the Official Public Custom GPT
+            {enableGPTMigration ? "Official Continuum ChatGPT Plugin & Custom GPT" : "Use the Official Public Custom GPT"}
           </h2>
           <p className="text-[13px] leading-[1.7] text-text-secondary mb-5">
-            Connect to the pre-built <strong className="font-semibold text-text-primary">Continuum Assistant</strong> on the GPT Store.
-            It uses secure OAuth 2.0 — no copy-pasting API keys required.
+            {enableGPTMigration
+              ? "Connect Continuum with secure OAuth 2.0. Works with our official ChatGPT Plugin or existing Custom GPT until December 11, 2026."
+              : "Connect to the pre-built Continuum Assistant on the GPT Store. It uses secure OAuth 2.0 — no copy-pasting API keys required."}
           </p>
           <a
             href="https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-dashboard-public"
@@ -226,7 +263,7 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
             rel="noopener noreferrer"
             className={BTN_PRIMARY}
           >
-            Open in ChatGPT
+            {enableGPTMigration ? "Open in ChatGPT (Active until Dec 11)" : "Open in ChatGPT"}
           </a>
         </div>
 

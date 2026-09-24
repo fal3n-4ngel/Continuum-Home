@@ -24,3 +24,16 @@ export const enableChatAssistant = flag<boolean>({
 });
 
 export const enableGeminiChatAssitant = enableChatAssistant;
+
+export const enableGPTMigration = flag<boolean>({
+  key: 'enableGPTMigration',
+  description: 'Flag for ChatGPT Plugin & Skills migration flow ahead of Dec 11 Custom GPT retirement',
+  defaultValue: false,
+  options: [
+    { value: false, label: 'Off' },
+    { value: true, label: 'On' },
+  ],
+  adapter: vercelAdapter,
+});
+
+export const enabeGPTMigration = enableGPTMigration;
