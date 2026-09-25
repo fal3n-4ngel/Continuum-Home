@@ -114,6 +114,22 @@ export async function GET(req: NextRequest) {
 
 const TOOLS_MANIFEST = [
   {
+    name: "connect_account",
+    description: "Verify authentication or connect your Continuum Home account to access expenses, watchlists, portfolio, and settings. Always call this if the user needs to sign in or connect.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
+    name: "get_auth_status",
+    description: "Check if the current session is connected to a verified Continuum Home user account.",
+    inputSchema: {
+      type: "object",
+      properties: {},
+    },
+  },
+  {
     name: "list_expenses",
     description: "List recent expenses with optional search term, category, and date range filters.",
     inputSchema: {
@@ -280,6 +296,21 @@ function normalizeWatchStatus(status?: string): "plan_to_watch" | "watching" | "
 
 async function executeTool(session: any, name: string, args: Record<string, any> = {}) {
   switch (name) {
+    case "connect_account": {
+      return {
+        status: "authenticated",
+        userId: session.uid || session.id || "verified_user",
+        message: "Your Continuum Home account is successfully connected and authorized."
+      };
+    }
+    case "get_auth_status": {
+      return {
+        authenticated: true,
+        userId: session.uid || session.id || "verified_user",
+        email: session.email || null,
+        message: "Continuum Home is active and ready."
+      };
+    }
     case "list_expenses": {
       return await listExpenses(session, {
         q: args.q,

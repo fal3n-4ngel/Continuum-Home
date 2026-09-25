@@ -168,6 +168,8 @@ describe("OAuth Discovery & MCP Server Endpoints", () => {
       const json = await res.json();
       expect(json.result.tools).toBeInstanceOf(Array);
       const toolNames = json.result.tools.map((t: any) => t.name);
+      expect(toolNames).toContain("connect_account");
+      expect(toolNames).toContain("get_auth_status");
       expect(toolNames).toContain("list_expenses");
       expect(toolNames).toContain("create_expense");
       expect(toolNames).toContain("list_watchlist");
