@@ -1,8 +1,11 @@
 "use client";
 
 import React from "react";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 export function ArchitectureFlowDiagram() {
+  const { enableGPTMigration } = useFeatureFlags();
+
   return (
     <div className="relative w-full max-w-5xl mx-auto rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] p-5 sm:p-7 shadow-xs overflow-hidden select-none">
       {/* Corner Ochre Tick Marks */}
@@ -222,12 +225,18 @@ export function ArchitectureFlowDiagram() {
           <circle cx="26" cy="21" r="1.5" fill="#10B981" />
 
           {/* Texts */}
-          <text x="50" y="26" fontFamily="sans-serif" fontSize="11" fontWeight="600" className="fill-[#26211F] dark:fill-[#F4F5F7]">MCP &amp; AI Agents</text>
-          <text x="50" y="38" fontFamily="sans-serif" fontSize="9" className="fill-[#6D635C] dark:fill-[#9BA1B0]">Native Tools &amp; OpenAPI</text>
+          <text x="50" y="26" fontFamily="sans-serif" fontSize="11" fontWeight="600" className="fill-[#26211F] dark:fill-[#F4F5F7]">
+            {enableGPTMigration ? "MCP & AI Agents" : "Custom GPT & AI"}
+          </text>
+          <text x="50" y="38" fontFamily="sans-serif" fontSize="9" className="fill-[#6D635C] dark:fill-[#9BA1B0]">
+            {enableGPTMigration ? "Native Tools & OpenAPI" : "OpenAPI 3.1 Actions"}
+          </text>
 
           {/* Badge */}
           <rect x="134" y="19" width="46" height="15" rx="1.5" className="fill-[#F3EFEA] dark:fill-[#121316] stroke-[#10B981]/40" strokeWidth="0.8" />
-          <text x="157" y="30" textAnchor="middle" fontFamily="monospace" fontSize="7" fontWeight="600" fill="#10B981">NATIVE MCP</text>
+          <text x="157" y="30" textAnchor="middle" fontFamily="monospace" fontSize="7" fontWeight="600" fill="#10B981">
+            {enableGPTMigration ? "NATIVE MCP" : "CUSTOM GPT"}
+          </text>
         </g>
 
         {/* ================= COLUMN 2: EXTERNAL SYNCS ================= */}
@@ -380,7 +389,7 @@ export function ArchitectureFlowDiagram() {
       <div className="mt-4 pt-3 border-t border-dashed border-[#DDD5CB] dark:border-[#25272E] flex flex-wrap items-center justify-between gap-3 font-mono text-[9px] text-[#9C9288] uppercase">
         <div className="flex items-center gap-2">
           <span className="text-[#9E5D48] dark:text-[#E07A5F] font-semibold">FLOW:</span>
-          <span>1. Incoming (MCP / AI Agent / Web)</span>
+          <span>{enableGPTMigration ? "1. Incoming (MCP / AI Agent / Web)" : "1. Incoming (Custom GPT / Website)"}</span>
           <span className="text-[#D99419]">&rarr;</span>
           <span>2. External Syncs (Trakt / AniList / Books)</span>
           <span className="text-[#D99419]">&rarr;</span>

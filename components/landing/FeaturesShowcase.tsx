@@ -2,6 +2,7 @@
 
 import React from "react";
 import { motion } from "framer-motion";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 interface Feature {
   id: string;
@@ -72,22 +73,46 @@ const FEATURES: Feature[] = [
     id: "ai",
     number: "04",
     tag: "services // 04",
-    title: "Autonomous AI & Native MCP Server",
+    title: "Autonomous AI & OpenAPI 3.1 Gateway",
     description:
-      "Continuum is built from the ground up as an AI-native operating system. Connect Claude Desktop, ChatGPT Plugins, Cursor, or custom agents via our native Model Context Protocol (MCP) server and OpenAPI 3.1 gateway to log data, audit budgets, or query holdings.",
+      "Continuum is built from the ground up as an AI-native operating system. Every action has an OpenAPI 3.1 specification. Speak to your custom ChatGPT or Claude agent to log data, audit budgets, or query holdings.",
     specs: [
-      "Native Model Context Protocol (MCP) server streaming at /api/mcp",
       "Live OpenAPI 3.1 JSON schema generated at /api/openapi.json",
-      "ChatGPT Plugin & OAuth 2.0 discovery for instant connection",
+      "Custom GPT Actions for voice & conversational transaction logging",
+      "Direct MCP (Model Context Protocol) tool integration ready",
     ],
     refSpec: "OPENAPI-AGENT-BRIDGE",
-    figTitle: "MODEL CONTEXT PROTOCOL & AI AGENT SPEC",
+    figTitle: "OPENAPI 3.1 & AI AGENT GATEWAY SPEC",
     cadCoord: "X 22.105 Y 03.440",
     canvasCoord: "X 22.105 Y 03.440",
   },
 ];
 
 export function FeaturesShowcase() {
+  const { enableGPTMigration } = useFeatureFlags();
+
+  const features = React.useMemo(() => {
+    return FEATURES.map((feat) => {
+      if (feat.id === "ai") {
+        return enableGPTMigration
+          ? {
+              ...feat,
+              title: "Autonomous AI & Native MCP Server",
+              description:
+                "Continuum is built from the ground up as an AI-native operating system. Connect Claude Desktop, ChatGPT Plugins, Cursor, or custom agents via our native Model Context Protocol (MCP) server and OpenAPI 3.1 gateway to log data, audit budgets, or query holdings.",
+              specs: [
+                "Native Model Context Protocol (MCP) server streaming at /api/mcp",
+                "Live OpenAPI 3.1 JSON schema generated at /api/openapi.json",
+                "ChatGPT Plugin & OAuth 2.0 discovery for instant connection",
+              ],
+              figTitle: "MODEL CONTEXT PROTOCOL & AI AGENT SPEC",
+            }
+          : feat;
+      }
+      return feat;
+    });
+  }, [enableGPTMigration]);
+
   return (
     <section
       id="capabilities"
@@ -111,7 +136,7 @@ export function FeaturesShowcase() {
 
         {/* Alternating Left-Right-Left-Right Vertical Stack */}
         <div className="flex flex-col">
-          {FEATURES.map((feat, idx) => {
+          {features.map((feat, idx) => {
             const isEven = idx % 2 === 0;
 
             return (
