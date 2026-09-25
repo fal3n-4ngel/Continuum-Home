@@ -17,7 +17,7 @@ let fetchPromise: Promise<Omit<FeatureFlags, "loading">> | null = null;
 export function useFeatureFlags(): FeatureFlags {
   const [flags, setFlags] = useState<Omit<FeatureFlags, "loading">>(
     cachedFlags || {
-      enableInvestmentPortfolios: false,
+      enableInvestmentPortfolios: true,
       enableChatAssistant: false,
       enableGeminiChatAssitant: false,
       enableGPTMigration: false,
@@ -38,7 +38,7 @@ export function useFeatureFlags(): FeatureFlags {
         .then((res) => (res.ok ? (res.json() as Promise<Record<string, unknown>>) : {}))
         .then((data: Record<string, unknown>) => {
           const resolved = {
-            enableInvestmentPortfolios: Boolean(data.enableInvestmentPortfolios),
+            enableInvestmentPortfolios: true,
             enableChatAssistant: Boolean(data.enableChatAssistant ?? data.enableGeminiChatAssitant),
             enableGeminiChatAssitant: Boolean(data.enableGeminiChatAssitant ?? data.enableChatAssistant),
             enableGPTMigration: Boolean(data.enableGPTMigration ?? data.enabeGPTMigration),
@@ -50,7 +50,7 @@ export function useFeatureFlags(): FeatureFlags {
         .catch((err) => {
           console.error("Failed to load feature flags:", err);
           const fallback = {
-            enableInvestmentPortfolios: false,
+            enableInvestmentPortfolios: true,
             enableChatAssistant: false,
             enableGeminiChatAssitant: false,
             enableGPTMigration: false,

@@ -1,11 +1,10 @@
 import { NextResponse } from 'next/server';
-import { enableInvestmentPortfolios, enableChatAssistant, enableGPTMigration, enabeGPTMigration } from '@/app/flags';
+import { enableChatAssistant, enableGPTMigration, enabeGPTMigration } from '@/app/flags';
 
 export async function GET() {
   const isDev = process.env.NODE_ENV === 'development';
 
   if (isDev) {
-    const envInvest = process.env.ENABLE_INVESTMENT_PORTFOLIOS || process.env.enableInvestmentPortfolios;
     const envChat =
       process.env.ENABLE_CHAT_ASSISTANT ||
       process.env.enableChatAssistant ||
@@ -21,7 +20,7 @@ export async function GET() {
     const migrationValue = envMigration !== undefined ? envMigration === 'true' : false;
 
     return NextResponse.json({
-      enableInvestmentPortfolios: envInvest !== undefined ? envInvest === 'true' : true,
+      enableInvestmentPortfolios: true,
       enableChatAssistant: chatValue,
       enableGeminiChatAssitant: chatValue,
       enableGPTMigration: migrationValue,
@@ -30,22 +29,20 @@ export async function GET() {
   }
 
   try {
-    const [isInvestEnabled, isChatEnabled, migration1, migration2] = await Promise.all([
-      enableInvestmentPortfolios().catch(() => false),
+    const [isChatEnabled, migration1, migration2] = await Promise.all([
       enableChatAssistant().catch(() => false),
       enableGPTMigration().catch(() => false),
       enabeGPTMigration().catch(() => false),
     ]);
     const isMigrationEnabled = migration1 || migration2;
     return NextResponse.json({
-      enableInvestmentPortfolios: isInvestEnabled,
+      enableInvestmentPortfolios: true,
       enableChatAssistant: isChatEnabled,
       enableGeminiChatAssitant: isChatEnabled,
       enableGPTMigration: isMigrationEnabled,
       enabeGPTMigration: isMigrationEnabled,
     });
   } catch (err) {
-    const envInvest = process.env.ENABLE_INVESTMENT_PORTFOLIOS || process.env.enableInvestmentPortfolios;
     const envChat =
       process.env.ENABLE_CHAT_ASSISTANT ||
       process.env.enableChatAssistant ||
@@ -61,7 +58,7 @@ export async function GET() {
     const migrationValue = envMigration === 'true';
 
     return NextResponse.json({
-      enableInvestmentPortfolios: envInvest !== 'false',
+      enableInvestmentPortfolios: true,
       enableChatAssistant: chatValue,
       enableGeminiChatAssitant: chatValue,
       enableGPTMigration: migrationValue,

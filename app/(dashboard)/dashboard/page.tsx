@@ -215,9 +215,6 @@ export default function Dashboard() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) {
-          if (typeof data.enableInvestmentPortfolios === "boolean") {
-            setShowInvestmentsTab(data.enableInvestmentPortfolios);
-          }
           const chatFlag = data.enableChatAssistant ?? data.enableGeminiChatAssitant;
           if (typeof chatFlag === "boolean") {
             setEnableChatAssistant(chatFlag);
