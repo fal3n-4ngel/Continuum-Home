@@ -65,53 +65,6 @@ export async function OPTIONS() {
   });
 }
 
-export async function GET(req: NextRequest) {
-  const origin = getOrigin(req);
-  const { searchParams } = req.nextUrl;
-  const sessionId = searchParams.get("sessionId") || crypto.randomUUID();
-
-  // Create SSE stream
-  const encoder = new TextEncoder();
-  const stream = new TransformStream();
-  const writer = stream.writable.getWriter();
-
-  const sendEvent = (event: string, data: string) => {
-    writer.write(encoder.encode(`event: ${event}\ndata: ${data}\n\n`)).catch(() => {});
-  };
-
-  activeSseClients.set(sessionId, (payload: string) => {
-    sendEvent("message", payload);
-  });
-
-  // Emit initial endpoint event directing the client where to post messages
-  const endpointUrl = `${origin}/api/mcp?sessionId=${sessionId}`;
-  sendEvent("endpoint", endpointUrl);
-
-  // Keep-alive timer
-  const keepAliveInterval = setInterval(() => {
-    writer.write(encoder.encode(": keep-alive\n\n")).catch(() => {
-      clearInterval(keepAliveInterval);
-      activeSseClients.delete(sessionId);
-    });
-  }, 15000);
-
-  req.signal.addEventListener("abort", () => {
-    clearInterval(keepAliveInterval);
-    activeSseClients.delete(sessionId);
-    writer.close().catch(() => {});
-  });
-
-  return new Response(stream.readable, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      "Mcp-Session-Id": sessionId,
-      ...CORS_HEADERS,
-    },
-  });
-}
-
 const TOOLS_MANIFEST = [
   {
     name: "connect_account",
@@ -284,6 +237,71 @@ const TOOLS_MANIFEST = [
   },
 ];
 
+export async function GET(req: NextRequest) {
+  const origin = getOrigin(req);
+  const accept = req.headers.get("accept") || "";
+
+  // If the client does not explicitly request SSE, return tools manifest & server info as JSON
+  if (!accept.includes("text/event-stream")) {
+    return NextResponse.json(
+      {
+        jsonrpc: "2.0",
+        result: {
+          protocolVersion: "2024-11-05",
+          capabilities: { tools: { listChanged: false } },
+          serverInfo: { name: "Continuum Home", version: "2.3.0" },
+          tools: TOOLS_MANIFEST,
+        },
+      },
+      { headers: CORS_HEADERS }
+    );
+  }
+
+  const { searchParams } = req.nextUrl;
+  const sessionId = searchParams.get("sessionId") || crypto.randomUUID();
+
+  // Create SSE stream
+  const encoder = new TextEncoder();
+  const stream = new TransformStream();
+  const writer = stream.writable.getWriter();
+
+  const sendEvent = (event: string, data: string) => {
+    writer.write(encoder.encode(`event: ${event}\ndata: ${data}\n\n`)).catch(() => {});
+  };
+
+  activeSseClients.set(sessionId, (payload: string) => {
+    sendEvent("message", payload);
+  });
+
+  // Emit initial endpoint event directing the client where to post messages
+  const endpointUrl = `${origin}/api/mcp?sessionId=${sessionId}`;
+  sendEvent("endpoint", endpointUrl);
+
+  // Keep-alive timer
+  const keepAliveInterval = setInterval(() => {
+    writer.write(encoder.encode(": keep-alive\n\n")).catch(() => {
+      clearInterval(keepAliveInterval);
+      activeSseClients.delete(sessionId);
+    });
+  }, 15000);
+
+  req.signal.addEventListener("abort", () => {
+    clearInterval(keepAliveInterval);
+    activeSseClients.delete(sessionId);
+    writer.close().catch(() => {});
+  });
+
+  return new Response(stream.readable, {
+    headers: {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache, no-transform",
+      Connection: "keep-alive",
+      "Mcp-Session-Id": sessionId,
+      ...CORS_HEADERS,
+    },
+  });
+}
+
 function normalizeWatchStatus(status?: string): "plan_to_watch" | "watching" | "completed" | "dropped" | "paused" {
   if (!status) return "plan_to_watch";
   const s = status.toLowerCase().replace(/[\s-]+/g, "_");
@@ -404,13 +422,45 @@ export async function POST(req: NextRequest) {
     authError = unauthorizedResponse(origin, "Authentication required", false);
   }
 
+  let rawBody = "";
+  try {
+    rawBody = await req.text();
+  } catch {
+    rawBody = "";
+  }
+
+  // Handle empty POST probes gracefully
+  if (!rawBody || !rawBody.trim()) {
+    return NextResponse.json(
+      {
+        jsonrpc: "2.0",
+        result: {
+          protocolVersion: "2024-11-05",
+          serverInfo: { name: "Continuum Home", version: "2.3.0" },
+          capabilities: { tools: { listChanged: false } },
+          tools: TOOLS_MANIFEST,
+        },
+      },
+      { headers: CORS_HEADERS }
+    );
+  }
+
   let body: any;
   try {
-    body = await req.json();
+    body = JSON.parse(rawBody);
   } catch {
+    // If not JSON, return tools manifest rather than a 400 error that breaks OpenAI App discovery
     return NextResponse.json(
-      { jsonrpc: "2.0", error: { code: -32700, message: "Parse error: Invalid JSON" } },
-      { status: 400, headers: CORS_HEADERS }
+      {
+        jsonrpc: "2.0",
+        result: {
+          protocolVersion: "2024-11-05",
+          serverInfo: { name: "Continuum Home", version: "2.3.0" },
+          capabilities: { tools: { listChanged: false } },
+          tools: TOOLS_MANIFEST,
+        },
+      },
+      { headers: CORS_HEADERS }
     );
   }
 
@@ -422,7 +472,13 @@ export async function POST(req: NextRequest) {
     const method = msg?.method;
 
     if (!method) {
-      return { jsonrpc: "2.0", id, error: { code: -32600, message: "Invalid Request: method is required" } };
+      return {
+        jsonrpc: "2.0",
+        id,
+        result: {
+          tools: TOOLS_MANIFEST,
+        },
+      };
     }
 
     if (method === "notifications/initialized") {
@@ -461,6 +517,59 @@ export async function POST(req: NextRequest) {
     }
 
     if (method === "tools/call") {
+      const toolName = msg?.params?.name;
+      const toolArgs = msg?.params?.arguments || {};
+
+      // connect_account and get_auth_status are always callable even before OAuth
+      if (toolName === "connect_account") {
+        if (!session) {
+          return {
+            jsonrpc: "2.0",
+            id,
+            result: {
+              content: [
+                {
+                  type: "text",
+                  text: `Please sign in to connect your Continuum Home account: ${origin}/api/oauth/authorize`,
+                },
+              ],
+            },
+          };
+        }
+        return {
+          jsonrpc: "2.0",
+          id,
+          result: {
+            content: [
+              {
+                type: "text",
+                text: "Your Continuum Home account is successfully connected and authorized.",
+              },
+            ],
+          },
+        };
+      }
+
+      if (toolName === "get_auth_status") {
+        return {
+          jsonrpc: "2.0",
+          id,
+          result: {
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({
+                  authenticated: !!session,
+                  userId: session?.uid || session?.id || null,
+                  email: session?.email || null,
+                  message: session ? "Connected to Continuum Home." : "Not connected. Sign in via OAuth to access data.",
+                }),
+              },
+            ],
+          },
+        };
+      }
+
       if (!session) {
         // Signal authentication requirement using RFC 9728 standard challenge
         return {
@@ -468,9 +577,6 @@ export async function POST(req: NextRequest) {
           errorResponse: authError || unauthorizedResponse(origin, "Authentication required", false)
         };
       }
-
-      const toolName = msg?.params?.name;
-      const toolArgs = msg?.params?.arguments || {};
       try {
         const result = await executeTool(session, toolName, toolArgs);
         return {

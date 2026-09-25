@@ -178,5 +178,69 @@ describe("OAuth Discovery & MCP Server Endpoints", () => {
       expect(toolNames).toContain("get_portfolio");
       expect(toolNames).toContain("get_settings");
     });
+
+    it("returns tools manifest on GET when Accept is not text/event-stream", async () => {
+      const req = new NextRequest(`${origin}/api/mcp`, {
+        method: "GET",
+        headers: { accept: "application/json" },
+      });
+      const res = await getMcp(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.result.tools.length).toBeGreaterThan(0);
+    });
+
+    it("handles empty POST probe or invalid JSON without failing with 400", async () => {
+      const emptyReq = new NextRequest(`${origin}/api/mcp`, {
+        method: "POST",
+        body: "",
+      });
+      const emptyRes = await postMcp(emptyReq);
+      expect(emptyRes.status).toBe(200);
+      const emptyJson = await emptyRes.json();
+      expect(emptyJson.result.tools.length).toBeGreaterThan(0);
+
+      const invalidReq = new NextRequest(`${origin}/api/mcp`, {
+        method: "POST",
+        body: "not-json-content",
+      });
+      const invalidRes = await postMcp(invalidReq);
+      expect(invalidRes.status).toBe(200);
+      const invalidJson = await invalidRes.json();
+      expect(invalidJson.result.tools.length).toBeGreaterThan(0);
+    });
+
+    it("allows unauthenticated call to connect_account and returns OAuth URL", async () => {
+      const req = new NextRequest(`${origin}/api/mcp`, {
+        method: "POST",
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: "connect-1",
+          method: "tools/call",
+          params: { name: "connect_account", arguments: {} },
+        }),
+      });
+      const res = await postMcp(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.result.content[0].text).toContain("/api/oauth/authorize");
+    });
+
+    it("allows unauthenticated call to get_auth_status and indicates not connected", async () => {
+      const req = new NextRequest(`${origin}/api/mcp`, {
+        method: "POST",
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: "auth-status-1",
+          method: "tools/call",
+          params: { name: "get_auth_status", arguments: {} },
+        }),
+      });
+      const res = await postMcp(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      const payload = JSON.parse(json.result.content[0].text);
+      expect(payload.authenticated).toBe(false);
+    });
   });
 });
