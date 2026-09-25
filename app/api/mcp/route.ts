@@ -33,8 +33,11 @@ function getOrigin(req: Request): string {
   }
 }
 
-function unauthorizedResponse(origin: string, message = "Authentication required") {
+function unauthorizedResponse(origin: string, message = "Authentication required", isInvalidToken = false) {
   const metadataUrl = `${origin}/.well-known/oauth-protected-resource`;
+  const challenge = isInvalidToken
+    ? `Bearer error="invalid_token", error_description="${message}", resource_metadata="${metadataUrl}"`
+    : `Bearer resource_metadata="${metadataUrl}", error_description="${message}"`;
   return new NextResponse(
     JSON.stringify({
       jsonrpc: "2.0",
@@ -44,7 +47,7 @@ function unauthorizedResponse(origin: string, message = "Authentication required
       status: 401,
       headers: {
         "Content-Type": "application/json",
-        "WWW-Authenticate": `Bearer error="invalid_token", error_description="${message}", resource_metadata="${metadataUrl}"`,
+        "WWW-Authenticate": challenge,
         Link: `<${metadataUrl}>; rel="oauth-protected-resource"`,
         ...CORS_HEADERS,
       },
@@ -68,14 +71,14 @@ export async function GET(req: NextRequest) {
 
   // If no auth header, respond with standard MCP OAuth challenge
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return unauthorizedResponse(origin, "No authorization provided");
+    return unauthorizedResponse(origin, "No authorization provided", false);
   }
 
   // Verify credentials
   try {
     await requireUser(req);
   } catch {
-    return unauthorizedResponse(origin, "Invalid or expired token");
+    return unauthorizedResponse(origin, "Invalid or expired token", true);
   }
 
   const { searchParams } = req.nextUrl;
@@ -372,14 +375,14 @@ export async function POST(req: NextRequest) {
   const authHeader = req.headers.get("authorization");
 
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return unauthorizedResponse(origin, "No authorization provided");
+    return unauthorizedResponse(origin, "No authorization provided", false);
   }
 
   let session: any;
   try {
     session = await requireUser(req);
   } catch {
-    return unauthorizedResponse(origin, "Invalid or expired token");
+    return unauthorizedResponse(origin, "Invalid or expired token", true);
   }
 
   let body: any;
