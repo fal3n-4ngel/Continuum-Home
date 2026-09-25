@@ -67,20 +67,6 @@ export async function OPTIONS() {
 
 export async function GET(req: NextRequest) {
   const origin = getOrigin(req);
-  const authHeader = req.headers.get("authorization");
-
-  // If no auth header, respond with standard MCP OAuth challenge
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return unauthorizedResponse(origin, "No authorization provided", false);
-  }
-
-  // Verify credentials
-  try {
-    await requireUser(req);
-  } catch {
-    return unauthorizedResponse(origin, "Invalid or expired token", true);
-  }
-
   const { searchParams } = req.nextUrl;
   const sessionId = searchParams.get("sessionId") || crypto.randomUUID();
 
@@ -374,15 +360,17 @@ export async function POST(req: NextRequest) {
   const origin = getOrigin(req);
   const authHeader = req.headers.get("authorization");
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
-    return unauthorizedResponse(origin, "No authorization provided", false);
-  }
+  let session: any = null;
+  let authError: NextResponse | null = null;
 
-  let session: any;
-  try {
-    session = await requireUser(req);
-  } catch {
-    return unauthorizedResponse(origin, "Invalid or expired token", true);
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    try {
+      session = await requireUser(req);
+    } catch {
+      authError = unauthorizedResponse(origin, "Invalid or expired token", true);
+    }
+  } else {
+    authError = unauthorizedResponse(origin, "Authentication required", false);
   }
 
   let body: any;
@@ -442,6 +430,14 @@ export async function POST(req: NextRequest) {
     }
 
     if (method === "tools/call") {
+      if (!session) {
+        // Signal authentication requirement using RFC 9728 standard challenge
+        return {
+          _isAuthError: true,
+          errorResponse: authError || unauthorizedResponse(origin, "Authentication required", false)
+        };
+      }
+
       const toolName = msg?.params?.name;
       const toolArgs = msg?.params?.arguments || {};
       try {
@@ -485,9 +481,16 @@ export async function POST(req: NextRequest) {
   let response: any;
   if (Array.isArray(body)) {
     const responses = (await Promise.all(body.map(handleSingleMessage))).filter(Boolean);
+    const authFail = responses.find((r) => r?._isAuthError);
+    if (authFail) {
+      return authFail.errorResponse;
+    }
     response = responses;
   } else {
     response = await handleSingleMessage(body);
+    if (response?._isAuthError) {
+      return response.errorResponse;
+    }
   }
 
   // If classic SSE client is connected on this sessionId, emit message event

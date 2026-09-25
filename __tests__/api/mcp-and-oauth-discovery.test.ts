@@ -82,24 +82,39 @@ describe("OAuth Discovery & MCP Server Endpoints", () => {
       expect(res.headers.get("access-control-allow-methods")).toContain("POST");
     });
 
-    it("returns 401 with standard WWW-Authenticate challenge when unauthenticated GET", async () => {
-      const req = new NextRequest(`${origin}/api/mcp`);
-      const res = await getMcp(req);
-      expect(res.status).toBe(401);
-      const wwwAuth = res.headers.get("www-authenticate");
-      expect(wwwAuth).toContain("Bearer");
-      expect(wwwAuth).toContain(`resource_metadata="${origin}/.well-known/oauth-protected-resource"`);
+    it("allows unauthenticated discovery for initialize and tools/list so ChatGPT indexes tools", async () => {
+      const initReq = new NextRequest(`${origin}/api/mcp`, {
+        method: "POST",
+        body: JSON.stringify({ jsonrpc: "2.0", id: "init-1", method: "initialize" }),
+      });
+      const initRes = await postMcp(initReq);
+      expect(initRes.status).toBe(200);
+
+      const listReq = new NextRequest(`${origin}/api/mcp`, {
+        method: "POST",
+        body: JSON.stringify({ jsonrpc: "2.0", id: "list-1", method: "tools/list" }),
+      });
+      const listRes = await postMcp(listReq);
+      expect(listRes.status).toBe(200);
+      const listJson = await listRes.json();
+      expect(listJson.result.tools.length).toBeGreaterThan(0);
     });
 
-    it("returns 401 with standard WWW-Authenticate challenge when unauthenticated POST", async () => {
+    it("returns 401 with standard WWW-Authenticate challenge when unauthenticated tools/call", async () => {
       const req = new NextRequest(`${origin}/api/mcp`, {
         method: "POST",
-        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: "call-1",
+          method: "tools/call",
+          params: { name: "list_expenses", arguments: {} },
+        }),
       });
       const res = await postMcp(req);
       expect(res.status).toBe(401);
       const wwwAuth = res.headers.get("www-authenticate");
       expect(wwwAuth).toContain("Bearer");
+      expect(wwwAuth).toContain(`resource_metadata="${origin}/.well-known/oauth-protected-resource"`);
     });
 
     it("handles initialize method when authenticated with CRON_TEST_TOKEN", async () => {
