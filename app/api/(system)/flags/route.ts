@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { enableInvestmentPortfolios, enableChatAssistant, enableGPTMigration } from '@/app/flags';
+import { enableInvestmentPortfolios, enableChatAssistant, enableGPTMigration, enabeGPTMigration } from '@/app/flags';
 
 export async function GET() {
   const isDev = process.env.NODE_ENV === 'development';
@@ -30,9 +30,13 @@ export async function GET() {
   }
 
   try {
-    const isInvestEnabled = await enableInvestmentPortfolios();
-    const isChatEnabled = await enableChatAssistant();
-    const isMigrationEnabled = await enableGPTMigration();
+    const [isInvestEnabled, isChatEnabled, migration1, migration2] = await Promise.all([
+      enableInvestmentPortfolios().catch(() => false),
+      enableChatAssistant().catch(() => false),
+      enableGPTMigration().catch(() => false),
+      enabeGPTMigration().catch(() => false),
+    ]);
+    const isMigrationEnabled = migration1 || migration2;
     return NextResponse.json({
       enableInvestmentPortfolios: isInvestEnabled,
       enableChatAssistant: isChatEnabled,
