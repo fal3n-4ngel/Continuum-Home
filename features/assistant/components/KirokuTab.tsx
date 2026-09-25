@@ -434,10 +434,10 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
 
             <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-stretch gap-3 shrink-0 w-full sm:w-auto">
               <Link
-                href="/assistant"
+                href="/assistant/plugin"
                 className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-sm border border-text-primary bg-text-primary px-7 py-3 text-xs font-mono uppercase tracking-wider font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 active:scale-95 text-center"
               >
-                <span>Plugin Setup &amp; Migration</span>
+                <span>Install New Plugin</span>
                 <span className="text-xs">→</span>
               </Link>
               <a
@@ -562,9 +562,28 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
                 {getGreeting()}, {firstName}
               </h2>
 
-              <p className="text-[13px] text-text-secondary leading-relaxed mb-8 max-w-md">
+              <p className="text-[13px] text-text-secondary leading-relaxed mb-6 max-w-md">
                 Natural language intelligence for your ledger, watchlist, and subscriptions.
               </p>
+
+              {enableGPTMigration && (
+                <div className="mb-8 flex flex-wrap items-center justify-between gap-2.5 rounded-sm border border-amber-500/30 bg-amber-500/5 px-3.5 py-2.5 text-left text-xs max-w-2xl w-full">
+                  <div className="flex items-center gap-2 text-text-secondary">
+                    <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 shrink-0">
+                      OpenAI Notice
+                    </span>
+                    <span className="text-[12px] leading-snug">
+                      Custom GPTs are being sunset by ChatGPT and will stop working after <strong>December 11, 2026</strong>.
+                    </span>
+                  </div>
+                  <Link
+                    href="/assistant/plugin"
+                    className="font-mono text-[11px] font-semibold text-text-primary underline hover:text-amber-600 transition-colors shrink-0"
+                  >
+                    Install Plugin →
+                  </Link>
+                </div>
+              )}
 
               <div className="grid grid-cols-4 max-xl:grid-cols-2 max-sm:grid-cols-1 gap-3 w-full">
                 {SUGGESTED_PROMPTS.map((prompt, idx) => {

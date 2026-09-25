@@ -205,31 +205,41 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
           </p>
         </div>
 
+        {/* OpenAI December 11 Retirement Notice - Gated under enableGPTMigration */}
         {enableGPTMigration && (
           <div className="rounded-sm border border-amber-500/30 bg-amber-500/5 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div className="flex flex-col gap-1 max-w-xl">
+            <div className="flex flex-col gap-1.5 max-w-xl">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-[9px] font-bold uppercase tracking-[1.2px] text-amber-600 dark:text-amber-400">
-                  OpenAI Notice
+                  OpenAI Policy Notice
                 </span>
                 <span className="font-mono text-[9px] text-text-muted">·</span>
                 <span className="font-mono text-[9px] text-text-muted">
-                  Custom GPTs Retiring Dec 11, 2026
+                  Custom GPTs Sunsetting Dec 11, 2026
                 </span>
               </div>
               <p className="text-[13px] leading-relaxed text-text-secondary">
-                OpenAI is retiring Custom GPTs on <strong className="text-text-primary">December 11, 2026</strong> in favor of modular Plugins &amp; Skills. If you maintain a Custom GPT, migrate it via <span className="font-mono text-xs">ChatGPT &gt; My GPTs &gt; Migrate to plugin</span>. Your OpenAPI actions and OAuth 2.0 authentication below remain 100% compatible.
+                By decision of OpenAI / ChatGPT, <strong className="text-text-primary">the Custom GPT is going away and will permanently stop working after December 11, 2026</strong>. Our official Custom GPT store link will be discontinued after this date. Continuum Home has already prepared the replacement: the new <strong>ChatGPT Plugin &amp; MCP Connector</strong>.
               </p>
             </div>
-            <a
-              href="https://help.openai.com/en/articles/20001519-custom-gpt-retirement-and-migration-faq"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex cursor-pointer shrink-0 items-center justify-center gap-1.5 rounded-sm border border-border-subtle bg-bg-card px-3.5 py-2 font-mono text-xs text-text-primary shadow-xs transition-all hover:bg-bg-secondary"
-            >
-              <span>Migration FAQ</span>
-              <span className="text-xs">↗</span>
-            </a>
+            <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
+              <Link
+                href="/assistant/plugin"
+                className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-text-primary bg-text-primary px-3.5 py-2 font-mono text-xs uppercase tracking-wider font-semibold text-bg-primary shadow-xs transition-all hover:opacity-90 w-full sm:w-auto text-center"
+              >
+                <span>Install New Plugin</span>
+                <span className="text-xs">→</span>
+              </Link>
+              <a
+                href="https://help.openai.com/en/articles/20001519-custom-gpt-retirement-and-migration-faq"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex cursor-pointer shrink-0 items-center justify-center gap-1.5 rounded-sm border border-border-subtle bg-bg-card px-3 py-2 font-mono text-xs text-text-secondary shadow-xs transition-all hover:bg-bg-secondary hover:text-text-primary"
+              >
+                <span>FAQ</span>
+                <span className="text-xs">↗</span>
+              </a>
+            </div>
           </div>
         )}
 
