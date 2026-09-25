@@ -212,22 +212,22 @@ export function ArchitectureFlowDiagram() {
           <text x="162" y="30" textAnchor="middle" fontFamily="monospace" fontSize="7.5" fontWeight="600" fill="#9E5D48">WEBSITE</text>
         </g>
 
-        {/* Card 1.2: Custom GPT & AI Agents */}
+        {/* Card 1.2: MCP Server & AI Agents */}
         <g transform="translate(40, 204)" className="cursor-pointer">
           <rect x="0" y="0" width="190" height="54" rx="3" filter="url(#arch-card-shadow)" className="fill-[#FAF8F5] dark:fill-[#18191D] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="1" />
           
-          {/* Icon Box: Custom GPT & Actions */}
+          {/* Icon Box: MCP Server & Actions */}
           <rect x="10" y="11" width="32" height="32" rx="2" className="fill-[#F3EFEA] dark:fill-[#121316] stroke-[#DDD5CB] dark:stroke-[#25272E]" strokeWidth="0.8" />
           <path d="M 20 27 L 23 21 L 26 27 L 32 23 L 26 31 Z" stroke="#10B981" strokeWidth="1.2" strokeLinejoin="round" fill="none" />
           <circle cx="26" cy="21" r="1.5" fill="#10B981" />
 
           {/* Texts */}
-          <text x="50" y="26" fontFamily="sans-serif" fontSize="11" fontWeight="600" className="fill-[#26211F] dark:fill-[#F4F5F7]">Custom GPT &amp; AI</text>
-          <text x="50" y="38" fontFamily="sans-serif" fontSize="9" className="fill-[#6D635C] dark:fill-[#9BA1B0]">OpenAPI 3.1 Actions</text>
+          <text x="50" y="26" fontFamily="sans-serif" fontSize="11" fontWeight="600" className="fill-[#26211F] dark:fill-[#F4F5F7]">MCP &amp; AI Agents</text>
+          <text x="50" y="38" fontFamily="sans-serif" fontSize="9" className="fill-[#6D635C] dark:fill-[#9BA1B0]">Native Tools &amp; OpenAPI</text>
 
           {/* Badge */}
           <rect x="134" y="19" width="46" height="15" rx="1.5" className="fill-[#F3EFEA] dark:fill-[#121316] stroke-[#10B981]/40" strokeWidth="0.8" />
-          <text x="157" y="30" textAnchor="middle" fontFamily="monospace" fontSize="7" fontWeight="600" fill="#10B981">CUSTOM GPT</text>
+          <text x="157" y="30" textAnchor="middle" fontFamily="monospace" fontSize="7" fontWeight="600" fill="#10B981">NATIVE MCP</text>
         </g>
 
         {/* ================= COLUMN 2: EXTERNAL SYNCS ================= */}
@@ -380,7 +380,7 @@ export function ArchitectureFlowDiagram() {
       <div className="mt-4 pt-3 border-t border-dashed border-[#DDD5CB] dark:border-[#25272E] flex flex-wrap items-center justify-between gap-3 font-mono text-[9px] text-[#9C9288] uppercase">
         <div className="flex items-center gap-2">
           <span className="text-[#9E5D48] dark:text-[#E07A5F] font-semibold">FLOW:</span>
-          <span>1. Incoming (Custom GPT / Website)</span>
+          <span>1. Incoming (MCP / AI Agent / Web)</span>
           <span className="text-[#D99419]">&rarr;</span>
           <span>2. External Syncs (Trakt / AniList / Books)</span>
           <span className="text-[#D99419]">&rarr;</span>

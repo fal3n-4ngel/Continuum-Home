@@ -35,9 +35,9 @@ const FAQ_ITEMS: { question: string; answer: string; ref: string }[] = [
   },
   {
     ref: "SPEC-03",
-    question: "How does the OpenAI / ChatGPT Custom GPT integration work?",
+    question: "How does the AI Assistant & MCP integration work?",
     answer:
-      "Continuum automatically generates a compliant OpenAPI 3.1 specification at /api/openapi.json. You configure ChatGPT Actions or Claude with your authenticated token, enabling you to log expenses or update queues via natural language.",
+      "Continuum provides a native Model Context Protocol (MCP) server at /api/mcp and an OpenAPI 3.1 specification at /api/openapi.json. Connect ChatGPT Plugins, Claude Desktop, Cursor, or autonomous agents securely via OAuth 2.0 to log expenses, check watchlists, and manage records in natural language.",
   },
   {
     ref: "SPEC-04",
@@ -328,7 +328,7 @@ export default function LandingPage({
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-[#D99419]">&bull;</span>
-                    <span>Custom GPT &amp; AI Agent API</span>
+                    <span>Native MCP &amp; AI Agent API</span>
                   </li>
                 </ul>
 
