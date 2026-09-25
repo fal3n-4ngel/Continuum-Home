@@ -17,7 +17,7 @@ export async function GET() {
       process.env.ENABE_GPT_MIGRATION;
 
     const chatValue = envChat !== undefined ? envChat === 'true' : true;
-    const migrationValue = envMigration !== undefined ? envMigration === 'true' : false;
+    const migrationValue = envMigration !== undefined ? envMigration === 'true' : true;
 
     return NextResponse.json({
       enableInvestmentPortfolios: true,
