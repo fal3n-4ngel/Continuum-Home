@@ -3,6 +3,9 @@ import { NextRequest } from "next/server";
 import { requireUser, verifyIdToken } from "@/lib/auth/auth";
 import { isAllowedOAuthRedirect } from "@/lib/auth/oauth-clients";
 import { GET as oauthAuthorizeGet, POST as oauthAuthorizePost } from "@/app/api/(auth)/oauth/authorize/route";
+import { POST as oauthTokenPost } from "@/app/api/(auth)/oauth/token/route";
+import crypto from "crypto";
+import { redis } from "@/lib/utils";
 
 describe("Security Invariant: Auth & OAuth Security Controls", () => {
   beforeEach(() => {
@@ -110,6 +113,58 @@ describe("Security Invariant: Auth & OAuth Security Controls", () => {
       });
       const res = await oauthAuthorizePost(req);
       expect(res.status).toBe(400);
+    });
+  });
+
+  describe("PKCE S256 Code Verifier Validation", () => {
+    it("validates PKCE S256 code_verifier correctly on authorization_code exchange", async () => {
+      const codeVerifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+      const codeChallenge = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
+      const testCode = "test-auth-code-pkce-123";
+
+      if (redis) {
+        await redis.set(
+          `oauth:code:${testCode}`,
+          JSON.stringify({
+            refreshToken: "mock-refresh-token",
+            clientId: "chatgpt",
+            redirectUri: "https://chatgpt.com/aip/g-12345/oauth/callback",
+            codeChallenge,
+            codeChallengeMethod: "S256",
+          }),
+          { ex: 60 }
+        );
+
+        // Exchange with wrong code_verifier -> must fail with 400
+        const failReq = new NextRequest("http://localhost:3000/api/oauth/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            grant_type: "authorization_code",
+            code: testCode,
+            code_verifier: "wrong-verifier-1234567890",
+          }),
+        });
+        const failRes = await oauthTokenPost(failReq);
+        expect(failRes.status).toBe(400);
+        const failJson = await failRes.json();
+        expect(failJson.error).toBe("invalid_grant");
+
+        // Exchange with correct code_verifier -> must succeed with 200
+        const okReq = new NextRequest("http://localhost:3000/api/oauth/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            grant_type: "authorization_code",
+            code: testCode,
+            code_verifier: codeVerifier,
+          }),
+        });
+        const okRes = await oauthTokenPost(okReq);
+        expect(okRes.status).toBe(200);
+        const okJson = await okRes.json();
+        expect(okJson.access_token).toBe("mock-refresh-token");
+      }
     });
   });
 });

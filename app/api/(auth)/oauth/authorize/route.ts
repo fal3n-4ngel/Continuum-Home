@@ -12,6 +12,8 @@ export async function GET(req: NextRequest) {
   const clientId = searchParams.get("client_id");
   const redirectUri = searchParams.get("redirect_uri");
   const state = searchParams.get("state");
+  const codeChallenge = searchParams.get("code_challenge") || "";
+  const codeChallengeMethod = searchParams.get("code_challenge_method") || "";
 
   if (!clientId || !redirectUri || !state) {
     return new NextResponse("Missing required OAuth 2.0 query parameters (client_id, redirect_uri, state).", { status: 400 });
@@ -266,7 +268,9 @@ export async function GET(req: NextRequest) {
                 refreshToken,
                 clientId: "${clientId}",
                 redirectUri: "${redirectUri}",
-                state: "${state}"
+                state: "${state}",
+                codeChallenge: "${codeChallenge}",
+                codeChallengeMethod: "${codeChallengeMethod}"
               })
             });
 
@@ -296,7 +300,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { idToken, refreshToken, clientId, redirectUri, state } = body;
+    const { idToken, refreshToken, clientId, redirectUri, state, codeChallenge, codeChallengeMethod } = body;
 
     if (!idToken || !refreshToken || !clientId || !redirectUri || !state) {
       return NextResponse.json({ error: "Missing required parameters." }, { status: 400 });
@@ -317,7 +321,15 @@ export async function POST(req: NextRequest) {
     const authCode = crypto.randomUUID();
     const cacheKey = `oauth:code:${authCode}`;
 
-    await redis.set(cacheKey, refreshToken, { ex: 300 });
+    const authPayload = {
+      refreshToken,
+      clientId,
+      redirectUri,
+      codeChallenge: codeChallenge || null,
+      codeChallengeMethod: codeChallengeMethod || null,
+    };
+
+    await redis.set(cacheKey, JSON.stringify(authPayload), { ex: 300 });
 
     const separator = redirectUri.includes("?") ? "&" : "?";
     const redirectUrl = `${redirectUri}${separator}code=${authCode}&state=${state}`;

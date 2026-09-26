@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { redis } from "@/lib/utils";
+import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +22,7 @@ export async function POST(req: NextRequest) {
     let grantType: string | null = null;
     let code: string | null = null;
     let clientRefreshToken: string | null = null;
+    let codeVerifier: string | null = null;
 
     const contentType = req.headers.get("content-type") || "";
     if (contentType.includes("application/json")) {
@@ -28,12 +30,14 @@ export async function POST(req: NextRequest) {
       grantType = json.grant_type || null;
       code = json.code || null;
       clientRefreshToken = json.refresh_token || null;
+      codeVerifier = json.code_verifier || null;
     } else {
       const text = await req.text();
       const params = new URLSearchParams(text);
       grantType = params.get("grant_type");
       code = params.get("code");
       clientRefreshToken = params.get("refresh_token");
+      codeVerifier = params.get("code_verifier");
     }
 
     if (!grantType) {
@@ -59,13 +63,68 @@ export async function POST(req: NextRequest) {
       }
 
       const cacheKey = `oauth:code:${code}`;
-      const refreshToken = await redis.get<string>(cacheKey);
+      const rawStored = await redis.get<any>(cacheKey);
 
-      if (!refreshToken) {
+      if (!rawStored) {
         return NextResponse.json(
           { error: "invalid_grant", error_description: "Invalid or expired authorization code." },
           { status: 400, headers: CORS_HEADERS }
         );
+      }
+
+      let refreshToken: string;
+      let codeChallenge: string | null = null;
+      let codeChallengeMethod: string | null = null;
+
+      if (typeof rawStored === "string") {
+        try {
+          const parsed = JSON.parse(rawStored);
+          refreshToken = parsed.refreshToken;
+          codeChallenge = parsed.codeChallenge || null;
+          codeChallengeMethod = parsed.codeChallengeMethod || null;
+        } catch {
+          refreshToken = rawStored;
+        }
+      } else if (typeof rawStored === "object" && rawStored !== null) {
+        refreshToken = (rawStored as any).refreshToken;
+        codeChallenge = (rawStored as any).codeChallenge || null;
+        codeChallengeMethod = (rawStored as any).codeChallengeMethod || null;
+      } else {
+        return NextResponse.json(
+          { error: "invalid_grant", error_description: "Malformed authorization code record." },
+          { status: 400, headers: CORS_HEADERS }
+        );
+      }
+
+      // PKCE Validation (RFC 7636)
+      if (codeChallenge) {
+        if (!codeVerifier) {
+          return NextResponse.json(
+            { error: "invalid_grant", error_description: "Missing PKCE code_verifier." },
+            { status: 400, headers: CORS_HEADERS }
+          );
+        }
+
+        if (codeChallengeMethod === "S256" || !codeChallengeMethod) {
+          const computedChallenge = crypto
+            .createHash("sha256")
+            .update(codeVerifier)
+            .digest("base64url");
+
+          if (computedChallenge !== codeChallenge) {
+            return NextResponse.json(
+              { error: "invalid_grant", error_description: "Invalid PKCE code_verifier." },
+              { status: 400, headers: CORS_HEADERS }
+            );
+          }
+        } else if (codeChallengeMethod === "plain") {
+          if (codeVerifier !== codeChallenge) {
+            return NextResponse.json(
+              { error: "invalid_grant", error_description: "Invalid PKCE code_verifier." },
+              { status: 400, headers: CORS_HEADERS }
+            );
+          }
+        }
       }
 
       await redis.del(cacheKey);
