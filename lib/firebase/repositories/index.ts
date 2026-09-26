@@ -4,3 +4,4 @@ export * from "./subscriptions.repo";
 export * from "./portfolio.repo";
 export * from "./settings.repo";
 export * from "./assistant.repo";
+export * from "./push.repo";

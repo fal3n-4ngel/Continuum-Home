@@ -6,7 +6,7 @@ import { LogoMark } from "@/components/Logo";
 import { SITE_NAME } from "@/lib/utils";
 import { safeSessionStorage } from "@/lib/utils/storage";
 import { useTheme } from "@/lib/theme/use-theme";
-import type { Auth } from "firebase/auth";
+import { GoogleAuthProvider, signInWithRedirect, type Auth } from "firebase/auth";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -33,74 +33,46 @@ function GoogleIcon({ className }: { className?: string }) {
 
 export default function LoginPage() {
   useTheme();
-  const [status, setStatus] = useState<"loading" | "ready" | "authenticating" | "error">("loading");
+  const [status, setStatus] = useState<"loading" | "ready" | "authenticating" | "error" | "redirecting">("loading");
   const [error, setError] = useState("");
-  const authInstanceRef = useRef<Auth | null>(null);
-  const hasTriggeredInitialRef = useRef(false);
+  const [isInteractiveSigningIn, setIsInteractiveSigningIn] = useState(false);
+  const authRef = useRef<any>(null);
 
-  // Perform sign-in (prioritizing popup on localhost to avoid 3rd-party cookie drops)
-  const handleSignIn = async (preferredMode?: "popup" | "redirect") => {
+  const handleGoogleSignIn = async () => {
+    if (!authRef.current || isInteractiveSigningIn) return;
+    setIsInteractiveSigningIn(true);
+    setError("");
     try {
-      setStatus("authenticating");
-      setError("");
-
-      const auth = authInstanceRef.current;
-      if (!auth) {
-        throw new Error("Authentication client is still initializing.");
-      }
-
-      const { GoogleAuthProvider, signInWithPopup, signInWithRedirect } = await import("firebase/auth");
+      const { GoogleAuthProvider, signInWithPopup, signInWithRedirect } =
+        await import("firebase/auth");
       const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: "select_account" });
-
-      const isLocalhost =
-        typeof window !== "undefined" &&
-        (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-
-      const mode = preferredMode || (isLocalhost ? "popup" : "popup");
-
-      if (mode === "popup") {
-        try {
-          const result = await signInWithPopup(auth, provider);
-          if (result?.user) {
-            safeSessionStorage.removeItem("redirect_sent");
-            window.location.replace("/dashboard");
-            return;
-          }
-        } catch (popupErr: any) {
-          // If popup was closed or blocked, don't show a harsh red fatal error
-          if (
-            popupErr?.code === "auth/popup-closed-by-user" ||
-            popupErr?.code === "auth/cancelled-popup-request"
-          ) {
-            setStatus("ready");
-            return;
-          }
-
-          if (popupErr?.code === "auth/popup-blocked") {
-            if (!isLocalhost) {
-              // Fallback to redirect in production if popup was blocked
-              setStatus("authenticating");
-              safeSessionStorage.setItem("redirect_sent", "1");
-              await signInWithRedirect(auth, provider);
-              return;
-            } else {
-              setError("Popup was blocked by your browser. Please click the button below to allow sign-in.");
-              setStatus("ready");
-              return;
-            }
-          }
-
+      try {
+        const result = await signInWithPopup(authRef.current, provider);
+        if (result?.user) {
+          sessionStorage.removeItem("redirect_sent");
+          window.location.replace("/dashboard");
+        }
+      } catch (popupErr: any) {
+        if (
+          popupErr.code === "auth/popup-blocked" ||
+          popupErr.code === "auth/cancelled-popup-request"
+        ) {
+          sessionStorage.setItem("redirect_sent", "1");
+          setStatus("redirecting");
+          await signInWithRedirect(authRef.current, provider);
+        } else if (popupErr.code === "auth/popup-closed-by-user") {
+          setError("Sign-in window was closed. Please try again.");
+          setStatus("error");
+        } else {
           throw popupErr;
         }
-      } else {
-        safeSessionStorage.setItem("redirect_sent", "1");
-        await signInWithRedirect(auth, provider);
       }
     } catch (err: any) {
-      console.error("[Login] Sign-in error:", err);
+      console.error("[Login] Interactive sign-in error:", err);
       setError(err?.message || "Sign-in failed. Please try again.");
       setStatus("error");
+    } finally {
+      setIsInteractiveSigningIn(false);
     }
   };
 
@@ -116,7 +88,9 @@ export default function LoginPage() {
 
         const { getAuth, getRedirectResult, onAuthStateChanged } = await import("firebase/auth");
         const auth = getAuth(app);
-        authInstanceRef.current = auth;
+        if (!cancelled) {
+          authRef.current = auth;
+        }
 
         // 1. If already logged in, redirect immediately
         if (auth.currentUser) {
@@ -145,25 +119,17 @@ export default function LoginPage() {
           console.warn("[Login] Redirect result:", redirectErr);
         }
 
-        if (cancelled) return;
-
-        const isLocalhost =
-          typeof window !== "undefined" &&
-          (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
-
-        // Guard against React Strict Mode running useEffect twice in dev
-        if (!hasTriggeredInitialRef.current) {
-          hasTriggeredInitialRef.current = true;
-
-          const hadRedirectAttempt = safeSessionStorage.getItem("redirect_sent");
-          if (hadRedirectAttempt) {
-            safeSessionStorage.removeItem("redirect_sent");
+        if (!cancelled && !auth.currentUser) {
+          const hasAttempted = sessionStorage.getItem("redirect_sent");
+          if (hasAttempted) {
+            sessionStorage.removeItem("redirect_sent");
+            setStatus("error");
+            setError("Unable to complete redirect sign-in. You can sign in directly below.");
+          } else {
+            sessionStorage.setItem("redirect_sent", "1");
+            setStatus("redirecting");
+            await signInWithRedirect(auth, new GoogleAuthProvider());
           }
-
-          // In local development, show the direct Google button immediately to prevent
-          // third-party cookie drops or popup blocker races.
-          // In production, also ready the UI gracefully.
-          setStatus("ready");
         }
 
         return () => unsubscribe();
@@ -228,7 +194,7 @@ export default function LoginPage() {
           </p>
 
           <button
-            onClick={() => handleSignIn("popup")}
+            onClick={() => handleGoogleSignIn()}
             className="flex items-center justify-center gap-2.5 w-full border border-[#DDD5CB] dark:border-[#25272E] bg-[#FFFFFF] dark:bg-[#121316] hover:bg-[#F3EFEA] dark:hover:bg-[#1E2025] hover:border-[#9E5D48] px-4 py-2.5 rounded-sm font-sans text-xs font-semibold text-[#26211F] dark:text-[#F4F5F7] transition-all duration-150 shadow-xs cursor-pointer active:scale-[0.99]"
           >
             <GoogleIcon />
@@ -246,24 +212,47 @@ export default function LoginPage() {
 
       {/* Error View */}
       {status === "error" && (
-        <div className="flex flex-col items-center gap-4 w-full">
-          <div className="border border-rose-500/30 bg-rose-500/10 px-3.5 py-2.5 rounded-sm w-full">
-            <p className="font-mono text-xs text-rose-600 dark:text-rose-400 break-words leading-relaxed">
+        <div className="flex w-full flex-col items-center gap-4">
+          {error && (
+            <p className="rounded-lg border border-rose-500/20 bg-rose-500/10 p-2.5 text-xs text-rose-500 max-w-[320px]">
               {error}
             </p>
-          </div>
+          )}
 
           <button
-            onClick={() => handleSignIn("popup")}
-            className="flex items-center justify-center gap-2.5 w-full border border-[#DDD5CB] dark:border-[#25272E] bg-[#FFFFFF] dark:bg-[#121316] hover:bg-[#F3EFEA] dark:hover:bg-[#1E2025] hover:border-[#9E5D48] px-4 py-2.5 rounded-sm font-sans text-xs font-semibold text-[#26211F] dark:text-[#F4F5F7] transition-all duration-150 shadow-xs cursor-pointer"
+            type="button"
+            onClick={handleGoogleSignIn}
+            disabled={isInteractiveSigningIn}
+            className="flex w-full items-center justify-center gap-2.5 rounded-xl bg-text-primary px-4 py-2.5 text-xs font-semibold text-bg-primary hover:opacity-90 transition-all disabled:opacity-50 cursor-pointer shadow-sm"
           >
-            <GoogleIcon />
-            <span>Retry with Google</span>
+            {isInteractiveSigningIn ? (
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-bg-primary border-t-transparent" />
+            ) : (
+              <svg className="h-4 w-4" viewBox="0 0 24 24">
+                <path
+                  fill="#4285F4"
+                  d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"
+                />
+                <path
+                  fill="#34A853"
+                  d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"
+                />
+                <path
+                  fill="#FBBC05"
+                  d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.16 0 9.97 0 12c0 2.03.45 3.84 1.25 5.42l4.03-3.15z"
+                />
+                <path
+                  fill="#EA4335"
+                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
+                />
+              </svg>
+            )}
+            <span>{isInteractiveSigningIn ? "Signing in…" : "Sign in with Google"}</span>
           </button>
 
           <Link
             href="/"
-            className="font-mono text-[11px] text-[#9C9288] hover:text-[#9E5D48] transition-colors uppercase tracking-wider"
+            className="rounded-full border border-border-subtle bg-bg-primary px-4 py-1.5 text-xs font-semibold text-text-muted hover:text-text-primary hover:border-border-hover transition-all"
           >
             ← Back to home
           </Link>

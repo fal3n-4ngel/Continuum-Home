@@ -1,9 +1,27 @@
 import { NextResponse } from "next/server";
 import { AUTHOR, SITE_URL } from "@/lib/utils";
 
-export const dynamic = "force-static";
+export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(req?: Request) {
+  let serverUrl = SITE_URL;
+  if (req) {
+    try {
+      const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
+      const proto = req.headers.get("x-forwarded-proto") || "https";
+      if (host) {
+        serverUrl = `${proto}://${host}`;
+      } else {
+        const url = new URL(req.url);
+        serverUrl = url.origin;
+      }
+    } catch {
+      serverUrl = SITE_URL;
+    }
+  } else if (process.env.APP_URL) {
+    serverUrl = process.env.APP_URL;
+  }
+
   const errorResponse = (description: string) => ({
     description,
     content: { "application/json": { schema: { $ref: "#/components/schemas/Error" } } },
@@ -42,8 +60,8 @@ export async function GET() {
     },
     servers: [
       {
-        url: SITE_URL,
-        description: "Production server",
+        url: serverUrl,
+        description: serverUrl.includes("uat") ? "UAT environment server" : "Production server",
       },
     ],
     security: [{ BearerAuth: [] }],

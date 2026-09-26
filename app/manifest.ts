@@ -1,15 +1,17 @@
 import type { MetadataRoute } from "next";
-import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/utils";
+import { SITE_DESCRIPTION, SITE_NAME, isUatDeployment } from "@/lib/utils";
 
 export default function manifest(): MetadataRoute.Manifest {
+  const isUat = isUatDeployment();
+
   return {
-    name: SITE_NAME,
-    short_name: "Continuum",
-    description: SITE_DESCRIPTION,
+    name: isUat ? `${SITE_NAME} (UAT)` : SITE_NAME,
+    short_name: isUat ? "Continuum UAT" : "Continuum",
+    description: isUat ? `[UAT Environment] ${SITE_DESCRIPTION}` : SITE_DESCRIPTION,
     start_url: "/dashboard",
     display: "standalone",
     background_color: "#f4f3ec",
-    theme_color: "#1c1b18",
+    theme_color: isUat ? "#DC2626" : "#1c1b18",
     icons: [
       { src: "/icon", sizes: "32x32", type: "image/png" },
       { src: "/icon-192", sizes: "192x192", type: "image/png", purpose: "any" },

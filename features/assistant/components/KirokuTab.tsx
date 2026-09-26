@@ -14,8 +14,12 @@ import {
   PieChart,
   CalendarClock,
   Shield,
+  ExternalLink,
+  Sparkles,
 } from "lucide-react";
+import Link from "next/link";
 import { useAuthStore } from "@/lib/stores/auth-store";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 interface KirokuTabProps {
   idToken?: string;
@@ -91,6 +95,7 @@ function formatKirokuErrorMessage(raw?: string): string {
 
 export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: KirokuTabProps) {
   const { user, isProUser } = useAuthStore();
+  const { enableGPTMigration } = useFeatureFlags();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [history, setHistory] = useState<any[]>([]);
   const [input, setInput] = useState("");
@@ -402,6 +407,89 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
             </a>
           </div>
         </div>
+
+        {/* Free Alternative: ChatGPT Plugin & Connected App Migration or Custom GPT */}
+        {enableGPTMigration ? (
+          <div className="rounded-sm border border-amber-500/30 bg-bg-card p-6 sm:p-8 shadow-subtle flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+            <div className="flex flex-col gap-2.5 max-w-2xl">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[1.2px] text-amber-600 dark:text-amber-400">
+                  Migration Notice
+                </span>
+                <span className="font-mono text-[9px] text-text-muted">·</span>
+                <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[1.2px] text-text-muted">
+                  ChatGPT Plugins &amp; Skills
+                </span>
+              </div>
+              <h3 className="font-serif text-2xl sm:text-3xl italic font-normal tracking-tight text-text-primary">
+                ChatGPT Plugin &amp; Connected App Migration
+              </h3>
+              <p className="text-[13.5px] leading-relaxed text-text-secondary">
+                OpenAI is retiring legacy Custom GPTs on <strong className="text-text-primary">December 11, 2026</strong>. You can migrate your GPT to the new Plugin &amp; Skills architecture, or connect Continuum directly to any external AI client via our standard OpenAPI 3.0 schema.
+              </p>
+              <div className="flex items-center gap-2 text-xs text-text-muted font-mono">
+                <span>Legacy Custom GPT active until Dec 11</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-stretch gap-3 shrink-0 w-full sm:w-auto">
+              <Link
+                href="/assistant/plugin"
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-sm border border-text-primary bg-text-primary px-7 py-3 text-xs font-mono uppercase tracking-wider font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 active:scale-95 text-center"
+              >
+                <span>Install New Plugin</span>
+                <span className="text-xs">→</span>
+              </Link>
+              <a
+                href="https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-dashboard-public"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-border-subtle bg-bg-secondary px-5 py-2.5 text-xs font-mono uppercase tracking-wider font-medium text-text-secondary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover text-center"
+              >
+                <span>Legacy GPT Link</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-sm border border-border-subtle bg-bg-card p-6 sm:p-8 shadow-subtle flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">
+            <div className="flex flex-col gap-2.5 max-w-2xl">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[1.2px] text-text-muted">
+                  Free Alternative
+                </span>
+                <span className="font-mono text-[9px] text-text-muted">·</span>
+                <span className="font-mono text-[9.5px] font-semibold uppercase tracking-[1.2px] text-text-muted">
+                  GPT Store
+                </span>
+              </div>
+              <h3 className="font-serif text-2xl sm:text-3xl italic font-normal tracking-tight text-text-primary">
+                Use Our Official Continuum Custom GPT
+              </h3>
+              <p className="text-[13.5px] leading-relaxed text-text-secondary">
+                Don&apos;t have Pro? You can still chat with your Continuum workspace directly inside ChatGPT. Connect your account with secure OAuth 2.0 to log expenses, check spending, and manage watchlists from any device at zero cost.
+              </p>
+            </div>
+
+            <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-stretch gap-3 shrink-0 w-full sm:w-auto">
+              <a
+                href="https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-dashboard-public"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-sm border border-text-primary bg-text-primary px-7 py-3 text-xs font-mono uppercase tracking-wider font-semibold text-bg-primary shadow-xs transition-all duration-200 hover:opacity-90 active:scale-95 text-center"
+              >
+                <span>Open in ChatGPT</span>
+                <ExternalLink className="h-3.5 w-3.5" />
+              </a>
+              <Link
+                href="/assistant"
+                className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-border-subtle bg-bg-secondary px-5 py-2.5 text-xs font-mono uppercase tracking-wider font-medium text-text-secondary shadow-2xs transition-all duration-200 hover:bg-bg-primary hover:text-text-primary hover:border-border-hover text-center"
+              >
+                <span>Setup &amp; Token Guide</span>
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -474,9 +562,28 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
                 {getGreeting()}, {firstName}
               </h2>
 
-              <p className="text-[13px] text-text-secondary leading-relaxed mb-8 max-w-md">
+              <p className="text-[13px] text-text-secondary leading-relaxed mb-6 max-w-md">
                 Natural language intelligence for your ledger, watchlist, and subscriptions.
               </p>
+
+              {enableGPTMigration && (
+                <div className="mb-8 flex flex-wrap items-center justify-between gap-2.5 rounded-sm border border-amber-500/30 bg-amber-500/5 px-3.5 py-2.5 text-left text-xs max-w-2xl w-full">
+                  <div className="flex items-center gap-2 text-text-secondary">
+                    <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 shrink-0">
+                      OpenAI Notice
+                    </span>
+                    <span className="text-[12px] leading-snug">
+                      Custom GPTs are being sunset by ChatGPT and will stop working after <strong>December 11, 2026</strong>.
+                    </span>
+                  </div>
+                  <Link
+                    href="/assistant/plugin"
+                    className="font-mono text-[11px] font-semibold text-text-primary underline hover:text-amber-600 transition-colors shrink-0"
+                  >
+                    Install Plugin →
+                  </Link>
+                </div>
+              )}
 
               <div className="grid grid-cols-4 max-xl:grid-cols-2 max-sm:grid-cols-1 gap-3 w-full">
                 {SUGGESTED_PROMPTS.map((prompt, idx) => {
