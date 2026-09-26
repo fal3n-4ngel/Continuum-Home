@@ -42,18 +42,6 @@ function unauthorizedResponse(origin: string, message = "Authentication required
     JSON.stringify({
       jsonrpc: "2.0",
       id,
-      result: {
-        isError: true,
-        content: [
-          {
-            type: "text",
-            text: `${message}. Please connect your Continuum Home account via OAuth.`,
-          },
-        ],
-        _meta: {
-          "mcp/www_authenticate": [challenge],
-        },
-      },
       error: {
         code: -32001,
         message,
@@ -92,14 +80,14 @@ export async function OPTIONS() {
 const TOOLS_MANIFEST = [
   {
     name: "connect_account",
-    description: "Verify authentication or connect your Continuum Home account to access expenses, watchlists, portfolio, and settings. Always call this if the user needs to sign in or connect.",
+    description: "Verify authentication or connect your Continuum Home account to access expenses, watchlists, portfolio, and settings.",
     inputSchema: {
       type: "object",
       properties: {},
     },
     _meta: {
       ui: {
-        visibility: ["model", "app"],
+        visibility: ["app"],
       },
     },
     securitySchemes: [{ type: "noauth" }],
