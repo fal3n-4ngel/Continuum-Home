@@ -73,6 +73,12 @@ const TOOLS_MANIFEST = [
       type: "object",
       properties: {},
     },
+    _meta: {
+      ui: {
+        visibility: ["model", "app"],
+      },
+    },
+    securitySchemes: [{ type: "noauth" }],
   },
   {
     name: "get_auth_status",
@@ -81,6 +87,12 @@ const TOOLS_MANIFEST = [
       type: "object",
       properties: {},
     },
+    _meta: {
+      ui: {
+        visibility: ["model", "app"],
+      },
+    },
+    securitySchemes: [{ type: "noauth" }],
   },
   {
     name: "list_expenses",
@@ -94,6 +106,12 @@ const TOOLS_MANIFEST = [
         to: { type: "string", description: "End date in YYYY-MM-DD format" },
       },
     },
+    _meta: {
+      ui: {
+        visibility: ["model", "app"],
+      },
+    },
+    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "create_expense",
@@ -109,6 +127,12 @@ const TOOLS_MANIFEST = [
         notes: { type: "string", description: "Additional notes" },
       },
     },
+    _meta: {
+      ui: {
+        visibility: ["model", "app"],
+      },
+    },
+    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "delete_expense",
@@ -120,6 +144,12 @@ const TOOLS_MANIFEST = [
         id: { type: "string", description: "Unique ID of the expense to delete" },
       },
     },
+    _meta: {
+      ui: {
+        visibility: ["model", "app"],
+      },
+    },
+    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "list_watchlist",
@@ -139,6 +169,12 @@ const TOOLS_MANIFEST = [
         },
       },
     },
+    _meta: {
+      ui: {
+        visibility: ["model", "app"],
+      },
+    },
+    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "add_watchlist_item",
@@ -162,6 +198,12 @@ const TOOLS_MANIFEST = [
         notes: { type: "string", description: "Notes or thoughts" },
       },
     },
+    _meta: {
+      ui: {
+        visibility: ["model", "app"],
+      },
+    },
+    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "update_watchlist_item",
@@ -180,6 +222,12 @@ const TOOLS_MANIFEST = [
         notes: { type: "string", description: "Updated notes" },
       },
     },
+    _meta: {
+      ui: {
+        visibility: ["model", "app"],
+      },
+    },
+    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "delete_watchlist_item",
@@ -191,6 +239,12 @@ const TOOLS_MANIFEST = [
         id: { type: "string", description: "Unique item ID" },
       },
     },
+    _meta: {
+      ui: {
+        visibility: ["model", "app"],
+      },
+    },
+    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "list_subscriptions",
@@ -199,6 +253,12 @@ const TOOLS_MANIFEST = [
       type: "object",
       properties: {},
     },
+    _meta: {
+      ui: {
+        visibility: ["model", "app"],
+      },
+    },
+    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "create_subscription",
@@ -218,6 +278,12 @@ const TOOLS_MANIFEST = [
         category: { type: "string", description: "Category (e.g. Entertainment, Software, Cloud)" },
       },
     },
+    _meta: {
+      ui: {
+        visibility: ["model", "app"],
+      },
+    },
+    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "get_portfolio",
@@ -226,6 +292,12 @@ const TOOLS_MANIFEST = [
       type: "object",
       properties: {},
     },
+    _meta: {
+      ui: {
+        visibility: ["model", "app"],
+      },
+    },
+    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "get_settings",
@@ -234,6 +306,12 @@ const TOOLS_MANIFEST = [
       type: "object",
       properties: {},
     },
+    _meta: {
+      ui: {
+        visibility: ["model", "app"],
+      },
+    },
+    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
   },
 ];
 
