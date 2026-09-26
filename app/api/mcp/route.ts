@@ -33,7 +33,7 @@ function getOrigin(req: Request): string {
   }
 }
 
-function unauthorizedResponse(origin: string, message = "Authentication required", isInvalidToken = false) {
+function unauthorizedResponse(origin: string, message = "Authentication required", isInvalidToken = false, id: any = null) {
   const metadataUrl = `${origin}/.well-known/oauth-protected-resource`;
   const challenge = isInvalidToken
     ? `Bearer error="invalid_token", error_description="${message}", resource_metadata="${metadataUrl}"`
@@ -41,7 +41,31 @@ function unauthorizedResponse(origin: string, message = "Authentication required
   return new NextResponse(
     JSON.stringify({
       jsonrpc: "2.0",
-      error: { code: -32001, message },
+      id,
+      result: {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: `${message}. Please connect your Continuum Home account via OAuth.`,
+          },
+        ],
+        _meta: {
+          "mcp/www_authenticate": [challenge],
+        },
+      },
+      error: {
+        code: -32001,
+        message,
+        data: {
+          _meta: {
+            "mcp/www_authenticate": [challenge],
+          },
+        },
+      },
+      _meta: {
+        "mcp/www_authenticate": [challenge],
+      },
     }),
     {
       status: 401,
@@ -649,10 +673,10 @@ export async function POST(req: NextRequest) {
       }
 
       if (!session) {
-        // Signal authentication requirement using RFC 9728 standard challenge
+        // Signal authentication requirement using RFC 9728 standard challenge and mcp/www_authenticate
         return {
           _isAuthError: true,
-          errorResponse: authError || unauthorizedResponse(origin, "Authentication required", false)
+          errorResponse: unauthorizedResponse(origin, "Authentication required", false, id)
         };
       }
       try {
