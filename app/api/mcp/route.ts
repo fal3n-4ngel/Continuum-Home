@@ -85,6 +85,11 @@ const TOOLS_MANIFEST = [
       type: "object",
       properties: {},
     },
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
+    },
     _meta: {
       ui: {
         visibility: ["app"],
@@ -98,6 +103,11 @@ const TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {},
+    },
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
     },
     _meta: {
       ui: {
@@ -117,6 +127,11 @@ const TOOLS_MANIFEST = [
         from: { type: "string", description: "Start date in YYYY-MM-DD format" },
         to: { type: "string", description: "End date in YYYY-MM-DD format" },
       },
+    },
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
     },
     _meta: {
       ui: {
@@ -139,6 +154,11 @@ const TOOLS_MANIFEST = [
         notes: { type: "string", description: "Additional notes" },
       },
     },
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      openWorldHint: false,
+    },
     _meta: {
       ui: {
         visibility: ["model", "app"],
@@ -155,6 +175,11 @@ const TOOLS_MANIFEST = [
       properties: {
         id: { type: "string", description: "Unique ID of the expense to delete" },
       },
+    },
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+      openWorldHint: false,
     },
     _meta: {
       ui: {
@@ -180,6 +205,11 @@ const TOOLS_MANIFEST = [
           description: "Watch status filter",
         },
       },
+    },
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
     },
     _meta: {
       ui: {
@@ -210,6 +240,11 @@ const TOOLS_MANIFEST = [
         notes: { type: "string", description: "Notes or thoughts" },
       },
     },
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      openWorldHint: false,
+    },
     _meta: {
       ui: {
         visibility: ["model", "app"],
@@ -234,6 +269,11 @@ const TOOLS_MANIFEST = [
         notes: { type: "string", description: "Updated notes" },
       },
     },
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      openWorldHint: false,
+    },
     _meta: {
       ui: {
         visibility: ["model", "app"],
@@ -251,6 +291,11 @@ const TOOLS_MANIFEST = [
         id: { type: "string", description: "Unique item ID" },
       },
     },
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: true,
+      openWorldHint: false,
+    },
     _meta: {
       ui: {
         visibility: ["model", "app"],
@@ -264,6 +309,11 @@ const TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {},
+    },
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
     },
     _meta: {
       ui: {
@@ -290,6 +340,11 @@ const TOOLS_MANIFEST = [
         category: { type: "string", description: "Category (e.g. Entertainment, Software, Cloud)" },
       },
     },
+    annotations: {
+      readOnlyHint: false,
+      destructiveHint: false,
+      openWorldHint: false,
+    },
     _meta: {
       ui: {
         visibility: ["model", "app"],
@@ -304,6 +359,11 @@ const TOOLS_MANIFEST = [
       type: "object",
       properties: {},
     },
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
+    },
     _meta: {
       ui: {
         visibility: ["model", "app"],
@@ -317,6 +377,11 @@ const TOOLS_MANIFEST = [
     inputSchema: {
       type: "object",
       properties: {},
+    },
+    annotations: {
+      readOnlyHint: true,
+      destructiveHint: false,
+      openWorldHint: false,
     },
     _meta: {
       ui: {

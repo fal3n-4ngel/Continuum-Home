@@ -98,6 +98,22 @@ describe("OAuth Discovery & MCP Server Endpoints", () => {
       expect(listRes.status).toBe(200);
       const listJson = await listRes.json();
       expect(listJson.result.tools.length).toBeGreaterThan(0);
+
+      const createExpenseTool = listJson.result.tools.find((t: any) => t.name === "create_expense");
+      expect(createExpenseTool).toBeDefined();
+      expect(createExpenseTool.annotations).toEqual({
+        readOnlyHint: false,
+        destructiveHint: false,
+        openWorldHint: false,
+      });
+
+      const listExpensesTool = listJson.result.tools.find((t: any) => t.name === "list_expenses");
+      expect(listExpensesTool).toBeDefined();
+      expect(listExpensesTool.annotations).toEqual({
+        readOnlyHint: true,
+        destructiveHint: false,
+        openWorldHint: false,
+      });
     });
 
     it("returns 401 with standard WWW-Authenticate challenge when unauthenticated tools/call", async () => {
