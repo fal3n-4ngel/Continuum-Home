@@ -84,6 +84,53 @@ describe("Security Invariant: Auth & OAuth Security Controls", () => {
       expect(text).toContain("Unrecognized client_id/redirect_uri");
     });
 
+    it("rejects malicious XSS injection payloads in state parameter with 400", async () => {
+      const xssPayloads = [
+        "<script>alert(1)</script>",
+        "\";alert('xss');//",
+        "javascript:alert(1)",
+        "state' onfocus='alert(1)'",
+      ];
+      for (const payload of xssPayloads) {
+        const req = new NextRequest(
+          `http://localhost:3000/api/oauth/authorize?client_id=trusted-app&redirect_uri=https://trusted-app.example/callback&state=${encodeURIComponent(payload)}`
+        );
+        const res = await oauthAuthorizeGet(req);
+        expect(res.status).toBe(400);
+        const text = await res.text();
+        expect(text).toContain("Invalid state parameter format.");
+      }
+    });
+
+    it("rejects invalid code_challenge or code_challenge_method with 400", async () => {
+      const badChallengeReq = new NextRequest(
+        "http://localhost:3000/api/oauth/authorize?client_id=trusted-app&redirect_uri=https://trusted-app.example/callback&state=valid-state&code_challenge=<script>"
+      );
+      const badChallengeRes = await oauthAuthorizeGet(badChallengeReq);
+      expect(badChallengeRes.status).toBe(400);
+      expect(await badChallengeRes.text()).toContain("Invalid code_challenge parameter format.");
+
+      const badMethodReq = new NextRequest(
+        "http://localhost:3000/api/oauth/authorize?client_id=trusted-app&redirect_uri=https://trusted-app.example/callback&state=valid-state&code_challenge_method=invalid"
+      );
+      const badMethodRes = await oauthAuthorizeGet(badMethodReq);
+      expect(badMethodRes.status).toBe(400);
+      expect(await badMethodRes.text()).toContain("Invalid code_challenge_method parameter.");
+    });
+
+    it("renders valid OAuth authorize page safely with application/json embedded params", async () => {
+      const req = new NextRequest(
+        "http://localhost:3000/api/oauth/authorize?client_id=trusted-app&redirect_uri=https://trusted-app.example/callback&state=safe_state_123"
+      );
+      const res = await oauthAuthorizeGet(req);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("text/html");
+      expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+      const html = await res.text();
+      expect(html).toContain('id="oauth-params" type="application/json"');
+      expect(html).not.toContain('state: "${state}"');
+    });
+
     it("returns 400 when POST /api/oauth/authorize is missing state", async () => {
       const req = new NextRequest("http://localhost:3000/api/oauth/authorize", {
         method: "POST",
