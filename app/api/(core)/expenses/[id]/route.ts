@@ -4,7 +4,7 @@ import { ApiError, toErrorResponse } from "@/lib/utils";
 import { updateExpense, archiveExpense, getExpense } from "@/lib/firebase";
 import { validateExpensePatch } from "@/lib/firebase";
 import { recordDomainEvent, DOMAIN_EVENTS } from "@/lib/domain-events";
-import { isCustomGptRequest } from "@/lib/utils";
+import { getRequestChannel } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +26,7 @@ export async function PATCH(
     const existing = await getExpense(session, id);
     const patch = validateExpensePatch(body);
     const result = await updateExpense(session, id, patch);
+    const channel = getRequestChannel(req);
 
     recordDomainEvent({
       eventType: DOMAIN_EVENTS.EXPENSE_UPDATED,
@@ -38,7 +39,8 @@ export async function PATCH(
         amount: patch.amount ?? existing?.amount,
         category: patch.category ?? existing?.category,
         date: patch.date ?? existing?.date,
-        channel: isCustomGptRequest(req) ? "custom_gpt" : "web",
+        channel,
+        source: channel,
       },
     });
 
@@ -57,6 +59,7 @@ export async function DELETE(
     const { id } = await params;
     const existing = await getExpense(session, id);
     const result = await archiveExpense(session, id);
+    const channel = getRequestChannel(req);
 
     recordDomainEvent({
       eventType: DOMAIN_EVENTS.EXPENSE_DELETED,
@@ -73,7 +76,8 @@ export async function DELETE(
             }
           : {}),
         deletedAt: Date.now(),
-        channel: isCustomGptRequest(req) ? "custom_gpt" : "web",
+        channel,
+        source: channel,
       },
     });
 

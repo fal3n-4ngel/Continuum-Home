@@ -4,6 +4,7 @@ import {
   listExpenses,
   createExpense,
   archiveExpense,
+  getExpense,
   listWatchlist,
   addWatchlistItem,
   updateWatchlistItem,
@@ -13,6 +14,7 @@ import {
   getPortfolio,
   getSettings,
 } from "@/lib/firebase";
+import { recordDomainEvent, DOMAIN_EVENTS } from "@/lib/domain-events";
 
 export const dynamic = "force-dynamic";
 
@@ -493,16 +495,55 @@ async function executeTool(session: any, name: string, args: Record<string, any>
       });
     }
     case "create_expense": {
-      return await createExpense(session, {
+      const resolvedDate = args.date || new Date().toISOString().slice(0, 10);
+      const result = await createExpense(session, {
         title: args.title,
         amount: Number(args.amount),
         category: args.category,
-        date: args.date,
+        date: resolvedDate,
         notes: args.notes,
       });
+      if (result?.id) {
+        recordDomainEvent({
+          eventType: DOMAIN_EVENTS.EXPENSE_CREATED,
+          userId: session.uid,
+          entityId: result.id,
+          userEmail: session.user?.email || session.email || null,
+          payload: {
+            title: args.title,
+            amount: Number(args.amount),
+            category: args.category,
+            date: resolvedDate,
+            notes: args.notes,
+            channel: "chatgpt_plugin",
+            source: "chatgpt_plugin",
+          },
+        });
+      }
+      return result;
     }
     case "delete_expense": {
+      const existing = await getExpense(session, args.id);
       await archiveExpense(session, args.id);
+      recordDomainEvent({
+        eventType: DOMAIN_EVENTS.EXPENSE_DELETED,
+        userId: session.uid,
+        entityId: args.id,
+        userEmail: session.user?.email || session.email || null,
+        payload: {
+          ...(existing
+            ? {
+                title: existing.title,
+                amount: existing.amount,
+                category: existing.category,
+                date: existing.date,
+              }
+            : {}),
+          deletedAt: Date.now(),
+          channel: "chatgpt_plugin",
+          source: "chatgpt_plugin",
+        },
+      });
       return { success: true, message: `Expense ${args.id} deleted` };
     }
     case "list_watchlist": {
@@ -515,7 +556,7 @@ async function executeTool(session: any, name: string, args: Record<string, any>
       return items;
     }
     case "add_watchlist_item": {
-      return await addWatchlistItem(session, {
+      const itemData = {
         title: args.title,
         type: args.type,
         status: normalizeWatchStatus(args.status),
@@ -524,30 +565,90 @@ async function executeTool(session: any, name: string, args: Record<string, any>
         totalEpisodes: args.totalEpisodes != null ? Number(args.totalEpisodes) : null,
         coverImage: args.coverImage || null,
         year: args.year != null ? Number(args.year) : null,
-      });
+      };
+      const result = await addWatchlistItem(session, itemData);
+      if (result?.id) {
+        recordDomainEvent({
+          eventType: DOMAIN_EVENTS.WATCHLIST_ADDED,
+          userId: session.uid,
+          entityId: result.id,
+          userEmail: session.user?.email || session.email || null,
+          payload: {
+            title: itemData.title,
+            type: itemData.type,
+            status: itemData.status,
+            year: itemData.year,
+            channel: "chatgpt_plugin",
+            source: "chatgpt_plugin",
+          },
+        });
+      }
+      return result;
     }
     case "update_watchlist_item": {
       const updates: any = {};
       if (args.status) updates.status = normalizeWatchStatus(args.status);
       if (args.rating != null) updates.rating = Number(args.rating);
       if (args.progress != null) updates.progress = Number(args.progress);
-      return await updateWatchlistItem(session, args.id, updates);
+      const result = await updateWatchlistItem(session, args.id, updates);
+      recordDomainEvent({
+        eventType: DOMAIN_EVENTS.WATCHLIST_UPDATED,
+        userId: session.uid,
+        entityId: args.id,
+        userEmail: session.user?.email || session.email || null,
+        payload: {
+          ...updates,
+          channel: "chatgpt_plugin",
+          source: "chatgpt_plugin",
+        },
+      });
+      return result;
     }
     case "delete_watchlist_item": {
       await deleteWatchlistItem(session, args.id);
+      recordDomainEvent({
+        eventType: DOMAIN_EVENTS.WATCHLIST_REMOVED,
+        userId: session.uid,
+        entityId: args.id,
+        userEmail: session.user?.email || session.email || null,
+        payload: {
+          deletedAt: Date.now(),
+          channel: "chatgpt_plugin",
+          source: "chatgpt_plugin",
+        },
+      });
       return { success: true, message: `Watchlist item ${args.id} deleted` };
     }
     case "list_subscriptions": {
       return await listSubscriptions(session);
     }
     case "create_subscription": {
-      return await createSubscription(session, {
+      const subData = {
         name: args.name,
         cost: Number(args.cost ?? args.amount),
-        billingCycle: args.billingCycle === "yearly" ? "yearly" : "monthly",
+        billingCycle: (args.billingCycle === "yearly" ? "yearly" : "monthly") as "yearly" | "monthly",
         nextBillingDate: args.nextBillingDate || new Date().toISOString().slice(0, 10),
         icon: args.icon || null,
-      });
+      };
+      const result = await createSubscription(session, subData);
+      if (result?.id) {
+        recordDomainEvent({
+          eventType: DOMAIN_EVENTS.SUBSCRIPTION_CREATED,
+          userId: session.uid,
+          entityId: result.id,
+          userEmail: session.user?.email || session.email || null,
+          payload: {
+            name: subData.name,
+            cost: subData.cost,
+            amount: subData.cost,
+            billingCycle: subData.billingCycle,
+            nextBillingDate: subData.nextBillingDate,
+            channel: "chatgpt_plugin",
+            source: "chatgpt_plugin",
+          },
+        });
+      }
+      return result;
     }
     case "get_portfolio": {
       return await getPortfolio(session);
