@@ -1,16 +1,6 @@
 import { flag } from 'flags/next';
 import { vercelAdapter } from '@flags-sdk/vercel';
 
-export const enableInvestmentPortfolios = flag<boolean>({
-  key: 'enableInvestmentPortfolios',
-  description: 'Flag for the investment tracking page',
-  defaultValue: false,
-  options: [
-    { value: false, label: 'Off' },
-    { value: true, label: 'On' },
-  ],
-  adapter: vercelAdapter,
-});
 
 export const enableChatAssistant = flag<boolean>({
   key: 'enableChatAssistant',
@@ -24,3 +14,18 @@ export const enableChatAssistant = flag<boolean>({
 });
 
 export const enableGeminiChatAssitant = enableChatAssistant;
+
+export const enabeGPTMigration = flag<boolean>({
+  key: 'enabeGPTMigration',
+  origin: 'https://vercel.com/fal3n4ngels-projects/continuum-home/flag/enabeGPTMigration',
+  description: 'Flag for ChatGPT Plugin & Skills migration flow ahead of Dec 11 Custom GPT retirement',
+  defaultValue: false,
+  options: [
+    { value: false, label: 'Off' },
+    { value: true, label: 'On' },
+  ],
+  adapter: vercelAdapter,
+});
+
+export const enableGPTMigration = enabeGPTMigration;
+

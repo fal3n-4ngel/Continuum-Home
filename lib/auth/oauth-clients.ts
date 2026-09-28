@@ -27,6 +27,23 @@ function loadEntries(): OAuthClientEntry[] {
 }
 
 export function isAllowedOAuthRedirect(clientId: string, redirectUri: string): boolean {
+  if (!redirectUri) return false;
+
+  // Allow OpenAI ChatGPT GPTs, Connectors, and Apps callbacks
+  try {
+    const url = new URL(redirectUri);
+    const host = url.hostname.toLowerCase();
+    const isChatGptOrOpenAi =
+      host === "chatgpt.com" ||
+      host.endsWith(".chatgpt.com") ||
+      host === "openai.com" ||
+      host.endsWith(".openai.com");
+
+    if (isChatGptOrOpenAi) {
+      return true;
+    }
+  } catch {}
+
   return loadEntries().some((entry) => {
     if (entry.clientId !== clientId) return false;
     if (entry.redirectUri) return entry.redirectUri === redirectUri;

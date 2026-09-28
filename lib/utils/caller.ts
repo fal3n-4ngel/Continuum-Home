@@ -10,3 +10,14 @@ export function isCustomGptRequest(req: NextRequest): boolean {
     clientHeader.includes("custom-gpt")
   );
 }
+
+export function getRequestChannel(req: NextRequest): "chatgpt_plugin" | "custom_gpt" | "web" {
+  const clientHeader = (req.headers.get("x-client") || "").toLowerCase();
+  if (clientHeader.includes("plugin") || clientHeader.includes("chatgpt_plugin") || clientHeader.includes("mcp")) {
+    return "chatgpt_plugin";
+  }
+  if (isCustomGptRequest(req)) {
+    return "custom_gpt";
+  }
+  return "web";
+}

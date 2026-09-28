@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { AUTHOR } from "@/lib/utils";
 import { LogoMark } from "@/components/Logo";
@@ -9,6 +9,7 @@ import { FeaturesShowcase } from "@/components/landing/FeaturesShowcase";
 import { AiAgentShowcase } from "@/components/landing/AiAgentShowcase";
 import { Sun, Moon, ExternalLink, ChevronDown, ArrowRight } from "lucide-react";
 import { THEMES } from "@/lib/theme/themes";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -58,9 +59,26 @@ export default function LandingPage({
   authError,
   firebaseAuthReady,
 }: LandingPageProps) {
+  const { enableGPTMigration } = useFeatureFlags();
   const [userCount, setUserCount] = useState<number | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [isDark, setIsDark] = useState(false);
+
+  const faqItems = useMemo(() => {
+    return FAQ_ITEMS.map((item) => {
+      if (item.ref === "SPEC-03") {
+        return enableGPTMigration
+          ? {
+              ref: "SPEC-03",
+              question: "How does the AI Assistant & MCP integration work?",
+              answer:
+                "Continuum provides a native Model Context Protocol (MCP) server at /api/mcp and an OpenAPI 3.1 specification at /api/openapi.json. Connect ChatGPT Plugins, Claude Desktop, Cursor, or autonomous agents securely via OAuth 2.0 to log expenses, check watchlists, and manage records in natural language.",
+            }
+          : item;
+      }
+      return item;
+    });
+  }, [enableGPTMigration]);
 
   useEffect(() => {
     let shouldBeDark = false;
@@ -328,7 +346,7 @@ export default function LandingPage({
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-[#D99419]">&bull;</span>
-                    <span>Custom GPT &amp; AI Agent API</span>
+                    <span>{enableGPTMigration ? "Native MCP & AI Agent API" : "Custom GPT & AI Agent API"}</span>
                   </li>
                 </ul>
 
@@ -587,7 +605,7 @@ export default function LandingPage({
           </div>
 
           <div className="divide-y divide-[#DDD5CB] dark:divide-[#25272E] border-y border-[#DDD5CB] dark:border-[#25272E]">
-            {FAQ_ITEMS.map((item, idx) => {
+            {faqItems.map((item, idx) => {
               const isOpen = openFaq === idx;
               return (
                 <div key={idx} className="py-4">

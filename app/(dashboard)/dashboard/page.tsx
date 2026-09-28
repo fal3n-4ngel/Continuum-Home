@@ -49,6 +49,7 @@ import {
   ReleaseNotesModal,
   GoodreadsModal,
 } from "@/components/modals";
+import { InstallBanner } from "@/components/pwa";
 import { parseGoodreadsCsv } from "@/features/media/lib/goodreads-csv";
 import type { ReleaseNote } from "@/types";
 import { KirokuTab } from "@/features/assistant";
@@ -214,9 +215,6 @@ export default function Dashboard() {
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data) {
-          if (typeof data.enableInvestmentPortfolios === "boolean") {
-            setShowInvestmentsTab(data.enableInvestmentPortfolios);
-          }
           const chatFlag = data.enableChatAssistant ?? data.enableGeminiChatAssitant;
           if (typeof chatFlag === "boolean") {
             setEnableChatAssistant(chatFlag);
@@ -2463,6 +2461,8 @@ export default function Dashboard() {
         onCsvImport={handleGoodreadsCsvImport}
         isSyncing={isImportingGoodreads}
       />
+
+      <InstallBanner />
     </div>
   );
 }

@@ -3,6 +3,9 @@ import { NextRequest } from "next/server";
 import { requireUser, verifyIdToken } from "@/lib/auth/auth";
 import { isAllowedOAuthRedirect } from "@/lib/auth/oauth-clients";
 import { GET as oauthAuthorizeGet, POST as oauthAuthorizePost } from "@/app/api/(auth)/oauth/authorize/route";
+import { POST as oauthTokenPost } from "@/app/api/(auth)/oauth/token/route";
+import crypto from "crypto";
+import { redis } from "@/lib/utils";
 
 describe("Security Invariant: Auth & OAuth Security Controls", () => {
   beforeEach(() => {
@@ -61,6 +64,7 @@ describe("Security Invariant: Auth & OAuth Security Controls", () => {
 
     it("permits registered OAuth redirect URIs", () => {
       expect(isAllowedOAuthRedirect("chatgpt", "https://chatgpt.com/aip/g-12345/oauth/callback")).toBe(true);
+      expect(isAllowedOAuthRedirect("chatgpt", "https://chatgpt.com/connector/oauth/m0NVCvO8mEhS")).toBe(true);
       expect(isAllowedOAuthRedirect("trusted-app", "https://trusted-app.example/callback")).toBe(true);
     });
 
@@ -78,6 +82,53 @@ describe("Security Invariant: Auth & OAuth Security Controls", () => {
       expect(res.status).toBe(400);
       const text = await res.text();
       expect(text).toContain("Unrecognized client_id/redirect_uri");
+    });
+
+    it("rejects malicious XSS injection payloads in state parameter with 400", async () => {
+      const xssPayloads = [
+        "<script>alert(1)</script>",
+        "\";alert('xss');//",
+        "javascript:alert(1)",
+        "state' onfocus='alert(1)'",
+      ];
+      for (const payload of xssPayloads) {
+        const req = new NextRequest(
+          `http://localhost:3000/api/oauth/authorize?client_id=trusted-app&redirect_uri=https://trusted-app.example/callback&state=${encodeURIComponent(payload)}`
+        );
+        const res = await oauthAuthorizeGet(req);
+        expect(res.status).toBe(400);
+        const text = await res.text();
+        expect(text).toContain("Invalid state parameter format.");
+      }
+    });
+
+    it("rejects invalid code_challenge or code_challenge_method with 400", async () => {
+      const badChallengeReq = new NextRequest(
+        "http://localhost:3000/api/oauth/authorize?client_id=trusted-app&redirect_uri=https://trusted-app.example/callback&state=valid-state&code_challenge=<script>"
+      );
+      const badChallengeRes = await oauthAuthorizeGet(badChallengeReq);
+      expect(badChallengeRes.status).toBe(400);
+      expect(await badChallengeRes.text()).toContain("Invalid code_challenge parameter format.");
+
+      const badMethodReq = new NextRequest(
+        "http://localhost:3000/api/oauth/authorize?client_id=trusted-app&redirect_uri=https://trusted-app.example/callback&state=valid-state&code_challenge_method=invalid"
+      );
+      const badMethodRes = await oauthAuthorizeGet(badMethodReq);
+      expect(badMethodRes.status).toBe(400);
+      expect(await badMethodRes.text()).toContain("Invalid code_challenge_method parameter.");
+    });
+
+    it("renders valid OAuth authorize page safely with application/json embedded params", async () => {
+      const req = new NextRequest(
+        "http://localhost:3000/api/oauth/authorize?client_id=trusted-app&redirect_uri=https://trusted-app.example/callback&state=safe_state_123"
+      );
+      const res = await oauthAuthorizeGet(req);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("text/html");
+      expect(res.headers.get("x-content-type-options")).toBe("nosniff");
+      const html = await res.text();
+      expect(html).toContain('id="oauth-params" type="application/json"');
+      expect(html).not.toContain('state: "${state}"');
     });
 
     it("returns 400 when POST /api/oauth/authorize is missing state", async () => {
@@ -109,6 +160,58 @@ describe("Security Invariant: Auth & OAuth Security Controls", () => {
       });
       const res = await oauthAuthorizePost(req);
       expect(res.status).toBe(400);
+    });
+  });
+
+  describe("PKCE S256 Code Verifier Validation", () => {
+    it("validates PKCE S256 code_verifier correctly on authorization_code exchange", async () => {
+      const codeVerifier = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk";
+      const codeChallenge = crypto.createHash("sha256").update(codeVerifier).digest("base64url");
+      const testCode = "test-auth-code-pkce-123";
+
+      if (redis) {
+        await redis.set(
+          `oauth:code:${testCode}`,
+          JSON.stringify({
+            refreshToken: "mock-refresh-token",
+            clientId: "chatgpt",
+            redirectUri: "https://chatgpt.com/aip/g-12345/oauth/callback",
+            codeChallenge,
+            codeChallengeMethod: "S256",
+          }),
+          { ex: 60 }
+        );
+
+        // Exchange with wrong code_verifier -> must fail with 400
+        const failReq = new NextRequest("http://localhost:3000/api/oauth/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            grant_type: "authorization_code",
+            code: testCode,
+            code_verifier: "wrong-verifier-1234567890",
+          }),
+        });
+        const failRes = await oauthTokenPost(failReq);
+        expect(failRes.status).toBe(400);
+        const failJson = await failRes.json();
+        expect(failJson.error).toBe("invalid_grant");
+
+        // Exchange with correct code_verifier -> must succeed with 200
+        const okReq = new NextRequest("http://localhost:3000/api/oauth/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            grant_type: "authorization_code",
+            code: testCode,
+            code_verifier: codeVerifier,
+          }),
+        });
+        const okRes = await oauthTokenPost(okReq);
+        expect(okRes.status).toBe(200);
+        const okJson = await okRes.json();
+        expect(okJson.access_token).toBe("mock-refresh-token");
+      }
     });
   });
 });

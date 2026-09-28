@@ -16,8 +16,11 @@ import {
   Receipt,
 } from "lucide-react";
 import { LogoMark } from "@/components/Logo";
+import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 export function AiAgentShowcase() {
+  const { enableGPTMigration } = useFeatureFlags();
+
   return (
     <section
       id="ai-agent"
@@ -28,13 +31,17 @@ export function AiAgentShowcase() {
         <div className="flex items-center justify-between border-b border-[#DDD5CB] dark:border-[#25272E] pb-4 mb-14 md:mb-20">
           <div className="flex items-center gap-3">
             <span className="font-mono text-xs text-[#9E5D48] dark:text-[#E07A5F]">
-              ⌜ 02 // OPENAPI 3.1 &amp; AI AGENTS ⌟
+              {enableGPTMigration
+                ? "⌜ 02 // MODEL CONTEXT PROTOCOL & AI AGENTS ⌟"
+                : "⌜ 02 // OPENAPI 3.1 & AI AGENTS ⌟"}
             </span>
             <span className="text-[#DDD5CB] dark:text-[#25272E]">&bull;</span>
-            <span className="font-mono text-xs text-[#9C9288]">AGENT INTERFACE SPECIFICATION</span>
+            <span className="font-mono text-xs text-[#9C9288]">
+              {enableGPTMigration ? "NATIVE MCP // OPENAPI 3.1" : "AGENT INTERFACE SPECIFICATION"}
+            </span>
           </div>
           <div className="flex items-center gap-2 font-mono text-xs text-[#D99419]">
-            <span>SCHEMA: /api/openapi.json</span>
+            <span>{enableGPTMigration ? "MCP: /api/mcp" : "SCHEMA: /api/openapi.json"}</span>
           </div>
         </div>
 
@@ -44,8 +51,8 @@ export function AiAgentShowcase() {
           <div className="lg:col-span-6 flex flex-col items-start">
             {/* Tag Badge */}
             <div className="inline-flex items-center gap-2 border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-3 py-1 font-mono text-xs tracking-wider text-[#9E5D48] dark:text-[#E07A5F] uppercase mb-6 rounded-sm shadow-2xs">
-              <span>🤖</span>
-              <span>OPENAPI 3.1 &amp; AI AGENTS</span>
+              <span>{enableGPTMigration ? "⚡" : "🤖"}</span>
+              <span>{enableGPTMigration ? "MODEL CONTEXT PROTOCOL & AI AGENTS" : "OPENAPI 3.1 & AI AGENTS"}</span>
             </div>
 
             {/* Headline with lighter, editorial font weight */}
@@ -58,10 +65,9 @@ export function AiAgentShowcase() {
 
             {/* Explanatory Paragraph */}
             <p className="text-sm sm:text-base leading-relaxed text-[#6D635C] dark:text-[#9BA1B0] mb-8 max-w-xl">
-              Every API route in Continuum exposes a clean, standard OpenAPI 3.1
-              specification. Plug the schema directly into custom ChatGPT Actions, Claude,
-              Groq function calling, or MCP tool servers to interact with your data in plain
-              English.
+              {enableGPTMigration
+                ? "Continuum exposes a native Model Context Protocol (MCP) server alongside our OpenAPI 3.1 specification. Connect your personal financial, watchlist, and subscription data directly to ChatGPT Plugins, Claude Desktop, Cursor, and custom AI agents via secure OAuth 2.0."
+                : "Every API route in Continuum exposes a clean, standard OpenAPI 3.1 specification. Plug the schema directly into custom ChatGPT Actions, Claude, Groq function calling, or MCP tool servers to interact with your data in plain English."}
             </p>
 
             {/* Key Bullet Points */}
@@ -70,21 +76,31 @@ export function AiAgentShowcase() {
                 <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
                   <Check size={12} strokeWidth={3} />
                 </div>
-                <span>Works natively with custom ChatGPT Actions (Custom GPTs)</span>
-              </li>
-              <li className="flex items-start gap-3">
-                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
-                  <Check size={12} strokeWidth={3} />
-                </div>
                 <span>
-                  Log expenses, add movies to watchlists, or ask for portfolio totals via natural language
+                  {enableGPTMigration
+                    ? "Native Model Context Protocol (MCP) server streaming tools via SSE & JSON-RPC"
+                    : "Works natively with custom ChatGPT Actions (Custom GPTs)"}
                 </span>
               </li>
               <li className="flex items-start gap-3">
                 <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
                   <Check size={12} strokeWidth={3} />
                 </div>
-                <span>Ready for agent frameworks (Dify, Flowise, LangChain, MCP sidecars)</span>
+                <span>
+                  {enableGPTMigration
+                    ? "Log expenses, manage watchlists, or audit portfolios in plain English with zero manual input"
+                    : "Log expenses, add movies to watchlists, or ask for portfolio totals via natural language"}
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400">
+                  <Check size={12} strokeWidth={3} />
+                </div>
+                <span>
+                  {enableGPTMigration
+                    ? "Supports ChatGPT Plugins, Claude Desktop, Cursor, Zed, and agent frameworks"
+                    : "Ready for agent frameworks (Dify, Flowise, LangChain, MCP sidecars)"}
+                </span>
               </li>
             </ul>
 
@@ -94,9 +110,19 @@ export function AiAgentShowcase() {
                 href="/assistant"
                 className="inline-flex items-center gap-2 rounded-sm bg-[#1C1B18] dark:bg-[#F4F5F7] px-5 py-3 font-mono text-xs font-semibold text-[#FAF8F5] dark:text-[#0C0D0E] uppercase tracking-wider transition-all duration-150 hover:opacity-90 shadow-xs cursor-pointer no-underline"
               >
-                <span>View Assistant Setup Guide</span>
+                <span>{enableGPTMigration ? "View Assistant & MCP Guide" : "View Assistant Setup Guide"}</span>
                 <span>&rarr;</span>
               </a>
+
+              {enableGPTMigration && (
+                <a
+                  href="/assistant/plugin"
+                  className="inline-flex items-center gap-1.5 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-4 py-3 font-mono text-xs font-semibold text-[#6D635C] dark:text-[#9BA1B0] hover:text-[#9E5D48] hover:border-[#9E5D48] transition-colors no-underline uppercase tracking-wider"
+                >
+                  <span>Install ChatGPT Plugin</span>
+                  <span className="text-[10px] text-[#D99419]">⚡</span>
+                </a>
+              )}
 
               <a
                 href="/api/openapi.json"
@@ -191,15 +217,15 @@ export function AiAgentShowcase() {
 
                     {/* Assistant Response Message */}
                     <div className="flex flex-col gap-2.5 items-start mt-0.5">
-                      {/* ChatGPT Action Tool Call Pill */}
+                      {/* Action / MCP Tool Call Pill */}
                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#F3EFEA] dark:bg-[#191A20] border border-[#E0DACF] dark:border-[#252833] text-[10px] text-[#6D635C] dark:text-[#9BA1B0] font-mono">
                         <Sparkles size={11} className="text-[#D99419]" />
                         <span className="font-semibold text-[#26211F] dark:text-[#E2E4E9]">
-                          Talked to Continuum
+                          {enableGPTMigration ? "MCP Tool Call" : "Talked to Continuum"}
                         </span>
                         <span className="text-[#A39B92] dark:text-[#6C7280]">•</span>
                         <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-                          createExpenseRecord
+                          {enableGPTMigration ? "create_expense" : "createExpenseRecord"}
                         </span>
                       </div>
 
@@ -234,7 +260,7 @@ export function AiAgentShowcase() {
                         {/* Footer metadata */}
                         <div className="mt-2.5 pt-2 border-t border-[#EFECE6] dark:border-[#23252E] flex items-center justify-between text-[9px] font-mono text-[#A39B92] dark:text-[#6C7280]">
                           <span>AES-256-GCM client encrypted · 38ms</span>
-                          <span className="text-[#D99419]">EXPENSES API</span>
+                          <span className="text-[#D99419]">{enableGPTMigration ? "MCP & REST API" : "EXPENSES API"}</span>
                         </div>
                       </div>
 

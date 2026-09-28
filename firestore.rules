@@ -50,6 +50,10 @@ service cloud.firestore {
       match /recommendations/{docId} {
         allow read, write: if isOwner(userId);
       }
+
+      match /push_subscriptions/{subscriptionId} {
+        allow read, write: if isOwner(userId);
+      }
     }
 
     match /{document=**} {

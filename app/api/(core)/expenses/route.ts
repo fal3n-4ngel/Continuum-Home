@@ -3,7 +3,7 @@ import { requireUser } from "@/lib/auth";
 import { ApiError, toErrorResponse } from "@/lib/utils";
 import { listExpenses, createExpense, createExpenseBatch } from "@/lib/firebase";
 import { validateExpenseEntry, validateExpenseBatch } from "@/lib/firebase";
-import { isCustomGptRequest } from "@/lib/utils";
+import { getRequestChannel } from "@/lib/utils";
 import { recordDomainEvent, DOMAIN_EVENTS } from "@/lib/domain-events";
 
 export const dynamic = "force-dynamic";
@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
       const added = results.filter((r) => r.success).length;
 
       if (added > 0) {
-        const channel = isCustomGptRequest(req) ? "custom_gpt" : "web";
+        const channel = getRequestChannel(req);
         results.forEach((r, idx) => {
           if (r.success && "id" in r && r.id) {
             const entry = entries[idx];
@@ -63,6 +63,7 @@ export async function POST(req: NextRequest) {
                 category: entry.category,
                 date: resolvedDate,
                 channel,
+                source: channel,
                 batch: true,
               },
             });
@@ -76,6 +77,7 @@ export async function POST(req: NextRequest) {
     const entry = validateExpenseEntry(body);
     const resolvedDate = entry.date || new Date().toISOString().slice(0, 10);
     const result = await createExpense(session, { ...entry, date: resolvedDate });
+    const channel = getRequestChannel(req);
 
     recordDomainEvent({
       eventType: DOMAIN_EVENTS.EXPENSE_CREATED,
@@ -87,7 +89,8 @@ export async function POST(req: NextRequest) {
         amount: entry.amount,
         category: entry.category,
         date: resolvedDate,
-        channel: isCustomGptRequest(req) ? "custom_gpt" : "web",
+        channel,
+        source: channel,
       },
     });
 

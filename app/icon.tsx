@@ -1,9 +1,13 @@
 import { ImageResponse } from "next/og";
+import { isUatDeployment } from "@/lib/utils";
 
 export const size = { width: 32, height: 32 };
 export const contentType = "image/png";
 
 export default function Icon() {
+  const isUat = isUatDeployment();
+  const boxColor = isUat ? "#DC2626" : "#1c1b18";
+
   return new ImageResponse(
     (
       <div
@@ -19,15 +23,16 @@ export default function Icon() {
         }}
       >
         <div style={{ display: "flex", gap: "2px" }}>
-          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: "#1c1b18", border: "none" }} />
-          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: "#1c1b18", opacity: 0.55, border: "none" }} />
+          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: boxColor, border: "none" }} />
+          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: boxColor, opacity: 0.55, border: "none" }} />
         </div>
         <div style={{ display: "flex", gap: "2px" }}>
-          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: "#1c1b18", opacity: 0.55, border: "none" }} />
-          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: "#1c1b18", opacity: 0.85, border: "none" }} />
+          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: boxColor, opacity: 0.55, border: "none" }} />
+          <div style={{ display: "flex", width: "12px", height: "12px", borderRadius: "3px", backgroundColor: boxColor, opacity: 0.85, border: "none" }} />
         </div>
       </div>
     ),
     { ...size }
   );
 }
+

@@ -7,14 +7,36 @@ import crypto from "crypto";
 
 export const dynamic = "force-dynamic";
 
+function safeJsonSerialize(data: unknown): string {
+  return JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const clientId = searchParams.get("client_id");
   const redirectUri = searchParams.get("redirect_uri");
   const state = searchParams.get("state");
+  const codeChallenge = searchParams.get("code_challenge") || "";
+  const codeChallengeMethod = searchParams.get("code_challenge_method") || "";
 
   if (!clientId || !redirectUri || !state) {
     return new NextResponse("Missing required OAuth 2.0 query parameters (client_id, redirect_uri, state).", { status: 400 });
+  }
+
+  // Barrier guard: strict validation to prevent Reflected XSS and enforce RFC standards
+  if (!/^[a-zA-Z0-9_\-\.:+=~]{1,512}$/.test(state)) {
+    return new NextResponse("Invalid state parameter format.", { status: 400 });
+  }
+
+  if (codeChallenge && !/^[a-zA-Z0-9_\-]{43,128}$/.test(codeChallenge)) {
+    return new NextResponse("Invalid code_challenge parameter format.", { status: 400 });
+  }
+
+  if (codeChallengeMethod && codeChallengeMethod !== "S256" && codeChallengeMethod !== "plain") {
+    return new NextResponse("Invalid code_challenge_method parameter.", { status: 400 });
   }
 
   if (!isAllowedOAuthRedirect(clientId, redirectUri)) {
@@ -24,11 +46,8 @@ export async function GET(req: NextRequest) {
   const creds = await getCredentials(req);
   const firebaseConfig = parseFirebaseConfig(creds);
 
-  const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
-  const domainFromHost = host ? host.split(":")[0] : null;
-  const isLocalhost = domainFromHost === "localhost" || domainFromHost === "127.0.0.1";
-  if (!isLocalhost && domainFromHost) {
-    firebaseConfig.authDomain = domainFromHost;
+  if (!firebaseConfig.authDomain) {
+    firebaseConfig.authDomain = `${firebaseConfig.projectId}.firebaseapp.com`;
   }
 
   const html = `
@@ -193,10 +212,23 @@ export async function GET(req: NextRequest) {
         </div>
       </div>
 
+      <script id="firebase-config" type="application/json">${safeJsonSerialize(firebaseConfig)}</script>
+      <script id="oauth-params" type="application/json">${safeJsonSerialize({
+        clientId,
+        redirectUri,
+        state,
+        codeChallenge,
+        codeChallengeMethod,
+      })}</script>
+
       <script>
-        const config = ${JSON.stringify(firebaseConfig)};
+        const configEl = document.getElementById('firebase-config');
+        const config = JSON.parse(configEl ? configEl.textContent || '{}' : '{}');
         firebase.initializeApp(config);
         const auth = firebase.auth();
+
+        const oauthParamsEl = document.getElementById('oauth-params');
+        const oauthParams = JSON.parse(oauthParamsEl ? oauthParamsEl.textContent || '{}' : '{}');
 
         const loadingDiv = document.getElementById('loading');
         const authPanel = document.getElementById('auth-panel');
@@ -267,9 +299,11 @@ export async function GET(req: NextRequest) {
               body: JSON.stringify({
                 idToken,
                 refreshToken,
-                clientId: "${clientId}",
-                redirectUri: "${redirectUri}",
-                state: "${state}"
+                clientId: oauthParams.clientId,
+                redirectUri: oauthParams.redirectUri,
+                state: oauthParams.state,
+                codeChallenge: oauthParams.codeChallenge,
+                codeChallengeMethod: oauthParams.codeChallengeMethod
               })
             });
 
@@ -292,17 +326,33 @@ export async function GET(req: NextRequest) {
   `;
 
   return new NextResponse(html, {
-    headers: { "Content-Type": "text/html" },
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+    },
   });
 }
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { idToken, refreshToken, clientId, redirectUri, state } = body;
+    const { idToken, refreshToken, clientId, redirectUri, state, codeChallenge, codeChallengeMethod } = body;
 
     if (!idToken || !refreshToken || !clientId || !redirectUri || !state) {
       return NextResponse.json({ error: "Missing required parameters." }, { status: 400 });
+    }
+
+    if (!/^[a-zA-Z0-9_\-\.:+=~]{1,512}$/.test(state)) {
+      return NextResponse.json({ error: "Invalid state parameter format." }, { status: 400 });
+    }
+
+    if (codeChallenge && !/^[a-zA-Z0-9_\-]{43,128}$/.test(codeChallenge)) {
+      return NextResponse.json({ error: "Invalid code_challenge parameter format." }, { status: 400 });
+    }
+
+    if (codeChallengeMethod && codeChallengeMethod !== "S256" && codeChallengeMethod !== "plain") {
+      return NextResponse.json({ error: "Invalid code_challenge_method parameter." }, { status: 400 });
     }
 
     if (!isAllowedOAuthRedirect(clientId, redirectUri)) {
@@ -320,9 +370,18 @@ export async function POST(req: NextRequest) {
     const authCode = crypto.randomUUID();
     const cacheKey = `oauth:code:${authCode}`;
 
-    await redis.set(cacheKey, refreshToken, { ex: 300 });
+    const authPayload = {
+      refreshToken,
+      clientId,
+      redirectUri,
+      codeChallenge: codeChallenge || null,
+      codeChallengeMethod: codeChallengeMethod || null,
+    };
 
-    const redirectUrl = `${redirectUri}?code=${authCode}&state=${state}`;
+    await redis.set(cacheKey, JSON.stringify(authPayload), { ex: 300 });
+
+    const separator = redirectUri.includes("?") ? "&" : "?";
+    const redirectUrl = `${redirectUri}${separator}code=${authCode}&state=${encodeURIComponent(state)}`;
 
     return NextResponse.json({ redirectUrl });
   } catch (error: any) {

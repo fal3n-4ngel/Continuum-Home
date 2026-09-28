@@ -1,9 +1,12 @@
 import { ImageResponse } from "next/og";
+import { isUatDeployment } from "@/lib/utils";
 
 export const size = { width: 512, height: 512 };
 export const contentType = "image/png";
 
 export async function GET() {
+  const isUat = isUatDeployment();
+  const boxColor = isUat ? "#DC2626" : "#1c1b18";
   const cell = 130;
   const gap = 24;
 
@@ -16,17 +19,18 @@ export async function GET() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
+          position: "relative",
           backgroundColor: "#f4f3ec",
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap }}>
           <div style={{ display: "flex", gap }}>
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 30, backgroundColor: "#1c1b18" }} />
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 30, backgroundColor: "#1c1b18", opacity: 0.55 }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 30, backgroundColor: boxColor }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 30, backgroundColor: boxColor, opacity: 0.55 }} />
           </div>
           <div style={{ display: "flex", gap }}>
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 30, backgroundColor: "#1c1b18", opacity: 0.55 }} />
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 30, backgroundColor: "#1c1b18", opacity: 0.85 }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 30, backgroundColor: boxColor, opacity: 0.55 }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 30, backgroundColor: boxColor, opacity: 0.85 }} />
           </div>
         </div>
       </div>
@@ -34,3 +38,4 @@ export async function GET() {
     { ...size }
   );
 }
+
