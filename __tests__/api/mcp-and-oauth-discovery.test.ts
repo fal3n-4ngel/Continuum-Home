@@ -195,6 +195,30 @@ describe("OAuth Discovery & MCP Server Endpoints", () => {
       expect(toolNames).toContain("get_settings");
     });
 
+    it("ensures every tool defines title, annotations, and _meta.securitySchemes for ChatGPT", async () => {
+      const listReq = new NextRequest(`${origin}/api/mcp`, {
+        method: "POST",
+        body: JSON.stringify({ jsonrpc: "2.0", id: "list-tools-check", method: "tools/list" }),
+      });
+      const listRes = await postMcp(listReq);
+      expect(listRes.status).toBe(200);
+      const json = await listRes.json();
+      expect(json.result.tools.length).toBe(13);
+
+      for (const tool of json.result.tools) {
+        expect(tool.name).toBeTruthy();
+        expect(tool.title).toBeTruthy();
+        expect(typeof tool.title).toBe("string");
+        expect(tool.description).toBeTruthy();
+        expect(tool.inputSchema).toBeDefined();
+        expect(typeof tool.annotations.readOnlyHint).toBe("boolean");
+        expect(typeof tool.annotations.destructiveHint).toBe("boolean");
+        expect(typeof tool.annotations.openWorldHint).toBe("boolean");
+        expect(tool.securitySchemes).toBeDefined();
+        expect(tool._meta?.securitySchemes).toEqual(tool.securitySchemes);
+      }
+    });
+
     it("returns tools manifest on GET when Accept is not text/event-stream", async () => {
       const req = new NextRequest(`${origin}/api/mcp`, {
         method: "GET",
@@ -204,6 +228,24 @@ describe("OAuth Discovery & MCP Server Endpoints", () => {
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.result.tools.length).toBeGreaterThan(0);
+      expect(json.result.instructions).toBeDefined();
+    });
+
+    it("returns SSE stream without legacy dual-endpoint event on GET with text/event-stream", async () => {
+      const req = new NextRequest(`${origin}/api/mcp`, {
+        method: "GET",
+        headers: { accept: "text/event-stream" },
+      });
+      const res = await getMcp(req);
+      expect(res.status).toBe(200);
+      expect(res.headers.get("content-type")).toContain("text/event-stream");
+
+      const reader = res.body?.getReader();
+      const chunk = await reader?.read();
+      const text = chunk?.value ? new TextDecoder().decode(chunk.value) : "";
+      expect(text).toContain(": keep-alive");
+      expect(text).not.toContain("event: endpoint");
+      reader?.cancel();
     });
 
     it("handles empty POST probe or invalid JSON without failing with 400", async () => {
