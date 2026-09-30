@@ -81,9 +81,6 @@ function unauthorizedResponse(origin: string, message = "Authentication required
   );
 }
 
-// Global registry of active SSE streams for classic MCP SSE transport
-const activeSseClients = new Map<string, (chunk: string) => void>();
-
 export async function OPTIONS() {
   return new NextResponse(null, {
     status: 204,
@@ -94,6 +91,7 @@ export async function OPTIONS() {
 const TOOLS_MANIFEST = [
   {
     name: "connect_account",
+    title: "Connect Account",
     description: "Verify authentication or connect your Continuum Home account to access expenses, watchlists, portfolio, and settings. Call this whenever the user needs to sign in or connect.",
     inputSchema: {
       type: "object",
@@ -104,15 +102,17 @@ const TOOLS_MANIFEST = [
       destructiveHint: false,
       openWorldHint: false,
     },
+    securitySchemes: [{ type: "noauth" }],
     _meta: {
+      securitySchemes: [{ type: "noauth" }],
       ui: {
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "noauth" }],
   },
   {
     name: "get_auth_status",
+    title: "Get Auth Status",
     description: "Check if the current session is connected to a verified Continuum Home user account.",
     inputSchema: {
       type: "object",
@@ -123,15 +123,17 @@ const TOOLS_MANIFEST = [
       destructiveHint: false,
       openWorldHint: false,
     },
+    securitySchemes: [{ type: "noauth" }],
     _meta: {
+      securitySchemes: [{ type: "noauth" }],
       ui: {
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "noauth" }],
   },
   {
     name: "list_expenses",
+    title: "List Expenses",
     description: "List recent expenses with optional search term, category, and date range filters.",
     inputSchema: {
       type: "object",
@@ -147,15 +149,17 @@ const TOOLS_MANIFEST = [
       destructiveHint: false,
       openWorldHint: false,
     },
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
     _meta: {
+      securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
       ui: {
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "create_expense",
+    title: "Create Expense",
     description: "Add a new expense to the personal ledger.",
     inputSchema: {
       type: "object",
@@ -173,15 +177,17 @@ const TOOLS_MANIFEST = [
       destructiveHint: false,
       openWorldHint: false,
     },
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
     _meta: {
+      securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
       ui: {
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "delete_expense",
+    title: "Delete Expense",
     description: "Delete an expense entry by its unique ID.",
     inputSchema: {
       type: "object",
@@ -195,15 +201,17 @@ const TOOLS_MANIFEST = [
       destructiveHint: true,
       openWorldHint: false,
     },
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
     _meta: {
+      securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
       ui: {
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "list_watchlist",
+    title: "List Watchlist",
     description: "List media watchlist items (movies, TV shows, anime, and books).",
     inputSchema: {
       type: "object",
@@ -225,15 +233,17 @@ const TOOLS_MANIFEST = [
       destructiveHint: false,
       openWorldHint: false,
     },
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
     _meta: {
+      securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
       ui: {
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "add_watchlist_item",
+    title: "Add Watchlist Item",
     description: "Add a movie, show, anime, or book to the watchlist.",
     inputSchema: {
       type: "object",
@@ -259,15 +269,17 @@ const TOOLS_MANIFEST = [
       destructiveHint: false,
       openWorldHint: false,
     },
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
     _meta: {
+      securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
       ui: {
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "update_watchlist_item",
+    title: "Update Watchlist Item",
     description: "Update the status, rating, or notes for a watchlist item.",
     inputSchema: {
       type: "object",
@@ -288,15 +300,17 @@ const TOOLS_MANIFEST = [
       destructiveHint: false,
       openWorldHint: false,
     },
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
     _meta: {
+      securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
       ui: {
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "delete_watchlist_item",
+    title: "Delete Watchlist Item",
     description: "Delete a watchlist item by ID.",
     inputSchema: {
       type: "object",
@@ -310,15 +324,17 @@ const TOOLS_MANIFEST = [
       destructiveHint: true,
       openWorldHint: false,
     },
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
     _meta: {
+      securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
       ui: {
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "list_subscriptions",
+    title: "List Subscriptions",
     description: "List all active recurring subscriptions and billing cycles.",
     inputSchema: {
       type: "object",
@@ -329,15 +345,17 @@ const TOOLS_MANIFEST = [
       destructiveHint: false,
       openWorldHint: false,
     },
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
     _meta: {
+      securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
       ui: {
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "create_subscription",
+    title: "Create Subscription",
     description: "Add a new recurring subscription to track.",
     inputSchema: {
       type: "object",
@@ -359,15 +377,17 @@ const TOOLS_MANIFEST = [
       destructiveHint: false,
       openWorldHint: false,
     },
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
     _meta: {
+      securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
       ui: {
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "get_portfolio",
+    title: "Get Portfolio",
     description: "Get investment portfolio holdings, asset allocation, and performance summary.",
     inputSchema: {
       type: "object",
@@ -378,15 +398,17 @@ const TOOLS_MANIFEST = [
       destructiveHint: false,
       openWorldHint: false,
     },
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
     _meta: {
+      securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
       ui: {
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "get_settings",
+    title: "Get Settings",
     description: "Retrieve dashboard configuration, user preferences, and monthly budget limits.",
     inputSchema: {
       type: "object",
@@ -397,78 +419,63 @@ const TOOLS_MANIFEST = [
       destructiveHint: false,
       openWorldHint: false,
     },
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
     _meta: {
+      securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
       ui: {
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
 ];
 
 export async function GET(req: NextRequest) {
-  const origin = getOrigin(req);
   const accept = req.headers.get("accept") || "";
 
-  // If the client does not explicitly request SSE, return tools manifest & server info as JSON
-  if (!accept.includes("text/event-stream")) {
-    return NextResponse.json(
-      {
-        jsonrpc: "2.0",
-        result: {
-          protocolVersion: "2024-11-05",
-          capabilities: { tools: { listChanged: false } },
-          serverInfo: { name: "Continuum Home", version: "2.3.0" },
-          tools: TOOLS_MANIFEST,
-        },
+  // If the client explicitly requests SSE (for Streamable HTTP notifications / keep-alive)
+  if (accept.includes("text/event-stream")) {
+    const encoder = new TextEncoder();
+    const stream = new TransformStream();
+    const writer = stream.writable.getWriter();
+
+    // Stream an immediate keep-alive comment
+    writer.write(encoder.encode(": keep-alive\n\n")).catch(() => {});
+
+    const keepAliveInterval = setInterval(() => {
+      writer.write(encoder.encode(": keep-alive\n\n")).catch(() => {
+        clearInterval(keepAliveInterval);
+      });
+    }, 15000);
+
+    req.signal.addEventListener("abort", () => {
+      clearInterval(keepAliveInterval);
+      writer.close().catch(() => {});
+    });
+
+    return new Response(stream.readable, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        Connection: "keep-alive",
+        ...CORS_HEADERS,
       },
-      { headers: CORS_HEADERS }
-    );
+    });
   }
 
-  const { searchParams } = req.nextUrl;
-  const sessionId = searchParams.get("sessionId") || crypto.randomUUID();
-
-  // Create SSE stream
-  const encoder = new TextEncoder();
-  const stream = new TransformStream();
-  const writer = stream.writable.getWriter();
-
-  const sendEvent = (event: string, data: string) => {
-    writer.write(encoder.encode(`event: ${event}\ndata: ${data}\n\n`)).catch(() => {});
-  };
-
-  activeSseClients.set(sessionId, (payload: string) => {
-    sendEvent("message", payload);
-  });
-
-  // Emit initial endpoint event directing the client where to post messages
-  const endpointUrl = `${origin}/api/mcp?sessionId=${sessionId}`;
-  sendEvent("endpoint", endpointUrl);
-
-  // Keep-alive timer
-  const keepAliveInterval = setInterval(() => {
-    writer.write(encoder.encode(": keep-alive\n\n")).catch(() => {
-      clearInterval(keepAliveInterval);
-      activeSseClients.delete(sessionId);
-    });
-  }, 15000);
-
-  req.signal.addEventListener("abort", () => {
-    clearInterval(keepAliveInterval);
-    activeSseClients.delete(sessionId);
-    writer.close().catch(() => {});
-  });
-
-  return new Response(stream.readable, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache, no-transform",
-      Connection: "keep-alive",
-      "Mcp-Session-Id": sessionId,
-      ...CORS_HEADERS,
+  // Standard Streamable HTTP / discovery GET returns tools manifest & server info directly as JSON
+  return NextResponse.json(
+    {
+      jsonrpc: "2.0",
+      result: {
+        protocolVersion: "2024-11-05",
+        capabilities: { tools: { listChanged: false } },
+        serverInfo: { name: "Continuum Home", version: "2.3.0" },
+        instructions: "Continuum Home Personal Finance & Life Dashboard MCP Server. Access personal finances, expenses, watchlists, subscriptions, and portfolio.",
+        tools: TOOLS_MANIFEST,
+      },
     },
-  });
+    { headers: CORS_HEADERS }
+  );
 }
 
 function normalizeWatchStatus(status?: string): "plan_to_watch" | "watching" | "completed" | "dropped" | "paused" {
@@ -770,6 +777,7 @@ export async function POST(req: NextRequest) {
             name: "Continuum Home",
             version: "2.3.0",
           },
+          instructions: "Continuum Home Personal Finance & Life Dashboard MCP Server. Access personal finances, expenses, watchlists, subscriptions, and portfolio.",
         },
       };
     }
@@ -898,14 +906,15 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  // If classic SSE client is connected on this sessionId, emit message event
-  if (sessionId && activeSseClients.has(sessionId) && response) {
-    activeSseClients.get(sessionId)!(JSON.stringify(response));
-  }
+  const mcpSessionId = req.headers.get("mcp-session-id") || sessionId || crypto.randomUUID();
+  const headers = {
+    ...CORS_HEADERS,
+    "Mcp-Session-Id": mcpSessionId,
+  };
 
   if (response === null) {
-    return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+    return new NextResponse(null, { status: 204, headers });
   }
 
-  return NextResponse.json(response, { headers: CORS_HEADERS });
+  return NextResponse.json(response, { headers });
 }
