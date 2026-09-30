@@ -44,6 +44,18 @@ function unauthorizedResponse(origin: string, message = "Authentication required
     JSON.stringify({
       jsonrpc: "2.0",
       id,
+      result: {
+        isError: true,
+        content: [
+          {
+            type: "text",
+            text: `${message}. Please connect your Continuum Home account via OAuth to perform this action: ${origin}/api/oauth/authorize`,
+          },
+        ],
+        _meta: {
+          "mcp/www_authenticate": [challenge],
+        },
+      },
       error: {
         code: -32001,
         message,
@@ -82,7 +94,7 @@ export async function OPTIONS() {
 const TOOLS_MANIFEST = [
   {
     name: "connect_account",
-    description: "Verify authentication or connect your Continuum Home account to access expenses, watchlists, portfolio, and settings.",
+    description: "Verify authentication or connect your Continuum Home account to access expenses, watchlists, portfolio, and settings. Call this whenever the user needs to sign in or connect.",
     inputSchema: {
       type: "object",
       properties: {},
@@ -94,7 +106,7 @@ const TOOLS_MANIFEST = [
     },
     _meta: {
       ui: {
-        visibility: ["app"],
+        visibility: ["model", "app"],
       },
     },
     securitySchemes: [{ type: "noauth" }],
@@ -140,7 +152,7 @@ const TOOLS_MANIFEST = [
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "create_expense",
@@ -166,7 +178,7 @@ const TOOLS_MANIFEST = [
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "delete_expense",
@@ -188,7 +200,7 @@ const TOOLS_MANIFEST = [
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "list_watchlist",
@@ -218,7 +230,7 @@ const TOOLS_MANIFEST = [
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "add_watchlist_item",
@@ -252,7 +264,7 @@ const TOOLS_MANIFEST = [
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "update_watchlist_item",
@@ -281,7 +293,7 @@ const TOOLS_MANIFEST = [
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "delete_watchlist_item",
@@ -303,7 +315,7 @@ const TOOLS_MANIFEST = [
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "list_subscriptions",
@@ -322,7 +334,7 @@ const TOOLS_MANIFEST = [
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "create_subscription",
@@ -352,7 +364,7 @@ const TOOLS_MANIFEST = [
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "get_portfolio",
@@ -371,7 +383,7 @@ const TOOLS_MANIFEST = [
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
   {
     name: "get_settings",
@@ -390,7 +402,7 @@ const TOOLS_MANIFEST = [
         visibility: ["model", "app"],
       },
     },
-    securitySchemes: [{ type: "oauth2", scopes: ["read", "write"] }],
+    securitySchemes: [{ type: "noauth" }, { type: "oauth2", scopes: ["read", "write"] }],
   },
 ];
 
