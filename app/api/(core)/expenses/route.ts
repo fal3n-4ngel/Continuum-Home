@@ -17,8 +17,11 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get("category") || undefined;
     const from = searchParams.get("from") || undefined;
     const to = searchParams.get("to") || undefined;
+    const tag = searchParams.get("tag") || undefined;
+    const rawType = searchParams.get("type");
+    const type = rawType === "expense" || rawType === "income" ? rawType : undefined;
 
-    const expenses = await listExpenses(session, { q, category, from, to });
+    const expenses = await listExpenses(session, { q, category, from, to, tag, type });
     return NextResponse.json(expenses);
   } catch (error) {
     return toErrorResponse(error, "GET /api/expenses");

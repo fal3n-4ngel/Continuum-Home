@@ -19,6 +19,8 @@ export interface BaseExpenseFilterOptions {
 
 export interface FullExpenseFilterOptions extends BaseExpenseFilterOptions {
   category?: string;
+  tag?: string;
+  entryType?: "all" | "expense" | "income";
   sortField?: "date" | "amount" | "title" | "category";
   sortDir?: "asc" | "desc";
 }
@@ -55,7 +57,8 @@ export function filterExpensesBase(expenses: Expense[], options: BaseExpenseFilt
       list = list.filter(
         (e) =>
           (e.title && e.title.toLowerCase().includes(q)) ||
-          (e.notes && e.notes.toLowerCase().includes(q))
+          (e.notes && e.notes.toLowerCase().includes(q)) ||
+          (e.tags && e.tags.some((t) => t.toLowerCase().includes(q)))
       );
     }
   }
@@ -113,24 +116,39 @@ export function filterExpenses(expenses: Expense[], options: FullExpenseFilterOp
     list = list.filter((e) => e.category === options.category);
   }
 
+  if (options.tag) {
+    const tagLower = options.tag.toLowerCase();
+    list = list.filter((e) => e.tags && e.tags.some((t) => t.toLowerCase() === tagLower));
+  }
+
+  if (options.entryType && options.entryType !== "all") {
+    list = list.filter((e) => (e.type ?? "expense") === options.entryType);
+  }
+
   return sortExpenses(list, options.sortField || "date", options.sortDir || "desc");
 }
 
 export function calculateExpenseTotals(expenses: Expense[]): {
   totalSpent: number;
+  totalIncome: number;
   byCategory: Record<string, number>;
 } {
   let totalSpent = 0;
+  let totalIncome = 0;
   const byCategory: Record<string, number> = {};
 
   for (const e of expenses) {
     const amt = e.amount || 0;
+    if (e.type === "income") {
+      totalIncome += amt;
+      continue;
+    }
     totalSpent += amt;
     const cat = e.category || "Uncategorized";
     byCategory[cat] = (byCategory[cat] || 0) + amt;
   }
 
-  return { totalSpent, byCategory };
+  return { totalSpent, totalIncome, byCategory };
 }
 
 export interface DailyTrendOptions {
@@ -155,6 +173,7 @@ export function calculateDailyTrend(
 
   const expenseMap: Record<string, number> = {};
   expenses.forEach((e) => {
+    if (e.type === "income") return;
     if (e.date) {
       const d = e.date.slice(0, 10);
       expenseMap[d] = (expenseMap[d] || 0) + (e.amount || 0);

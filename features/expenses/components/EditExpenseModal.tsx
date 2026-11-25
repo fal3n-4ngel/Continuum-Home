@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { Pencil, X, Loader2 } from "lucide-react";
-import { Expense } from "@/types";
+import { Pencil, X, Loader2, Plus, Trash2 } from "lucide-react";
+import { Expense, ExpenseSplit, ExpenseType } from "@/types";
 
 interface EditExpenseModalProps {
   isOpen: boolean;
@@ -27,6 +27,9 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
   const [category, setCategory] = useState("");
   const [date, setDate] = useState("");
   const [notes, setNotes] = useState("");
+  const [entryType, setEntryType] = useState<ExpenseType>("expense");
+  const [tagsInput, setTagsInput] = useState("");
+  const [splits, setSplits] = useState<ExpenseSplit[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -37,11 +40,21 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
       setCategory(expense.category || "");
       setDate(expense.date || "");
       setNotes(expense.notes || "");
+      setEntryType(expense.type === "income" ? "income" : "expense");
+      setTagsInput(expense.tags?.join(", ") || "");
+      setSplits(expense.splits || []);
       setErrorMessage("");
     }
   }, [expense]);
 
   if (!isOpen || !expense || typeof window === "undefined") return null;
+
+  const parseTags = (raw: string): string[] =>
+    raw
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .slice(0, 20);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,6 +63,10 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
       setErrorMessage("Please enter a valid title and positive amount.");
       return;
     }
+
+    const cleanSplits = splits
+      .filter((s) => s.label.trim() && Number.isFinite(s.amount) && s.amount >= 0)
+      .map((s) => ({ label: s.label.trim(), amount: s.amount, ...(s.category ? { category: s.category } : {}) }));
 
     try {
       setIsSaving(true);
@@ -60,6 +77,9 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
         category: category || "Other",
         date: date || undefined,
         notes: notes.trim() || undefined,
+        type: entryType,
+        tags: parseTags(tagsInput),
+        splits: cleanSplits,
       });
       setIsSaving(false);
       onClose();
@@ -160,6 +180,79 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
                 className="w-full rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all focus:border-border-hover focus:shadow-focus"
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-[11px] font-medium text-text-muted">Entry Type</label>
+              <select
+                value={entryType}
+                onChange={(e) => setEntryType(e.target.value as ExpenseType)}
+                className="w-full rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all focus:border-border-hover focus:shadow-focus"
+              >
+                <option value="expense">Expense</option>
+                <option value="income">Income / Salary</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-[11px] font-medium text-text-muted">Tags (comma-separated)</label>
+              <input
+                type="text"
+                value={tagsInput}
+                onChange={(e) => setTagsInput(e.target.value)}
+                placeholder="e.g. dining, work"
+                className="w-full rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all focus:border-border-hover focus:shadow-focus"
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <label className="text-[11px] font-medium text-text-muted">Splits (Optional)</label>
+              <button
+                type="button"
+                onClick={() => setSplits([...splits, { label: "", amount: 0 }])}
+                className="flex items-center gap-1 text-[11px] font-medium text-text-secondary hover:text-text-primary cursor-pointer"
+              >
+                <Plus size={12} /> Add Split
+              </button>
+            </div>
+            {splits.length > 0 && (
+              <div className="flex flex-col gap-2">
+                {splits.map((split, idx) => (
+                  <div key={idx} className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={split.label}
+                      onChange={(e) =>
+                        setSplits(splits.map((s, i) => (i === idx ? { ...s, label: e.target.value } : s)))
+                      }
+                      placeholder="Label (e.g. Friend / Tax)"
+                      className="flex-1 rounded-lg border border-border-subtle bg-bg-card px-2.5 py-1.5 text-[12px] text-text-primary outline-none"
+                    />
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={split.amount}
+                      onChange={(e) =>
+                        setSplits(
+                          splits.map((s, i) => (i === idx ? { ...s, amount: parseFloat(e.target.value) || 0 } : s))
+                        )
+                      }
+                      className="w-24 rounded-lg border border-border-subtle bg-bg-card px-2.5 py-1.5 text-[12px] text-text-primary outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setSplits(splits.filter((_, i) => i !== idx))}
+                      className="rounded p-1 text-text-muted hover:text-red-600 cursor-pointer"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {errorMessage && (

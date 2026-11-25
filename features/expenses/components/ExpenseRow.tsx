@@ -12,11 +12,29 @@ interface ExpenseRowProps {
 const LEDGER_TD = "border-b border-border-subtle px-3 py-3 align-middle text-[13px] text-text-primary";
 
 export const ExpenseRow: React.FC<ExpenseRowProps> = ({ exp, currency, deleteExpense, onEditExpense }) => {
+  const isIncome = exp.type === "income";
   return (
     <tr className="group transition-colors hover:bg-bg-secondary/60">
       <td className={`${LEDGER_TD} font-medium`}>
-        {exp.title}
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span>{exp.title}</span>
+          {isIncome && (
+            <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-emerald-600">
+              Income
+            </span>
+          )}
+          {exp.tags && exp.tags.map((tag) => (
+            <span key={tag} className="rounded-full border border-border-subtle bg-bg-secondary px-1.5 py-0.5 font-mono text-[9px] text-text-muted">
+              #{tag}
+            </span>
+          ))}
+        </div>
         {exp.notes && <p className="mt-0.5 text-[10px] text-text-muted">{exp.notes}</p>}
+        {exp.splits && exp.splits.length > 0 && (
+          <p className="mt-0.5 text-[10px] text-text-secondary">
+            Split ({exp.splits.length}): {exp.splits.map((s) => `${s.label} ${currency}${s.amount}`).join(" · ")}
+          </p>
+        )}
       </td>
       <td className={LEDGER_TD}>
         {exp.category ? (
@@ -26,7 +44,9 @@ export const ExpenseRow: React.FC<ExpenseRowProps> = ({ exp, currency, deleteExp
         ) : "—"}
       </td>
       <td className={`${LEDGER_TD} text-[11px] text-text-secondary`}>{exp.date || "—"}</td>
-      <td className={`${LEDGER_TD} text-right font-semibold`}>{currency}{(exp.amount || 0).toLocaleString()}</td>
+      <td className={`${LEDGER_TD} text-right font-semibold ${isIncome ? "text-emerald-600" : ""}`}>
+        {isIncome ? "+" : ""}{currency}{(exp.amount || 0).toLocaleString()}
+      </td>
       <td className={`${LEDGER_TD} text-right`}>
         <div className="flex items-center justify-end gap-1">
           {onEditExpense && (
