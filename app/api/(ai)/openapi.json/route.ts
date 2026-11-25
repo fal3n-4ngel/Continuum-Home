@@ -52,6 +52,7 @@ export async function GET(req?: Request) {
     info: {
       title: "Continuum Home API",
       description:
+        "DEPRECATED: OpenAI is retiring legacy Custom GPTs on December 11, 2026. Migrate to the ChatGPT MCP Connector at /api/mcp (guide: /assistant/plugin). " +
         "API for a personal expense ledger, subscription tracker, investment portfolio, and movie/show/anime/book watchlist, " +
         "backed by Firestore. Every request must carry the user's Firebase ID token or Permanent API Key as a Bearer token; " +
         "all data is scoped to that user.",
@@ -934,6 +935,10 @@ export async function GET(req?: Request) {
   };
 
   return NextResponse.json(spec, {
-    headers: { "Cache-Control": "public, max-age=300" },
+    headers: {
+      "Cache-Control": "public, max-age=300",
+      "Deprecation": "true",
+      "Sunset": "Fri, 11 Dec 2026 23:59:59 GMT",
+    },
   });
 }

@@ -185,10 +185,32 @@ export default function PluginInstallationPage() {
                   )}
                 </button>
               </div>
-              <div className={CODE_BOX}>{clientId}</div>
+              <div className={CODE_BOX}>Automatic via DCR (or {clientId})</div>
               <p className="text-[11px] text-text-muted mt-0.5">
-                Client ID configured in Continuum OAuth clients.
+                Leave Client ID blank for Dynamic Client Registration (<span className="font-mono text-[10px]">/api/oauth/register</span>).
               </p>
+            </div>
+
+            <div className="flex flex-col gap-1.5 p-3.5 rounded-xs border border-border-subtle bg-bg-primary/50 md:col-span-2">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-muted">
+                Plugin Assets (Icon &amp; Manifest Bundle)
+              </span>
+              <div className="flex flex-wrap gap-2 mt-1">
+                <a
+                  href="/plugin/continuum-icon-256.png"
+                  download="continuum-icon-256.png"
+                  className="inline-flex items-center gap-1.5 rounded-xs border border-border-subtle bg-bg-card px-3 py-1.5 font-mono text-[11px] text-text-primary hover:bg-bg-secondary transition-colors no-underline"
+                >
+                  Download 256×256 Icon (&lt; 2 KB PNG)
+                </a>
+                <a
+                  href="/plugin/continuum-home-plugin.zip"
+                  download="continuum-home-plugin.zip"
+                  className="inline-flex items-center gap-1.5 rounded-xs border border-border-subtle bg-bg-card px-3 py-1.5 font-mono text-[11px] text-text-primary hover:bg-bg-secondary transition-colors no-underline"
+                >
+                  Download Codex / Plugin ZIP
+                </a>
+              </div>
             </div>
 
             {/* Authentication Mode */}

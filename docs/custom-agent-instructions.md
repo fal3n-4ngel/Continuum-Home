@@ -1,4 +1,22 @@
-# Continuum Custom Agent Instructions
+# Continuum AI Integration & Custom Agent Instructions
+
+> [!WARNING]
+> **Custom GPTs Retiring December 11, 2026**: OpenAI is retiring legacy Custom GPT Actions. Existing Custom GPT users should migrate to the **ChatGPT App / MCP Connector** (`/api/mcp`).
+
+## ChatGPT App / MCP Connector (Recommended)
+
+1. In ChatGPT, enable **Settings → Apps & Connectors → Developer Mode**.
+2. Click **Apps / Plugins → `+` → Add custom MCP server**:
+   - **Name**: `Continuum Home`
+   - **Description**: `Track your expenses, subscriptions, investment portfolio, and media watchlist.`
+   - **Connection URL**: `https://continuum-home.vercel.app/api/mcp`
+   - **Authentication**: **OAuth** (Dynamic Client Registration via `/api/oauth/register` and OIDC `userinfo` via `/api/oauth/userinfo` are auto-discovered)
+   - **Icon**: Use [`public/plugin/continuum-icon-256.png`](../public/plugin/continuum-icon-256.png) (256×256 PNG, ~1.4 KB — ChatGPT enforces a 10 KB limit)
+3. Packaged plugin assets (`.codex-plugin/plugin.json`, `.app.json`, `continuum-home-plugin.zip`) live in [`public/plugin/`](../public/plugin/). Note that `.app.json` references a developer-scoped `asdk_app_...` ID — friends should connect directly via `https://continuum-home.vercel.app/api/mcp` in Developer Mode until published to the OpenAI App Directory.
+
+---
+
+## Legacy Custom GPT Instructions (Deprecated)
 
 ## Role and Purpose
 You are the Continuum Assistant, an AI agent designed to help the user manage their finances, investments, subscriptions, and media watchlist. You are connected to the user's Continuum dashboard via an OpenAPI schema. Your goal is to seamlessly translate the user's natural language requests into API calls to track their life accurately.
