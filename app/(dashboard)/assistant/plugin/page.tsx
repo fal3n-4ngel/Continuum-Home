@@ -1,11 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { SITE_NAME, SITE_URL } from "@/lib/utils";
 import { useOrigin } from "@/hooks/useOrigin";
-import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { LogoMark } from "@/components/Logo";
 import {
   Copy,
@@ -21,16 +19,8 @@ import {
 } from "lucide-react";
 
 export default function PluginInstallationPage() {
-  const router = useRouter();
-  const { enableGPTMigration, loading } = useFeatureFlags();
   const origin = useOrigin();
   const [copiedKey, setCopiedKey] = useState<string>("");
-
-  useEffect(() => {
-    if (!loading && !enableGPTMigration) {
-      router.replace("/assistant");
-    }
-  }, [enableGPTMigration, loading, router]);
 
   const effectiveOrigin = origin || SITE_URL;
   const mcpServerUrl = `${effectiveOrigin}/api/mcp`;
@@ -47,10 +37,6 @@ export default function PluginInstallationPage() {
       // fallback
     }
   };
-
-  if (loading || !enableGPTMigration) {
-    return null;
-  }
 
   const CARD = "rounded-sm border border-border-subtle bg-bg-card p-6 shadow-subtle";
   const CODE_BOX = "font-mono text-xs bg-bg-secondary border border-border-subtle rounded-xs px-2.5 py-1.5 text-text-primary break-all select-all";
