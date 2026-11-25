@@ -3,6 +3,7 @@ import { NextRequest } from "next/server";
 import { GET as getProtectedResource } from "@/app/.well-known/oauth-protected-resource/route";
 import { GET as getAuthServer } from "@/app/.well-known/oauth-authorization-server/route";
 import { GET as getOpenIdConfig } from "@/app/.well-known/openid-configuration/route";
+import { GET as getUserInfo } from "@/app/api/(auth)/oauth/userinfo/route";
 import { GET as getMcp, POST as postMcp, OPTIONS as optionsMcp } from "@/app/api/mcp/route";
 import { isAllowedOAuthRedirect } from "@/lib/auth/oauth-clients";
 
@@ -55,6 +56,14 @@ describe("OAuth Discovery & MCP Server Endpoints", () => {
       expect(json.issuer).toBe(origin);
       expect(json.authorization_endpoint).toBe(`${origin}/api/oauth/authorize`);
       expect(json.token_endpoint).toBe(`${origin}/api/oauth/token`);
+      expect(json.userinfo_endpoint).toBe(`${origin}/api/oauth/userinfo`);
+    });
+
+    it("rejects unauthenticated requests to /api/oauth/userinfo", async () => {
+      const req = new NextRequest(`${origin}/api/oauth/userinfo`);
+      const res = await getUserInfo(req);
+      expect(res.status).toBe(401);
+      expect(res.headers.get("access-control-allow-origin")).toBe("*");
     });
   });
 
