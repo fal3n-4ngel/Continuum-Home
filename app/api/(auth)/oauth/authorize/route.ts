@@ -26,8 +26,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse("Missing required OAuth 2.0 query parameters (client_id, redirect_uri, state).", { status: 400 });
   }
 
-  // Barrier guard: strict validation to prevent Reflected XSS and enforce RFC standards
-  if (!/^[a-zA-Z0-9_\-\.:+=~]{1,512}$/.test(state)) {
+  if (!/^[a-zA-Z0-9_\-\.:+=~\/%]{1,2048}$/.test(state)) {
     return new NextResponse("Invalid state parameter format.", { status: 400 });
   }
 
@@ -343,7 +342,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing required parameters." }, { status: 400 });
     }
 
-    if (!/^[a-zA-Z0-9_\-\.:+=~]{1,512}$/.test(state)) {
+    if (!/^[a-zA-Z0-9_\-\.:+=~\/%]{1,2048}$/.test(state)) {
       return NextResponse.json({ error: "Invalid state parameter format." }, { status: 400 });
     }
 
