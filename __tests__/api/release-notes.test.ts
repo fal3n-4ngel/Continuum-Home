@@ -156,6 +156,16 @@ describe("Release Notes API Integration Tests", () => {
     });
 
     it("generates release notes for latest release without custom commits payload", async () => {
+      const fetchSpy = vi.spyOn(global, "fetch").mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            tag_name: "v1.3.0",
+            name: "Release v1.3.0",
+            body: "* feat: clearer audit logs\n* fix: timeout alerts",
+          }),
+          { status: 200 }
+        )
+      );
       const groqSpy = vi.spyOn(groqIntegration, "executeGroqJson").mockResolvedValueOnce({
         version: "v1.3.0",
         title: "Release v1.3.0",
@@ -171,6 +181,7 @@ describe("Release Notes API Integration Tests", () => {
       const res = await adminGenerateReleaseNotes(req);
       const data = await res.json();
 
+      fetchSpy.mockRestore();
       expect(res.status).toBe(200);
       expect(data.version).toBe("v1.3.0");
       expect(data.title).toBe("Release v1.3.0");
