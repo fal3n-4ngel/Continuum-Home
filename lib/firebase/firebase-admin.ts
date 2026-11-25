@@ -108,6 +108,13 @@ export async function adminListExpenses(uid: string): Promise<ExpenseRecord[]> {
     const notes = decrypt(data.notes || "");
     const amountStr = typeof data.amount === "string" ? decrypt(data.amount) : String(data.amount ?? "");
     const amountParsed = amountStr ? parseFloat(amountStr) : null;
+    let tags: string[] | undefined;
+    if (typeof data.tags === "string" && data.tags) {
+      try {
+        const parsed = JSON.parse(decrypt(data.tags));
+        if (Array.isArray(parsed)) tags = parsed;
+      } catch {}
+    }
     return {
       id: doc.id,
       title: title || "Untitled",
@@ -115,6 +122,8 @@ export async function adminListExpenses(uid: string): Promise<ExpenseRecord[]> {
       category: category || null,
       date: (data.date as string) || null,
       notes: notes || null,
+      type: data.type === "income" ? "income" : "expense",
+      ...(tags ? { tags } : {}),
       createdAt: typeof data.createdAt === "number" ? data.createdAt : 0,
     };
   });
@@ -136,10 +145,63 @@ export async function adminListSubscriptions(uid: string): Promise<SubscriptionR
         billingCycle: (data.billingCycle as SubscriptionRecord["billingCycle"]) || "monthly",
         nextBillingDate: (data.nextBillingDate as string) || "",
         icon: (data.icon as string) || null,
+        type: (data.type === "income" ? "income" : "expense") as SubscriptionRecord["type"],
+        autoPost: Boolean(data.autoPost),
+        category: typeof data.category === "string" ? data.category : null,
+        tags: Array.isArray(data.tags) ? data.tags.filter((t): t is string => typeof t === "string") : undefined,
+        lastAutoPostedDate: typeof data.lastAutoPostedDate === "string" ? data.lastAutoPostedDate : null,
         createdAt: typeof data.createdAt === "number" ? data.createdAt : 0,
       };
     })
     .sort((a, b) => b.createdAt - a.createdAt);
+}
+
+export async function adminCreateIdempotentExpense(
+  uid: string,
+  idempotencyKey: string,
+  entry: {
+    title: string;
+    amount: number;
+    category?: string | null;
+    date: string;
+    notes?: string | null;
+    type?: "expense" | "income";
+    tags?: string[] | null;
+  }
+): Promise<{ id: string; created: boolean }> {
+  const db = getAdminDb();
+  const docRef = db.collection("users").doc(uid).collection("expenses").doc(idempotencyKey);
+  try {
+    await docRef.create({
+      userId: uid,
+      title: encrypt(entry.title),
+      amount: encrypt(String(entry.amount)),
+      category: entry.category ? encrypt(entry.category) : null,
+      date: entry.date,
+      notes: entry.notes ? encrypt(entry.notes) : null,
+      type: entry.type === "income" ? "income" : "expense",
+      tags: entry.tags && entry.tags.length > 0 ? encrypt(JSON.stringify(entry.tags)) : null,
+      splits: null,
+      idempotencyKey,
+      createdAt: Date.now(),
+    });
+    return { id: idempotencyKey, created: true };
+  } catch (err: unknown) {
+    const code = (err as { code?: number | string })?.code;
+    if (code === 6 || code === "already-exists") {
+      return { id: idempotencyKey, created: false };
+    }
+    throw err;
+  }
+}
+
+export async function adminUpdateSubscription(
+  uid: string,
+  id: string,
+  updates: Record<string, unknown>
+): Promise<void> {
+  const db = getAdminDb();
+  await db.collection("users").doc(uid).collection("subscriptions").doc(id).set(updates, { merge: true });
 }
 
 export async function adminGetPortfolio(uid: string): Promise<PortfolioRecord | null> {

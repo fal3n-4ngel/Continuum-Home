@@ -5,6 +5,7 @@ import type { DashboardSettings, ExpenseEntry, InvestmentAsset, SubscriptionEntr
 const MEDIA_TYPES = ["movie", "show", "anime", "book"] as const;
 const MEDIA_STATUSES = ["plan_to_watch", "watching", "completed", "dropped", "paused"] as const;
 const BILLING_CYCLES = ["monthly", "yearly"] as const;
+const ENTRY_TYPES = ["expense", "income"] as const;
 const ASSET_CATEGORIES = ["equity", "crypto", "mutual_fund", "sip", "gold", "cash", "fixed_deposit", "other"] as const;
 const FD_COMPOUNDING_OPTIONS = ["monthly", "quarterly", "half_yearly", "yearly"] as const;
 const TIME_FILTERS = ["7", "30", "90", "salary", "all"] as const;
@@ -74,6 +75,36 @@ function requireObject(body: unknown, what: string): Record<string, unknown> {
   return body as Record<string, unknown>;
 }
 
+function asTags(value: unknown, field: string): string[] | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (!Array.isArray(value)) badRequest(`Field '${field}' must be an array.`);
+  if (value.length > 20) badRequest(`Field '${field}' must contain at most 20 tags.`);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (let i = 0; i < value.length; i++) {
+    const tag = asTrimmedString(value[i], `${field}[${i}]`, 40, true)!;
+    const key = tag.toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      out.push(tag);
+    }
+  }
+  return out;
+}
+
+function asSplits(value: unknown, field: string): { label: string; amount: number; category?: string }[] | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (!Array.isArray(value)) badRequest(`Field '${field}' must be an array.`);
+  if (value.length > 20) badRequest(`Field '${field}' must contain at most 20 splits.`);
+  return value.map((raw, i) => {
+    const item = requireObject(raw, `${field}[${i}]`);
+    const label = asTrimmedString(item.label, `${field}[${i}].label`, 100, true)!;
+    const amount = asNumber(item.amount, `${field}[${i}].amount`, { min: 0, max: 1_000_000_000 });
+    const category = asTrimmedString(item.category, `${field}[${i}].category`, 100, false);
+    return { label, amount, ...(category ? { category } : {}) };
+  });
+}
+
 export function validateExpenseEntry(body: unknown): ExpenseEntry {
   const b = requireObject(body, "Expense entry");
   return {
@@ -82,6 +113,10 @@ export function validateExpenseEntry(body: unknown): ExpenseEntry {
     category: asTrimmedString(b.category, "category", 100, false),
     date: asDate(b.date, "date"),
     notes: asTrimmedString(b.notes, "notes", 1000, false),
+    type: asEnum(b.type, "type", ENTRY_TYPES, false),
+    tags: asTags(b.tags, "tags"),
+    splits: asSplits(b.splits, "splits"),
+    idempotencyKey: asTrimmedString(b.idempotencyKey, "idempotencyKey", 128, false),
   };
 }
 
@@ -93,7 +128,10 @@ export function validateExpensePatch(body: unknown): Partial<ExpenseEntry> {
   if (b.category !== undefined) patch.category = asTrimmedString(b.category, "category", 100, false) ?? "";
   if (b.date !== undefined) patch.date = asDate(b.date, "date") ?? "";
   if (b.notes !== undefined) patch.notes = asTrimmedString(b.notes, "notes", 1000, false) ?? "";
-  if (Object.keys(patch).length === 0) badRequest("Patch body must include at least one of: title, amount, category, date, notes.");
+  if (b.type !== undefined) patch.type = asEnum(b.type, "type", ENTRY_TYPES, true)!;
+  if (b.tags !== undefined) patch.tags = asTags(b.tags, "tags") ?? [];
+  if (b.splits !== undefined) patch.splits = asSplits(b.splits, "splits") ?? [];
+  if (Object.keys(patch).length === 0) badRequest("Patch body must include at least one of: title, amount, category, date, notes, type, tags, splits.");
   return patch;
 }
 
@@ -202,6 +240,10 @@ export function validateSubscriptionEntry(body: unknown): SubscriptionEntry {
     billingCycle: asEnum(b.billingCycle, "billingCycle", BILLING_CYCLES, true)!,
     nextBillingDate: asDate(b.nextBillingDate, "nextBillingDate") ?? badRequest("Field 'nextBillingDate' is required."),
     icon: asTrimmedString(b.icon, "icon", 10, false) ?? null,
+    type: asEnum(b.type, "type", ENTRY_TYPES, false) ?? "expense",
+    autoPost: b.autoPost !== undefined ? asBoolean(b.autoPost, "autoPost") : false,
+    category: asTrimmedString(b.category, "category", 100, false) ?? null,
+    tags: asTags(b.tags, "tags"),
   };
 }
 
@@ -213,8 +255,12 @@ export function validateSubscriptionPatch(body: unknown): Partial<Omit<Subscript
   if (b.billingCycle !== undefined) patch.billingCycle = asEnum(b.billingCycle, "billingCycle", BILLING_CYCLES, true)!;
   if (b.nextBillingDate !== undefined) patch.nextBillingDate = asDate(b.nextBillingDate, "nextBillingDate") ?? badRequest("Field 'nextBillingDate' must be a valid date.");
   if (b.icon !== undefined) patch.icon = asTrimmedString(b.icon, "icon", 10, false) ?? null;
+  if (b.type !== undefined) patch.type = asEnum(b.type, "type", ENTRY_TYPES, true)!;
+  if (b.autoPost !== undefined) patch.autoPost = asBoolean(b.autoPost, "autoPost");
+  if (b.category !== undefined) patch.category = asTrimmedString(b.category, "category", 100, false) ?? null;
+  if (b.tags !== undefined) patch.tags = asTags(b.tags, "tags") ?? [];
   if (Object.keys(patch).length === 0) {
-    badRequest("Patch body must include at least one of: name, cost, billingCycle, nextBillingDate, icon.");
+    badRequest("Patch body must include at least one of: name, cost, billingCycle, nextBillingDate, icon, type, autoPost, category, tags.");
   }
   return patch;
 }

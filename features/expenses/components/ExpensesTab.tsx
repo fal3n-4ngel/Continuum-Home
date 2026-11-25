@@ -136,8 +136,9 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     expenseTitle, setExpenseTitle, expenseAmount, setExpenseAmount,
     expenseCategory, setExpenseCategory, newCategoryInput, setNewCategoryInput,
     customCategories, setCustomCategories, expenseDate, setExpenseDate,
-    expenseNotes, setExpenseNotes, isAddingExpense, expenseSearch, setExpenseSearch,
-    ledgerCategoryFilter, setLedgerCategoryFilter, ledgerMinAmount, setLedgerMinAmount,
+    expenseNotes, setExpenseNotes, expenseType, setExpenseType, expenseTags, setExpenseTags,
+    isAddingExpense, expenseSearch, setExpenseSearch,
+    ledgerCategoryFilter, setLedgerCategoryFilter, ledgerTypeFilter, ledgerTagFilter, ledgerMinAmount, setLedgerMinAmount,
     ledgerMaxAmount, setLedgerMaxAmount, ledgerStartDate, setLedgerStartDate, ledgerEndDate, setLedgerEndDate,
     ledgerSortField, setLedgerSortField,
     ledgerSortDir, setLedgerSortDir, isFetchingExpenses, setIsFetchingExpenses, expensesLoaded, setExpensesLoaded,
@@ -420,18 +421,29 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
       minAmount: ledgerMinAmount,
       maxAmount: ledgerMaxAmount,
       category: ledgerCategoryFilter,
+      tag: ledgerTagFilter,
+      entryType: ledgerTypeFilter,
       startDate: ledgerStartDate,
       endDate: ledgerEndDate,
       sortField: ledgerSortField,
       sortDir: ledgerSortDir,
     });
-  }, [expenses, timeFilter, currentPayCycle, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
+  }, [expenses, timeFilter, currentPayCycle, expenseSearch, ledgerMinAmount, ledgerMaxAmount, ledgerCategoryFilter, ledgerTagFilter, ledgerTypeFilter, ledgerStartDate, ledgerEndDate, ledgerSortField, ledgerSortDir]);
 
-  const totalSpent = React.useMemo(() => filteredExpensesBase.reduce((sum, e) => sum + (e.amount || 0), 0), [filteredExpensesBase]);
+  const totalSpent = React.useMemo(
+    () => filteredExpensesBase.filter((e) => e.type !== "income").reduce((sum, e) => sum + (e.amount || 0), 0),
+    [filteredExpensesBase]
+  );
+
+  const totalIncome = React.useMemo(
+    () => filteredExpensesBase.filter((e) => e.type === "income").reduce((sum, e) => sum + (e.amount || 0), 0),
+    [filteredExpensesBase]
+  );
 
   const catBreakdown = React.useMemo(() => {
     const breakdown: Record<string, number> = {};
     filteredExpenses.forEach((e) => {
+      if (e.type === "income") return;
       const cat = e.category || "Uncategorized";
       breakdown[cat] = (breakdown[cat] || 0) + (e.amount || 0);
     });
@@ -441,6 +453,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
   const chartCatBreakdown = React.useMemo(() => {
     const breakdown: Record<string, number> = {};
     filteredExpensesBase.forEach((e) => {
+      if (e.type === "income") return;
       const cat = e.category || "Uncategorized";
       breakdown[cat] = (breakdown[cat] || 0) + (e.amount || 0);
     });
@@ -461,8 +474,9 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
   }, [dailyTrend]);
 
   const largestItem = React.useMemo(() => {
-    if (filteredExpensesBase.length === 0) return null;
-    return filteredExpensesBase.reduce((max, e) => ((e.amount || 0) > (max.amount || 0) ? e : max), filteredExpensesBase[0]);
+    const onlyExpenses = filteredExpensesBase.filter((e) => e.type !== "income");
+    if (onlyExpenses.length === 0) return null;
+    return onlyExpenses.reduce((max, e) => ((e.amount || 0) > (max.amount || 0) ? e : max), onlyExpenses[0]);
   }, [filteredExpensesBase]);
   const largestCharge = largestItem?.amount || 0;
 
@@ -477,6 +491,11 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     if (!expenseTitle.trim() || !expenseAmount) return;
     setIsAddingExpense(true);
     try {
+      const parsedTags = expenseTags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
+        .slice(0, 20);
       const res = await fetch("/api/expenses", {
         method: "POST",
         headers: getHeaders(),
@@ -486,6 +505,8 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
           category: expenseCategory || null,
           date: expenseDate || toLocalDateStr(new Date()),
           notes: expenseNotes.trim() || null,
+          type: expenseType,
+          ...(parsedTags.length > 0 ? { tags: parsedTags } : {}),
         }),
       });
       if (res.ok) {
@@ -493,6 +514,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
         setExpenseAmount("");
         setExpenseCategory("");
         setExpenseNotes("");
+        setExpenseTags("");
         fetchExpenses();
       }
     } catch (err) {
@@ -647,6 +669,13 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                 {timeFilter === "all" ? "All time" : timeFilter === "salary" ? `Cycle (${currentPayCycle.startStr} – ${currentPayCycle.endStr})` : `Last ${timeFilter} days`}
               </span>
             </div>
+            {totalIncome > 0 && (
+              <div className={`${STAT_CARD} border-t-2 border-t-emerald-500/80`}>
+                <span className={LABEL_MONO}>Total Income</span>
+                <span className={`${STAT_VALUE} text-emerald-600`}>+{currency}{totalIncome.toLocaleString()}</span>
+                <span className={STAT_SUBTEXT}>Recurring &amp; logged income</span>
+              </div>
+            )}
             <div className={`${STAT_CARD} border-t-2 border-t-accent-yellow/80`}>
               <span className={LABEL_MONO}>Charges Logged</span>
               <span className={STAT_VALUE}>{filteredExpenses.length}</span>
@@ -818,8 +847,25 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
               <div className={BENTO_CARD}>
                 <span className={`${LABEL_MONO} mb-3.5 block`}>Log Transaction</span>
                 <form onSubmit={addExpense} className="flex flex-col gap-[9px]">
+                  <div className="grid grid-cols-2 gap-1.5 rounded-lg bg-bg-secondary p-1">
+                    <button
+                      type="button"
+                      onClick={() => setExpenseType("expense")}
+                      className={tabPillClass(expenseType === "expense")}
+                    >
+                      Expense
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setExpenseType("income")}
+                      className={tabPillClass(expenseType === "income")}
+                    >
+                      Income
+                    </button>
+                  </div>
                   <input id="transaction-desc-input" type="text" value={expenseTitle} onChange={(e) => setExpenseTitle(e.target.value)} placeholder="Description" required className={INPUT_CLASS} />
                   <input type="number" value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} placeholder={`Amount (${currency})`} required className={INPUT_CLASS} />
+                  <input type="text" value={expenseTags} onChange={(e) => setExpenseTags(e.target.value)} placeholder="Tags (comma-separated, optional)" className={INPUT_CLASS} />
 
                   <select value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} required className={`${INPUT_CLASS} w-full cursor-pointer`}>
                     <option value="">Select Category</option>

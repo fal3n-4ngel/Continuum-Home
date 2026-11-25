@@ -1,5 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { listAllUsers, adminListSubscriptions, adminGetEmailSubscriptions, type AdminUser } from "@/lib/firebase/firebase-admin";
+import {
+  listAllUsers,
+  adminListSubscriptions,
+  adminGetEmailSubscriptions,
+  adminCreateIdempotentExpense,
+  adminUpdateSubscription,
+  type AdminUser,
+} from "@/lib/firebase/firebase-admin";
+import { collectDueBillingDates, buildRecurringExpenseEntry } from "@/lib/finance";
 import { hasCronBeenSentToday, markCronAsSentToday } from "@/lib/cron";
 import { getIstDateString } from "@/lib/utils";
 import { reportCronFailures, type CronUserResult } from "@/lib/cron";
@@ -25,11 +33,37 @@ async function processUser(user: AdminUser, resendApiKey: string, force: boolean
     return { sent: false, reason: "user unsubscribed from subscription renewal emails" };
   }
   const subscriptions = await adminListSubscriptions(user.uid);
+  for (const sub of subscriptions) {
+    if (!sub.autoPost || !sub.nextBillingDate || sub.nextBillingDate > todayDateStr) continue;
+    const { dueDates, nextDate } = collectDueBillingDates(sub.nextBillingDate, sub.billingCycle, todayDateStr);
+    let lastPosted: string | null = sub.lastAutoPostedDate ?? null;
+    for (const dueDate of dueDates) {
+      const entry = buildRecurringExpenseEntry(sub, dueDate);
+      if (entry.idempotencyKey) {
+        await adminCreateIdempotentExpense(user.uid, entry.idempotencyKey, {
+          title: entry.title,
+          amount: entry.amount,
+          category: entry.category,
+          date: dueDate,
+          notes: entry.notes,
+          type: entry.type,
+          tags: entry.tags,
+        });
+        lastPosted = dueDate;
+      }
+    }
+    if (dueDates.length > 0) {
+      await adminUpdateSubscription(user.uid, sub.id, {
+        nextBillingDate: nextDate,
+        ...(lastPosted ? { lastAutoPostedDate: lastPosted } : {}),
+      });
+    }
+  }
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   const upcomingRenewals = subscriptions.filter((sub) => {
-    if (!sub.nextBillingDate) return false;
+    if (!sub.nextBillingDate || sub.type === "income") return false;
     const billingDate = new Date(sub.nextBillingDate + "T00:00:00");
     const diffTime = billingDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));

@@ -1,46 +1,25 @@
 "use client";
-import { SITE_NAME, getAuthHeaders } from "@/lib/utils";
+
+import React, { useState, useEffect, useCallback } from "react";
+import dynamic from "next/dynamic";
+import { motion, AnimatePresence } from "framer-motion";
+import { SITE_NAME, getAuthHeaders, toLocalDateStr } from "@/lib/utils";
 import { safeLocalStorage } from "@/lib/utils/storage";
-
-import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import {
-  FirebaseUser,
-  AniListUser,
-  TraktUser,
-  Expense,
-  WatchlistItem,
-  Subscription,
-  InvestmentAsset,
-  InvestmentCategory,
-  SearchResult,
-  InvestmentQuote,
-  FdCompounding,
-} from "@/types";
-import { getNextFutureBillingDate, resolvePayCycle, buildCycleHistory, toLocalDateStr } from "@/lib/utils";
-import { getCurrencySymbol } from "@/lib/utils";
-import { anilistQuery } from "@/lib/integrations";
-import { traktRequest } from "@/lib/integrations";
-import { pushWatchlistUpdate } from "@/lib/firebase";
-import type { SyncEntry } from "@/lib/firebase";
-
+import { WatchlistItem, ReleaseNote } from "@/types";
 import { useExpensesStore } from "@/lib/stores/expenses-store";
 import { useUiStore } from "@/lib/stores/ui-store";
-import { useAuthStore } from "@/lib/stores/auth-store";
 import { useInvestmentsStore } from "@/lib/stores/investments-store";
-import { useMediaStore } from "@/lib/stores/media-store";
 import { usePayCycleData } from "@/hooks/usePayCycleData";
-import { motion, AnimatePresence } from "framer-motion";
-
+import { useDashboardAuth } from "@/hooks/dashboard/useDashboardAuth";
+import { useDashboardSettings } from "@/hooks/dashboard/useDashboardSettings";
+import { useSubscriptionsController } from "@/hooks/dashboard/useSubscriptionsController";
+import { useInvestmentsController } from "@/hooks/dashboard/useInvestmentsController";
+import { useMediaController } from "@/hooks/dashboard/useMediaController";
 import LandingPage from "@/components/landing/LandingPage";
-import { setClientAuthSession, clearClientAuthSession } from "@/lib/auth/session-cookie";
-import dynamic from "next/dynamic";
 import { Sidebar, MobileHeader } from "@/components/layout";
 import {
   ConfirmModal,
-  ConfirmState,
   SyncPreviewModal,
-  SyncPreviewState,
-  SyncPreviewItem,
   OnboardingModal,
   MediaDetailsModal,
   ClaimProModal,
@@ -50,8 +29,6 @@ import {
   GoodreadsModal,
 } from "@/components/modals";
 import { InstallBanner } from "@/components/pwa";
-import { parseGoodreadsCsv } from "@/features/media/lib/goodreads-csv";
-import type { ReleaseNote } from "@/types";
 import { KirokuTab } from "@/features/assistant";
 
 const ExpensesTab = dynamic(() => import("@/features/expenses").then((mod) => mod.ExpensesTab));
@@ -65,183 +42,147 @@ const ReportsTab = dynamic(() => import("@/features/reports").then((mod) => mod.
 const AdminTab = dynamic(() => import("@/features/admin").then((mod) => mod.AdminTab));
 const SettingsTab = dynamic(() => import("@/features/settings").then((mod) => mod.SettingsTab));
 
-import type { Auth, GoogleAuthProvider as GoogleAuthProviderType, UserCredential, User, AuthProvider } from "firebase/auth";
-
-interface FirebaseAuthModule {
-  auth: Auth;
-  GoogleAuthProvider: typeof GoogleAuthProviderType;
-  signInWithPopup: (auth: Auth, provider: AuthProvider) => Promise<UserCredential>;
-  signInWithRedirect: (auth: Auth, provider: AuthProvider) => Promise<never>;
-  signOut: (auth: Auth) => Promise<void>;
-}
-
-const TICKER_SEARCH_CATEGORIES: InvestmentCategory[] = ["equity", "crypto", "mutual_fund", "sip"];
-
 export default function Dashboard() {
   const {
-    expenses, setExpenses,
-    expensesLoaded, setExpensesLoaded,
+    expenses,
+    setExpenses,
+    expensesLoaded,
+    setExpensesLoaded,
     setIsFetchingExpenses,
-    expenseSearch, ledgerMinAmount, ledgerMaxAmount,
-    catBreakdown
+    expenseSearch,
+    ledgerMinAmount,
+    ledgerMaxAmount,
   } = useExpensesStore();
   const { expenseTab, confirmDlg, setConfirmDlg, triggerConfirm } = useUiStore();
-  const { user, setUser, authLoading, setAuthLoading, isProUser, setIsProUser } = useAuthStore();
   const {
-    watchlist, setWatchlist,
-    isFetchingWatchlist, setIsFetchingWatchlist,
-    watchlistLoaded, setWatchlistLoaded,
-    mediaQuery, setMediaQuery,
-    mediaType, setMediaType,
-    searchResults, setSearchResults,
-    isSearchingMedia, setIsSearchingMedia,
-    watchlistFilter, setWatchlistFilter,
-    isEnrichingPosters, setIsEnrichingPosters,
-    showLetterboxdModal, setShowLetterboxdModal,
-    letterboxdUsername, setLetterboxdUsername,
-    isImportingLetterboxd, setIsImportingLetterboxd,
-    showGoodreadsModal, setShowGoodreadsModal,
-    goodreadsUserId, setGoodreadsUserId,
-    isImportingGoodreads, setIsImportingGoodreads,
-    bookQuery, setBookQuery,
-    isSearchingBooks, setIsSearchingBooks,
-    bookResults, setBookResults,
-    bookFilter, setBookFilter,
-    isEnrichingBookCovers, setIsEnrichingBookCovers,
-    anilistUser, setAnilistUser,
-    traktUser, setTraktUser,
-  } = useMediaStore();
-  const {
-    investments, setInvestments,
-    isFetchingInvestments, setIsFetchingInvestments,
-    investmentsLoaded, setInvestmentsLoaded,
-    invName, setInvName,
-    invMfSchemeCode, setInvMfSchemeCode,
-    invCategory, setInvCategory,
-    invAmount, setInvAmount,
-    invQuantity, setInvQuantity,
-    invBuyPrice, setInvBuyPrice,
-    invNotes, setInvNotes,
-    invInterestRate, setInvInterestRate,
-    invStartDate, setInvStartDate,
-    invMaturityDate, setInvMaturityDate,
-    invCompounding, setInvCompounding,
-    invSipDay, setInvSipDay,
-    isAddingAsset, setIsAddingAsset,
-    isUpdatingPrices, setIsUpdatingPrices,
-    invSuggestions, setInvSuggestions,
-    showInvestmentsTab, setShowInvestmentsTab,
+    investments,
+    isFetchingInvestments,
+    investmentsLoaded,
+    invName,
+    invCategory,
+    setInvCategory,
+    invAmount,
+    setInvAmount,
+    invQuantity,
+    setInvQuantity,
+    invBuyPrice,
+    setInvBuyPrice,
+    invNotes,
+    setInvNotes,
+    invInterestRate,
+    setInvInterestRate,
+    invStartDate,
+    setInvStartDate,
+    invMaturityDate,
+    setInvMaturityDate,
+    invCompounding,
+    setInvCompounding,
+    invSipDay,
+    setInvSipDay,
+    invSuggestions,
+    setInvSuggestions,
+    isAddingAsset,
+    isUpdatingPrices,
+    showInvestmentsTab,
   } = useInvestmentsStore();
+
+  const { user, authLoading, isProUser, setIsProUser, firebaseAuth } = useDashboardAuth();
 
   const [activeTab, setActiveTab] = useState<string>("expenses");
   const [mediaSubTab, setMediaSubTab] = useState<"watchlist" | "books" | "integrations">("watchlist");
   const [selectedMediaItem, setSelectedMediaItem] = useState<WatchlistItem | null>(null);
-  const [firebaseAuth, setFirebaseAuth] = useState<FirebaseAuthModule | null>(null);
-  const [isEmbedded, setIsEmbedded] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const searchParams = new URLSearchParams(window.location.search);
-      const tokenParam = searchParams.get("token");
-      if (tokenParam) {
-        safeLocalStorage.setItem("phub_embedded_token", tokenParam);
-      }
-
-      const queryTab = searchParams.get("tab");
-      const hashTab = window.location.hash.replace("#", "");
-      const tab = queryTab || hashTab;
-
-      if (tab) {
-        if (["expenses", "subscriptions", "investments", "financial", "reports", "agent", "admin", "settings"].includes(tab)) {
-          setActiveTab(tab);
-        } else if (["watchlist", "books", "integrations"].includes(tab)) {
-          setActiveTab("media");
-          setMediaSubTab(tab as any);
-        } else if (tab === "health") {
-          setActiveTab("financial");
-        }
-      }
-    }
-  }, []);
-
-  const [currency, setCurrencyState] = useState<string>(() => {
-    const cached = safeLocalStorage.getItem("phub_currency");
-    return getCurrencySymbol(cached);
-  });
-
-  const [subscriptionsLoaded, setSubscriptionsLoaded] = useState(false);
-  const [settingsLoaded, setSettingsLoaded] = useState(false);
-
-  const [timeFilter, setTimeFilterState] = useState<"7" | "30" | "90" | "salary" | "all">(() => {
-    const cached = safeLocalStorage.getItem("phub_time_filter");
-    return cached === "7" || cached === "30" || cached === "90" || cached === "salary" || cached === "all" ? cached : "all";
-  });
-  const [salaryDay, setSalaryDayState] = useState<number>(1);
-  const [monthlySalary, setMonthlySalaryState] = useState<number>(() => {
-    const cached = parseFloat(safeLocalStorage.getItem("phub_monthly_salary") || "0");
-    return isNaN(cached) ? 0 : cached;
-  });
-  const [additionalIncome, setAdditionalIncomeState] = useState<number>(() => {
-    const cached = parseFloat(safeLocalStorage.getItem("phub_additional_income") || "0");
-    return isNaN(cached) ? 0 : cached;
-  });
-  const [reconciliations, setReconciliationsState] = useState<Record<string, number>>({});
-  const [salaryLog, setSalaryLogState] = useState<Record<string, { date: string; amount: number }>>({});
-  const [emailSubscriptions, setEmailSubscriptionsState] = useState<{ expenses: boolean; portfolio: boolean; subscriptions: boolean }>({
-    expenses: true,
-    portfolio: false,
-    subscriptions: true,
-  });
-  const [aiOptOut, setAiOptOutState] = useState<boolean>(() => {
-    return safeLocalStorage.getItem("phub_ai_opt_out") === "true";
-  });
   const [showClaimPro, setShowClaimPro] = useState(false);
-
-  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
-  const [isFetchingSubscriptions, setIsFetchingSubscriptions] = useState(false);
-  const [subName, setSubName] = useState("");
-  const [subIcon, setSubIcon] = useState("");
-  const [subCost, setSubCost] = useState("");
-  const [subCycle, setSubCycle] = useState<"monthly" | "yearly">("monthly");
-  const [subNextDate, setSubNextDate] = useState("");
-  const [isAddingSub, setIsAddingSub] = useState(false);
-
   const [isDataCorrectionOpen, setIsDataCorrectionOpen] = useState(false);
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
-  const [enableChatAssistant, setEnableChatAssistant] = useState(false);
-
-  useEffect(() => {
-    fetch("/api/flags")
-      .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (data) {
-          const chatFlag = data.enableChatAssistant ?? data.enableGeminiChatAssitant;
-          if (typeof chatFlag === "boolean") {
-            setEnableChatAssistant(chatFlag);
-          }
-        }
-      })
-      .catch((err) => console.error("Failed to load feature flags:", err));
-  }, []);
-
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [activeReleaseNote, setActiveReleaseNote] = useState<ReleaseNote | null>(null);
   const [showReleaseNotesModal, setShowReleaseNotesModal] = useState(false);
+  const [firestoreLastSeenRelease, setFirestoreLastSeenRelease] = useState<string | null>(null);
 
   const getHeaders = useCallback(() => getAuthHeaders(user?.idToken), [user]);
 
   const patchSettings = useCallback(
-    (data: Record<string, unknown>) => {
+    async (data: Record<string, unknown>) => {
       if (user) {
-        fetch("/api/settings", { method: "PATCH", headers: getHeaders(), body: JSON.stringify(data) }).catch((err) =>
-          console.error(err)
-        );
+        fetch("/api/settings", {
+          method: "PATCH",
+          headers: getHeaders(),
+          body: JSON.stringify(data),
+        }).catch((err) => console.error(err));
       }
     },
     [user, getHeaders]
   );
 
-  const [firestoreLastSeenRelease, setFirestoreLastSeenRelease] = useState<string | null>(null);
+  const fetchExpenses = useCallback(async () => {
+    setIsFetchingExpenses(true);
+    try {
+      const res = await fetch("/api/expenses", { headers: getHeaders() });
+      if (res.ok) setExpenses(await res.json());
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsFetchingExpenses(false);
+      setExpensesLoaded(true);
+    }
+  }, [getHeaders, setIsFetchingExpenses, setExpenses, setExpensesLoaded]);
+
+  const media = useMediaController({
+    user,
+    getHeaders,
+    patchSettings,
+    triggerConfirm,
+    setConfirmDlg,
+  });
+
+  const settings = useDashboardSettings({
+    user,
+    getHeaders,
+    setIsProUser,
+    setFirestoreLastSeenRelease,
+    loadAnilistUser: media.loadAnilistUser,
+    setAnilistUser: media.setAnilistUser,
+    loadTraktUser: media.loadTraktUser,
+    setTraktUser: media.setTraktUser,
+    setLetterboxdUsername: media.setLetterboxdUsername,
+    setGoodreadsUserId: media.setGoodreadsUserId,
+  });
+
+  const subs = useSubscriptionsController({
+    getHeaders,
+    triggerConfirm,
+    onAutoPosted: fetchExpenses,
+  });
+
+  const inv = useInvestmentsController({
+    user,
+    getHeaders,
+    triggerConfirm,
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const searchParams = new URLSearchParams(window.location.search);
+    const tokenParam = searchParams.get("token");
+    if (tokenParam) {
+      safeLocalStorage.setItem("phub_embedded_token", tokenParam);
+    }
+
+    const queryTab = searchParams.get("tab");
+    const hashTab = window.location.hash.replace("#", "");
+    const tab = queryTab || hashTab;
+
+    if (tab) {
+      if (["expenses", "subscriptions", "investments", "financial", "reports", "agent", "admin", "settings"].includes(tab)) {
+        setActiveTab(tab);
+      } else if (["watchlist", "books", "integrations"].includes(tab)) {
+        setActiveTab("media");
+        setMediaSubTab(tab as "watchlist" | "books" | "integrations");
+      } else if (tab === "health") {
+        setActiveTab("financial");
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -261,7 +202,7 @@ export default function Dashboard() {
         }
       }
     });
-  }, [user?.idToken, getHeaders]);
+  }, [user, getHeaders]);
 
   const handleDismissReleaseNotes = useCallback(() => {
     if (activeReleaseNote) {
@@ -279,1021 +220,16 @@ export default function Dashboard() {
     setShowReleaseNotesModal(false);
   }, [activeReleaseNote, user, getHeaders]);
 
-  const [syncPreview, setSyncPreview] = useState<SyncPreviewState>({
-    isOpen: false,
-    title: "",
-    newItems: [],
-    updatedItems: [],
-    onConfirm: () => {},
-  });
-
-  const triggerAlert = (
-    title: string,
-    message: string,
-    tone: "danger" | "success" | "info" = "info",
-    confirmText = "OK"
-  ) => {
-    setConfirmDlg({
-      isOpen: true,
-      title,
-      message,
-      onConfirm: () => setConfirmDlg((prev) => ({ ...prev, isOpen: false })),
-      confirmText,
-      variant: "alert",
-      tone,
-    });
-  };
-
-  async function loadAnilistUser(token: string) {
-    try {
-      const data = await anilistQuery(`query { Viewer { id name avatar { large } } }`, {}, token);
-      const viewer = data.data?.Viewer;
-      if (viewer) {
-        setAnilistUser({ id: viewer.id, name: viewer.name, avatar: viewer.avatar?.large || null, token });
-      }
-    } catch (err) {
-      console.error("Failed to load AniList profile:", err);
-      setAnilistUser({ id: 0, name: "AniList User", avatar: null, token });
-    }
-  }
-
-  function connectAnilist() {
-    const clientId = process.env.NEXT_PUBLIC_ANILIST_CLIENT_ID || "46469";
-    window.location.href = `https://anilist.co/api/v2/oauth/authorize?client_id=${clientId}&response_type=token`;
-  }
-
-  function disconnectAnilist() {
-    safeLocalStorage.removeItem("anilist_token");
-    setAnilistUser(null);
-    patchSettings({ integrations: { anilist: null } });
-  }
-
-  async function loadTraktUser(accessToken: string, refreshToken: string, idToken: string | undefined) {
-    try {
-      const profile = await traktRequest(idToken, "users/me?extended=full", { token: accessToken });
-      if (profile?.username) {
-        setTraktUser({
-          username: profile.username,
-          name: profile.name || profile.username,
-          avatar: profile.images?.avatar?.full || null,
-          accessToken,
-          refreshToken,
-        });
-      }
-    } catch (err) {
-      console.error("Failed to load Trakt profile:", err);
-      setTraktUser({
-        username: "trakt_user",
-        name: "Trakt User",
-        avatar: null,
-        accessToken,
-        refreshToken,
-      });
-    }
-  }
-
-  function connectTrakt() {
-    const clientId = process.env.NEXT_PUBLIC_TRAKT_CLIENT_ID || "L_cE2O_7uJ7nkzU_UDkivqetsef0OLyvpOH6o6b4Y_0";
-    const redirectUri = encodeURIComponent(window.location.origin + "/api/auth/trakt/callback");
-    window.location.href = `https://trakt.tv/oauth/authorize?response_type=code&client_id=${clientId}&redirect_uri=${redirectUri}`;
-  }
-
-  function disconnectTrakt() {
-    safeLocalStorage.removeItem("trakt_access_token");
-    safeLocalStorage.removeItem("trakt_refresh_token");
-    setTraktUser(null);
-    patchSettings({ integrations: { trakt: null } });
-  }
-
-  function disconnectLetterboxd() {
-    safeLocalStorage.removeItem("letterboxd_username");
-    setLetterboxdUsername("");
-    patchSettings({ integrations: { letterboxd: null } });
-  }
-
-  function disconnectGoodreads() {
-    safeLocalStorage.removeItem("goodreads_user_id");
-    setGoodreadsUserId("");
-    patchSettings({ integrations: { goodreads: null } });
-  }
-
-  const [isSyncingAnilist, setIsSyncingAnilist] = useState(false);
-  const [isSyncingTrakt, setIsSyncingTrakt] = useState(false);
-
-  const describeSyncChanges = (existing: WatchlistItem, e: SyncEntry): string[] => {
-    const changes: string[] = [];
-    if (existing.status !== e.status) {
-      changes.push(`Status: ${existing.status.replace(/_/g, " ")} → ${e.status.replace(/_/g, " ")}`);
-    }
-    if ((existing.progress || 0) !== (e.progress || 0)) {
-      changes.push(`Progress: ${existing.progress || 0} → ${e.progress || 0}`);
-    }
-    if ((existing.rating ?? null) !== (e.rating ?? null)) {
-      changes.push(`Rating: ${existing.rating ?? "—"} → ${e.rating ?? "—"}`);
-    }
-    if (!existing.coverImage && e.coverImage) {
-      changes.push("Cover image added");
-    }
-    if (existing.year == null && e.year != null) {
-      changes.push(`Year added: ${e.year}`);
-    }
-    return changes;
-  };
-
-  const diffSyncEntries = (entries: SyncEntry[], matchExisting: (e: SyncEntry) => WatchlistItem | undefined) => {
-    const newItems: SyncPreviewItem[] = [];
-    const updatedItems: SyncPreviewItem[] = [];
-    for (const e of entries) {
-      const existing = matchExisting(e);
-      if (!existing) {
-        newItems.push({ title: e.title, type: e.type, changes: [] });
-        continue;
-      }
-      const changes = describeSyncChanges(existing, e);
-      if (changes.length > 0) {
-        updatedItems.push({ title: e.title, type: e.type, changes });
-      }
-    }
-    return { newItems, updatedItems, newCount: newItems.length, updatedCount: updatedItems.length };
-  };
-
-  const syncAnilist = async () => {
-    if (!anilistUser?.token) {
-      connectAnilist();
-      return;
-    }
-    setIsSyncingAnilist(true);
-    try {
-      const viewerData = await anilistQuery(`query { Viewer { id } }`, {}, anilistUser.token);
-      const userId = viewerData?.data?.Viewer?.id;
-      if (!userId) throw new Error("Could not fetch AniList profile.");
-
-      const query = `
-        query ($userId: Int) {
-          MediaListCollection(userId: $userId, type: ANIME) {
-            lists {
-              entries {
-                status
-                progress
-                score(format: POINT_10)
-                media {
-                  id
-                  title { english romaji }
-                  episodes
-                  coverImage { large }
-                  startDate { year }
-                }
-              }
-            }
-          }
-        }
-      `;
-      const data = await anilistQuery(query, { userId }, anilistUser.token);
-      const lists = data?.data?.MediaListCollection?.lists || [];
-      const entries: SyncEntry[] = [];
-
-      for (const list of lists) {
-        for (const entry of list.entries || []) {
-          const media = entry.media;
-          if (!media) continue;
-
-          let status: WatchlistItem["status"] = "plan_to_watch";
-          if (entry.status === "CURRENT") status = "watching";
-          else if (entry.status === "COMPLETED") status = "completed";
-          else if (entry.status === "DROPPED") status = "dropped";
-          else if (entry.status === "PAUSED") status = "paused";
-
-          const title = media.title?.english || media.title?.romaji || "Untitled Anime";
-          entries.push({
-            title,
-            type: "anime",
-            status,
-            progress: entry.progress || 0,
-            totalEpisodes: media.episodes || null,
-            rating: entry.score ? Number(entry.score) : null,
-            coverImage: media.coverImage?.large || null,
-            year: media.startDate?.year || null,
-            anilistId: media.id,
-          });
-        }
-      }
-
-      if (entries.length === 0) {
-        triggerAlert("AniList Sync", "No anime items found in your AniList account.", "info");
-        return;
-      }
-
-      const { newItems, updatedItems, newCount, updatedCount } = diffSyncEntries(entries, (e) =>
-        watchlist.find((w) => (w.anilistId && w.anilistId === e.anilistId) || (w.type === "anime" && w.title.toLowerCase().trim() === e.title.toLowerCase().trim()))
-      );
-
-      if (newCount === 0 && updatedCount === 0) {
-        triggerAlert("AniList Sync", "Your library already matches AniList — nothing to sync.", "info");
-        return;
-      }
-
-      const applyAnilistSync = async () => {
-        setSyncPreview((prev) => ({ ...prev, isApplying: true }));
-        setIsSyncingAnilist(true);
-        try {
-          const res = await fetch("/api/watchlist/sync", {
-            method: "POST",
-            headers: getHeaders(),
-            body: JSON.stringify({ source: "anilist", entries }),
-          });
-          if (res.ok) {
-            const result = await res.json();
-            await fetchWatchlist();
-            setSyncPreview((prev) => ({ ...prev, isOpen: false }));
-            triggerAlert("AniList Sync Complete", `Successfully synced ${result.added || 0} new and ${result.updated || 0} updated anime titles!`, "success");
-          } else {
-            throw new Error("Server rejected sync payload.");
-          }
-        } catch (err: any) {
-          console.error(err);
-          triggerAlert("AniList Sync Error", err?.message || "Failed to sync with AniList.", "danger");
-        } finally {
-          setIsSyncingAnilist(false);
-          setSyncPreview((prev) => ({ ...prev, isApplying: false }));
-        }
-      };
-
-      setSyncPreview({ isOpen: true, title: "Sync AniList", newItems, updatedItems, onConfirm: applyAnilistSync });
-    } catch (err: any) {
-      console.error(err);
-      triggerAlert("AniList Sync Error", err?.message || "Failed to sync with AniList.", "danger");
-    } finally {
-      setIsSyncingAnilist(false);
-    }
-  };
-
-  const fetchOMDbPoster = async (imdbId: string | null | undefined): Promise<string | null> => {
-    if (!imdbId) return null;
-    try {
-      const res = await fetch(`/api/omdb?i=${imdbId}`);
-      if (res.ok) {
-        const data = await res.json();
-        return data.Poster && data.Poster !== "N/A" ? data.Poster : null;
-      }
-    } catch (err) {
-      console.error("OMDb poster error:", err);
-    }
-    return null;
-  };
-
-  const syncTrakt = async () => {
-    if (!traktUser?.accessToken) {
-      connectTrakt();
-      return;
-    }
-    setIsSyncingTrakt(true);
-    try {
-      const idToken = user?.idToken;
-      const watchedMovies = await traktRequest(idToken, "sync/watched/movies", { token: traktUser.accessToken }).catch(() => []);
-      const watchedShows = await traktRequest(idToken, "sync/watched/shows", { token: traktUser.accessToken }).catch(() => []);
-
-      const watchlistMovies = await traktRequest(idToken, "sync/watchlist/movies", { token: traktUser.accessToken }).catch(() => []);
-      const watchlistShows = await traktRequest(idToken, "sync/watchlist/shows", { token: traktUser.accessToken }).catch(() => []);
-
-      const entries: SyncEntry[] = [];
-      const processedTraktIds = new Set<number>();
-
-      if (Array.isArray(watchedMovies)) {
-        for (const item of watchedMovies) {
-          if (!item?.movie) continue;
-          const traktId = item.movie.ids?.trakt;
-          if (traktId) processedTraktIds.add(Number(traktId));
-
-          const existing = watchlist.find(
-            (w) =>
-              (w.traktId && w.traktId === traktId) ||
-              (w.title.toLowerCase().trim() === item.movie.title.toLowerCase().trim() && w.type === "movie")
-          );
-
-          let coverImage = existing?.coverImage || null;
-          if (!coverImage && item.movie.ids?.imdb) {
-            coverImage = await fetchOMDbPoster(item.movie.ids.imdb);
-          }
-
-          entries.push({
-            title: item.movie.title,
-            type: "movie",
-            status: "completed",
-            progress: 1,
-            totalEpisodes: 1,
-            rating: item.rating ? Number(item.rating) : null,
-            coverImage,
-            year: item.movie.year || null,
-            traktId,
-          });
-        }
-      }
-
-      if (Array.isArray(watchlistMovies)) {
-        for (const item of watchlistMovies) {
-          if (!item?.movie) continue;
-          const traktId = item.movie.ids?.trakt;
-          if (traktId && processedTraktIds.has(Number(traktId))) continue;
-          if (traktId) processedTraktIds.add(Number(traktId));
-
-          const existing = watchlist.find(
-            (w) =>
-              (w.traktId && w.traktId === traktId) ||
-              (w.title.toLowerCase().trim() === item.movie.title.toLowerCase().trim() && w.type === "movie")
-          );
-
-          let coverImage = existing?.coverImage || null;
-          if (!coverImage && item.movie.ids?.imdb) {
-            coverImage = await fetchOMDbPoster(item.movie.ids.imdb);
-          }
-
-          entries.push({
-            title: item.movie.title,
-            type: "movie",
-            status: existing?.status === "dropped" ? "dropped" : existing?.status === "paused" ? "paused" : "plan_to_watch",
-            progress: 0,
-            totalEpisodes: 1,
-            rating: item.rating ? Number(item.rating) : null,
-            coverImage,
-            year: item.movie.year || null,
-            traktId,
-          });
-        }
-      }
-
-      if (Array.isArray(watchedShows)) {
-        for (const item of watchedShows) {
-          if (!item?.show) continue;
-          const traktId = item.show.ids?.trakt;
-          if (traktId) processedTraktIds.add(Number(traktId));
-
-          let progress = 0;
-          if (Array.isArray(item.seasons)) {
-            for (const season of item.seasons) {
-              if (Array.isArray(season.episodes)) {
-                progress += season.episodes.length;
-              }
-            }
-          }
-          if (progress === 0 && item.plays) {
-            progress = item.plays;
-          }
-
-          const existing = watchlist.find(
-            (w) =>
-              (w.traktId && w.traktId === traktId) ||
-              (w.title.toLowerCase().trim() === item.show.title.toLowerCase().trim() && w.type === "show")
-          );
-
-          let totalEpisodes = existing?.totalEpisodes || null;
-          if (!totalEpisodes && traktId) {
-            try {
-              const showDetails = await traktRequest(idToken, `shows/${traktId}?extended=full`, { token: traktUser.accessToken });
-              if (showDetails?.aired_episodes) {
-                totalEpisodes = Number(showDetails.aired_episodes);
-              }
-            } catch (err) {
-              console.error("Failed to fetch show episode count:", err);
-            }
-          }
-
-          let status: WatchlistItem["status"] = "watching";
-          if (totalEpisodes && totalEpisodes > 0 && progress >= totalEpisodes) {
-            status = "completed";
-          } else if (!totalEpisodes && existing?.status === "completed" && progress >= (existing.progress || 0)) {
-            status = "completed";
-          } else if (existing?.status === "dropped" && progress <= (existing.progress || 0)) {
-            status = "dropped";
-          } else if (existing?.status === "paused" && progress <= (existing.progress || 0)) {
-            status = "paused";
-          }
-
-          let coverImage = existing?.coverImage || null;
-          if (!coverImage && item.show.ids?.imdb) {
-            coverImage = await fetchOMDbPoster(item.show.ids.imdb);
-          }
-          if (!coverImage && item.show.ids?.imdb) {
-            try {
-              const tvmazeRes = await fetch(`https://api.tvmaze.com/lookup/shows?imdb=${item.show.ids.imdb}`);
-              if (tvmazeRes.ok) {
-                const tvmazeData = await tvmazeRes.json();
-                coverImage = tvmazeData.image?.medium || null;
-              }
-            } catch (err) {
-              console.error("TVMaze fallback error:", err);
-            }
-          }
-
-          entries.push({
-            title: item.show.title,
-            type: "show",
-            status,
-            progress,
-            totalEpisodes,
-            rating: item.rating ? Number(item.rating) : null,
-            coverImage,
-            year: item.show.year || null,
-            traktId,
-          });
-        }
-      }
-
-      if (Array.isArray(watchlistShows)) {
-        for (const item of watchlistShows) {
-          if (!item?.show) continue;
-          const traktId = item.show.ids?.trakt;
-          if (traktId && processedTraktIds.has(Number(traktId))) continue;
-          if (traktId) processedTraktIds.add(Number(traktId));
-
-          const existing = watchlist.find(
-            (w) =>
-              (w.traktId && w.traktId === traktId) ||
-              (w.title.toLowerCase().trim() === item.show.title.toLowerCase().trim() && w.type === "show")
-          );
-
-          let coverImage = existing?.coverImage || null;
-          if (!coverImage && item.show.ids?.imdb) {
-            coverImage = await fetchOMDbPoster(item.show.ids.imdb);
-          }
-          if (!coverImage && item.show.ids?.imdb) {
-            try {
-              const tvmazeRes = await fetch(`https://api.tvmaze.com/lookup/shows?imdb=${item.show.ids.imdb}`);
-              if (tvmazeRes.ok) {
-                const tvmazeData = await tvmazeRes.json();
-                coverImage = tvmazeData.image?.medium || null;
-              }
-            } catch (err) {
-              console.error("TVMaze fallback error:", err);
-            }
-          }
-
-          entries.push({
-            title: item.show.title,
-            type: "show",
-            status: existing?.status === "dropped" ? "dropped" : existing?.status === "paused" ? "paused" : "plan_to_watch",
-            progress: 0,
-            totalEpisodes: existing?.totalEpisodes || null,
-            rating: item.rating ? Number(item.rating) : null,
-            coverImage,
-            year: item.show.year || null,
-            traktId,
-          });
-        }
-      }
-
-      if (entries.length === 0) {
-        triggerAlert("Trakt Sync", "No watched items found in your Trakt account.", "info");
-        return;
-      }
-
-      const { newItems, updatedItems, newCount, updatedCount } = diffSyncEntries(entries, (e) =>
-        watchlist.find((w) => w.type === e.type && ((w.traktId && w.traktId === e.traktId) || w.title.toLowerCase().trim() === e.title.toLowerCase().trim()))
-      );
-
-      if (newCount === 0 && updatedCount === 0) {
-        triggerAlert("Trakt Sync", "Your library already matches Trakt — nothing to sync.", "info");
-        return;
-      }
-
-      const applyTraktSync = async () => {
-        setSyncPreview((prev) => ({ ...prev, isApplying: true }));
-        setIsSyncingTrakt(true);
-        try {
-          const res = await fetch("/api/watchlist/sync", {
-            method: "POST",
-            headers: getHeaders(),
-            body: JSON.stringify({ source: "trakt", entries }),
-          });
-          if (res.ok) {
-            const result = await res.json();
-            await fetchWatchlist();
-            setSyncPreview((prev) => ({ ...prev, isOpen: false }));
-            triggerAlert("Trakt Sync Complete", `Successfully synced ${result.added || 0} new and ${result.updated || 0} updated movies & shows!`, "success");
-          } else {
-            throw new Error("Server rejected sync payload.");
-          }
-        } catch (err: any) {
-          console.error(err);
-          triggerAlert("Trakt Sync Error", err?.message || "Failed to sync with Trakt.", "danger");
-        } finally {
-          setIsSyncingTrakt(false);
-          setSyncPreview((prev) => ({ ...prev, isApplying: false }));
-        }
-      };
-
-      setSyncPreview({ isOpen: true, title: "Sync Trakt", newItems, updatedItems, onConfirm: applyTraktSync });
-    } catch (err: any) {
-      console.error(err);
-      triggerAlert("Trakt Sync Error", err?.message || "Failed to sync with Trakt.", "danger");
-    } finally {
-      setIsSyncingTrakt(false);
-    }
-  };
-
-  const enrichMissingPosters = async () => {
-    const missing = watchlist.filter(
-      (w) => !w.coverImage && (w.type === "movie" || w.type === "show")
-    );
-    if (missing.length === 0) {
-      triggerAlert("All Good", "All your movies and shows already have cover images!", "success");
-      return;
-    }
-
-    triggerConfirm(
-      "Fetch Missing Posters",
-      `Found ${missing.length} items with missing cover art. Fetch them now from OMDb/TVMaze?`,
-      async () => {
-        setIsEnrichingPosters(true);
-        let successCount = 0;
-        try {
-          for (const item of missing) {
-            let imdbId = null;
-
-            if (item.traktId) {
-              try {
-                const details = await traktRequest(user?.idToken, `${item.type}s/${item.traktId}`);
-                imdbId = details?.ids?.imdb || null;
-              } catch (e) {
-                console.error("Trakt details fetch error:", e);
-              }
-            }
-
-            let coverImage = null;
-            try {
-              const searchUrl = imdbId
-                ? `/api/omdb?i=${imdbId}`
-                : `/api/omdb?t=${encodeURIComponent(item.title)}&y=${item.year || ""}`;
-              const omdbRes = await fetch(searchUrl);
-              if (omdbRes.ok) {
-                const omdbData = await omdbRes.json();
-                coverImage = omdbData.Poster && omdbData.Poster !== "N/A" ? omdbData.Poster : null;
-              }
-            } catch (e) {
-              console.error("OMDb search error:", e);
-            }
-
-            if (!coverImage && item.type === "show") {
-              try {
-                const searchUrl = imdbId
-                  ? `https://api.tvmaze.com/lookup/shows?imdb=${imdbId}`
-                  : `https://api.tvmaze.com/singlesearch/shows?q=${encodeURIComponent(item.title)}`;
-                const tvmazeRes = await fetch(searchUrl);
-                if (tvmazeRes.ok) {
-                  const tvmazeData = await tvmazeRes.json();
-                  coverImage = tvmazeData.image?.medium || null;
-                }
-              } catch (e) {
-                console.error("TVMaze fallback error:", e);
-              }
-            }
-
-            if (coverImage) {
-              const res = await fetch(`/api/watchlist/${item.id}`, {
-                method: "PATCH",
-                headers: getHeaders(),
-                body: JSON.stringify({ coverImage }),
-              });
-              if (res.ok) {
-                successCount++;
-              }
-            }
-          }
-
-          if (successCount > 0) {
-            await fetchWatchlist();
-            triggerAlert("Enrichment Complete", `Successfully updated ${successCount} items with cover art!`, "success");
-          } else {
-            triggerAlert("Enrichment Complete", "Could not find any posters for the missing items.", "info");
-          }
-        } catch (err: any) {
-          console.error("Enrichment error:", err);
-          triggerAlert("Enrichment Error", err.message || "Failed to enrich posters.", "danger");
-        } finally {
-          setIsEnrichingPosters(false);
-        }
-      }
-    );
-  };
-
-  const enrichMissingBookCovers = async () => {
-    const missing = watchlist.filter((w) => w.type === "book" && !w.coverImage);
-    if (missing.length === 0) {
-      triggerAlert("All Good", "All your books already have cover images!", "success");
-      return;
-    }
-
-    triggerConfirm(
-      "Fetch Missing Covers",
-      `Found ${missing.length} book${missing.length === 1 ? "" : "s"} with missing cover art. Fetch them now from OpenLibrary?`,
-      async () => {
-        setIsEnrichingBookCovers(true);
-        let successCount = 0;
-        try {
-          for (const item of missing) {
-            let coverImage: string | null = null;
-            try {
-              const searchUrl = `https://openlibrary.org/search.json?q=${encodeURIComponent(item.title)}&limit=1`;
-              const res = await fetch(searchUrl);
-              if (res.ok) {
-                const data = await res.json();
-                const doc = data.docs?.[0];
-                coverImage = doc?.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : null;
-              }
-            } catch (e) {
-              console.error("OpenLibrary search error:", e);
-            }
-
-            if (coverImage) {
-              const res = await fetch(`/api/watchlist/${item.id}`, {
-                method: "PATCH",
-                headers: getHeaders(),
-                body: JSON.stringify({ coverImage }),
-              });
-              if (res.ok) successCount++;
-            }
-          }
-
-          if (successCount > 0) {
-            await fetchWatchlist();
-            triggerAlert("Enrichment Complete", `Successfully updated ${successCount} book${successCount === 1 ? "" : "s"} with cover art!`, "success");
-          } else {
-            triggerAlert("Enrichment Complete", "Could not find any covers for the missing books.", "info");
-          }
-        } catch (err: any) {
-          console.error("Book cover enrichment error:", err);
-          triggerAlert("Enrichment Error", err.message || "Failed to enrich book covers.", "danger");
-        } finally {
-          setIsEnrichingBookCovers(false);
-        }
-      }
-    );
-  };
-
-  useEffect(() => {
-    const hash = window.location.hash;
-    const params = new URLSearchParams(hash.startsWith("#") ? hash.slice(1) : hash);
-    const anilistToken = params.get("access_token");
-    const traktAccessToken = params.get("trakt_access_token");
-    const traktRefreshToken = params.get("trakt_refresh_token");
-
-    if (anilistToken) {
-      safeLocalStorage.setItem("anilist_token", anilistToken);
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    }
-    if (traktAccessToken && traktRefreshToken) {
-      safeLocalStorage.setItem("trakt_access_token", traktAccessToken);
-      safeLocalStorage.setItem("trakt_refresh_token", traktRefreshToken);
-      window.history.replaceState(null, "", window.location.pathname + window.location.search);
-    }
-
-    let unsubscribe: (() => void) | undefined;
-    import("firebase/app").then(async ({ initializeApp, getApps }) => {
-      const res = await fetch("/api/auth/config");
-      const config = await res.json();
-      const app = getApps().length ? getApps()[0] : initializeApp(config);
-
-      const { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, getRedirectResult } = await import("firebase/auth");
-      const auth = getAuth(app);
-      setFirebaseAuth({ auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut });
-
-      getRedirectResult(auth).then((result) => {
-        if (result?.user) {
-          console.log("[Auth] Redirect sign-in consumed:", result.user.email);
-        }
-      }).catch((err) => {
-        console.warn("[Auth] getRedirectResult error:", err?.code, err?.message);
-      });
-
-      unsubscribe = auth.onAuthStateChanged(async (fbUser: any) => {
-        if (fbUser) {
-          const idToken = await fbUser.getIdToken();
-          const u = {
-            uid: fbUser.uid,
-            email: fbUser.email,
-            displayName: fbUser.displayName,
-            photoURL: fbUser.photoURL,
-            idToken,
-          };
-          setUser(u);
-          setClientAuthSession();
-        } else if (typeof window !== "undefined" && (new URLSearchParams(window.location.search).get("embedded") === "true" || safeLocalStorage.getItem("phub_embedded_token"))) {
-          const token = safeLocalStorage.getItem("phub_embedded_token") || "embedded_token";
-          setUser({
-            uid: "adiadithyakrishnan",
-            email: "adiadithyakrishnan@gmail.com",
-            displayName: "Adithya Krishnan",
-            photoURL: null,
-            idToken: token,
-          });
-          setIsProUser(true);
-          setClientAuthSession();
-        } else {
-          setUser(null);
-          setIsProUser(false);
-          clearClientAuthSession();
-        }
-        setAuthLoading(false);
-      });
-
-    });
-
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!user) return;
-    const aniToken = safeLocalStorage.getItem("anilist_token");
-    if (aniToken) loadAnilistUser(aniToken);
-
-    const trAcc = safeLocalStorage.getItem("trakt_access_token");
-    const trRef = safeLocalStorage.getItem("trakt_refresh_token");
-    if (trAcc && trRef) loadTraktUser(trAcc, trRef, user.idToken);
-
-    const lbUser = safeLocalStorage.getItem("letterboxd_username");
-    if (lbUser) setLetterboxdUsername(lbUser);
-
-    const grUser = safeLocalStorage.getItem("goodreads_user_id");
-    if (grUser) setGoodreadsUserId(grUser);
-  }, [user]);
-
-  const fetchExpenses = async () => {
-    setIsFetchingExpenses(true);
-    try {
-      const res = await fetch("/api/expenses", { headers: getHeaders() });
-      if (res.ok) setExpenses(await res.json());
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsFetchingExpenses(false);
-      setExpensesLoaded(true);
-    }
-  };
-
-  const fetchWatchlist = async () => {
-    setIsFetchingWatchlist(true);
-    try {
-      const res = await fetch("/api/watchlist", { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        setWatchlist(Array.isArray(data) ? data : data.items || []);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsFetchingWatchlist(false);
-      setWatchlistLoaded(true);
-    }
-  };
-
-  const fetchSubscriptions = async () => {
-    setIsFetchingSubscriptions(true);
-    try {
-      const res = await fetch("/api/subscriptions", { headers: getHeaders() });
-      if (res.ok) {
-        const loaded = (await res.json()) as any[];
-        const rolled = loaded.map((sub) => {
-          const futureDate = getNextFutureBillingDate(sub.nextBillingDate, sub.billingCycle);
-          if (futureDate !== sub.nextBillingDate) {
-            fetch(`/api/subscriptions/${sub.id}`, {
-              method: "PATCH",
-              headers: getHeaders(),
-              body: JSON.stringify({ nextBillingDate: futureDate }),
-            }).catch((e) => console.error(e));
-            return { ...sub, nextBillingDate: futureDate };
-          }
-          return sub;
-        });
-        setSubscriptions(rolled);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsFetchingSubscriptions(false);
-      setSubscriptionsLoaded(true);
-    }
-  };
-
-  const fetchInvestments = async () => {
-    setIsFetchingInvestments(true);
-    try {
-      const res = await fetch("/api/portfolio", { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        const list = Array.isArray(data) ? data : (data && Array.isArray(data.assets) ? data.assets : []);
-        setInvestments(list);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsFetchingInvestments(false);
-      setInvestmentsLoaded(true);
-    }
-  };
-
-  const fetchSettings = async () => {
-    try {
-      const res = await fetch("/api/settings", { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        if (data.timeFilter) {
-          setTimeFilterState(data.timeFilter);
-          safeLocalStorage.setItem("phub_time_filter", data.timeFilter);
-          useExpensesStore.getState().setTimeFilter(data.timeFilter);
-        }
-        if (data.salaryDay) {
-          setSalaryDayState(data.salaryDay);
-          useExpensesStore.getState().setSalaryDay(data.salaryDay);
-        }
-        if (data.monthlySalary !== undefined) {
-          setMonthlySalaryState(data.monthlySalary);
-          safeLocalStorage.setItem("phub_monthly_salary", String(data.monthlySalary));
-        }
-        if (data.additionalIncome !== undefined) {
-          setAdditionalIncomeState(data.additionalIncome);
-          safeLocalStorage.setItem("phub_additional_income", String(data.additionalIncome));
-        }
-        if (data.currency) {
-          const sym = getCurrencySymbol(data.currency);
-          setCurrencyState(sym);
-          safeLocalStorage.setItem("phub_currency", sym);
-        }
-        if (data.reconciliations && typeof data.reconciliations === "object") {
-          setReconciliationsState(data.reconciliations);
-        }
-        if (data.salaryLog && typeof data.salaryLog === "object") {
-          setSalaryLogState(data.salaryLog);
-          useExpensesStore.getState().setSalaryLog(data.salaryLog);
-        }
-        if (data.emailSubscriptions && typeof data.emailSubscriptions === "object") {
-          setEmailSubscriptionsState({
-            expenses: data.emailSubscriptions.expenses !== false,
-            portfolio: data.emailSubscriptions.portfolio === true,
-            subscriptions: data.emailSubscriptions.subscriptions !== false,
-          });
-        }
-        if (data.aiOptOut !== undefined) {
-          setAiOptOutState(data.aiOptOut === true);
-          safeLocalStorage.setItem("phub_ai_opt_out", String(data.aiOptOut === true));
-        }
-        if (data.lastSeenRelease) {
-          setFirestoreLastSeenRelease(data.lastSeenRelease);
-        }
-        setIsProUser(data.isPro === true);
-
-        if (data.integrations) {
-          const { anilist, trakt, letterboxd } = data.integrations;
-          if (anilist?.token) {
-            safeLocalStorage.setItem("anilist_token", anilist.token);
-            loadAnilistUser(anilist.token);
-          } else if (anilist === null) {
-            safeLocalStorage.removeItem("anilist_token");
-            setAnilistUser(null);
-          }
-
-          if (trakt?.accessToken && trakt?.refreshToken) {
-            safeLocalStorage.setItem("trakt_access_token", trakt.accessToken);
-            safeLocalStorage.setItem("trakt_refresh_token", trakt.refreshToken);
-            loadTraktUser(trakt.accessToken, trakt.refreshToken, user?.idToken);
-          } else if (trakt === null) {
-            safeLocalStorage.removeItem("trakt_access_token");
-            safeLocalStorage.removeItem("trakt_refresh_token");
-            setTraktUser(null);
-          }
-
-          if (letterboxd?.username) {
-            safeLocalStorage.setItem("letterboxd_username", letterboxd.username);
-            setLetterboxdUsername(letterboxd.username);
-          } else if (letterboxd === null) {
-            safeLocalStorage.removeItem("letterboxd_username");
-            setLetterboxdUsername("");
-          }
-
-          const goodreads = data.integrations?.goodreads;
-          if (goodreads?.userId) {
-            safeLocalStorage.setItem("goodreads_user_id", goodreads.userId);
-            setGoodreadsUserId(goodreads.userId);
-          } else if (goodreads === null) {
-            safeLocalStorage.removeItem("goodreads_user_id");
-            setGoodreadsUserId("");
-          }
-        }
-
-        // Auto-migrate local storage integrations to cloud if missing in cloud
-        const localAni = safeLocalStorage.getItem("anilist_token");
-        const localTrAcc = safeLocalStorage.getItem("trakt_access_token");
-        const localTrRef = safeLocalStorage.getItem("trakt_refresh_token");
-        const localLb = safeLocalStorage.getItem("letterboxd_username");
-        const localGr = safeLocalStorage.getItem("goodreads_user_id");
-
-        const toSync: Record<string, unknown> = {};
-        if (localAni && !data.integrations?.anilist?.token) {
-          toSync.anilist = { token: localAni };
-        }
-        if (localTrAcc && localTrRef && (!data.integrations?.trakt?.accessToken || !data.integrations?.trakt?.refreshToken)) {
-          toSync.trakt = { accessToken: localTrAcc, refreshToken: localTrRef };
-        }
-        if (localLb && !data.integrations?.letterboxd?.username) {
-          toSync.letterboxd = { username: localLb };
-        }
-        if (localGr && !data.integrations?.goodreads?.userId) {
-          toSync.goodreads = { userId: localGr };
-        }
-        if (Object.keys(toSync).length > 0) {
-          patchSettings({ integrations: toSync });
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSettingsLoaded(true);
-    }
-  };
-
-  const setTimeFilter = (f: "7" | "30" | "90" | "salary" | "all") => {
-    setTimeFilterState(f);
-    safeLocalStorage.setItem("phub_time_filter", f);
-    useExpensesStore.getState().setTimeFilter(f);
-    patchSettings({ timeFilter: f });
-  };
-
-  const setSalaryDay = (d: number) => {
-    if (d === salaryDay) return;
-    setSalaryDayState(d);
-    useExpensesStore.getState().setSalaryDay(d);
-    patchSettings({ salaryDay: d });
-  };
-
-  const setMonthlySalary = (val: number) => {
-    if (val === monthlySalary) return;
-    setMonthlySalaryState(val);
-    safeLocalStorage.setItem("phub_monthly_salary", String(val));
-    patchSettings({ monthlySalary: val });
-  };
-
-  const setAdditionalIncome = (val: number) => {
-    if (val === additionalIncome) return;
-    setAdditionalIncomeState(val);
-    safeLocalStorage.setItem("phub_additional_income", String(val));
-    patchSettings({ additionalIncome: val });
-  };
-
-  const setAiOptOut = (val: boolean) => {
-    if (val === aiOptOut) return;
-    setAiOptOutState(val);
-    safeLocalStorage.setItem("phub_ai_opt_out", String(val));
-    patchSettings({ aiOptOut: val });
-  };
-
-  const setReconciliation = (cycleStartDate: string, actualAmount: number | null) => {
-    const next = { ...reconciliations };
-    if (actualAmount === null) {
-      delete next[cycleStartDate];
-    } else {
-      next[cycleStartDate] = actualAmount;
-    }
-    setReconciliationsState(next);
-    patchSettings({ reconciliations: next });
-  };
-
-  const setSalaryLogEntry = (date: string, amount: number) => {
-    const next = { ...salaryLog, [date]: { date, amount } };
-    setSalaryLogState(next);
-    useExpensesStore.getState().setSalaryLog(next);
-    patchSettings({ salaryLog: next });
-  };
-
-  const setCurrency = (c: string) => {
-    const symbol = getCurrencySymbol(c);
-    setCurrencyState(symbol);
-    safeLocalStorage.setItem("phub_currency", symbol);
-    patchSettings({ currency: symbol });
-  };
-
-  const setEmailSubscriptions = (next: { expenses: boolean; portfolio: boolean; subscriptions: boolean }) => {
-    setEmailSubscriptionsState(next);
-    patchSettings({ emailSubscriptions: next });
-  };
-
   useEffect(() => {
     if (user) {
       Promise.allSettled([
         fetchExpenses(),
-        fetchWatchlist(),
-        fetchSubscriptions(),
-        fetchInvestments(),
-        fetchSettings(),
+        media.fetchWatchlist(),
+        subs.fetchSubscriptions(),
+        inv.fetchInvestments(),
+        settings.fetchSettings(),
       ]);
     }
-  }, [user]);
-
-  useEffect(() => {
-    const handleWatchlistUpdate = () => {
-      fetchWatchlist();
-    };
-    window.addEventListener("watchlist-updated", handleWatchlistUpdate);
-    return () => window.removeEventListener("watchlist-updated", handleWatchlistUpdate);
   }, [user]);
 
   useEffect(() => {
@@ -1306,6 +242,15 @@ export default function Dashboard() {
       setShowOnboarding(true);
     }
   }, [user, expensesLoaded, expenses.length]);
+
+  const { payCycle, cycleHistory, cycleAverages } = usePayCycleData({
+    expenses,
+    subscriptions: subs.subscriptions,
+    salaryDay: settings.salaryDay,
+    monthlySalary: settings.monthlySalary,
+    additionalIncome: settings.additionalIncome,
+    salaryLog: settings.salaryLog,
+  });
 
   const logUnaccountedGap = async (amount: number) => {
     try {
@@ -1327,633 +272,8 @@ export default function Dashboard() {
     }
   };
 
-  const addSubscription = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!subName.trim() || !subCost || !subNextDate) return;
-    setIsAddingSub(true);
-    try {
-      const res = await fetch("/api/subscriptions", {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify({
-          name: subName.trim(),
-          cost: parseFloat(subCost),
-          billingCycle: subCycle,
-          nextBillingDate: subNextDate,
-          icon: subIcon.trim() || null,
-        }),
-      });
-      if (res.ok) {
-        setSubName("");
-        setSubCost("");
-        setSubIcon("");
-        fetchSubscriptions();
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsAddingSub(false);
-    }
-  };
-
-  const deleteSubscription = async (id: string) => {
-    triggerConfirm("Delete Subscription", "Are you sure you want to delete this subscription?", async () => {
-      const previousList = [...subscriptions];
-      setSubscriptions((prev) => prev.filter((s) => s.id !== id));
-      try {
-        const res = await fetch(`/api/subscriptions/${id}`, { method: "DELETE", headers: getHeaders() });
-        if (!res.ok) throw new Error("Failed to delete subscription");
-      } catch (err) {
-        console.error(err);
-        setSubscriptions(previousList);
-      }
-    });
-  };
-
-  const updateSubscriptionIcon = async (id: string, icon: string) => {
-    const nextIcon = icon.trim() || null;
-    setSubscriptions((prev) => prev.map((s) => (s.id === id ? { ...s, icon: nextIcon } : s)));
-    try {
-      await fetch(`/api/subscriptions/${id}`, {
-        method: "PATCH",
-        headers: getHeaders(),
-        body: JSON.stringify({ icon: nextIcon }),
-      });
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const updateWatchItem = async (item: WatchlistItem, updates: Partial<WatchlistItem>) => {
-    const nextUpdates = { ...updates };
-    if (nextUpdates.progress !== undefined) {
-      const total = nextUpdates.totalEpisodes !== undefined && nextUpdates.totalEpisodes !== null
-        ? Number(nextUpdates.totalEpisodes)
-        : (item.totalEpisodes !== undefined && item.totalEpisodes !== null ? Number(item.totalEpisodes) : null);
-
-      if (total && total > 0 && Number(nextUpdates.progress) >= total) {
-        nextUpdates.status = "completed";
-      } else if (total && total > 0 && Number(nextUpdates.progress) < total && item.status === "completed" && nextUpdates.status === undefined) {
-        nextUpdates.status = "watching";
-      }
-    }
-
-    const res = await fetch(`/api/watchlist/${item.id}`, {
-      method: "PATCH",
-      headers: getHeaders(),
-      body: JSON.stringify(nextUpdates),
-    });
-    if (res.ok) {
-      setWatchlist((prev) => prev.map((w) => (w.id === item.id ? { ...w, ...nextUpdates, updatedAt: Date.now() } : w)));
-      pushWatchlistUpdate(user?.idToken, item, nextUpdates).catch((err) => console.error(err));
-    }
-  };
-
-  const deleteWatchItem = async (id: string) => {
-    triggerConfirm("Delete Watchlist Item", "Are you sure you want to remove this item from your watchlist?", async () => {
-      const res = await fetch(`/api/watchlist/${id}`, { method: "DELETE", headers: getHeaders() });
-      if (res.ok) setWatchlist((prev) => prev.filter((w) => w.id !== id));
-    });
-  };
-
-  const searchMedia = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!mediaQuery.trim()) return;
-    setIsSearchingMedia(true);
-    setSearchResults([]);
-    try {
-      if (mediaType === "anime") {
-        const data = await anilistQuery(
-          `query($s:String){Page(perPage:8){media(search:$s,type:ANIME){id title{english romaji}coverImage{large}startDate{year}episodes}}}`,
-          { s: mediaQuery }
-        );
-        setSearchResults(
-          (data.data?.Page?.media || []).map((m: any) => ({
-            title: m.title.english || m.title.romaji,
-            type: "anime",
-            totalEpisodes: m.episodes || null,
-            coverImage: m.coverImage?.large || null,
-            year: m.startDate?.year || null,
-            anilistId: m.id,
-          }))
-        );
-      } else {
-        const data = await traktRequest(user?.idToken, `search/${mediaType}?query=${encodeURIComponent(mediaQuery)}&limit=8`);
-        if (Array.isArray(data)) {
-          const enrichedResults = await Promise.all(
-            data.map(async (item: any) => {
-              const m = item.movie || item.show;
-              const imdbId = m.ids?.imdb;
-              let coverImage = null;
-              if (imdbId) {
-                coverImage = await fetchOMDbPoster(imdbId);
-              }
-              if (!coverImage && item.type === "show" && imdbId) {
-                try {
-                  const tvmazeRes = await fetch(`https://api.tvmaze.com/lookup/shows?imdb=${imdbId}`);
-                  if (tvmazeRes.ok) {
-                    const tvmazeData = await tvmazeRes.json();
-                    coverImage = tvmazeData.image?.medium || null;
-                  }
-                } catch (err) {
-                  console.error("TVMaze fallback error:", err);
-                }
-              }
-              return {
-                title: m.title,
-                type: (item.type === "movie" ? "movie" : "show") as "movie" | "show",
-                totalEpisodes: item.type === "show" ? m.aired_episodes || null : null,
-                coverImage,
-                year: m.year || null,
-                traktId: m.ids?.trakt || null,
-              };
-            })
-          );
-          setSearchResults(enrichedResults);
-        }
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSearchingMedia(false);
-    }
-  };
-
-  const addToWatchlist = async (res: SearchResult): Promise<boolean> => {
-    const body: Omit<WatchlistItem, "id" | "updatedAt" | "createdAt"> = {
-      title: res.title,
-      type: res.type,
-      status: "plan_to_watch",
-      progress: 0,
-      totalEpisodes: res.totalEpisodes || null,
-      rating: null,
-      coverImage: res.coverImage || null,
-      year: res.year || null,
-      anilistId: res.anilistId || null,
-      traktId: res.traktId || null,
-    };
-    try {
-      const apiRes = await fetch("/api/watchlist", {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify(body),
-      });
-      if (apiRes.ok) {
-        const createdData = await apiRes.json().catch(() => ({}));
-        const createdItem: WatchlistItem = {
-          ...body,
-          id: createdData.id || `temp-${Date.now()}`,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        };
-        setWatchlist((prev) => [createdItem, ...prev.filter((item) => item.id !== createdItem.id)]);
-        fetchWatchlist();
-        pushWatchlistUpdate(user?.idToken, createdItem, { status: "plan_to_watch" }).catch((e) => console.error(e));
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.error("[addToWatchlist] Error adding item:", err);
-      return false;
-    }
-  };
-
-  const handleLetterboxdImport = async () => {
-    if (!letterboxdUsername.trim()) return;
-    setIsImportingLetterboxd(true);
-    try {
-      const res = await fetch(`/api/watchlist/letterboxd?username=${encodeURIComponent(letterboxdUsername.trim())}`, {
-        headers: getHeaders(),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || "Failed to fetch Letterboxd RSS feed.");
-      }
-
-      const { movies } = await res.json();
-      if (!movies || movies.length === 0) {
-        throw new Error("No recent watched diary entries found in this Letterboxd feed.");
-      }
-
-      const { newItems, updatedItems, newCount, updatedCount } = diffSyncEntries(movies, (e) =>
-        watchlist.find((w) => w.type === "movie" && ((w.traktId && e.traktId && w.traktId === e.traktId) || w.title.toLowerCase().trim() === e.title.toLowerCase().trim()))
-      );
-
-      if (newCount === 0 && updatedCount === 0) {
-        triggerAlert("Letterboxd Sync", "Your library already matches this Letterboxd feed — nothing to sync.", "info");
-        return;
-      }
-
-      const applyLetterboxdSync = async () => {
-        setSyncPreview((prev) => ({ ...prev, isApplying: true }));
-        setIsImportingLetterboxd(true);
-        try {
-          const syncRes = await fetch("/api/watchlist/sync", {
-            method: "POST",
-            headers: getHeaders(),
-            body: JSON.stringify({ source: "letterboxd", entries: movies }),
-          });
-          if (syncRes.ok) {
-            const result = await syncRes.json();
-            setShowLetterboxdModal(false);
-            safeLocalStorage.setItem("letterboxd_username", letterboxdUsername.trim());
-            patchSettings({ integrations: { letterboxd: { username: letterboxdUsername.trim() } } });
-            fetchWatchlist();
-            setSyncPreview((prev) => ({ ...prev, isOpen: false }));
-            triggerAlert("Letterboxd Sync Complete", `Successfully synced ${result.added || 0} new and ${result.updated || 0} updated movies!`, "success");
-          } else {
-            throw new Error("Server rejected sync payload.");
-          }
-        } catch (err: any) {
-          triggerAlert("Sync Failed", err?.message || "Failed to sync Letterboxd feed.", "danger");
-        } finally {
-          setIsImportingLetterboxd(false);
-          setSyncPreview((prev) => ({ ...prev, isApplying: false }));
-        }
-      };
-
-      setSyncPreview({ isOpen: true, title: "Sync Letterboxd", newItems, updatedItems, onConfirm: applyLetterboxdSync });
-    } catch (err: any) {
-      triggerAlert("Sync Failed", err?.message || "Failed to parse RSS feed", "danger");
-    } finally {
-      setIsImportingLetterboxd(false);
-    }
-  };
-
-  const handleGoodreadsSync = async () => {
-    if (!goodreadsUserId.trim()) return;
-    setIsImportingGoodreads(true);
-    try {
-      const res = await fetch(`/api/watchlist/goodreads?userId=${encodeURIComponent(goodreadsUserId.trim())}`, {
-        headers: getHeaders(),
-      });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        throw new Error(errData.message || "Failed to fetch Goodreads RSS shelves.");
-      }
-
-      const { books } = await res.json();
-      if (!books || books.length === 0) {
-        throw new Error("No books found in this Goodreads account's public shelves.");
-      }
-
-      const { newItems, updatedItems, newCount, updatedCount } = diffSyncEntries(books, (e) =>
-        watchlist.find((w) => w.type === "book" && w.title.toLowerCase().trim() === e.title.toLowerCase().trim())
-      );
-
-      if (newCount === 0 && updatedCount === 0) {
-        triggerAlert("Goodreads Sync", "Your book library already matches Goodreads — nothing to sync.", "info");
-        return;
-      }
-
-      const applyGoodreadsSync = async () => {
-        setSyncPreview((prev) => ({ ...prev, isApplying: true }));
-        setIsImportingGoodreads(true);
-        try {
-          const syncRes = await fetch("/api/watchlist/sync", {
-            method: "POST",
-            headers: getHeaders(),
-            body: JSON.stringify({ source: "goodreads", entries: books }),
-          });
-          if (syncRes.ok) {
-            const result = await syncRes.json();
-            setShowGoodreadsModal(false);
-            safeLocalStorage.setItem("goodreads_user_id", goodreadsUserId.trim());
-            patchSettings({ integrations: { goodreads: { userId: goodreadsUserId.trim() } } });
-            fetchWatchlist();
-            setSyncPreview((prev) => ({ ...prev, isOpen: false }));
-            triggerAlert("Goodreads Sync Complete", `Successfully synced ${result.added || 0} new and ${result.updated || 0} updated books!`, "success");
-          } else {
-            throw new Error("Server rejected sync payload.");
-          }
-        } catch (err: any) {
-          triggerAlert("Sync Failed", err?.message || "Failed to sync Goodreads feed.", "danger");
-        } finally {
-          setIsImportingGoodreads(false);
-          setSyncPreview((prev) => ({ ...prev, isApplying: false }));
-        }
-      };
-
-      setSyncPreview({ isOpen: true, title: "Sync Goodreads", newItems, updatedItems, onConfirm: applyGoodreadsSync });
-    } catch (err: any) {
-      triggerAlert("Sync Failed", err?.message || "Failed to parse Goodreads feed", "danger");
-    } finally {
-      setIsImportingGoodreads(false);
-    }
-  };
-
-  const handleGoodreadsCsvImport = async (file: File) => {
-    setIsImportingGoodreads(true);
-    try {
-      const text = await file.text();
-      const { books } = parseGoodreadsCsv(text);
-      if (!books || books.length === 0) {
-        throw new Error("No valid book entries found in the uploaded CSV file.");
-      }
-
-      const { newItems, updatedItems, newCount, updatedCount } = diffSyncEntries(books, (e) =>
-        watchlist.find((w) => w.type === "book" && w.title.toLowerCase().trim() === e.title.toLowerCase().trim())
-      );
-
-      if (newCount === 0 && updatedCount === 0) {
-        triggerAlert("Goodreads CSV Import", "Your library already contains all books from this CSV — nothing to sync.", "info");
-        return;
-      }
-
-      const applyGoodreadsCsv = async () => {
-        setSyncPreview((prev) => ({ ...prev, isApplying: true }));
-        setIsImportingGoodreads(true);
-        try {
-          const syncRes = await fetch("/api/watchlist/sync", {
-            method: "POST",
-            headers: getHeaders(),
-            body: JSON.stringify({ source: "goodreads_csv", entries: books }),
-          });
-          if (syncRes.ok) {
-            const result = await syncRes.json();
-            setShowGoodreadsModal(false);
-            fetchWatchlist();
-            setSyncPreview((prev) => ({ ...prev, isOpen: false }));
-            triggerAlert("Goodreads CSV Import Complete", `Successfully imported ${result.added || 0} new and ${result.updated || 0} updated books!`, "success");
-          } else {
-            throw new Error("Server rejected sync payload.");
-          }
-        } catch (err: any) {
-          triggerAlert("Import Failed", err?.message || "Failed to import Goodreads CSV.", "danger");
-        } finally {
-          setIsImportingGoodreads(false);
-          setSyncPreview((prev) => ({ ...prev, isApplying: false }));
-        }
-      };
-
-      setSyncPreview({ isOpen: true, title: "Import Goodreads CSV", newItems, updatedItems, onConfirm: applyGoodreadsCsv });
-    } catch (err: any) {
-      triggerAlert("Import Failed", err?.message || "Failed to parse Goodreads CSV file.", "danger");
-    } finally {
-      setIsImportingGoodreads(false);
-    }
-  };
-
-  const searchBooks = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!bookQuery.trim()) return;
-    setIsSearchingBooks(true);
-    setBookResults([]);
-    try {
-      const res = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(bookQuery)}&limit=8`);
-      if (res.ok) {
-        const data = await res.json();
-        setBookResults(
-          (data.docs || []).map((doc: any) => ({
-            title: doc.title,
-            type: "book",
-            totalEpisodes: doc.number_of_pages_median || null,
-            coverImage: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-M.jpg` : null,
-            year: doc.first_publish_year || null,
-          }))
-        );
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsSearchingBooks(false);
-    }
-  };
-
-  const addBook = async (b: SearchResult): Promise<boolean> => {
-    const body: Omit<WatchlistItem, "id" | "updatedAt" | "createdAt"> = {
-      title: b.title,
-      type: "book",
-      status: "plan_to_watch",
-      progress: 0,
-      totalEpisodes: b.totalEpisodes || null,
-      rating: null,
-      coverImage: b.coverImage || null,
-      year: b.year || null,
-    };
-    try {
-      const apiRes = await fetch("/api/watchlist", {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify(body),
-      });
-      if (apiRes.ok) {
-        const createdData = await apiRes.json().catch(() => ({}));
-        const createdItem: WatchlistItem = {
-          ...body,
-          id: createdData.id || `temp-${Date.now()}`,
-          createdAt: Date.now(),
-          updatedAt: Date.now(),
-        };
-        setWatchlist((prev) => [createdItem, ...prev.filter((item) => item.id !== createdItem.id)]);
-        fetchWatchlist();
-        return true;
-      }
-      return false;
-    } catch (err) {
-      console.error("[addBook] Error adding book:", err);
-      return false;
-    }
-  };
-
-  useEffect(() => {
-    if (!invName.trim() || !TICKER_SEARCH_CATEGORIES.includes(invCategory)) {
-      setInvSuggestions([]);
-      return;
-    }
-    const delayDebounce = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/portfolio/search?q=${encodeURIComponent(invName)}&category=${encodeURIComponent(invCategory)}`, {
-          headers: getHeaders(),
-        });
-        if (res.ok) {
-          const data = await res.json();
-          setInvSuggestions(data.quotes || []);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }, 250);
-
-    return () => clearTimeout(delayDebounce);
-  }, [invName, invCategory, user]);
-
-  const handleInvNameChange = (value: string) => {
-    setInvName(value);
-    setInvMfSchemeCode("");
-  };
-
-  const selectSuggestion = (s: InvestmentQuote) => {
-    if (s.type === "MUTUALFUND_IN" && s.schemeCode) {
-      setInvName(s.name || "");
-      setInvMfSchemeCode(s.schemeCode);
-      setInvSuggestions([]);
-      return;
-    }
-    setInvName(s.symbol || s.name || "");
-    setInvMfSchemeCode("");
-    if (invCategory === "equity" || invCategory === "crypto" || invCategory === "mutual_fund") {
-      if (s.type === "EQUITY") setInvCategory("equity");
-      else if (s.type === "CRYPTOCURRENCY") setInvCategory("crypto");
-      else if (s.type === "MUTUALFUND") setInvCategory("mutual_fund");
-    }
-    setInvSuggestions([]);
-  };
-
-  const addInvestment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!invName.trim() || !invAmount) return;
-    if (invCategory === "fixed_deposit" && (!invInterestRate || !invStartDate || !invMaturityDate)) return;
-    setIsAddingAsset(true);
-    try {
-      const newAsset =
-        invCategory === "fixed_deposit"
-          ? {
-              name: invName.trim(),
-              category: invCategory,
-              amount: parseFloat(invAmount),
-              investedAmount: parseFloat(invAmount),
-              interestRate: parseFloat(invInterestRate),
-              startDate: invStartDate,
-              maturityDate: invMaturityDate,
-              compounding: invCompounding,
-              notes: invNotes.trim() || undefined,
-            }
-          : {
-              name: invName.trim(),
-              category: invCategory,
-              amount: parseFloat(invAmount),
-              investedAmount: parseFloat(invAmount),
-              quantity: invQuantity ? parseFloat(invQuantity) : undefined,
-              buyPrice: invBuyPrice ? parseFloat(invBuyPrice) : undefined,
-              notes: invNotes.trim() || undefined,
-              mfSchemeCode: invMfSchemeCode || undefined,
-              startDate: invCategory === "sip" && invStartDate ? invStartDate : undefined,
-              sipDay: invCategory === "sip" && invSipDay ? parseInt(invSipDay, 10) : undefined,
-            };
-      const res = await fetch("/api/portfolio", {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify({
-          assets: [...investments, newAsset],
-        }),
-      });
-      if (res.ok) {
-        setInvName("");
-        setInvMfSchemeCode("");
-        setInvAmount("");
-        setInvQuantity("");
-        setInvBuyPrice("");
-        setInvNotes("");
-        setInvInterestRate("");
-        setInvStartDate("");
-        setInvMaturityDate("");
-        setInvSipDay("");
-        fetchInvestments();
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsAddingAsset(false);
-    }
-  };
-
-  const deleteInvestment = async (id: string) => {
-    triggerConfirm("Delete Asset", "Are you sure you want to delete this asset from your portfolio?", async () => {
-      const previousList = [...investments];
-      const updatedList = investments.filter((a) => a.id !== id);
-      setInvestments(updatedList);
-      try {
-        const res = await fetch(`/api/portfolio/${id}`, {
-          method: "DELETE",
-          headers: getHeaders(),
-        });
-        if (!res.ok) throw new Error("Failed to delete asset");
-      } catch (err) {
-        console.error(err);
-        setInvestments(previousList);
-      }
-    });
-  };
-
-  const sellInvestment = async (id: string, soldPrice: number) => {
-    const previousList = [...investments];
-    const now = Date.now();
-    const updatedList = investments.map((a) => {
-      if (a.id === id) {
-        return {
-          ...a,
-          isSold: true,
-          soldAt: now,
-          soldPrice: soldPrice,
-          amount: 0,
-        };
-      }
-      return a;
-    });
-    setInvestments(updatedList);
-    try {
-      const res = await fetch(`/api/portfolio/${id}`, {
-        method: "PATCH",
-        headers: getHeaders(),
-        body: JSON.stringify({
-          isSold: true,
-          soldAt: now,
-          soldPrice: soldPrice,
-          amount: 0,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to update asset");
-    } catch (err) {
-      console.error(err);
-      setInvestments(previousList);
-    }
-  };
-
-  const updateMarketPrices = async () => {
-    setIsUpdatingPrices(true);
-    try {
-      const res = await fetch("/api/portfolio/prices", {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify({ assets: investments, forceRefresh: true }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        const pricedAssets = (data.assets || []).map((a: any) => {
-          const liveValue =
-            a.category !== "sip" && a.quantity && a.currentPriceInr
-              ? a.quantity * a.currentPriceInr
-              : a.amount;
-          return { ...a, amount: liveValue };
-        });
-
-        const saveRes = await fetch("/api/portfolio", {
-          method: "POST",
-          headers: getHeaders(),
-          body: JSON.stringify({ assets: pricedAssets }),
-        });
-        if (saveRes.ok) fetchInvestments();
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsUpdatingPrices(false);
-    }
-  };
-
-  const { payCycle, cycleHistory, cycleAverages } = usePayCycleData({
-    expenses,
-    subscriptions,
-    salaryDay,
-    salaryLog,
-    monthlySalary,
-    additionalIncome,
-  });
-
-  const topCategory = useMemo(() => Object.keys(catBreakdown)[0] || "None", [catBreakdown]);
-
-  const isDataLoaded = !user || (expensesLoaded && watchlistLoaded && subscriptionsLoaded && investmentsLoaded && settingsLoaded);
+  const isDataLoaded =
+    !user || (expensesLoaded && media.watchlistLoaded && subs.subscriptionsLoaded && investmentsLoaded && settings.settingsLoaded);
   const showLoader = authLoading || (user && !isDataLoaded);
 
   if (showLoader) {
@@ -1964,15 +284,12 @@ export default function Dashboard() {
             0%, 100% { opacity: 0.35; transform: scale(0.95); }
             50% { opacity: 0.95; transform: scale(1.05); }
           }
-          .bento-cell {
-            animation: pulse-dot 1.4s ease-in-out infinite;
-          }
+          .bento-cell { animation: pulse-dot 1.4s ease-in-out infinite; }
           .bento-cell-1 { animation-delay: 0s; }
           .bento-cell-2 { animation-delay: 0.2s; }
           .bento-cell-3 { animation-delay: 0.4s; }
           .bento-cell-4 { animation-delay: 0.6s; }
         `}</style>
-
         <div className="flex flex-col items-center gap-6">
           <div className="grid grid-cols-2 gap-1.5 w-11 h-11">
             <div className="bento-cell bento-cell-1 rounded-[4px] bg-text-primary" />
@@ -1980,7 +297,6 @@ export default function Dashboard() {
             <div className="bento-cell bento-cell-3 rounded-[4px] bg-text-primary/60" />
             <div className="bento-cell bento-cell-4 rounded-[4px] bg-text-primary/30" />
           </div>
-
           <div className="flex flex-col items-center gap-1.5 text-center animate-[heroFadeUp_0.6s_ease-out_both]">
             <span className="font-body font-semibold text-lg tracking-tight">{SITE_NAME}</span>
             <span className="text-[12px] tracking-wide text-text-muted font-mono uppercase">
@@ -1997,7 +313,8 @@ export default function Dashboard() {
       <LandingPage
         onLogin={() => {
           if (firebaseAuth) {
-            firebaseAuth.signInWithPopup(firebaseAuth.auth, new firebaseAuth.GoogleAuthProvider())
+            firebaseAuth
+              .signInWithPopup(firebaseAuth.auth, new firebaseAuth.GoogleAuthProvider())
               .catch((err: any) => {
                 if (err.code === "auth/popup-blocked" || err.code === "auth/cancelled-popup-request") {
                   firebaseAuth.signInWithRedirect(firebaseAuth.auth, new firebaseAuth.GoogleAuthProvider());
@@ -2013,6 +330,8 @@ export default function Dashboard() {
     );
   }
 
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com";
+
   return (
     <div className="flex min-h-screen max-md:flex-col max-md:overflow-x-hidden">
       <MobileHeader
@@ -2025,31 +344,31 @@ export default function Dashboard() {
         triggerConfirm={triggerConfirm}
         firebaseAuth={firebaseAuth}
         setExpenses={setExpenses}
-        setWatchlist={setWatchlist}
+        setWatchlist={media.setWatchlist}
         setExpensesLoaded={setExpensesLoaded}
-        disconnectAnilist={disconnectAnilist}
-        disconnectTrakt={disconnectTrakt}
+        disconnectAnilist={media.disconnectAnilist}
+        disconnectTrakt={media.disconnectTrakt}
       />
 
       <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         user={user}
-        anilistUser={anilistUser}
-        traktUser={traktUser}
-        connectAnilist={connectAnilist}
-        disconnectAnilist={disconnectAnilist}
-        syncAnilist={syncAnilist}
-        isSyncingAnilist={isSyncingAnilist}
-        connectTrakt={connectTrakt}
-        disconnectTrakt={disconnectTrakt}
-        syncTrakt={syncTrakt}
-        isSyncingTrakt={isSyncingTrakt}
-        letterboxdUsername={letterboxdUsername || null}
-        connectLetterboxd={() => setShowLetterboxdModal(true)}
-        disconnectLetterboxd={disconnectLetterboxd}
-        syncLetterboxd={handleLetterboxdImport}
-        isSyncingLetterboxd={isImportingLetterboxd}
+        anilistUser={media.anilistUser}
+        traktUser={media.traktUser}
+        connectAnilist={media.connectAnilist}
+        disconnectAnilist={media.disconnectAnilist}
+        syncAnilist={media.syncAnilist}
+        isSyncingAnilist={media.isSyncingAnilist}
+        connectTrakt={media.connectTrakt}
+        disconnectTrakt={media.disconnectTrakt}
+        syncTrakt={media.syncTrakt}
+        isSyncingTrakt={media.isSyncingTrakt}
+        letterboxdUsername={media.letterboxdUsername || null}
+        connectLetterboxd={() => media.setShowLetterboxdModal(true)}
+        disconnectLetterboxd={media.disconnectLetterboxd}
+        syncLetterboxd={media.handleLetterboxdImport}
+        isSyncingLetterboxd={media.isImportingLetterboxd}
         showInvestmentsTab={showInvestmentsTab}
         isProUser={isProUser}
         onClaimPro={() => setShowClaimPro(true)}
@@ -2057,12 +376,11 @@ export default function Dashboard() {
         triggerConfirm={triggerConfirm}
         firebaseAuth={firebaseAuth}
         setExpenses={setExpenses}
-        setWatchlist={setWatchlist}
+        setWatchlist={media.setWatchlist}
         setExpensesLoaded={setExpensesLoaded}
       />
 
       <main className="ml-[250px] flex w-full max-w-[1680px] min-w-0 flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:overflow-x-hidden max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(130px+env(safe-area-inset-bottom))]">
-
         <AnimatePresence mode="wait">
           <motion.div
             key={activeTab}
@@ -2078,23 +396,32 @@ export default function Dashboard() {
 
                 {expenseTab === "subscriptions" && (
                   <SubscriptionsTab
-                    subscriptions={subscriptions}
-                    currency={currency}
-                    subName={subName}
-                    setSubName={setSubName}
-                    subIcon={subIcon}
-                    setSubIcon={setSubIcon}
-                    subCost={subCost}
-                    setSubCost={setSubCost}
-                    subCycle={subCycle}
-                    setSubCycle={setSubCycle}
-                    subNextDate={subNextDate}
-                    setSubNextDate={setSubNextDate}
-                    isAddingSub={isAddingSub}
-                    addSubscription={addSubscription}
-                    deleteSubscription={deleteSubscription}
-                    updateSubscriptionIcon={updateSubscriptionIcon}
-                    isFetchingSubscriptions={isFetchingSubscriptions}
+                    subscriptions={subs.subscriptions}
+                    currency={settings.currency}
+                    subName={subs.subName}
+                    setSubName={subs.setSubName}
+                    subIcon={subs.subIcon}
+                    setSubIcon={subs.setSubIcon}
+                    subCost={subs.subCost}
+                    setSubCost={subs.setSubCost}
+                    subCycle={subs.subCycle}
+                    setSubCycle={subs.setSubCycle}
+                    subNextDate={subs.subNextDate}
+                    setSubNextDate={subs.setSubNextDate}
+                    subType={subs.subType}
+                    setSubType={subs.setSubType}
+                    subAutoPost={subs.subAutoPost}
+                    setSubAutoPost={subs.setSubAutoPost}
+                    subCategory={subs.subCategory}
+                    setSubCategory={subs.setSubCategory}
+                    isAddingSub={subs.isAddingSub}
+                    addSubscription={subs.addSubscription}
+                    deleteSubscription={subs.deleteSubscription}
+                    updateSubscriptionIcon={subs.updateSubscriptionIcon}
+                    toggleSubscriptionAutoPost={subs.toggleSubscriptionAutoPost}
+                    syncDueSubscriptions={subs.syncDueSubscriptions}
+                    isSyncingSubscriptions={subs.isSyncingSubscriptions}
+                    isFetchingSubscriptions={subs.isFetchingSubscriptions}
                   />
                 )}
               </>
@@ -2104,82 +431,55 @@ export default function Dashboard() {
               <>
                 <h1 className="font-serif text-3xl italic font-medium tracking-wide text-text-primary mb-2">My Library</h1>
                 <div className="mb-8 flex gap-6 border-b border-border-subtle max-sm:gap-4 max-sm:overflow-x-auto max-sm:scrollbar-none">
-                  <button
-                    onClick={() => setMediaSubTab("watchlist")}
-                    className={`relative pb-3 text-[13px] font-medium transition-all ${
-                      mediaSubTab === "watchlist"
-                        ? "text-text-primary"
-                        : "text-text-muted hover:text-text-primary"
-                    }`}
-                  >
-                    Cine
-                    {mediaSubTab === "watchlist" && (
-                      <span className="absolute bottom-0 left-0 right-0 h-px bg-text-primary" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setMediaSubTab("books")}
-                    className={`relative pb-3 text-[13px] font-medium transition-all ${
-                      mediaSubTab === "books"
-                        ? "text-text-primary"
-                        : "text-text-muted hover:text-text-primary"
-                    }`}
-                  >
-                    Books
-                    {mediaSubTab === "books" && (
-                      <span className="absolute bottom-0 left-0 right-0 h-px bg-text-primary" />
-                    )}
-                  </button>
-                  <button
-                    onClick={() => setMediaSubTab("integrations")}
-                    className={`relative pb-3 text-[13px] font-medium transition-all ${
-                      mediaSubTab === "integrations"
-                        ? "text-text-primary"
-                        : "text-text-muted hover:text-text-primary"
-                    }`}
-                  >
-                    Integrations
-                    {mediaSubTab === "integrations" && (
-                      <span className="absolute bottom-0 left-0 right-0 h-px bg-text-primary" />
-                    )}
-                  </button>
+                  {(["watchlist", "books", "integrations"] as const).map((subTab) => (
+                    <button
+                      key={subTab}
+                      onClick={() => setMediaSubTab(subTab)}
+                      className={`relative pb-3 text-[13px] font-medium transition-all ${
+                        mediaSubTab === subTab ? "text-text-primary" : "text-text-muted hover:text-text-primary"
+                      }`}
+                    >
+                      {subTab === "watchlist" ? "Cine" : subTab === "books" ? "Books" : "Integrations"}
+                      {mediaSubTab === subTab && <span className="absolute bottom-0 left-0 right-0 h-px bg-text-primary" />}
+                    </button>
+                  ))}
                 </div>
 
                 {mediaSubTab === "watchlist" && (
                   <WatchlistTab
-                    watchlist={watchlist}
-                    watchlistFilter={watchlistFilter}
-                    setWatchlistFilter={setWatchlistFilter}
-                    mediaQuery={mediaQuery}
-                    setMediaQuery={setMediaQuery}
-                    mediaType={mediaType}
-                    setMediaType={setMediaType}
-                    searchMedia={searchMedia}
-                    isSearchingMedia={isSearchingMedia}
-                    searchResults={searchResults}
-                    addToWatchlist={addToWatchlist}
-                    updateWatchItem={updateWatchItem}
-                    deleteWatchItem={deleteWatchItem}
-                    isFetchingWatchlist={isFetchingWatchlist}
-                    showLetterboxdModal={showLetterboxdModal}
-                    setShowLetterboxdModal={setShowLetterboxdModal}
-                    letterboxdUsername={letterboxdUsername}
-                    setLetterboxdUsername={setLetterboxdUsername}
-                    handleLetterboxdImport={handleLetterboxdImport}
-                    isImportingLetterboxd={isImportingLetterboxd}
-                    disconnectLetterboxd={disconnectLetterboxd}
-                    anilistUser={anilistUser}
-                    connectAnilist={connectAnilist}
-                    disconnectAnilist={disconnectAnilist}
-                    syncAnilist={syncAnilist}
-                    isSyncingAnilist={isSyncingAnilist}
-                    traktUser={traktUser}
-                    connectTrakt={connectTrakt}
-                    disconnectTrakt={disconnectTrakt}
-                    syncTrakt={syncTrakt}
-                    isSyncingTrakt={isSyncingTrakt}
-                    enrichMissingPosters={enrichMissingPosters}
-                    isEnrichingPosters={isEnrichingPosters}
+                    watchlist={media.watchlist}
+                    watchlistFilter={media.watchlistFilter}
+                    setWatchlistFilter={media.setWatchlistFilter}
+                    mediaQuery={media.mediaQuery}
+                    setMediaQuery={media.setMediaQuery}
+                    mediaType={media.mediaType}
+                    setMediaType={media.setMediaType}
+                    searchMedia={media.searchMedia}
+                    isSearchingMedia={media.isSearchingMedia}
+                    searchResults={media.searchResults}
+                    addToWatchlist={media.addToWatchlist}
+                    updateWatchItem={media.updateWatchItem}
+                    deleteWatchItem={media.deleteWatchItem}
+                    isFetchingWatchlist={media.isFetchingWatchlist}
+                    showLetterboxdModal={media.showLetterboxdModal}
+                    setShowLetterboxdModal={media.setShowLetterboxdModal}
+                    letterboxdUsername={media.letterboxdUsername}
+                    setLetterboxdUsername={media.setLetterboxdUsername}
+                    handleLetterboxdImport={media.handleLetterboxdImport}
+                    isImportingLetterboxd={media.isImportingLetterboxd}
+                    disconnectLetterboxd={media.disconnectLetterboxd}
+                    anilistUser={media.anilistUser}
+                    connectAnilist={media.connectAnilist}
+                    disconnectAnilist={media.disconnectAnilist}
+                    syncAnilist={media.syncAnilist}
+                    isSyncingAnilist={media.isSyncingAnilist}
+                    traktUser={media.traktUser}
+                    connectTrakt={media.connectTrakt}
+                    disconnectTrakt={media.disconnectTrakt}
+                    syncTrakt={media.syncTrakt}
+                    isSyncingTrakt={media.isSyncingTrakt}
+                    enrichMissingPosters={media.enrichMissingPosters}
+                    isEnrichingPosters={media.isEnrichingPosters}
                     onItemClick={(item) => setSelectedMediaItem(item)}
                     idToken={user?.idToken}
                     openDataCorrection={() => setIsDataCorrectionOpen(true)}
@@ -2188,51 +488,51 @@ export default function Dashboard() {
 
                 {mediaSubTab === "books" && (
                   <BooksTab
-                    watchlist={watchlist}
-                    bookQuery={bookQuery}
-                    setBookQuery={setBookQuery}
-                    searchBooks={searchBooks}
-                    isSearchingBooks={isSearchingBooks}
-                    bookResults={bookResults}
-                    addBook={addBook}
-                    bookFilter={bookFilter}
-                    setBookFilter={setBookFilter}
-                    updateWatchItem={updateWatchItem}
-                    deleteWatchItem={deleteWatchItem}
-                    isFetchingWatchlist={isFetchingWatchlist}
-                    enrichMissingBookCovers={enrichMissingBookCovers}
-                    isEnrichingBookCovers={isEnrichingBookCovers}
+                    watchlist={media.watchlist}
+                    bookQuery={media.bookQuery}
+                    setBookQuery={media.setBookQuery}
+                    searchBooks={media.searchBooks}
+                    isSearchingBooks={media.isSearchingBooks}
+                    bookResults={media.bookResults}
+                    addBook={media.addBook}
+                    bookFilter={media.bookFilter}
+                    setBookFilter={media.setBookFilter}
+                    updateWatchItem={media.updateWatchItem}
+                    deleteWatchItem={media.deleteWatchItem}
+                    isFetchingWatchlist={media.isFetchingWatchlist}
+                    enrichMissingBookCovers={media.enrichMissingBookCovers}
+                    isEnrichingBookCovers={media.isEnrichingBookCovers}
                     onItemClick={setSelectedMediaItem}
                     idToken={user?.idToken}
-                    openGoodreadsModal={() => setShowGoodreadsModal(true)}
+                    openGoodreadsModal={() => media.setShowGoodreadsModal(true)}
                   />
                 )}
 
                 {mediaSubTab === "integrations" && (
                   <IntegrationsTab
-                    watchlist={watchlist}
-                    showLetterboxdModal={showLetterboxdModal}
-                    setShowLetterboxdModal={setShowLetterboxdModal}
-                    letterboxdUsername={letterboxdUsername}
-                    setLetterboxdUsername={setLetterboxdUsername}
-                    handleLetterboxdImport={handleLetterboxdImport}
-                    isImportingLetterboxd={isImportingLetterboxd}
-                    disconnectLetterboxd={disconnectLetterboxd}
-                    anilistUser={anilistUser}
-                    connectAnilist={connectAnilist}
-                    disconnectAnilist={disconnectAnilist}
-                    syncAnilist={syncAnilist}
-                    isSyncingAnilist={isSyncingAnilist}
-                    traktUser={traktUser}
-                    connectTrakt={connectTrakt}
-                    disconnectTrakt={disconnectTrakt}
-                    syncTrakt={syncTrakt}
-                    isSyncingTrakt={isSyncingTrakt}
-                    goodreadsUserId={goodreadsUserId}
-                    setShowGoodreadsModal={setShowGoodreadsModal}
-                    handleGoodreadsSync={handleGoodreadsSync}
-                    isSyncingGoodreads={isImportingGoodreads}
-                    disconnectGoodreads={disconnectGoodreads}
+                    watchlist={media.watchlist}
+                    showLetterboxdModal={media.showLetterboxdModal}
+                    setShowLetterboxdModal={media.setShowLetterboxdModal}
+                    letterboxdUsername={media.letterboxdUsername}
+                    setLetterboxdUsername={media.setLetterboxdUsername}
+                    handleLetterboxdImport={media.handleLetterboxdImport}
+                    isImportingLetterboxd={media.isImportingLetterboxd}
+                    disconnectLetterboxd={media.disconnectLetterboxd}
+                    anilistUser={media.anilistUser}
+                    connectAnilist={media.connectAnilist}
+                    disconnectAnilist={media.disconnectAnilist}
+                    syncAnilist={media.syncAnilist}
+                    isSyncingAnilist={media.isSyncingAnilist}
+                    traktUser={media.traktUser}
+                    connectTrakt={media.connectTrakt}
+                    disconnectTrakt={media.disconnectTrakt}
+                    syncTrakt={media.syncTrakt}
+                    isSyncingTrakt={media.isSyncingTrakt}
+                    goodreadsUserId={media.goodreadsUserId}
+                    setShowGoodreadsModal={media.setShowGoodreadsModal}
+                    handleGoodreadsSync={media.handleGoodreadsSync}
+                    isSyncingGoodreads={media.isImportingGoodreads}
+                    disconnectGoodreads={media.disconnectGoodreads}
                   />
                 )}
               </>
@@ -2241,9 +541,9 @@ export default function Dashboard() {
             {activeTab === "investments" && (
               <InvestmentsTab
                 investments={investments}
-                currency={currency}
+                currency={settings.currency}
                 invName={invName}
-                setInvName={handleInvNameChange}
+                setInvName={inv.handleInvNameChange}
                 invCategory={invCategory}
                 setInvCategory={setInvCategory}
                 invQuantity={invQuantity}
@@ -2265,42 +565,42 @@ export default function Dashboard() {
                 invSipDay={invSipDay}
                 setInvSipDay={setInvSipDay}
                 isAddingAsset={isAddingAsset}
-                addInvestment={addInvestment}
-                deleteInvestment={deleteInvestment}
-                sellInvestment={sellInvestment}
+                addInvestment={inv.addInvestment}
+                deleteInvestment={inv.deleteInvestment}
+                sellInvestment={inv.sellInvestment}
                 isUpdatingPrices={isUpdatingPrices}
-                updateMarketPrices={updateMarketPrices}
+                updateMarketPrices={inv.updateMarketPrices}
                 isFetchingInvestments={isFetchingInvestments}
                 invSuggestions={invSuggestions}
                 setInvSuggestions={setInvSuggestions}
-                selectSuggestion={selectSuggestion}
+                selectSuggestion={inv.selectSuggestion}
               />
             )}
 
             {activeTab === "financial" && (
               <FinancialHealthTab
-                currency={currency}
+                currency={settings.currency}
                 expenses={expenses}
                 investments={investments}
                 showInvestmentsTab={showInvestmentsTab}
-                salaryDay={salaryDay}
-                monthlySalary={monthlySalary}
-                setMonthlySalary={setMonthlySalary}
-                additionalIncome={additionalIncome}
-                setAdditionalIncome={setAdditionalIncome}
+                salaryDay={settings.salaryDay}
+                monthlySalary={settings.monthlySalary}
+                setMonthlySalary={settings.setMonthlySalary}
+                additionalIncome={settings.additionalIncome}
+                setAdditionalIncome={settings.setAdditionalIncome}
                 payCycle={payCycle}
-                savedReconciliation={reconciliations[payCycle.startStr]}
-                setReconciliation={setReconciliation}
-                salaryLog={salaryLog}
-                setSalaryLogEntry={setSalaryLogEntry}
+                savedReconciliation={settings.reconciliations[payCycle.startStr]}
+                setReconciliation={settings.setReconciliation}
+                salaryLog={settings.salaryLog}
+                setSalaryLogEntry={settings.setSalaryLogEntry}
                 cycleHistory={cycleHistory}
                 cycleAverages={cycleAverages}
-                reconciliations={reconciliations}
+                reconciliations={settings.reconciliations}
                 logUnaccountedGap={logUnaccountedGap}
                 getHeaders={getHeaders}
                 isProUser={isProUser}
                 onClaimPro={() => setShowClaimPro(true)}
-                aiOptOut={aiOptOut}
+                aiOptOut={settings.aiOptOut}
                 onOpenSettings={() => setActiveTab("settings")}
               />
             )}
@@ -2308,14 +608,14 @@ export default function Dashboard() {
             {activeTab === "reports" && (
               <ReportsTab
                 expenses={expenses}
-                watchlist={watchlist}
+                watchlist={media.watchlist}
                 investments={investments}
-                currency={currency}
-                salaryDay={salaryDay}
-                salaryLog={salaryLog}
+                currency={settings.currency}
+                salaryDay={settings.salaryDay}
+                salaryLog={settings.salaryLog}
                 isProUser={isProUser}
                 cycleHistory={cycleHistory}
-                reconciliations={reconciliations}
+                reconciliations={settings.reconciliations}
               />
             )}
 
@@ -2323,52 +623,53 @@ export default function Dashboard() {
               <KirokuTab
                 idToken={user?.idToken}
                 onOpenUpgrade={() => setShowClaimPro(true)}
-                aiOptOut={aiOptOut}
+                aiOptOut={settings.aiOptOut}
                 onOpenSettings={() => setActiveTab("settings")}
               />
             )}
 
             {activeTab === "settings" && (
               <SettingsTab
-                emailSubscriptions={emailSubscriptions}
-                setEmailSubscriptions={setEmailSubscriptions}
-                currency={currency}
-                setCurrency={setCurrency}
-                salaryDay={salaryDay}
-                setSalaryDay={setSalaryDay}
-                monthlySalary={monthlySalary}
-                setMonthlySalary={setMonthlySalary}
-                additionalIncome={additionalIncome}
-                setAdditionalIncome={setAdditionalIncome}
+                emailSubscriptions={settings.emailSubscriptions}
+                setEmailSubscriptions={settings.setEmailSubscriptions}
+                currency={settings.currency}
+                setCurrency={settings.setCurrency}
+                salaryDay={settings.salaryDay}
+                setSalaryDay={settings.setSalaryDay}
+                monthlySalary={settings.monthlySalary}
+                setMonthlySalary={settings.setMonthlySalary}
+                additionalIncome={settings.additionalIncome}
+                setAdditionalIncome={settings.setAdditionalIncome}
                 onDeleteAccount={() => setIsDeleteAccountModalOpen(true)}
-                isAdmin={Boolean(user && user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com"))}
+                isAdmin={Boolean(user && user.email === adminEmail)}
                 onOpenAdmin={() => setActiveTab("admin")}
-                aiOptOut={aiOptOut}
-                setAiOptOut={setAiOptOut}
+                aiOptOut={settings.aiOptOut}
+                setAiOptOut={settings.setAiOptOut}
               />
             )}
 
-            {activeTab === "admin" && user && user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL || "adiad.dev@gmail.com") && (
-              <AdminTab user={user} />
-            )}
+            {activeTab === "admin" && user && user.email === adminEmail && <AdminTab user={user} />}
           </motion.div>
         </AnimatePresence>
       </main>
 
       <ConfirmModal confirmDlg={confirmDlg} setConfirmDlg={setConfirmDlg} />
-      <SyncPreviewModal preview={syncPreview} onClose={() => setSyncPreview((prev) => ({ ...prev, isOpen: false }))} />
+      <SyncPreviewModal
+        preview={media.syncPreview}
+        onClose={() => media.setSyncPreview((prev) => ({ ...prev, isOpen: false }))}
+      />
       <OnboardingModal
         showOnboarding={showOnboarding}
         setShowOnboarding={setShowOnboarding}
         showInvestmentsTab={showInvestmentsTab}
       />
 
-      {showLetterboxdModal && (
+      {media.showLetterboxdModal && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="flex w-[400px] flex-col gap-4 rounded-card border border-border-subtle bg-white p-6 shadow-[0_20px_25px_-5px_rgba(0,0,0,0.1),0_10px_10px_-5px_rgba(0,0,0,0.04)]">
             <div className="flex items-center justify-between">
               <span className="font-mono text-xs font-semibold tracking-[0.8px] text-text-secondary uppercase">Sync Letterboxd RSS</span>
-              <button onClick={() => setShowLetterboxdModal(false)} className="cursor-pointer border-none bg-transparent p-1 text-base">✕</button>
+              <button onClick={() => media.setShowLetterboxdModal(false)} className="cursor-pointer border-none bg-transparent p-1 text-base">✕</button>
             </div>
             <p className="text-xs leading-[1.4] text-text-muted">
               Enter your Letterboxd username to fetch and sync your recent watched diary entries from your public RSS feed.
@@ -2376,20 +677,20 @@ export default function Dashboard() {
             <input
               type="text"
               placeholder="Username (e.g. fal3n4ngel)"
-              value={letterboxdUsername}
-              onChange={(e) => setLetterboxdUsername(e.target.value)}
+              value={media.letterboxdUsername}
+              onChange={(e) => media.setLetterboxdUsername(e.target.value)}
               className="w-full rounded-md border border-border-subtle bg-bg-primary px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus"
             />
             <div className="flex justify-end gap-2.5">
-              <button onClick={() => setShowLetterboxdModal(false)} className="h-9 cursor-pointer rounded-md border border-border-subtle bg-transparent px-4 text-xs font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary">
+              <button onClick={() => media.setShowLetterboxdModal(false)} className="h-9 cursor-pointer rounded-md border border-border-subtle bg-transparent px-4 text-xs font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary">
                 Cancel
               </button>
               <button
-                onClick={handleLetterboxdImport}
-                disabled={isImportingLetterboxd || !letterboxdUsername.trim()}
+                onClick={media.handleLetterboxdImport}
+                disabled={media.isImportingLetterboxd || !media.letterboxdUsername.trim()}
                 className="h-9 cursor-pointer rounded-md border border-text-primary bg-text-primary px-5 text-xs font-medium text-bg-primary transition-all duration-200 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isImportingLetterboxd ? "Syncing..." : "Sync Feed"}
+                {media.isImportingLetterboxd ? "Syncing..." : "Sync Feed"}
               </button>
             </div>
           </div>
@@ -2401,27 +702,21 @@ export default function Dashboard() {
           item={selectedMediaItem}
           onClose={() => setSelectedMediaItem(null)}
           user={user}
-          updateWatchItem={updateWatchItem}
+          updateWatchItem={media.updateWatchItem}
         />
       )}
 
-      {user && (
-        <ClaimProModal
-          isOpen={showClaimPro}
-          onClose={() => setShowClaimPro(false)}
-          idToken={user.idToken}
-        />
-      )}
+      {user && <ClaimProModal isOpen={showClaimPro} onClose={() => setShowClaimPro(false)} idToken={user.idToken} />}
 
       <DataCorrectionModal
         isOpen={isDataCorrectionOpen}
         onClose={() => setIsDataCorrectionOpen(false)}
-        watchlist={watchlist}
+        watchlist={media.watchlist}
         getHeaders={getHeaders}
-        triggerAlert={triggerAlert}
+        triggerAlert={media.triggerAlert}
         onSuccess={() => {
           setIsDataCorrectionOpen(false);
-          fetchWatchlist();
+          media.fetchWatchlist();
         }}
       />
 
@@ -2429,10 +724,7 @@ export default function Dashboard() {
         isOpen={isDeleteAccountModalOpen}
         onClose={() => setIsDeleteAccountModalOpen(false)}
         onConfirmDelete={async () => {
-          const res = await fetch("/api/settings", {
-            method: "DELETE",
-            headers: getHeaders(),
-          });
+          const res = await fetch("/api/settings", { method: "DELETE", headers: getHeaders() });
           if (res.ok) {
             if (firebaseAuth?.auth) {
               await firebaseAuth.signOut(firebaseAuth.auth).catch(() => {});
@@ -2453,13 +745,13 @@ export default function Dashboard() {
       />
 
       <GoodreadsModal
-        isOpen={showGoodreadsModal}
-        onClose={() => setShowGoodreadsModal(false)}
-        userId={goodreadsUserId}
-        setUserId={setGoodreadsUserId}
-        onRssSync={handleGoodreadsSync}
-        onCsvImport={handleGoodreadsCsvImport}
-        isSyncing={isImportingGoodreads}
+        isOpen={media.showGoodreadsModal}
+        onClose={() => media.setShowGoodreadsModal(false)}
+        userId={media.goodreadsUserId}
+        setUserId={media.setGoodreadsUserId}
+        onRssSync={media.handleGoodreadsSync}
+        onCsvImport={media.handleGoodreadsCsvImport}
+        isSyncing={media.isImportingGoodreads}
       />
 
       <InstallBanner />

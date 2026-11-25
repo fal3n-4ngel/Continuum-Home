@@ -37,7 +37,9 @@ export function isAllowedOAuthRedirect(clientId: string, redirectUri: string): b
       host === "chatgpt.com" ||
       host.endsWith(".chatgpt.com") ||
       host === "openai.com" ||
-      host.endsWith(".openai.com");
+      host.endsWith(".openai.com") ||
+      host === "claude.ai" ||
+      host.endsWith(".claude.ai");
 
     if (isChatGptOrOpenAi) {
       return true;

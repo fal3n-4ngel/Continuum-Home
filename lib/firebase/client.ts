@@ -33,6 +33,7 @@ export async function fsFetch<T = unknown>(session: Session, url: string, init?:
   }
 
   if (res.status === 404) throw new ApiError(404, "Record not found.");
+  if (res.status === 409) throw new ApiError(409, "Record already exists.");
   if (res.status === 403) throw new ApiError(403, "Permission denied by database security rules.");
   if (res.status === 401) throw new ApiError(401, "Database rejected the authentication token.");
 
@@ -134,9 +135,24 @@ export function userPath(session: Session, ...subpaths: string[]): string {
 }
 
 export async function listSubcollectionDocs(session: Session, subcollection: string): Promise<{ id: string; data: Record<string, unknown> }[]> {
+  const results: { id: string; data: Record<string, unknown> }[] = [];
+  let pageToken: string | undefined;
+  const baseUrl = userPath(session, subcollection);
+
   try {
-    const res = await fsFetch<{ documents?: FirestoreDocument[] }>(session, `${userPath(session, subcollection)}?pageSize=300`);
-    return (res.documents || []).map((doc) => ({ id: idFromName(doc.name), data: fromFields(doc.fields) }));
+    do {
+      const params = new URLSearchParams({ pageSize: "300" });
+      if (pageToken) params.set("pageToken", pageToken);
+      const res = await fsFetch<{ documents?: FirestoreDocument[]; nextPageToken?: string }>(
+        session,
+        `${baseUrl}?${params.toString()}`
+      );
+      for (const doc of res.documents || []) {
+        results.push({ id: idFromName(doc.name), data: fromFields(doc.fields) });
+      }
+      pageToken = res.nextPageToken || undefined;
+    } while (pageToken);
+    return results;
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) return [];
     throw err;

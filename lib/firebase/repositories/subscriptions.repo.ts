@@ -9,6 +9,7 @@ import {
   userPath,
   listSubcollectionDocs,
 } from "../client";
+import type { SubscriptionType } from "../validators/subscription.schema";
 
 export interface SubscriptionRecord {
   id: string;
@@ -17,6 +18,11 @@ export interface SubscriptionRecord {
   billingCycle: "monthly" | "yearly";
   nextBillingDate: string;
   icon: string | null;
+  type?: SubscriptionType;
+  autoPost?: boolean;
+  category?: string | null;
+  tags?: string[];
+  lastAutoPostedDate?: string | null;
   createdAt: number;
 }
 
@@ -26,6 +32,10 @@ export interface SubscriptionEntry {
   billingCycle: "monthly" | "yearly";
   nextBillingDate: string;
   icon?: string | null;
+  type?: SubscriptionType;
+  autoPost?: boolean;
+  category?: string | null;
+  tags?: string[];
 }
 
 const SUBSCRIPTION_CACHE_TTL = 3_600_000;
@@ -49,6 +59,11 @@ export async function listSubscriptions(session: Session): Promise<SubscriptionR
       billingCycle: (data.billingCycle as SubscriptionRecord["billingCycle"]) || "monthly",
       nextBillingDate: (data.nextBillingDate as string) || "",
       icon: (data.icon as string) || null,
+      type: (data.type === "income" ? "income" : "expense") as SubscriptionType,
+      autoPost: Boolean(data.autoPost),
+      category: typeof data.category === "string" ? data.category : null,
+      tags: Array.isArray(data.tags) ? data.tags.filter((t): t is string => typeof t === "string") : undefined,
+      lastAutoPostedDate: typeof data.lastAutoPostedDate === "string" ? data.lastAutoPostedDate : null,
       createdAt: typeof data.createdAt === "number" ? data.createdAt : 0,
     }))
     .sort((a, b) => b.createdAt - a.createdAt);
@@ -65,6 +80,11 @@ export async function createSubscription(session: Session, entry: SubscriptionEn
     billingCycle: entry.billingCycle,
     nextBillingDate: entry.nextBillingDate,
     icon: entry.icon || null,
+    type: entry.type === "income" ? "income" : "expense",
+    autoPost: Boolean(entry.autoPost),
+    category: entry.category || null,
+    tags: entry.tags && entry.tags.length > 0 ? entry.tags : null,
+    lastAutoPostedDate: null,
     createdAt: Date.now(),
   };
 

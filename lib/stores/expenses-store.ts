@@ -31,6 +31,10 @@ interface ExpensesState {
   setExpenseDate: (s: string) => void;
   expenseNotes: string;
   setExpenseNotes: (s: string) => void;
+  expenseType: "expense" | "income";
+  setExpenseType: (t: "expense" | "income") => void;
+  expenseTags: string;
+  setExpenseTags: (s: string) => void;
   isAddingExpense: boolean;
   setIsAddingExpense: (is: boolean) => void;
 
@@ -38,6 +42,10 @@ interface ExpensesState {
   setExpenseSearch: (s: string) => void;
   ledgerCategoryFilter: string;
   setLedgerCategoryFilter: (s: string) => void;
+  ledgerTypeFilter: "all" | "expense" | "income";
+  setLedgerTypeFilter: (t: "all" | "expense" | "income") => void;
+  ledgerTagFilter: string;
+  setLedgerTagFilter: (s: string) => void;
   ledgerMinAmount: string;
   setLedgerMinAmount: (s: string) => void;
   ledgerMaxAmount: string;
@@ -96,6 +104,10 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
   setExpenseDate: (expenseDate) => set({ expenseDate }),
   expenseNotes: "",
   setExpenseNotes: (expenseNotes) => set({ expenseNotes }),
+  expenseType: "expense",
+  setExpenseType: (expenseType) => set({ expenseType }),
+  expenseTags: "",
+  setExpenseTags: (expenseTags) => set({ expenseTags }),
   isAddingExpense: false,
   setIsAddingExpense: (isAddingExpense) => set({ isAddingExpense }),
 
@@ -103,6 +115,10 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
   setExpenseSearch: (expenseSearch) => set({ expenseSearch }),
   ledgerCategoryFilter: "",
   setLedgerCategoryFilter: (ledgerCategoryFilter) => set({ ledgerCategoryFilter }),
+  ledgerTypeFilter: "all",
+  setLedgerTypeFilter: (ledgerTypeFilter) => set({ ledgerTypeFilter }),
+  ledgerTagFilter: "",
+  setLedgerTagFilter: (ledgerTagFilter) => set({ ledgerTagFilter }),
   ledgerMinAmount: "",
   setLedgerMinAmount: (ledgerMinAmount) => set({ ledgerMinAmount }),
   ledgerMaxAmount: "",

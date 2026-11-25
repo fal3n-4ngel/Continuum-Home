@@ -15,10 +15,19 @@ interface SubscriptionsTabProps {
   setSubCycle: (c: "monthly" | "yearly") => void;
   subNextDate: string;
   setSubNextDate: (s: string) => void;
+  subType?: "expense" | "income";
+  setSubType?: (t: "expense" | "income") => void;
+  subAutoPost?: boolean;
+  setSubAutoPost?: (b: boolean) => void;
+  subCategory?: string;
+  setSubCategory?: (s: string) => void;
   isAddingSub: boolean;
   addSubscription: (e: React.FormEvent) => void;
   deleteSubscription: (id: string) => void;
   updateSubscriptionIcon: (id: string, icon: string) => void;
+  toggleSubscriptionAutoPost?: (id: string, nextValue: boolean) => void;
+  syncDueSubscriptions?: () => void;
+  isSyncingSubscriptions?: boolean;
   isFetchingSubscriptions: boolean;
 }
 
@@ -43,10 +52,19 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
   setSubCycle,
   subNextDate,
   setSubNextDate,
+  subType = "expense",
+  setSubType,
+  subAutoPost = false,
+  setSubAutoPost,
+  subCategory = "",
+  setSubCategory,
   isAddingSub,
   addSubscription,
   deleteSubscription,
   updateSubscriptionIcon,
+  toggleSubscriptionAutoPost,
+  syncDueSubscriptions,
+  isSyncingSubscriptions = false,
   isFetchingSubscriptions,
 }) => {
   const [now] = React.useState(() => Date.now());
@@ -68,14 +86,14 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
         <div className={STAT_CARD}>
           <span className={LABEL_MONO}>Monthly Burn</span>
           <span className={STAT_VALUE}>
-            {currency}{subscriptions.reduce((acc, sub) => acc + (sub.billingCycle === "yearly" ? sub.cost / 12 : sub.cost), 0).toFixed(0)}
+            {currency}{subscriptions.filter((s) => s.type !== "income").reduce((acc, sub) => acc + (sub.billingCycle === "yearly" ? sub.cost / 12 : sub.cost), 0).toFixed(0)}
           </span>
           <span className={STAT_SUBTEXT}>per month (normalised)</span>
         </div>
         <div className={STAT_CARD}>
           <span className={LABEL_MONO}>Yearly Total</span>
           <span className={STAT_VALUE}>
-            {currency}{subscriptions.reduce((acc, sub) => acc + (sub.billingCycle === "yearly" ? sub.cost : sub.cost * 12), 0).toFixed(0)}
+            {currency}{subscriptions.filter((s) => s.type !== "income").reduce((acc, sub) => acc + (sub.billingCycle === "yearly" ? sub.cost : sub.cost * 12), 0).toFixed(0)}
           </span>
           <span className={STAT_SUBTEXT}>annual commitment</span>
         </div>
@@ -106,11 +124,23 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
       </div>
 
       <div className={BENTO_CARD}>
-        <span className={`${LABEL_MONO} mb-3.5 block`}>Add Subscription</span>
+        <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
+          <span className={LABEL_MONO}>Add Recurring Rule / Subscription</span>
+          {syncDueSubscriptions && (
+            <button
+              type="button"
+              onClick={syncDueSubscriptions}
+              disabled={isSyncingSubscriptions}
+              className="cursor-pointer rounded-md border border-border-subtle bg-bg-secondary px-3 py-1 text-[11px] font-semibold text-text-primary transition-colors hover:bg-bg-primary disabled:opacity-50"
+            >
+              {isSyncingSubscriptions ? "Syncing..." : "Auto-Post Due Now"}
+            </button>
+          )}
+        </div>
         <form onSubmit={addSubscription} className="grid grid-cols-2 gap-[9px] md:grid-cols-[1fr_70px_1fr_1fr_1fr_auto] items-end">
           <div className="col-span-2 md:col-span-1 flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold text-text-secondary uppercase md:hidden">Name</span>
-            <input type="text" placeholder="Name (e.g. Netflix)" value={subName} onChange={(e) => setSubName(e.target.value)} required className={`${INPUT_CLASS} w-full`} />
+            <input type="text" placeholder="Name (e.g. Netflix or Salary)" value={subName} onChange={(e) => setSubName(e.target.value)} required className={`${INPUT_CLASS} w-full`} />
           </div>
           <div className="col-span-1 md:col-span-1 flex flex-col gap-1.5">
             <span className="text-[10px] font-semibold text-text-secondary uppercase md:hidden">Icon</span>
@@ -134,6 +164,36 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
           <button type="submit" disabled={isAddingSub} className={`${BTN_PRIMARY} col-span-2 md:col-span-1 whitespace-nowrap w-full`}>
             {isAddingSub ? "Adding..." : "+ Add"}
           </button>
+          {(setSubType || setSubAutoPost || setSubCategory) && (
+            <div className="col-span-2 md:col-span-6 mt-1 flex flex-wrap items-center gap-3 text-xs text-text-secondary">
+              {setSubType && (
+                <select value={subType} onChange={(e) => setSubType(e.target.value as "expense" | "income")} className={`${INPUT_CLASS} py-1.5 text-xs`}>
+                  <option value="expense">Recurring Expense</option>
+                  <option value="income">Recurring Income / Salary</option>
+                </select>
+              )}
+              {setSubCategory && (
+                <input
+                  type="text"
+                  placeholder="Category (optional)"
+                  value={subCategory}
+                  onChange={(e) => setSubCategory(e.target.value)}
+                  className={`${INPUT_CLASS} py-1.5 text-xs`}
+                />
+              )}
+              {setSubAutoPost && (
+                <label className="flex cursor-pointer items-center gap-1.5 select-none">
+                  <input
+                    type="checkbox"
+                    checked={subAutoPost}
+                    onChange={(e) => setSubAutoPost(e.target.checked)}
+                    className="h-3.5 w-3.5 rounded border-border-subtle"
+                  />
+                  <span>Auto-post to ledger on billing date</span>
+                </label>
+              )}
+            </div>
+          )}
         </form>
       </div>
 
@@ -201,7 +261,31 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                       </button>
                     )}
                     <div>
-                      <p className="text-[13px] font-semibold">{sub.name}</p>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <p className="text-[13px] font-semibold">{sub.name}</p>
+                        {sub.type === "income" && (
+                          <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-emerald-600">
+                            Income
+                          </span>
+                        )}
+                        {toggleSubscriptionAutoPost ? (
+                          <button
+                            type="button"
+                            onClick={() => toggleSubscriptionAutoPost(sub.id, !sub.autoPost)}
+                            className={`cursor-pointer rounded px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase transition-colors ${
+                              sub.autoPost
+                                ? "bg-indigo-500/15 text-indigo-500"
+                                : "bg-bg-card text-text-muted border border-border-subtle"
+                            }`}
+                          >
+                            {sub.autoPost ? "Auto-Post On" : "Auto-Post Off"}
+                          </button>
+                        ) : sub.autoPost ? (
+                          <span className="rounded bg-indigo-500/15 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-indigo-500">
+                            Auto-Post
+                          </span>
+                        ) : null}
+                      </div>
                       <p className={`mt-0.5 text-[11px] ${isDueSoon ? "font-semibold text-[#b3666b]" : "font-normal text-text-muted"}`}>
                         {isDueSoon ? `⚡ Due in ${daysUntil}d` : `Next: ${sub.nextBillingDate}`}
                       </p>

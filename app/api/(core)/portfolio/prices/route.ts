@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { fetchAssetPrice, getUsdToInrRate } from "@/lib/finance";
+import { cacheGet, cacheSet } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -11,10 +12,7 @@ interface CacheEntry {
   previousCloseUsd: number | null;
   timestamp: number;
 }
-const priceCache: Record<string, CacheEntry> = {};
 const CACHE_TTL = 5 * 60 * 1000;
-
-const lastUserRefresh: Record<string, number> = {};
 const REFRESH_COOLDOWN = 30 * 1000;
 
 interface AssetPriceInput {
@@ -33,20 +31,23 @@ export async function POST(req: NextRequest) {
 
     const uid = session.uid;
     const now = Date.now();
+    const cooldownKey = `portfolio:refresh_cooldown:${uid}`;
 
     let isCooldownActive = false;
     let secondsLeft = 0;
 
-    if (forceRefresh && lastUserRefresh[uid]) {
-      const timePassed = now - lastUserRefresh[uid];
-      if (timePassed < REFRESH_COOLDOWN) {
-        isCooldownActive = true;
-        secondsLeft = Math.ceil((REFRESH_COOLDOWN - timePassed) / 1000);
+    if (forceRefresh) {
+      const lastRefresh = await cacheGet<number>(cooldownKey);
+      if (lastRefresh) {
+        const timePassed = now - lastRefresh;
+        if (timePassed < REFRESH_COOLDOWN) {
+          isCooldownActive = true;
+          secondsLeft = Math.ceil((REFRESH_COOLDOWN - timePassed) / 1000);
+        }
       }
-    }
-
-    if (forceRefresh && !isCooldownActive) {
-      lastUserRefresh[uid] = now;
+      if (!isCooldownActive) {
+        await cacheSet(cooldownKey, now, REFRESH_COOLDOWN);
+      }
     }
 
     const usdToInr = await getUsdToInrRate();
@@ -54,31 +55,29 @@ export async function POST(req: NextRequest) {
     const updatedAssets = await Promise.all(assets.map(async (asset) => {
       const category = asset.category || "";
       const name = asset.name || "";
-      const cacheKey = `${category}:${name}:${asset.mfSchemeCode || ""}`;
+      const cacheKey = `portfolio:price:${category}:${name.trim().toUpperCase()}:${asset.mfSchemeCode || ""}`;
+      const cached = await cacheGet<CacheEntry>(cacheKey);
 
-      if (!forceRefresh || isCooldownActive) {
-        const cached = priceCache[cacheKey];
-        if (cached && (now - cached.timestamp < CACHE_TTL)) {
-          return {
-            ...asset,
-            currentPrice: cached.priceInr,
-            currentPriceUsd: cached.priceUsd,
-            currentPriceInr: cached.priceInr,
-            previousClose: cached.previousCloseInr,
-            isFromCache: true
-          };
-        }
+      if ((!forceRefresh || isCooldownActive) && cached && (now - cached.timestamp < CACHE_TTL)) {
+        return {
+          ...asset,
+          currentPrice: cached.priceInr,
+          currentPriceUsd: cached.priceUsd,
+          currentPriceInr: cached.priceInr,
+          previousClose: cached.previousCloseInr,
+          isFromCache: true
+        };
       }
 
       const priceInfo = await fetchAssetPrice(category, name, usdToInr, asset.mfSchemeCode);
       if (priceInfo) {
-        priceCache[cacheKey] = {
+        await cacheSet(cacheKey, {
           priceUsd: priceInfo.priceUsd,
           priceInr: priceInfo.priceInr,
           previousCloseInr: priceInfo.previousCloseInr,
           previousCloseUsd: priceInfo.previousCloseUsd,
           timestamp: now
-        };
+        }, CACHE_TTL);
         return {
           ...asset,
           currentPrice: priceInfo.priceInr,
@@ -89,7 +88,6 @@ export async function POST(req: NextRequest) {
         };
       }
 
-      const cached = priceCache[cacheKey];
       if (cached) {
         return {
           ...asset,

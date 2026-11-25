@@ -6,6 +6,7 @@
     "node": ">=20.0.0"
   },
   "overrides": {
+    "@grpc/grpc-js": "^1.14.7",
     "jose": "5.10.0",
     "jwks-rsa": {
       "jose": "5.10.0"
