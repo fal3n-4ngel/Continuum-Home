@@ -195,10 +195,40 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
+    const tabMap: Record<string, string> = {
+      "1": "expenses",
+      "2": "financial",
+      "3": "investments",
+      "4": "media",
+      "5": "reports",
+      "6": "agent",
+      "7": "settings",
+    };
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setShowQuickAdd((prev) => !prev);
+        return;
+      }
+      if (e.key === "Escape") {
+        setShowQuickAdd(false);
+        return;
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const nextTab = tabMap[e.key];
+      if (nextTab) {
+        e.preventDefault();
+        setActiveTabState(nextTab);
       }
     };
     window.addEventListener("keydown", onKeyDown);
