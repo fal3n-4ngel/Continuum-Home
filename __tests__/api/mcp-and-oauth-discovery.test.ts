@@ -309,5 +309,29 @@ describe("OAuth Discovery & MCP Server Endpoints", () => {
       const payload = JSON.parse(json.result.content[0].text);
       expect(payload.authenticated).toBe(false);
     });
+
+    it("exposes pagination and filter parameters on all list/get MCP tools", async () => {
+      const req = new NextRequest(`${origin}/api/mcp`, {
+        method: "POST",
+        body: JSON.stringify({ jsonrpc: "2.0", id: "list-pag-1", method: "tools/list" }),
+      });
+      const res = await postMcp(req);
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      const toolsByName = Object.fromEntries((json.result.tools || []).map((t: any) => [t.name, t]));
+
+      for (const toolName of ["list_expenses", "list_watchlist", "list_subscriptions", "get_portfolio"]) {
+        const props = toolsByName[toolName]?.inputSchema?.properties || {};
+        expect(props.limit, `${toolName}.limit`).toBeDefined();
+        expect(props.offset, `${toolName}.offset`).toBeDefined();
+        expect(props.q, `${toolName}.q`).toBeDefined();
+      }
+      expect(toolsByName.list_expenses.inputSchema.properties.tag).toBeDefined();
+      expect(toolsByName.list_expenses.inputSchema.properties.type).toBeDefined();
+      expect(toolsByName.list_watchlist.inputSchema.properties.minRating).toBeDefined();
+      expect(toolsByName.list_subscriptions.inputSchema.properties.autoPost).toBeDefined();
+      expect(toolsByName.get_portfolio.inputSchema.properties.category).toBeDefined();
+      expect(toolsByName.get_portfolio.inputSchema.properties.isSold).toBeDefined();
+    });
   });
 });

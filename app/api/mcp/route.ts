@@ -134,14 +134,20 @@ const TOOLS_MANIFEST = [
   {
     name: "list_expenses",
     title: "List Expenses",
-    description: "List recent expenses with optional search term, category, and date range filters.",
+    description: "List expenses and income with optional search, category, tag, type, amount, date range, and pagination.",
     inputSchema: {
       type: "object",
       properties: {
-        q: { type: "string", description: "Search query matching title or notes" },
+        q: { type: "string", description: "Search query matching title, notes, or tags" },
         category: { type: "string", description: "Expense category filter" },
+        tag: { type: "string", description: "Tag filter" },
+        type: { type: "string", enum: ["expense", "income"], description: "Entry type filter" },
         from: { type: "string", description: "Start date in YYYY-MM-DD format" },
         to: { type: "string", description: "End date in YYYY-MM-DD format" },
+        minAmount: { type: "number", description: "Minimum amount filter" },
+        maxAmount: { type: "number", description: "Maximum amount filter" },
+        limit: { type: "integer", description: "Page size (1-200, default 50)" },
+        offset: { type: "integer", description: "Number of items to skip (default 0)" },
       },
     },
     annotations: {
@@ -212,10 +218,11 @@ const TOOLS_MANIFEST = [
   {
     name: "list_watchlist",
     title: "List Watchlist",
-    description: "List media watchlist items (movies, TV shows, anime, and books).",
+    description: "List media watchlist items with optional search, type, status, rating filter, and pagination.",
     inputSchema: {
       type: "object",
       properties: {
+        q: { type: "string", description: "Search query matching title" },
         type: {
           type: "string",
           enum: ["movie", "show", "anime", "book"],
@@ -223,9 +230,12 @@ const TOOLS_MANIFEST = [
         },
         status: {
           type: "string",
-          enum: ["Planned", "In Progress", "Completed", "Dropped"],
+          enum: ["Planned", "In Progress", "Completed", "Dropped", "Paused"],
           description: "Watch status filter",
         },
+        minRating: { type: "number", description: "Minimum rating filter (0-10)" },
+        limit: { type: "integer", description: "Page size (1-200, default 50)" },
+        offset: { type: "integer", description: "Number of items to skip (default 0)" },
       },
     },
     annotations: {
@@ -335,10 +345,17 @@ const TOOLS_MANIFEST = [
   {
     name: "list_subscriptions",
     title: "List Subscriptions",
-    description: "List all active recurring subscriptions and billing cycles.",
+    description: "List recurring subscriptions and income rules with optional filters and pagination.",
     inputSchema: {
       type: "object",
-      properties: {},
+      properties: {
+        q: { type: "string", description: "Search query matching name or category" },
+        billingCycle: { type: "string", enum: ["monthly", "yearly"], description: "Billing cycle filter" },
+        type: { type: "string", enum: ["expense", "income"], description: "Rule type filter" },
+        autoPost: { type: "boolean", description: "Filter by auto-post enabled status" },
+        limit: { type: "integer", description: "Page size (1-200, default 50)" },
+        offset: { type: "integer", description: "Number of items to skip (default 0)" },
+      },
     },
     annotations: {
       readOnlyHint: true,
@@ -388,10 +405,21 @@ const TOOLS_MANIFEST = [
   {
     name: "get_portfolio",
     title: "Get Portfolio",
-    description: "Get investment portfolio holdings, asset allocation, and performance summary.",
+    description: "Get investment portfolio holdings with optional category, search, sold filter, and pagination.",
     inputSchema: {
       type: "object",
-      properties: {},
+      properties: {
+        q: { type: "string", description: "Search query matching asset name or notes" },
+        category: {
+          type: "string",
+          enum: ["equity", "crypto", "mutual_fund", "sip", "gold", "cash", "fixed_deposit", "other"],
+          description: "Asset category filter",
+        },
+        isSold: { type: "boolean", description: "Filter by sold status" },
+        includeValuationHistory: { type: "boolean", description: "Include daily valuationHistory map (default false)" },
+        limit: { type: "integer", description: "Page size (1-200, default 50)" },
+        offset: { type: "integer", description: "Number of assets to skip (default 0)" },
+      },
     },
     annotations: {
       readOnlyHint: true,
@@ -488,6 +516,23 @@ function normalizeWatchStatus(status?: string): "plan_to_watch" | "watching" | "
   return "plan_to_watch";
 }
 
+function paginate<T>(items: T[], args: Record<string, any>) {
+  const rawLimit = Number(args.limit);
+  const rawOffset = Number(args.offset);
+  const limit = Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(Math.floor(rawLimit), 200) : 50;
+  const offset = Number.isFinite(rawOffset) && rawOffset >= 0 ? Math.floor(rawOffset) : 0;
+  const sliced = items.slice(offset, offset + limit);
+  const hasMore = offset + sliced.length < items.length;
+  return {
+    items: sliced,
+    total: items.length,
+    limit,
+    offset,
+    hasMore,
+    nextOffset: hasMore ? offset + sliced.length : null,
+  };
+}
+
 async function executeTool(session: any, name: string, args: Record<string, any> = {}) {
   switch (name) {
     case "connect_account": {
@@ -506,12 +551,23 @@ async function executeTool(session: any, name: string, args: Record<string, any>
       };
     }
     case "list_expenses": {
-      return await listExpenses(session, {
+      let expenses = await listExpenses(session, {
         q: args.q,
         category: args.category,
         from: args.from,
         to: args.to,
+        tag: args.tag,
+        type: args.type === "income" || args.type === "expense" ? args.type : undefined,
       });
+      if (args.minAmount != null && !isNaN(Number(args.minAmount))) {
+        const min = Number(args.minAmount);
+        expenses = expenses.filter((e) => (e.amount ?? 0) >= min);
+      }
+      if (args.maxAmount != null && !isNaN(Number(args.maxAmount))) {
+        const max = Number(args.maxAmount);
+        expenses = expenses.filter((e) => (e.amount ?? 0) <= max);
+      }
+      return paginate(expenses, args);
     }
     case "create_expense": {
       const resolvedDate = args.date || new Date().toISOString().slice(0, 10);
@@ -521,6 +577,8 @@ async function executeTool(session: any, name: string, args: Record<string, any>
         category: args.category,
         date: resolvedDate,
         notes: args.notes,
+        type: args.type === "income" ? "income" : "expense",
+        tags: Array.isArray(args.tags) ? args.tags : undefined,
       });
       if (result?.id) {
         recordDomainEvent({
@@ -567,12 +625,20 @@ async function executeTool(session: any, name: string, args: Record<string, any>
     }
     case "list_watchlist": {
       let items = await listWatchlist(session);
+      if (args.q) {
+        const qLower = String(args.q).toLowerCase();
+        items = items.filter((i) => i.title.toLowerCase().includes(qLower));
+      }
       if (args.type) items = items.filter((i) => i.type === args.type);
       if (args.status) {
         const norm = normalizeWatchStatus(args.status);
         items = items.filter((i) => i.status === norm);
       }
-      return items;
+      if (args.minRating != null && !isNaN(Number(args.minRating))) {
+        const minR = Number(args.minRating);
+        items = items.filter((i) => (i.rating ?? 0) >= minR);
+      }
+      return paginate(items, args);
     }
     case "add_watchlist_item": {
       const itemData = {
@@ -639,7 +705,25 @@ async function executeTool(session: any, name: string, args: Record<string, any>
       return { success: true, message: `Watchlist item ${args.id} deleted` };
     }
     case "list_subscriptions": {
-      return await listSubscriptions(session);
+      let subs = await listSubscriptions(session);
+      if (args.q) {
+        const qLower = String(args.q).toLowerCase();
+        subs = subs.filter(
+          (s) =>
+            s.name.toLowerCase().includes(qLower) ||
+            (s.category && s.category.toLowerCase().includes(qLower))
+        );
+      }
+      if (args.billingCycle) {
+        subs = subs.filter((s) => s.billingCycle === args.billingCycle);
+      }
+      if (args.type) {
+        subs = subs.filter((s) => (s.type ?? "expense") === args.type);
+      }
+      if (typeof args.autoPost === "boolean") {
+        subs = subs.filter((s) => Boolean(s.autoPost) === args.autoPost);
+      }
+      return paginate(subs, args);
     }
     case "create_subscription": {
       const subData = {
@@ -648,6 +732,9 @@ async function executeTool(session: any, name: string, args: Record<string, any>
         billingCycle: (args.billingCycle === "yearly" ? "yearly" : "monthly") as "yearly" | "monthly",
         nextBillingDate: args.nextBillingDate || new Date().toISOString().slice(0, 10),
         icon: args.icon || null,
+        type: (args.type === "income" ? "income" : "expense") as "income" | "expense",
+        autoPost: Boolean(args.autoPost),
+        category: args.category || null,
       };
       const result = await createSubscription(session, subData);
       if (result?.id) {
@@ -670,7 +757,35 @@ async function executeTool(session: any, name: string, args: Record<string, any>
       return result;
     }
     case "get_portfolio": {
-      return await getPortfolio(session);
+      const portfolio = await getPortfolio(session);
+      if (!portfolio) return null;
+      let assets = [...portfolio.assets];
+      if (args.q) {
+        const qLower = String(args.q).toLowerCase();
+        assets = assets.filter(
+          (a) =>
+            a.name.toLowerCase().includes(qLower) ||
+            (a.notes && a.notes.toLowerCase().includes(qLower))
+        );
+      }
+      if (args.category) {
+        assets = assets.filter((a) => a.category === args.category);
+      }
+      if (typeof args.isSold === "boolean") {
+        assets = assets.filter((a) => Boolean(a.isSold) === args.isSold);
+      }
+      const paged = paginate(assets, args);
+      return {
+        id: portfolio.id,
+        updatedAt: portfolio.updatedAt,
+        assets: paged.items,
+        total: paged.total,
+        limit: paged.limit,
+        offset: paged.offset,
+        hasMore: paged.hasMore,
+        nextOffset: paged.nextOffset,
+        ...(args.includeValuationHistory ? { valuationHistory: portfolio.valuationHistory } : {}),
+      };
     }
     case "get_settings": {
       return await getSettings(session);
