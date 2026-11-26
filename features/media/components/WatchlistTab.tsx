@@ -51,12 +51,12 @@ const BTN_SECONDARY = "rounded-md border border-border-subtle bg-transparent tex
 const INPUT_CLASS = "w-full rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
 
 const pillClass = (active: boolean) =>
-  `cursor-pointer rounded-md px-3.5 py-[5px] text-xs font-semibold transition-all duration-200 ${
+  `cursor-pointer whitespace-nowrap rounded-md px-3.5 max-md:px-2.5 py-[5px] text-xs font-semibold transition-all duration-200 ${
     active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
   }`;
 
 const statusPillClass = (active: boolean) =>
-  `cursor-pointer rounded-md px-3 py-[5px] text-[11px] font-semibold transition-all duration-200 ${
+  `cursor-pointer shrink-0 whitespace-nowrap rounded-md px-3 max-md:px-2.5 py-[5px] text-[11px] font-semibold transition-all duration-200 ${
     active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
   }`;
 
@@ -650,7 +650,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
       <div className={`${BENTO_CARD} p-5`}>
           <div className="mb-4 flex flex-col gap-3 border-b border-border-subtle pb-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex gap-1.5 rounded-lg bg-bg-secondary p-[3px] max-md:overflow-x-auto max-md:w-full hide-scrollbar">
+              <div className="flex max-w-full gap-1.5 rounded-lg bg-bg-secondary p-[3px] max-md:overflow-x-auto max-md:w-full hide-scrollbar">
                 <button onClick={() => setActiveCategoryTab("movie")} className={`${pillClass(activeCategoryTab === "movie")} max-md:flex-1 max-md:justify-center`}>
                   🎬 Movies
                 </button>
@@ -662,7 +662,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                 </button>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex min-w-0 flex-wrap items-center gap-2.5 max-md:w-full">
                 {watchlist.some((w) => !w.coverImage && (w.type === "movie" || w.type === "show")) && enrichMissingPosters && (
                   <button
                     onClick={enrichMissingPosters}
@@ -674,7 +674,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                   </button>
                 )}
 
-                <div className="flex gap-1 rounded-lg bg-bg-secondary p-[3px] max-md:overflow-x-auto max-md:w-full hide-scrollbar">
+                <div className="flex max-w-full gap-1 rounded-lg bg-bg-secondary p-[3px] max-md:overflow-x-auto max-md:w-full hide-scrollbar">
                   {(
                     [
                       { id: "all", label: "All" },

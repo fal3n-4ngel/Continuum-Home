@@ -71,7 +71,7 @@ const tabPillClass = (active: boolean) =>
   }`;
 
 const chartPillClass = (active: boolean) =>
-  `cursor-pointer rounded-md px-3 py-[5px] text-[11px] font-semibold transition-all duration-200 ${
+  `cursor-pointer whitespace-nowrap rounded-md px-3 py-[5px] text-[11px] font-semibold transition-all duration-200 ${
     active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs dark:bg-white/10 dark:border-white/15" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
   }`;
 
@@ -621,7 +621,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
   return (
     <>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <div className="flex gap-0.5 rounded-lg bg-bg-secondary p-[3px]">
             <button onClick={() => setExpenseTab("ledger")} className={tabPillClass(expenseTab === "ledger")}>
               Ledger
@@ -648,14 +648,14 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
         </div>
 
         {expenseTab === "ledger" && (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 max-md:w-full">
             {timeFilter === "salary" && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 min-w-0">
                 <span className="font-mono text-[11px] text-text-muted uppercase">Payday</span>
                 <select
                   value={salaryDay}
                   onChange={(e) => handleSalaryDayChange(parseInt(e.target.value, 10))}
-                  className={`${INPUT_CLASS} px-2 py-1 text-xs`}
+                  className={`${INPUT_CLASS} min-w-0 max-w-full px-2 py-1 text-xs`}
                 >
                   {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
                     <option key={day} value={day}>
@@ -670,7 +670,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
             <select
               value={timeFilter}
               onChange={(e) => handleTimeFilterChange(e.target.value as any)}
-              className={`${INPUT_CLASS} px-2 py-1 text-xs`}
+              className={`${INPUT_CLASS} min-w-0 max-w-full px-2 py-1 text-xs`}
             >
               <option value="7">Last 7 days</option>
               <option value="30">Last 30 days</option>
@@ -724,9 +724,9 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
           </div>
 
           <div className={BENTO_CARD}>
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-[15px] font-semibold">Analytics</h3>
-              <div className="flex gap-1 rounded-lg bg-bg-secondary p-[3px]">
+              <div className="flex max-w-full gap-1 overflow-x-auto rounded-lg bg-bg-secondary p-[3px] hide-scrollbar">
                 <button onClick={() => setActiveChart("category")} className={chartPillClass(activeChart === "category")}>
                   Category Distribution
                 </button>
