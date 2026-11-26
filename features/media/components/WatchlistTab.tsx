@@ -51,12 +51,12 @@ const BTN_SECONDARY = "rounded-md border border-border-subtle bg-transparent tex
 const INPUT_CLASS = "w-full rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
 
 const pillClass = (active: boolean) =>
-  `cursor-pointer rounded-md px-3.5 py-[5px] text-xs font-semibold transition-all duration-200 ${
+  `cursor-pointer whitespace-nowrap rounded-md px-3.5 max-md:px-2.5 py-[5px] text-xs font-semibold transition-all duration-200 ${
     active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
   }`;
 
 const statusPillClass = (active: boolean) =>
-  `cursor-pointer rounded-md px-3 py-[5px] text-[11px] font-semibold transition-all duration-200 ${
+  `cursor-pointer shrink-0 whitespace-nowrap rounded-md px-3 max-md:px-2.5 py-[5px] text-[11px] font-semibold transition-all duration-200 ${
     active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
   }`;
 
@@ -134,6 +134,12 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
   const [activeCategoryTab, setActiveCategoryTab] = React.useState<"movie" | "show" | "anime">("movie");
   const [titleSearch, setTitleSearch] = React.useState("");
   const [sortBy, setSortBy] = React.useState<"title" | "rating" | "year">("year");
+  const [visibleCount, setVisibleCount] = React.useState(36);
+  const [synopsisExpanded, setSynopsisExpanded] = React.useState(false);
+
+  React.useEffect(() => {
+    setVisibleCount(36);
+  }, [activeCategoryTab, statusFilter, titleSearch, sortBy]);
 
   const [addingMap, setAddingMap] = React.useState<Record<string, boolean>>({});
   const [justAddedMap, setJustAddedMap] = React.useState<Record<string, boolean>>({});
@@ -571,7 +577,16 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                 {rec.synopsis && (
                   <div className="text-[10.5px] leading-[1.4] text-text-secondary border-t border-border-subtle pt-2">
                     <span className="font-semibold text-text-primary block mb-0.5">Synopsis</span>
-                    {rec.synopsis}
+                    <p className={synopsisExpanded ? "" : "line-clamp-4"}>{rec.synopsis}</p>
+                    {rec.synopsis.length > 140 && (
+                      <button
+                        type="button"
+                        onClick={() => setSynopsisExpanded((prev) => !prev)}
+                        className="mt-1 text-[10px] font-semibold text-text-primary hover:underline cursor-pointer"
+                      >
+                        {synopsisExpanded ? "Show less" : "Read more"}
+                      </button>
+                    )}
                   </div>
                 )}
 
@@ -650,7 +665,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
       <div className={`${BENTO_CARD} p-5`}>
           <div className="mb-4 flex flex-col gap-3 border-b border-border-subtle pb-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex gap-1.5 rounded-lg bg-bg-secondary p-[3px] max-md:overflow-x-auto max-md:w-full hide-scrollbar">
+              <div className="flex max-w-full gap-1.5 rounded-lg bg-bg-secondary p-[3px] max-md:overflow-x-auto max-md:w-full hide-scrollbar">
                 <button onClick={() => setActiveCategoryTab("movie")} className={`${pillClass(activeCategoryTab === "movie")} max-md:flex-1 max-md:justify-center`}>
                   🎬 Movies
                 </button>
@@ -662,7 +677,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                 </button>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2.5">
+              <div className="flex min-w-0 flex-wrap items-center gap-2.5 max-md:w-full">
                 {watchlist.some((w) => !w.coverImage && (w.type === "movie" || w.type === "show")) && enrichMissingPosters && (
                   <button
                     onClick={enrichMissingPosters}
@@ -674,7 +689,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                   </button>
                 )}
 
-                <div className="flex gap-1 rounded-lg bg-bg-secondary p-[3px] max-md:overflow-x-auto max-md:w-full hide-scrollbar">
+                <div className="flex max-w-full gap-1 rounded-lg bg-bg-secondary p-[3px] max-md:overflow-x-auto max-md:w-full hide-scrollbar">
                   {(
                     [
                       { id: "all", label: "All" },
@@ -702,13 +717,25 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">
-              <input
-                type="text"
-                placeholder="🔍 Search by title..."
-                value={titleSearch}
-                onChange={(e) => setTitleSearch(e.target.value)}
-                className={`${INPUT_CLASS} max-w-[260px] max-md:max-w-none max-md:flex-1`}
-              />
+              <div className="relative flex-1 max-w-[260px] max-md:max-w-none min-w-[160px]">
+                <input
+                  type="text"
+                  placeholder="🔍 Search by title..."
+                  value={titleSearch}
+                  onChange={(e) => setTitleSearch(e.target.value)}
+                  className={`${INPUT_CLASS} pr-7`}
+                />
+                {titleSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setTitleSearch("")}
+                    aria-label="Clear search"
+                    className="absolute inset-y-0 right-2 flex items-center text-text-muted hover:text-text-primary cursor-pointer"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
@@ -718,10 +745,13 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                 <option value="rating">Sort: Highest Rated</option>
                 <option value="year">Sort: Newest Year</option>
               </select>
+              <span className="ml-auto font-mono text-[11px] text-text-muted max-sm:hidden">
+                {filteredWatchlist.length} {filteredWatchlist.length === 1 ? "item" : "items"}
+              </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] max-md:grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-5 overflow-y-auto max-h-[65vh] pr-1 pb-10 custom-scrollbar">
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] max-md:grid-cols-[repeat(auto-fill,minmax(125px,1fr))] gap-4 max-md:gap-3">
             {isFetchingWatchlist && watchlist.length === 0 ? (
               Array.from({ length: 8 }).map((_, idx) => (
                 <div key={idx} className="flex flex-col gap-3 rounded-[14px] border border-border-subtle bg-bg-card p-3 shadow-sm animate-pulse">
@@ -732,7 +762,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                 </div>
               ))
             ) : (
-              filteredWatchlist.map((item) => (
+              filteredWatchlist.slice(0, visibleCount).map((item) => (
                 <div key={item.id} className="group flex flex-col rounded-[14px] border border-border-subtle bg-bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
                   <div
                     onClick={() => onItemClick(item)}
@@ -743,6 +773,8 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                         <img
                           src={item.coverImage}
                           alt={item.title}
+                          loading="lazy"
+                          decoding="async"
                           className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                         />
                         <div className="absolute inset-y-0 left-0 w-2.5 bg-linear-to-r from-black/25 via-black/10 to-transparent pointer-events-none" />
@@ -798,36 +830,36 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                       </p>
                     </div>
 
-                    <div className="flex flex-col gap-1.5 mt-auto">
-                      <div className="relative w-full">
+                    <div className="grid grid-cols-[1.25fr_0.9fr] gap-1.5 mt-auto">
+                      <div className="relative min-w-0">
                         <select
                           value={item.status}
                           onChange={(e) => updateWatchItem(item, { status: e.target.value as any })}
-                          className="w-full cursor-pointer appearance-none rounded-full border border-border-subtle bg-bg-secondary/40 py-1.5 pl-3 pr-8 text-[11px] font-bold text-text-secondary transition-all duration-200 hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary outline-none"
+                          className="w-full cursor-pointer appearance-none rounded-full border border-border-subtle bg-bg-secondary/40 py-1 pl-2.5 pr-5 text-[10.5px] font-semibold text-text-secondary transition-all duration-200 hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary outline-none truncate"
                         >
                           <option value="watching">Watching</option>
                           <option value="paused">Paused</option>
                           <option value="plan_to_watch">Plan</option>
-                          <option value="completed">Completed</option>
+                          <option value="completed">Done</option>
                           <option value="dropped">Dropped</option>
                         </select>
-                        <span className="absolute inset-y-0 right-2 flex items-center pointer-events-none text-text-muted text-[8px] select-none">
+                        <span className="absolute inset-y-0 right-1.5 flex items-center pointer-events-none text-text-muted text-[7px] select-none">
                           ▼
                         </span>
                       </div>
 
-                      <div className="relative w-full">
+                      <div className="relative min-w-0">
                         <select
                           value={item.rating || 0}
                           onChange={(e) => updateWatchItem(item, { rating: Number(e.target.value) || null })}
-                          className="w-full cursor-pointer appearance-none rounded-full border border-border-subtle bg-bg-secondary/40 py-1.5 pl-3 pr-8 text-[11px] font-bold text-text-secondary transition-all duration-200 hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary outline-none"
+                          className="w-full cursor-pointer appearance-none rounded-full border border-border-subtle bg-bg-secondary/40 py-1 pl-2 pr-5 text-[10.5px] font-semibold text-text-secondary transition-all duration-200 hover:border-border-hover hover:bg-bg-secondary hover:text-text-primary outline-none"
                         >
-                          <option value="0">Score v</option>
+                          <option value="0">— ★</option>
                           {[10, 9, 8, 7, 6, 5, 4, 3, 2, 1].map((n) => (
                             <option key={n} value={n}>★ {n}</option>
                           ))}
                         </select>
-                        <span className="absolute inset-y-0 right-2 flex items-center pointer-events-none text-text-muted text-[8px] select-none">
+                        <span className="absolute inset-y-0 right-1.5 flex items-center pointer-events-none text-text-muted text-[7px] select-none">
                           ▼
                         </span>
                       </div>
@@ -843,6 +875,18 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
               </p>
             )}
           </div>
+
+          {filteredWatchlist.length > visibleCount && (
+            <div className="mt-5 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setVisibleCount((prev) => prev + 36)}
+                className="cursor-pointer rounded-full border border-border-subtle bg-bg-secondary/50 px-5 py-2 text-xs font-semibold text-text-primary transition-all hover:border-border-hover hover:bg-bg-secondary"
+              >
+                Show more ({filteredWatchlist.length - visibleCount} remaining)
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

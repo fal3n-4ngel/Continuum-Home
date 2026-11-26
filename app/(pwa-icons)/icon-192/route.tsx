@@ -6,7 +6,7 @@ export const contentType = "image/png";
 
 export async function GET() {
   const isUat = isUatDeployment();
-  const primary = isUat ? "#DC2626" : "#FAF8F5";
+  const primary = isUat ? "#DC2626" : "#26211F";
   const accent = isUat ? "#DC2626" : "#D99419";
   const cell = 68;
   const gap = 12;
@@ -22,7 +22,7 @@ export async function GET() {
           alignItems: "center",
           justifyContent: "center",
           position: "relative",
-          backgroundColor: isUat ? "#F3EFEA" : "#181715",
+          backgroundColor: isUat ? "#F3EFEA" : "#FAF8F5",
           borderRadius: radius,
         }}
       >

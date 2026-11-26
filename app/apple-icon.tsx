@@ -6,7 +6,7 @@ export const contentType = "image/png";
 
 export default function AppleIcon() {
   const isUat = isUatDeployment();
-  const primary = isUat ? "#DC2626" : "#FAF8F5";
+  const primary = isUat ? "#DC2626" : "#26211F";
   const accent = isUat ? "#DC2626" : "#D99419";
 
   return new ImageResponse(
@@ -20,7 +20,7 @@ export default function AppleIcon() {
           alignItems: "center",
           justifyContent: "center",
           gap: "10px",
-          backgroundColor: isUat ? "#F3EFEA" : "#181715",
+          backgroundColor: isUat ? "#F3EFEA" : "#FAF8F5",
         }}
       >
         <div style={{ display: "flex", gap: "10px" }}>
