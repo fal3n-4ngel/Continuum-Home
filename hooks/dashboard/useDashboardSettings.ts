@@ -38,7 +38,10 @@ export function useDashboardSettings({
   const [timeFilter, setTimeFilterState] = useState<"7" | "30" | "90" | "salary" | "prev_salary" | "all">(
     () => (safeLocalStorage.getItem("phub_time_filter") as "7" | "30" | "90" | "salary" | "prev_salary" | "all") || "all"
   );
-  const [salaryDay, setSalaryDayState] = useState<number>(1);
+  const [salaryDay, setSalaryDayState] = useState<number>(() => {
+    const saved = parseInt(safeLocalStorage.getItem("phub_salary_day") || "", 10);
+    return Number.isFinite(saved) && saved >= 1 && saved <= 28 ? saved : 1;
+  });
   const [monthlySalary, setMonthlySalaryState] = useState<number>(() => {
     const saved = safeLocalStorage.getItem("phub_monthly_salary");
     return saved ? parseFloat(saved) : 0;
@@ -48,7 +51,14 @@ export function useDashboardSettings({
     return saved ? parseFloat(saved) : 0;
   });
   const [reconciliations, setReconciliationsState] = useState<Record<string, number>>({});
-  const [salaryLog, setSalaryLogState] = useState<Record<string, { date: string; amount: number }>>({});
+  const [salaryLog, setSalaryLogState] = useState<Record<string, { date: string; amount: number }>>(() => {
+    try {
+      const saved = safeLocalStorage.getItem("phub_salary_log");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
   const [emailSubscriptions, setEmailSubscriptionsState] = useState<{
     expenses: boolean;
     portfolio: boolean;
@@ -184,6 +194,7 @@ export function useDashboardSettings({
       console.error(err);
     } finally {
       setSettingsLoaded(true);
+      useExpensesStore.getState().setSettingsLoaded(true);
     }
   }, [
     getHeaders,

@@ -141,12 +141,14 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     ledgerCategoryFilter, setLedgerCategoryFilter, ledgerTypeFilter, ledgerTagFilter, ledgerMinAmount, setLedgerMinAmount,
     ledgerMaxAmount, setLedgerMaxAmount, ledgerStartDate, setLedgerStartDate, ledgerEndDate, setLedgerEndDate,
     ledgerSortField, setLedgerSortField,
-    ledgerSortDir, setLedgerSortDir, isFetchingExpenses, setIsFetchingExpenses, expensesLoaded, setExpensesLoaded,
+    ledgerSortDir, setLedgerSortDir, isFetchingExpenses, setIsFetchingExpenses, expensesLoaded, setExpensesLoaded, settingsLoaded,
     subscriptions, expenses, setExpenses, setIsAddingExpense, setSubscriptions
   } = useExpensesStore();
   const { user } = useAuthStore();
   const { theme, themeId } = useTheme();
   const isDark = theme.type === "dark";
+  const isWaitingForPayCycle = !settingsLoaded && (timeFilter === "salary" || timeFilter === "prev_salary");
+  const isLedgerLoading = (isFetchingExpenses && expenses.length === 0) || isWaitingForPayCycle;
 
   const getHeaders = React.useCallback(() => getAuthHeaders(user?.idToken), [user]);
 
@@ -688,9 +690,11 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
           <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-4 max-md:grid-cols-2 max-md:gap-2.5">
             <div className={`${STAT_CARD} border-t-2 border-t-accent-blue/80`}>
               <span className={LABEL_MONO}>Total Spent</span>
-              <span className={STAT_VALUE}>{currency}{totalSpent.toLocaleString()}</span>
+              <span className={STAT_VALUE}>{isLedgerLoading ? "—" : `${currency}${totalSpent.toLocaleString()}`}</span>
               <span className={STAT_SUBTEXT}>
-                {timeFilter === "all"
+                {isWaitingForPayCycle
+                  ? "Loading pay cycle..."
+                  : timeFilter === "all"
                   ? "All time"
                   : timeFilter === "salary"
                   ? `Cycle (${currentPayCycle.startStr} – ${currentPayCycle.endStr})`
@@ -699,7 +703,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                   : `Last ${timeFilter} days`}
               </span>
             </div>
-            {totalIncome > 0 && (
+            {!isLedgerLoading && totalIncome > 0 && (
               <div className={`${STAT_CARD} border-t-2 border-t-emerald-500/80`}>
                 <span className={LABEL_MONO}>Total Income</span>
                 <span className={`${STAT_VALUE} text-emerald-600`}>+{currency}{totalIncome.toLocaleString()}</span>
@@ -708,17 +712,17 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
             )}
             <div className={`${STAT_CARD} border-t-2 border-t-accent-yellow/80`}>
               <span className={LABEL_MONO}>Charges Logged</span>
-              <span className={STAT_VALUE}>{filteredExpenses.length}</span>
+              <span className={STAT_VALUE}>{isLedgerLoading ? "—" : filteredExpenses.length}</span>
               <span className={STAT_SUBTEXT}>Transactions</span>
             </div>
             <div className={`${STAT_CARD} border-t-2 border-t-accent-terracotta/80`}>
               <span className={LABEL_MONO}>Largest Charge</span>
-              <span className={`${STAT_VALUE} overflow-hidden text-ellipsis whitespace-nowrap text-accent-terracotta`}>{currency}{largestCharge.toLocaleString()}</span>
-              <span className={`${STAT_SUBTEXT} overflow-hidden text-ellipsis whitespace-nowrap`}>{largestItem?.title || "—"}</span>
+              <span className={`${STAT_VALUE} overflow-hidden text-ellipsis whitespace-nowrap text-accent-terracotta`}>{isLedgerLoading ? "—" : `${currency}${largestCharge.toLocaleString()}`}</span>
+              <span className={`${STAT_SUBTEXT} overflow-hidden text-ellipsis whitespace-nowrap`}>{isLedgerLoading ? "—" : (largestItem?.title || "—")}</span>
             </div>
             <div className={`${STAT_CARD} border-t-2 border-t-border-subtle`}>
               <span className={LABEL_MONO}>Top Category</span>
-              <span className={`${STAT_VALUE} mt-2 overflow-hidden text-ellipsis whitespace-nowrap text-[22px]`}>{topCategory}</span>
+              <span className={`${STAT_VALUE} mt-2 overflow-hidden text-ellipsis whitespace-nowrap text-[22px]`}>{isLedgerLoading ? "—" : topCategory}</span>
               <span className={STAT_SUBTEXT}>Highest share</span>
             </div>
           </div>
@@ -1061,7 +1065,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    {isFetchingExpenses && expenses.length === 0 ? (
+                    {isLedgerLoading ? (
                       Array.from({ length: 5 }).map((_, idx) => (
                         <tr key={idx} className="animate-pulse">
                           <td className={LEDGER_TD}><div className="h-4 w-36 rounded bg-bg-secondary" /></td>
@@ -1082,7 +1086,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                         />
                       ))
                     )}
-                    {!isFetchingExpenses && totalItems === 0 && (
+                    {!isLedgerLoading && totalItems === 0 && (
                       <tr>
                         <td colSpan={5} className="border-b border-border-subtle p-6 text-center text-text-muted">
                           No transactions match your filter.

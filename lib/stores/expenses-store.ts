@@ -9,6 +9,8 @@ interface ExpensesState {
   setIsFetchingExpenses: (is: boolean) => void;
   expensesLoaded: boolean;
   setExpensesLoaded: (loaded: boolean) => void;
+  settingsLoaded: boolean;
+  setSettingsLoaded: (loaded: boolean) => void;
 
   timeFilter: "7" | "30" | "90" | "salary" | "prev_salary" | "all";
   setTimeFilter: (f: "7" | "30" | "90" | "salary" | "prev_salary" | "all") => void;
@@ -77,18 +79,36 @@ export const useExpensesStore = create<ExpensesState>((set) => ({
   setIsFetchingExpenses: (is) => set({ isFetchingExpenses: is }),
   expensesLoaded: false,
   setExpensesLoaded: (loaded) => set({ expensesLoaded: loaded }),
+  settingsLoaded: false,
+  setSettingsLoaded: (loaded) => set({ settingsLoaded: loaded }),
 
   timeFilter: (safeLocalStorage.getItem("phub_time_filter") as any) || "all",
   setTimeFilter: (timeFilter) => {
     safeLocalStorage.setItem("phub_time_filter", timeFilter);
     set({ timeFilter });
   },
-  salaryDay: 1,
+  salaryDay: (() => {
+    const saved = parseInt(safeLocalStorage.getItem("phub_salary_day") || "", 10);
+    return Number.isFinite(saved) && saved >= 1 && saved <= 28 ? saved : 1;
+  })(),
   setSalaryDay: (salaryDay) => {
+    safeLocalStorage.setItem("phub_salary_day", String(salaryDay));
     set({ salaryDay });
   },
-  salaryLog: {},
-  setSalaryLog: (salaryLog) => set({ salaryLog }),
+  salaryLog: (() => {
+    try {
+      const saved = safeLocalStorage.getItem("phub_salary_log");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  })(),
+  setSalaryLog: (salaryLog) => {
+    try {
+      safeLocalStorage.setItem("phub_salary_log", JSON.stringify(salaryLog));
+    } catch {}
+    set({ salaryLog });
+  },
 
   expenseTitle: "",
   setExpenseTitle: (expenseTitle) => set({ expenseTitle }),
