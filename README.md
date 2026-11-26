@@ -17,20 +17,21 @@
 
 ## What is Continuum?
 
-Continuum is a self-hostable personal dashboard for tracking daily expenses, investment portfolios, subscriptions, and media watchlists.
+Continuum is a self-hostable personal dashboard for tracking daily expenses, financial health, investment portfolios, subscriptions, and media/book watchlists.
 
-It gives you a clean web dashboard for everyday tracking, backed by an OpenAPI specification so you can log expenses or query your data directly through AI assistants (like ChatGPT Actions or MCP tools).
+It gives you a clean web dashboard for everyday tracking, backed by a **Model Context Protocol (MCP) server (`/api/mcp`)** and **OpenAPI 3.1 specification (`/api/openapi.json`)** so you can plug your data directly into ChatGPT Plugins, Claude Desktop, Cursor, Windsurf, or any MCP/OpenAPI-compatible AI assistant.
 
 ---
 
 ## Features
 
-- **💸 Expenses**: Quick-log cash and card spending, set salary-based pay cycles, filter by category/date, and export CSVs.
+- **💸 Expenses**: Quick-log cash and card spending, filter by **Current / Previous Pay Period**, category, tag, or date range, export CSVs, and view category distribution & daily trends.
+- **🫀 Financial Health**: Target-driven daily/weekly safe spending limits, recurring-bill-aware cycle projections, salary history snapshotting (with optional retroactive overwrite), cash-on-hand reconciliation, and liquidity runway.
+- **💳 Subscriptions & Recurring Rules**: Track monthly/yearly subscriptions and recurring income, edit rules inline (name, amount, cycle, due date, category, auto-post), and auto-post due entries to your ledger.
 - **📈 Portfolio**: Multi-asset tracker for stocks, mutual funds (live NAV via AMFI), SIPs, gold, fixed deposits, and crypto.
-- **🎬 Watchlist**: Unified tracking for movies, anime, and TV shows with Trakt, TMDB, and AniList sync.
-- **📚 Book Library**: Reading tracker with edition search and covers via OpenLibrary.
-- **💳 Subscriptions**: Normalize weekly, monthly, and annual renewals with monthly burn analysis.
-- **🤖 AI & API Ready**: Standard OpenAPI 3.1 endpoints (`/api/openapi.json`) and Custom GPT support to log entries or check balances in plain English.
+- **🎬 Watchlist & 📚 Books**: Unified tracking for movies, TV shows, anime, and books with Trakt, TMDB, AniList, Letterboxd, and Goodreads RSS sync plus OpenLibrary covers.
+- **🤖 Universal MCP & ChatGPT Plugin**: Connect `/api/mcp` via OAuth 2.0 (RFC 8414 + Dynamic Client Registration) or Bearer API key to ChatGPT Plugins, Claude, Cursor, or custom AI agents (`/assistant/plugin` setup guide; legacy Custom GPTs deprecated ahead of Dec 11, 2026).
+- **🎨 14 Themes & Digest Emails**: Light, dark, and curated color themes with customizable geometry/typography, plus mobile-friendly weekly/monthly expense, renewal, and portfolio close emails.
 - **🔐 Encrypted at Rest**: Financial records and holdings are encrypted with your own master key (AES-256-GCM) before being stored.
 
 ---
@@ -91,7 +92,7 @@ npm run start
 - **[System Architecture](docs/architecture.md)** — Topology, multi-tenant isolation, caching, and threat model.
 - **[Security & Encryption](docs/security.md)** — Cryptographic details, authentication flow, and token boundaries.
 - **[Database Schema](docs/firebase-schema.md)** — Subcollections, data models, and migration utilities.
-- **[AI Agent Setup](docs/custom-agent-instructions.md)** — Custom GPT instructions and action configuration.
+- **[AI Agent & MCP Setup](docs/custom-agent-instructions.md)** — ChatGPT MCP Plugin (`/assistant/plugin`), OAuth 2.0, and agent instructions.
 
 ---
 
