@@ -51,13 +51,13 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
 
   return (
     <>
-      <header className="sticky top-0 z-[100] hidden min-h-[52px] items-center justify-between border-b border-border-subtle/70 bg-bg-card/80 backdrop-blur-xl px-4 max-md:flex">
-        <div className="flex items-center gap-2 shrink-0">
-          <LogoMark size={20} className="text-text-primary" />
-          <span className="text-base font-medium tracking-tight text-text-primary">{SITE_NAME}</span>
+      <header className="sticky top-0 z-[100] hidden min-h-[52px] items-center justify-between gap-2 border-b border-border-subtle/70 bg-bg-card/80 backdrop-blur-xl px-3 max-md:flex">
+        <div className="flex items-center gap-2 min-w-0">
+          <LogoMark size={20} className="shrink-0 text-text-primary" />
+          <span className="truncate text-[15px] font-medium tracking-tight text-text-primary">{SITE_NAME}</span>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           {onOpenQuickAdd && (
             <motion.button
               whileTap={{ scale: 0.9 }}
@@ -65,9 +65,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               onClick={onOpenQuickAdd}
               title="Quick Log"
               aria-label="Quick Log"
-              className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-primary transition-colors hover:border-border-hover cursor-pointer shadow-2xs"
+              className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-primary transition-colors hover:border-border-hover cursor-pointer shadow-2xs"
             >
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="12" y1="5" x2="12" y2="19" />
                 <line x1="5" y1="12" x2="19" y2="12" />
               </svg>
@@ -78,9 +78,9 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             target="_blank"
             rel="noopener noreferrer"
             title="Support this project"
-            className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-secondary transition-colors hover:text-text-primary hover:border-border-hover cursor-pointer shadow-2xs"
+            className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-secondary transition-colors hover:text-text-primary hover:border-border-hover cursor-pointer shadow-2xs"
           >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8h1a4 4 0 0 1 0 8h-1" /><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4Z" /><line x1="6" y1="1" x2="6" y2="4" /><line x1="10" y1="1" x2="10" y2="4" /><line x1="14" y1="1" x2="14" y2="4" />
             </svg>
           </a>
@@ -91,7 +91,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             onClick={toggleTheme}
             title={theme.type === "dark" ? "Switch to light mode" : "Switch to dark mode"}
             aria-label={theme.type === "dark" ? "Switch to light mode" : "Switch to dark mode"}
-            className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-secondary transition-colors hover:text-text-primary hover:border-border-hover cursor-pointer shadow-2xs"
+            className="shrink-0 flex h-8 w-8 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-secondary transition-colors hover:text-text-primary hover:border-border-hover cursor-pointer shadow-2xs"
           >
             {theme.type === "dark" ? (
               <Sun className="h-3.5 w-3.5 text-amber-400 dark:text-amber-300 stroke-[2.2]" />
@@ -105,7 +105,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             onClick={() => setActiveTab("settings")}
             title="Settings"
             aria-label="Settings"
-            className={`shrink-0 flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle cursor-pointer transition-colors ${activeTab === "settings"
+            className={`shrink-0 flex h-8 w-8 items-center justify-center rounded-full border border-border-subtle cursor-pointer transition-colors ${activeTab === "settings"
                 ? "bg-bg-secondary text-text-primary border-border-hover"
                 : "bg-bg-primary text-text-secondary hover:text-text-primary"
               }`}
