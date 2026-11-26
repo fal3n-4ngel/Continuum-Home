@@ -466,13 +466,14 @@ export default function LandingPage({
               </div>
 
               <div className="mt-8">
-                <button
-                  onClick={onLogin}
-                  disabled={!firebaseAuthReady}
-                  className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#F3EFEA] dark:bg-[#0C0D0E] px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wider text-[#1C1B18] dark:text-[#F4F5F7] transition-all hover:border-[#9E5D48] disabled:cursor-not-allowed disabled:opacity-50"
+                <a
+                  href={AUTHOR.coffeeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#F3EFEA] dark:bg-[#0C0D0E] px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wider text-[#1C1B18] dark:text-[#F4F5F7] no-underline transition-all hover:border-[#9E5D48]"
                 >
                   Become a Supporter &rarr;
-                </button>
+                </a>
               </div>
             </div>
 
