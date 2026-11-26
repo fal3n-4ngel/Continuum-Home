@@ -3,10 +3,10 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { LogoMark } from "@/components/Logo";
+import { GoogleOneTap } from "@/components/auth/GoogleOneTap";
 import { SITE_NAME } from "@/lib/utils";
 import { safeSessionStorage } from "@/lib/utils/storage";
 import { useTheme } from "@/lib/theme/use-theme";
-import type { Auth } from "firebase/auth";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -148,6 +148,7 @@ export default function LoginPage() {
 
   return (
     <div className="relative flex w-full max-w-[390px] flex-col items-center justify-center border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] p-8 shadow-sm gap-6 text-center">
+      <GoogleOneTap disabled={status !== "ready"} />
       <span className="absolute top-2 left-2 font-mono text-[9px] text-[#D99419]">⌜</span>
       <span className="absolute top-2 right-2 font-mono text-[9px] text-[#D99419]">⌝</span>
       <span className="absolute bottom-2 left-2 font-mono text-[9px] text-[#D99419]">⌞</span>
