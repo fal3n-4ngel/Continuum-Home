@@ -4,10 +4,12 @@ import { toLocalDateStr } from "@/lib/utils/dates";
 export interface ExpensePayCycleRange {
   startStr: string;
   endStr: string;
+  prevStartStr?: string;
+  prevEndStr?: string;
 }
 
 export interface BaseExpenseFilterOptions {
-  timeFilter?: "7" | "30" | "90" | "salary" | "all";
+  timeFilter?: "7" | "30" | "90" | "salary" | "prev_salary" | "all";
   currentPayCycle?: ExpensePayCycleRange;
   search?: string;
   minAmount?: string | number;
@@ -42,7 +44,10 @@ export function filterExpensesBase(expenses: Expense[], options: BaseExpenseFilt
     if (timeFilter === "salary" && currentPayCycle) {
       const { startStr, endStr } = currentPayCycle;
       list = list.filter((e) => e.date && e.date.slice(0, 10) >= startStr && e.date.slice(0, 10) <= endStr);
-    } else if (timeFilter !== "salary") {
+    } else if (timeFilter === "prev_salary" && currentPayCycle?.prevStartStr && currentPayCycle?.prevEndStr) {
+      const { prevStartStr, prevEndStr } = currentPayCycle;
+      list = list.filter((e) => e.date && e.date.slice(0, 10) >= prevStartStr && e.date.slice(0, 10) <= prevEndStr);
+    } else if (timeFilter !== "salary" && timeFilter !== "prev_salary") {
       const days = parseInt(timeFilter, 10);
       if (!isNaN(days)) {
         const cutoff = toLocalDateStr(new Date(referenceDate.getTime() - days * 86400000));
@@ -152,7 +157,7 @@ export function calculateExpenseTotals(expenses: Expense[]): {
 }
 
 export interface DailyTrendOptions {
-  timeFilter?: "7" | "30" | "90" | "salary" | "all";
+  timeFilter?: "7" | "30" | "90" | "salary" | "prev_salary" | "all";
   currentPayCycle?: ExpensePayCycleRange;
   referenceDate?: Date;
   startDate?: string;
@@ -205,6 +210,9 @@ export function calculateDailyTrend(
   } else if (timeFilter === "salary" && currentPayCycle) {
     rangeStart = currentPayCycle.startStr;
     rangeEnd = currentPayCycle.endStr;
+  } else if (timeFilter === "prev_salary" && currentPayCycle?.prevStartStr && currentPayCycle?.prevEndStr) {
+    rangeStart = currentPayCycle.prevStartStr;
+    rangeEnd = currentPayCycle.prevEndStr;
   } else {
     const allDates = Object.keys(expenseMap).sort();
     if (allDates.length === 0) return [];

@@ -45,10 +45,10 @@ interface SidebarProps {
 }
 
 const navLinkClass = (active: boolean) =>
-  `mb-1 flex w-full text-left cursor-pointer items-center gap-3 rounded-sm px-3.5 py-2 text-[13px] font-medium no-underline transition-all duration-150 active:scale-[0.98] ${
+  `mb-1 flex w-full text-left cursor-pointer items-center gap-3 rounded-md px-3.5 py-2 text-[13px] font-medium no-underline transition-all duration-150 active:scale-[0.98] ${
     active
-      ? "bg-bg-primary font-semibold text-accent-terracotta border-l-2 border-accent-terracotta shadow-xs"
-      : "bg-transparent border-l-2 border-transparent text-text-secondary hover:bg-bg-primary hover:text-text-primary"
+      ? "bg-bg-primary/90 font-semibold text-text-primary dark:bg-white/[0.07]"
+      : "bg-transparent text-text-secondary hover:bg-bg-primary/60 hover:text-text-primary dark:hover:bg-white/[0.04]"
   }`;
 
 const sidebarActionBtnClass =

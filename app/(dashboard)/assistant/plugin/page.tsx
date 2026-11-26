@@ -10,12 +10,9 @@ import {
   Check,
   ExternalLink,
   ArrowLeft,
-  ShieldCheck,
   Sparkles,
   AlertTriangle,
-  Layers,
   Terminal,
-  Cpu,
 } from "lucide-react";
 
 export default function PluginInstallationPage() {
@@ -264,9 +261,11 @@ export default function PluginInstallationPage() {
                 </p>
                 <ul className="text-[12.5px] text-text-secondary list-disc pl-5 space-y-1">
                   <li><strong>Name:</strong> <span className="font-mono text-xs text-text-primary">Continuum Home</span></li>
-                  <li><strong>Connection:</strong> Select <strong>Server URL</strong></li>
+                  <li><strong>Description:</strong> <span className="text-text-primary">Personal ledger for expenses, subscriptions, investments, and media watchlist.</span></li>
+                  <li><strong>Icon:</strong> Upload the <span className="font-mono text-xs text-text-primary">continuum-icon-256.png</span> downloaded above (optional).</li>
+                  <li><strong>Connection:</strong> Select <strong>MCP Server URL</strong></li>
                   <li><strong>Server URL:</strong> Paste <span className="font-mono text-xs text-text-primary">{mcpServerUrl}</span></li>
-                  <li><strong>Authentication:</strong> Select <strong>OAuth</strong></li>
+                  <li><strong>Authentication:</strong> Select <strong>OAuth</strong> (Dynamic Client Registration is automatic)</li>
                 </ul>
               </div>
             </div>
@@ -303,6 +302,32 @@ export default function PluginInstallationPage() {
                 <p className="text-[13px] leading-relaxed text-text-secondary">
                   Check the consent checkbox (<em>&ldquo;I understand and want to continue&rdquo;</em>) and click <strong>Create</strong>. Next, click <strong>Authorize / Connect</strong> to open the Continuum login window, sign in to your Google account, and grant access.
                 </p>
+              </div>
+            </div>
+
+            <div className="flex gap-4 items-start pt-2 border-t border-border-subtle">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-xs border border-border-subtle bg-bg-primary font-mono text-xs font-bold text-text-primary">
+                5
+              </div>
+              <div className="flex flex-col gap-2 min-w-0 flex-1">
+                <h3 className="font-serif text-base italic font-semibold text-text-primary">
+                  Plug Into Any Other MCP Agent (Claude, Cursor, Windsurf, Custom)
+                </h3>
+                <p className="text-[13px] leading-relaxed text-text-secondary">
+                  You can connect the exact same <span className="font-mono text-xs text-text-primary">{mcpServerUrl}</span> endpoint to any MCP-compatible client using OAuth 2.0 or a Permanent API Key from the Integration Hub:
+                </p>
+                <pre className="overflow-x-auto rounded-xs border border-border-subtle bg-bg-primary/60 p-3 font-mono text-[11px] text-text-primary">
+{`{
+  "mcpServers": {
+    "continuum-home": {
+      "url": "${mcpServerUrl}",
+      "headers": {
+        "Authorization": "Bearer <YOUR_PERMANENT_API_KEY>"
+      }
+    }
+  }
+}`}
+                </pre>
               </div>
             </div>
           </div>

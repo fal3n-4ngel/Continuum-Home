@@ -56,7 +56,7 @@ export async function GET(req?: Request) {
         "API for a personal expense ledger, subscription tracker, investment portfolio, and movie/show/anime/book watchlist, " +
         "backed by Firestore. Every request must carry the user's Firebase ID token or Permanent API Key as a Bearer token; " +
         "all data is scoped to that user.",
-      version: "2.3.0",
+      version: "2.4.0",
       contact: { name: AUTHOR.name, url: AUTHOR.url, email: AUTHOR.email },
     },
     servers: [
@@ -72,13 +72,15 @@ export async function GET(req?: Request) {
           operationId: "listExpenses",
           summary: "List expenses",
           description:
-            "Retrieve the user's expense transactions, newest first. Supports free-text and date/category filtering.",
+            "Retrieve the user's expense transactions, newest first. Supports free-text, tag, type, and date/category filtering.",
           "x-openai-isConsequential": false,
           parameters: [
             { name: "q", in: "query", schema: { type: "string" }, description: "Free-text filter on title and notes" },
             { name: "category", in: "query", schema: { type: "string" }, description: "Exact category name (case-insensitive)" },
             { name: "from", in: "query", schema: { type: "string", format: "date" }, description: "Only expenses on or after this date (YYYY-MM-DD)" },
             { name: "to", in: "query", schema: { type: "string", format: "date" }, description: "Only expenses on or before this date (YYYY-MM-DD)" },
+            { name: "tag", in: "query", schema: { type: "string" }, description: "Filter by tag (case-insensitive, e.g. subscription)" },
+            { name: "type", in: "query", schema: { type: "string", enum: ["expense", "income"] }, description: "Filter by transaction type" },
           ],
           responses: {
             "200": {
@@ -108,6 +110,10 @@ export async function GET(req?: Request) {
                     category: { type: "string", description: "Category name (ignored if items is provided)" },
                     date: { type: "string", format: "date", description: "YYYY-MM-DD date string. Always supply today's date if unspecified (ignored if items is provided)" },
                     notes: { type: "string", description: "Additional notes (ignored if items is provided)" },
+                    type: { type: "string", enum: ["expense", "income"], description: "Transaction type (defaults to expense)" },
+                    tags: { type: "array", items: { type: "string" }, description: "Optional tags (e.g. [\"subscription\"])" },
+                    splits: { type: "array", items: { $ref: "#/components/schemas/ExpenseSplit" }, description: "Optional category splits" },
+                    idempotencyKey: { type: "string", maxLength: 128, description: "Optional idempotency key to prevent duplicate writes" },
                     items: {
                       type: "array",
                       description: "Optional list of multiple expenses to create in batch",
@@ -298,6 +304,35 @@ export async function GET(req?: Request) {
           },
         },
       },
+      "/api/watchlist/goodreads": {
+        get: {
+          operationId: "getGoodreadsBooks",
+          summary: "Fetch Goodreads user shelves",
+          description: "Fetch and parse public Goodreads RSS shelves (currently-reading, read, to-read) for a user.",
+          "x-openai-isConsequential": false,
+          parameters: [
+            { name: "userId", in: "query", required: true, schema: { type: "string" }, description: "Goodreads numeric user ID or profile URL" },
+          ],
+          responses: {
+            "200": {
+              description: "Books imported from Goodreads shelves",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      userId: { type: "string" },
+                      books: { type: "array", items: { $ref: "#/components/schemas/NewWatchlistItem" } },
+                    },
+                  },
+                },
+              },
+            },
+            "400": errorResponse("Invalid Goodreads User ID"),
+            "401": errorResponse("Missing or invalid authentication token"),
+          },
+        },
+      },
       "/api/subscriptions": {
         get: {
           operationId: "listSubscriptions",
@@ -344,6 +379,44 @@ export async function GET(req?: Request) {
           "x-openai-isConsequential": false,
           parameters: [idParam("subscription")],
           responses: writeResult("Subscription deleted"),
+        },
+      },
+      "/api/subscriptions/auto-post": {
+        post: {
+          operationId: "autoPostDueSubscriptions",
+          summary: "Auto-post due recurring subscriptions",
+          description: "Materialize any due recurring subscriptions with autoPost enabled into the expense ledger.",
+          "x-openai-isConsequential": false,
+          responses: {
+            "200": {
+              description: "Auto-post summary",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: {
+                      success: { type: "boolean" },
+                      posted: { type: "integer" },
+                      skipped: { type: "integer" },
+                      items: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: {
+                            subscriptionId: { type: "string" },
+                            date: { type: "string", format: "date" },
+                            expenseId: { type: "string" },
+                            created: { type: "boolean" },
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            "401": errorResponse("Missing or invalid authentication token"),
+          },
         },
       },
       "/api/portfolio": {
@@ -591,6 +664,15 @@ export async function GET(req?: Request) {
         },
       },
       schemas: {
+        ExpenseSplit: {
+          type: "object",
+          required: ["label", "amount"],
+          properties: {
+            label: { type: "string", maxLength: 100 },
+            amount: { type: "number", minimum: 0 },
+            category: { type: ["string", "null"], maxLength: 100 },
+          },
+        },
         ExpenseEntry: {
           type: "object",
           required: ["title", "amount"],
@@ -600,6 +682,10 @@ export async function GET(req?: Request) {
             category: { type: "string", maxLength: 100, description: "Category name, e.g. Transport, Food, Rent", examples: ["Transport"] },
             date: { type: "string", format: "date", description: "Transaction date (YYYY-MM-DD). AI assistants must always provide this field.", examples: ["2026-07-20"] },
             notes: { type: "string", maxLength: 1000, description: "Optional free-form notes", examples: ["Ride back from airport"] },
+            type: { type: "string", enum: ["expense", "income"], description: "Transaction type (defaults to expense)" },
+            tags: { type: "array", items: { type: "string", maxLength: 40 }, maxItems: 20, description: "Optional tags" },
+            splits: { type: "array", items: { $ref: "#/components/schemas/ExpenseSplit" }, maxItems: 20 },
+            idempotencyKey: { type: "string", maxLength: 128 },
           },
         },
         ExpensePatch: {
@@ -611,6 +697,9 @@ export async function GET(req?: Request) {
             category: { type: "string", maxLength: 100 },
             date: { type: "string", format: "date" },
             notes: { type: "string", maxLength: 1000 },
+            type: { type: "string", enum: ["expense", "income"] },
+            tags: { type: "array", items: { type: "string", maxLength: 40 }, maxItems: 20 },
+            splits: { type: "array", items: { $ref: "#/components/schemas/ExpenseSplit" }, maxItems: 20 },
           },
         },
         ExpenseRecord: {
@@ -622,6 +711,10 @@ export async function GET(req?: Request) {
             category: { type: ["string", "null"] },
             date: { type: ["string", "null"], format: "date" },
             notes: { type: ["string", "null"] },
+            type: { type: "string", enum: ["expense", "income"] },
+            tags: { type: "array", items: { type: "string" } },
+            splits: { type: "array", items: { $ref: "#/components/schemas/ExpenseSplit" } },
+            idempotencyKey: { type: ["string", "null"] },
             createdAt: { type: "integer", description: "Creation time (Unix ms)" },
           },
         },
@@ -691,6 +784,10 @@ export async function GET(req?: Request) {
             billingCycle: { type: "string", enum: ["monthly", "yearly"] },
             nextBillingDate: { type: "string", format: "date", description: "Next charge date (YYYY-MM-DD)", examples: ["2026-08-15"] },
             icon: { type: ["string", "null"], maxLength: 10, description: "Optional short emoji/code to represent the service" },
+            type: { type: "string", enum: ["expense", "income"] },
+            autoPost: { type: "boolean", description: "Automatically log to expenses when due" },
+            category: { type: ["string", "null"], maxLength: 100 },
+            tags: { type: "array", items: { type: "string" } },
           },
         },
         SubscriptionPatch: {
@@ -702,6 +799,10 @@ export async function GET(req?: Request) {
             billingCycle: { type: "string", enum: ["monthly", "yearly"] },
             nextBillingDate: { type: "string", format: "date" },
             icon: { type: ["string", "null"], maxLength: 10 },
+            type: { type: "string", enum: ["expense", "income"] },
+            autoPost: { type: "boolean" },
+            category: { type: ["string", "null"], maxLength: 100 },
+            tags: { type: "array", items: { type: "string" } },
           },
         },
         SubscriptionRecord: {
@@ -713,6 +814,11 @@ export async function GET(req?: Request) {
             billingCycle: { type: "string", enum: ["monthly", "yearly"] },
             nextBillingDate: { type: "string", format: "date" },
             icon: { type: ["string", "null"] },
+            type: { type: "string", enum: ["expense", "income"] },
+            autoPost: { type: "boolean" },
+            category: { type: ["string", "null"] },
+            tags: { type: "array", items: { type: "string" } },
+            lastAutoPostedDate: { type: ["string", "null"], format: "date" },
             createdAt: { type: "integer", description: "Creation time (Unix ms)" },
           },
         },
@@ -855,7 +961,7 @@ export async function GET(req?: Request) {
         DashboardSettings: {
           type: "object",
           properties: {
-            timeFilter: { type: "string", enum: ["7", "30", "90", "salary", "all"] },
+            timeFilter: { type: "string", enum: ["7", "30", "90", "salary", "prev_salary", "all"] },
             salaryDay: { type: "integer", minimum: 1, maximum: 31 },
             monthlySalary: { type: "number", minimum: 0 },
             additionalIncome: { type: "number", minimum: 0 },
@@ -880,7 +986,7 @@ export async function GET(req?: Request) {
           type: "object",
           description: "Any subset of dashboard setting fields to change.",
           properties: {
-            timeFilter: { type: "string", enum: ["7", "30", "90", "salary", "all"] },
+            timeFilter: { type: "string", enum: ["7", "30", "90", "salary", "prev_salary", "all"] },
             salaryDay: { type: "integer", minimum: 1, maximum: 31 },
             monthlySalary: { type: "number", minimum: 0 },
             additionalIncome: { type: "number", minimum: 0 },
@@ -939,6 +1045,8 @@ export async function GET(req?: Request) {
       "Cache-Control": "public, max-age=300",
       "Deprecation": "true",
       "Sunset": "Fri, 11 Dec 2026 23:59:59 GMT",
+      "Link": "</assistant/plugin>; rel=\"successor-version\"",
+      "X-Deprecation-Notice": "Legacy Custom GPTs are deprecated (retiring Dec 11, 2026). Migrate to the ChatGPT MCP Plugin at /api/mcp (guide: /assistant/plugin).",
     },
   });
 }

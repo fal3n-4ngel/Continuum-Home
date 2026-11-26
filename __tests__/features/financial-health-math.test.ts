@@ -5,6 +5,7 @@ import {
   isFixedRecurringExpense,
   calculateCycleSpendProjection,
 } from "@/features/health/lib/financial-math";
+import { snapshotPreviousCyclesSalary } from "@/lib/utils/dates";
 
 describe("features/health/lib/financial-math unit tests", () => {
   it("calculates balanced forward-looking daily and weekly spending limits", () => {
@@ -147,5 +148,28 @@ describe("features/health/lib/financial-math unit tests", () => {
     expect(projection.projectedFixedSpend).toBe(5000);
     expect(projection.projectedVariableSpend).toBeCloseTo(6000, 2);
     expect(projection.projectedTotalSpend).toBeCloseTo(11000, 2);
+  });
+
+  it("snapshots previous cycles with expenses when monthly salary changes without overwriting explicit logs", () => {
+    const refDate = new Date("2026-11-26T00:00:00");
+    const nextLog = snapshotPreviousCyclesSalary({
+      salaryDay: 25,
+      previousSalary: 43000,
+      newSalary: 55000,
+      salaryLog: {
+        "2026-09-25": { date: "2026-09-25", amount: 40000 },
+      },
+      expenses: [
+        { date: "2026-11-26" },
+        { date: "2026-11-05" },
+        { date: "2026-10-10" },
+      ],
+      referenceDate: refDate,
+    });
+
+    expect(nextLog).not.toBeNull();
+    expect(nextLog?.["2026-10-25"]).toEqual({ date: "2026-10-25", amount: 43000 });
+    expect(nextLog?.["2026-09-25"]).toEqual({ date: "2026-09-25", amount: 40000 });
+    expect(nextLog?.["2026-11-25"]).toBeUndefined();
   });
 });

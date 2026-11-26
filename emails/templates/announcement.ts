@@ -1,4 +1,4 @@
-import { htmlDoc, wrap } from "../layout";
+import { htmlDoc, wrap, brandMarkHtml } from "../layout";
 import { COLORS } from "../theme";
 
 export interface AnnouncementEmailData {
@@ -33,7 +33,7 @@ export function buildAnnouncementEmail(data: AnnouncementEmailData): { subject: 
                 <tr><td style="border-bottom: 1px solid ${COLORS.hairline}; padding-bottom: 16px;">
                   <table width="100%" cellpadding="0" cellspacing="0"><tr>
                     <td align="left" style="font-family: ${SANS}; font-size: 14px; font-weight: 700; color: ${COLORS.ink};">
-                      <span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:${COLORS.terracotta};margin-right:6px;">⌜</span>Continuum<span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:${COLORS.terracotta};margin-left:6px;">⌟</span>
+                      ${brandMarkHtml()}<span style="vertical-align:middle;">Continuum</span>
                     </td>
                     <td align="right" style="font-family: ui-monospace, monospace; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; color: ${COLORS.muted};">Announcement</td>
                   </tr></table>
@@ -49,7 +49,7 @@ export function buildAnnouncementEmail(data: AnnouncementEmailData): { subject: 
                 <tr><td height="32"></td></tr>
 
                 <tr><td align="center" style="border-top: 1px solid ${COLORS.hairline}; padding-top: 24px;">
-                  <a href="${data.appUrl}" style="display: inline-block; background-color: ${COLORS.terracotta}; color: #FAF8F5; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; padding: 11px 22px; border-radius: 2px;">Open Dashboard</a>
+                  <a href="${data.appUrl.replace(/\/$/, "")}/dashboard" style="display: inline-block; background-color: ${COLORS.terracotta}; color: #FAF8F5; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; text-decoration: none; padding: 12px 26px; border-radius: 9999px;">Open Dashboard</a>
                   <p style="font-family: ${SANS}; font-size: 11px; margin-top: 16px; color: ${COLORS.muted};">Continuum — steady flow of life progression.</p>
                 </td></tr>
               </table>
@@ -62,6 +62,6 @@ export function buildAnnouncementEmail(data: AnnouncementEmailData): { subject: 
 
   return {
     subject: data.isPreview ? `[ANNOUNCEMENT PREVIEW] ${data.subject}` : data.subject,
-    html: htmlDoc(data.subject, body),
+    html: htmlDoc(data.subject, body, data.title),
   };
 }

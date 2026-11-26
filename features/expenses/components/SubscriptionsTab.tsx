@@ -1,6 +1,20 @@
 import React from "react";
 import { Subscription } from "@/types";
 import { getSubLogoUrl } from "@/lib/finance";
+import { useExpensesStore } from "@/lib/stores/expenses-store";
+
+const DEFAULT_SUB_CATEGORIES = [
+  "Subscriptions",
+  "Rent",
+  "Utilities",
+  "Food",
+  "Groceries",
+  "Transport",
+  "Entertainment",
+  "Shopping",
+  "Salary",
+  "Other",
+];
 
 interface SubscriptionsTabProps {
   subscriptions: Subscription[];
@@ -24,6 +38,7 @@ interface SubscriptionsTabProps {
   isAddingSub: boolean;
   addSubscription: (e: React.FormEvent) => void;
   deleteSubscription: (id: string) => void;
+  updateSubscription?: (id: string, patch: Partial<Subscription>) => void;
   updateSubscriptionIcon: (id: string, icon: string) => void;
   toggleSubscriptionAutoPost?: (id: string, nextValue: boolean) => void;
   syncDueSubscriptions?: () => void;
@@ -61,6 +76,7 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
   isAddingSub,
   addSubscription,
   deleteSubscription,
+  updateSubscription,
   updateSubscriptionIcon,
   toggleSubscriptionAutoPost,
   syncDueSubscriptions,
@@ -70,6 +86,40 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
   const [now] = React.useState(() => Date.now());
   const [editingIconId, setEditingIconId] = React.useState<string | null>(null);
   const [iconDraft, setIconDraft] = React.useState("");
+  const [editingSubId, setEditingSubId] = React.useState<string | null>(null);
+  const [editDraft, setEditDraft] = React.useState<{
+    name: string;
+    cost: string;
+    billingCycle: "monthly" | "yearly";
+    nextBillingDate: string;
+    type: "expense" | "income";
+    category: string;
+    autoPost: boolean;
+  }>({
+    name: "",
+    cost: "",
+    billingCycle: "monthly",
+    nextBillingDate: "",
+    type: "expense",
+    category: "",
+    autoPost: false,
+  });
+  const expenses = useExpensesStore((s) => s.expenses);
+  const customCategories = useExpensesStore((s) => s.customCategories);
+
+  const categoryOptions = React.useMemo(() => {
+    const set = new Set<string>(DEFAULT_SUB_CATEGORIES);
+    expenses.forEach((e) => {
+      if (e.category) set.add(e.category);
+    });
+    customCategories.forEach((c) => {
+      if (c) set.add(c);
+    });
+    subscriptions.forEach((s) => {
+      if (s.category) set.add(s.category);
+    });
+    return Array.from(set).sort();
+  }, [expenses, customCategories, subscriptions]);
 
   const startIconEdit = (id: string, current: string | null) => {
     setEditingIconId(id);
@@ -78,6 +128,36 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
   const commitIconEdit = (id: string) => {
     updateSubscriptionIcon(id, iconDraft);
     setEditingIconId(null);
+  };
+
+  const startSubEdit = (sub: Subscription) => {
+    setEditingSubId(sub.id);
+    setEditDraft({
+      name: sub.name,
+      cost: String(sub.cost),
+      billingCycle: sub.billingCycle,
+      nextBillingDate: sub.nextBillingDate,
+      type: sub.type === "income" ? "income" : "expense",
+      category: sub.category || "",
+      autoPost: Boolean(sub.autoPost),
+    });
+  };
+
+  const saveSubEdit = (e: React.FormEvent, id: string) => {
+    e.preventDefault();
+    if (!updateSubscription) return;
+    const parsedCost = parseFloat(editDraft.cost);
+    if (!editDraft.name.trim() || isNaN(parsedCost) || parsedCost < 0) return;
+    updateSubscription(id, {
+      name: editDraft.name.trim(),
+      cost: parsedCost,
+      billingCycle: editDraft.billingCycle,
+      nextBillingDate: editDraft.nextBillingDate,
+      type: editDraft.type,
+      category: editDraft.category || null,
+      autoPost: editDraft.autoPost,
+    });
+    setEditingSubId(null);
   };
 
   return (
@@ -173,13 +253,18 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                 </select>
               )}
               {setSubCategory && (
-                <input
-                  type="text"
-                  placeholder="Category (optional)"
+                <select
                   value={subCategory}
                   onChange={(e) => setSubCategory(e.target.value)}
-                  className={`${INPUT_CLASS} py-1.5 text-xs`}
-                />
+                  className={`${INPUT_CLASS} cursor-pointer py-1.5 text-xs`}
+                >
+                  <option value="">Category (optional)</option>
+                  {categoryOptions.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
               )}
               {setSubAutoPost && (
                 <label className="flex cursor-pointer items-center gap-1.5 select-none">
@@ -217,6 +302,100 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
               const nextDate = new Date(sub.nextBillingDate);
               const daysUntil = Math.ceil((nextDate.getTime() - now) / 86400000);
               const isDueSoon = daysUntil <= 7 && daysUntil >= 0;
+              if (editingSubId === sub.id) {
+                return (
+                  <form
+                    key={sub.id}
+                    onSubmit={(e) => saveSubEdit(e, sub.id)}
+                    className="flex flex-col gap-3 rounded-[10px] border border-border-hover bg-bg-card p-3.5 shadow-xs"
+                  >
+                    <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+                      <input
+                        type="text"
+                        value={editDraft.name}
+                        onChange={(e) => setEditDraft((prev) => ({ ...prev, name: e.target.value }))}
+                        placeholder="Name"
+                        required
+                        className={`${INPUT_CLASS} col-span-2 sm:col-span-1 py-1.5 text-xs`}
+                      />
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={editDraft.cost}
+                        onChange={(e) => setEditDraft((prev) => ({ ...prev, cost: e.target.value }))}
+                        placeholder={`Amount (${currency})`}
+                        required
+                        className={`${INPUT_CLASS} py-1.5 text-xs`}
+                      />
+                      <select
+                        value={editDraft.billingCycle}
+                        onChange={(e) => setEditDraft((prev) => ({ ...prev, billingCycle: e.target.value as "monthly" | "yearly" }))}
+                        className={`${INPUT_CLASS} cursor-pointer py-1.5 text-xs`}
+                      >
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                      </select>
+                      <input
+                        type="date"
+                        lang="en-CA"
+                        value={editDraft.nextBillingDate}
+                        onChange={(e) => setEditDraft((prev) => ({ ...prev, nextBillingDate: e.target.value }))}
+                        required
+                        className={`${INPUT_CLASS} py-1.5 text-xs`}
+                      />
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-2.5">
+                      <div className="flex flex-wrap items-center gap-2.5 text-xs text-text-secondary">
+                        <select
+                          value={editDraft.type}
+                          onChange={(e) => setEditDraft((prev) => ({ ...prev, type: e.target.value as "expense" | "income" }))}
+                          className={`${INPUT_CLASS} cursor-pointer py-1.5 text-xs`}
+                        >
+                          <option value="expense">Recurring Expense</option>
+                          <option value="income">Recurring Income / Salary</option>
+                        </select>
+                        <select
+                          value={editDraft.category}
+                          onChange={(e) => setEditDraft((prev) => ({ ...prev, category: e.target.value }))}
+                          className={`${INPUT_CLASS} cursor-pointer py-1.5 text-xs`}
+                        >
+                          <option value="">Category (optional)</option>
+                          {categoryOptions.map((cat) => (
+                            <option key={cat} value={cat}>
+                              {cat}
+                            </option>
+                          ))}
+                        </select>
+                        <label className="flex cursor-pointer items-center gap-1.5 select-none">
+                          <input
+                            type="checkbox"
+                            checked={editDraft.autoPost}
+                            onChange={(e) => setEditDraft((prev) => ({ ...prev, autoPost: e.target.checked }))}
+                            className="h-3.5 w-3.5 rounded border-border-subtle"
+                          />
+                          <span>Auto-post</span>
+                        </label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setEditingSubId(null)}
+                          className="cursor-pointer rounded-full border border-border-subtle bg-transparent px-3 py-1 text-xs font-medium text-text-secondary hover:text-text-primary"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="submit"
+                          className={`${BTN_PRIMARY} px-3.5 py-1 text-xs`}
+                        >
+                          Save
+                        </button>
+                      </div>
+                    </div>
+                  </form>
+                );
+              }
               return (
                 <div
                   key={sub.id}
@@ -268,6 +447,11 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                             Income
                           </span>
                         )}
+                        {sub.category && (
+                          <span className="rounded border border-border-subtle bg-bg-card px-1.5 py-0.5 font-mono text-[9px] font-medium uppercase text-text-muted">
+                            {sub.category}
+                          </span>
+                        )}
                         {toggleSubscriptionAutoPost ? (
                           <button
                             type="button"
@@ -296,6 +480,20 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                       <p className="text-[13px] font-bold">{currency}{sub.cost.toFixed(2)}</p>
                       <p className="font-mono text-[10px] tracking-[0.4px] text-text-muted uppercase">{sub.billingCycle}</p>
                     </div>
+                    {updateSubscription && (
+                      <button
+                        type="button"
+                        onClick={() => startSubEdit(sub)}
+                        className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-text-muted transition-all duration-150 hover:border-border-subtle hover:bg-bg-secondary hover:text-text-primary"
+                        title="Edit subscription"
+                        aria-label={`Edit ${sub.name}`}
+                      >
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M12 20h9" />
+                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                        </svg>
+                      </button>
+                    )}
                     <button
                       onClick={() => deleteSubscription(sub.id)}
                       className="rounded-md border-none bg-transparent p-1 text-text-muted transition-colors duration-150 hover:text-[#b3666b]"

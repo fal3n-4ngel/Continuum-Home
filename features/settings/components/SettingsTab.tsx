@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Mail, Wallet, TrendingUp, RefreshCw, Coins, CalendarClock, Banknote, Trash2, Palette, Check, Shield, ExternalLink, Sliders, Type, Sparkles, Square, Layers, Loader2 } from "lucide-react";
+import { Mail, Wallet, TrendingUp, RefreshCw, Coins, CalendarClock, Banknote, Trash2, Palette, Check, Shield, ExternalLink, Sliders, Type, Sparkles, Loader2 } from "lucide-react";
 import { useTheme, CardRadiusOption, CardShadowOption, HeadingFontOption } from "@/lib/theme/use-theme";
 import { ThemeDefinition } from "@/lib/theme/themes";
 import { AUTHOR } from "@/lib/utils";
@@ -349,11 +349,12 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         type="button"
                         disabled={isApplying}
                         onClick={() => handleSelectTheme(t.id)}
-                        className={`relative flex flex-col items-start gap-2 p-3 rounded-sm border-2 text-left transition-all duration-300 cursor-pointer overflow-hidden ${
+                        title={t.description}
+                        className={`relative flex flex-col items-start gap-2 p-3 rounded-md border text-left transition-all duration-200 cursor-pointer overflow-hidden active:scale-[0.98] ${
                           isActive
-                            ? "border-text-primary bg-bg-primary/50 shadow-sm"
+                            ? "border-text-primary ring-1 ring-text-primary bg-bg-primary/50 shadow-xs"
                             : isApplying
-                            ? "border-text-primary/70 bg-bg-primary/30 shadow-xs"
+                            ? "border-text-primary/70 bg-bg-primary/30"
                             : "border-border-subtle bg-bg-card hover:border-border-hover hover:bg-bg-primary/20"
                         }`}
                       >
@@ -362,42 +363,33 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                             <div className="h-full w-full bg-text-primary animate-pulse" />
                           </div>
                         )}
-                        <div className="flex items-center justify-between w-full">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-text-primary">{t.name}</span>
-                            <span className="font-mono text-[8.5px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-xs border border-border-subtle bg-bg-primary/40 text-text-secondary">
+                        <div className="flex items-center justify-between w-full gap-2">
+                          <span className="text-xs font-semibold text-text-primary truncate">{t.name}</span>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            <span className="font-mono text-[8.5px] font-semibold uppercase tracking-wider text-text-muted">
                               {t.type}
                             </span>
-                          </div>
-                          <div className="flex items-center gap-1.5">
                             {isApplying && (
-                              <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-xs font-mono text-[9px] font-bold uppercase tracking-wider text-text-primary bg-bg-primary/90 border border-border-subtle shadow-2xs">
-                                <Loader2 size={10} className="animate-spin text-text-primary" />
-                                Applying
-                              </span>
+                              <Loader2 size={11} className="animate-spin text-text-primary" />
                             )}
                             {isActive && !isApplying && (
-                              <div className="flex h-4.5 w-4.5 items-center justify-center rounded-xs bg-text-primary text-bg-card animate-[fadeIn_0.2s_ease]">
-                                <Check size={10} strokeWidth={3} />
+                              <div className="flex h-4 w-4 items-center justify-center rounded-full bg-text-primary text-bg-card animate-[fadeIn_0.2s_ease]">
+                                <Check size={9} strokeWidth={3} />
                               </div>
                             )}
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-1.5 w-full py-0.5">
+                        <div className="flex items-center gap-1.5 w-full">
                           {t.swatches.map((color, idx) => (
                             <div
                               key={idx}
-                              className="h-3.5 flex-1 rounded-sm border border-black/10 shadow-2xs"
+                              className="h-3 flex-1 rounded-sm border border-black/10"
                               style={{ backgroundColor: color }}
                               title={color}
                             />
                           ))}
                         </div>
-
-                        <span className="text-[10.5px] leading-snug text-text-muted line-clamp-2">
-                          {t.description}
-                        </span>
                       </button>
                     );
                   })}
@@ -422,10 +414,7 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 {/* Corner Radius */}
                 <div>
                   <label className={FIELD_LABEL}>Card Corner Geometry</label>
-                  <p className="text-[11.5px] text-text-muted mb-2.5">
-                    Controls curvature across dashboard cards, modals, and interactive buttons.
-                  </p>
-                  <div className="grid grid-cols-4 gap-2 max-sm:grid-cols-2">
+                  <div className="mt-2 grid grid-cols-4 gap-2 max-sm:grid-cols-2">
                     {RADIUS_OPTIONS.map((opt) => {
                       const isCurrent = cardRadius === opt.id;
                       return (
@@ -433,21 +422,19 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           key={opt.id}
                           type="button"
                           onClick={() => setCardRadius(opt.id)}
-                          className={`flex flex-col items-center gap-1.5 p-2.5 rounded-sm border-2 text-center transition-all cursor-pointer ${
+                          title={opt.desc}
+                          className={`flex flex-col items-center gap-1.5 p-2.5 rounded-md border text-center transition-all cursor-pointer active:scale-[0.97] ${
                             isCurrent
-                              ? "border-text-primary bg-bg-primary/50 shadow-sm"
+                              ? "border-text-primary ring-1 ring-text-primary bg-bg-primary/50 shadow-xs"
                               : "border-border-subtle bg-bg-card hover:border-border-hover hover:bg-bg-primary/20"
                           }`}
                         >
-                          <div className="flex h-7 w-10 items-center justify-center border-2 border-dashed border-text-muted/60 bg-bg-primary/30" style={{ borderRadius: opt.px }}>
+                          <div className="flex h-7 w-10 items-center justify-center border border-dashed border-text-muted/60 bg-bg-primary/30" style={{ borderRadius: opt.px }}>
                             <span className="text-[9.5px] font-mono font-bold text-text-secondary">{opt.px}</span>
                           </div>
-                          <div>
-                            <div className="flex items-center justify-center gap-1">
-                              <span className="text-[11.5px] font-bold text-text-primary">{opt.label}</span>
-                              {isCurrent && <Check size={10} strokeWidth={3} className="text-text-primary" />}
-                            </div>
-                            <span className="text-[9.5px] text-text-muted leading-tight block mt-0.5">{opt.desc}</span>
+                          <div className="flex items-center justify-center gap-1">
+                            <span className="text-[11.5px] font-semibold text-text-primary">{opt.label}</span>
+                            {isCurrent && <Check size={10} strokeWidth={3} className="text-text-primary" />}
                           </div>
                         </button>
                       );
@@ -455,13 +442,9 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                   </div>
                 </div>
 
-                {/* Shadow Elevation */}
-                <div className="pt-2 border-t border-border-subtle">
+                <div className="pt-3 border-t border-border-subtle">
                   <label className={FIELD_LABEL}>Card Elevation &amp; Shadows</label>
-                  <p className="text-[11.5px] text-text-muted mb-2.5">
-                    Adjusts tactile depth, ambient drop shadows, and visual hierarchy.
-                  </p>
-                  <div className="grid grid-cols-3 gap-2 max-sm:grid-cols-1">
+                  <div className="mt-2 grid grid-cols-3 gap-2 max-sm:grid-cols-1">
                     {SHADOW_OPTIONS.map((opt) => {
                       const isCurrent = cardShadow === opt.id;
                       return (
@@ -469,21 +452,19 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                           key={opt.id}
                           type="button"
                           onClick={() => setCardShadow(opt.id)}
-                          className={`flex flex-col items-start gap-1 p-2.5 rounded-sm border-2 text-left transition-all cursor-pointer ${
+                          title={opt.desc}
+                          className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-md border text-left transition-all cursor-pointer active:scale-[0.97] ${
                             isCurrent
-                              ? "border-text-primary bg-bg-primary/50 shadow-sm"
+                              ? "border-text-primary ring-1 ring-text-primary bg-bg-primary/50 shadow-xs"
                               : "border-border-subtle bg-bg-card hover:border-border-hover hover:bg-bg-primary/20"
                           }`}
                         >
-                          <div className="flex items-center justify-between w-full">
-                            <span className="text-[11.5px] font-bold text-text-primary">{opt.label}</span>
-                            {isCurrent && (
-                              <div className="flex h-3.5 w-3.5 items-center justify-center rounded-xs bg-text-primary text-bg-card">
-                                <Check size={9} strokeWidth={3} />
-                              </div>
-                            )}
-                          </div>
-                          <span className="text-[10px] text-text-muted leading-snug">{opt.desc}</span>
+                          <span className="text-[11.5px] font-semibold text-text-primary">{opt.label}</span>
+                          {isCurrent && (
+                            <div className="flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-full bg-text-primary text-bg-card">
+                              <Check size={9} strokeWidth={3} />
+                            </div>
+                          )}
                         </button>
                       );
                     })}
@@ -503,9 +484,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 </h2>
               </div>
               <div className={CARD_BODY}>
-                <p className="text-[11.5px] text-text-muted">
-                  Choose the font family applied to titles, headers, and major balance metrics throughout Continuum.
-                </p>
                 <div className="grid grid-cols-3 gap-2 max-sm:grid-cols-1">
                   {FONT_OPTIONS.map((opt) => {
                     const isCurrent = headingFont === opt.id;
@@ -514,27 +492,25 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                         key={opt.id}
                         type="button"
                         onClick={() => setHeadingFont(opt.id)}
-                        className={`flex flex-col items-start gap-1.5 p-3 rounded-sm border-2 text-left transition-all cursor-pointer ${
+                        title={opt.desc}
+                        className={`flex flex-col items-start gap-1 p-3 rounded-md border text-left transition-all cursor-pointer active:scale-[0.97] ${
                           isCurrent
-                            ? "border-text-primary bg-bg-primary/50 shadow-sm"
+                            ? "border-text-primary ring-1 ring-text-primary bg-bg-primary/50 shadow-xs"
                             : "border-border-subtle bg-bg-card hover:border-border-hover hover:bg-bg-primary/20"
                         }`}
                       >
                         <div className="flex items-center justify-between w-full">
-                          <span className="text-xs font-bold text-text-primary">{opt.label}</span>
+                          <span className="text-xs font-semibold text-text-primary">{opt.label}</span>
                           {isCurrent && (
-                            <div className="flex h-3.5 w-3.5 items-center justify-center rounded-xs bg-text-primary text-bg-card">
+                            <div className="flex h-3.5 w-3.5 items-center justify-center rounded-full bg-text-primary text-bg-card">
                               <Check size={9} strokeWidth={3} />
                             </div>
                           )}
                         </div>
-                        <div className="py-1">
-                          <span className={`text-lg text-text-primary block ${opt.sampleClass}`}>
-                            Aa Bb 12
-                          </span>
-                          <span className="text-[9.5px] font-mono text-text-muted">{opt.fontName}</span>
-                        </div>
-                        <span className="text-[10px] text-text-muted leading-snug">{opt.desc}</span>
+                        <span className={`text-lg text-text-primary block pt-1 ${opt.sampleClass}`}>
+                          Aa Bb 12
+                        </span>
+                        <span className="text-[9.5px] font-mono text-text-muted">{opt.fontName}</span>
                       </button>
                     );
                   })}
@@ -554,10 +530,6 @@ export const SettingsTab: React.FC<SettingsTabProps> = ({
                 <span className="text-[9.5px] font-mono uppercase tracking-wider text-text-muted">Real-time render</span>
               </div>
               <div className={CARD_BODY}>
-                <p className="text-[11.5px] leading-relaxed text-text-secondary">
-                  Live simulation of active palette, card radius, shadow elevation, and typography:
-                </p>
-
                 <div
                   className="p-4 border border-border-subtle bg-bg-card transition-all"
                   style={{

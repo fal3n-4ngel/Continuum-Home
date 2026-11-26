@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { safeLocalStorage } from "@/lib/utils/storage";
-import { getCurrencySymbol } from "@/lib/utils";
+import { getCurrencySymbol, snapshotPreviousCyclesSalary, buildCycleHistory } from "@/lib/utils";
 import { useExpensesStore } from "@/lib/stores/expenses-store";
 
 interface UseDashboardSettingsProps {
@@ -35,8 +35,8 @@ export function useDashboardSettings({
     return getCurrencySymbol(saved);
   });
   const [settingsLoaded, setSettingsLoaded] = useState(false);
-  const [timeFilter, setTimeFilterState] = useState<"7" | "30" | "90" | "salary" | "all">(
-    () => (safeLocalStorage.getItem("phub_time_filter") as "7" | "30" | "90" | "salary" | "all") || "all"
+  const [timeFilter, setTimeFilterState] = useState<"7" | "30" | "90" | "salary" | "prev_salary" | "all">(
+    () => (safeLocalStorage.getItem("phub_time_filter") as "7" | "30" | "90" | "salary" | "prev_salary" | "all") || "all"
   );
   const [salaryDay, setSalaryDayState] = useState<number>(1);
   const [monthlySalary, setMonthlySalaryState] = useState<number>(() => {
@@ -199,7 +199,7 @@ export function useDashboardSettings({
     patchSettings,
   ]);
 
-  const setTimeFilter = (f: "7" | "30" | "90" | "salary" | "all") => {
+  const setTimeFilter = (f: "7" | "30" | "90" | "salary" | "prev_salary" | "all") => {
     setTimeFilterState(f);
     safeLocalStorage.setItem("phub_time_filter", f);
     useExpensesStore.getState().setTimeFilter(f);
@@ -213,10 +213,42 @@ export function useDashboardSettings({
     patchSettings({ salaryDay: d });
   };
 
-  const setMonthlySalary = (val: number) => {
-    if (val === monthlySalary) return;
+  const setMonthlySalary = (val: number, options?: { overwriteHistory?: boolean }) => {
+    const overwriteHistory = Boolean(options?.overwriteHistory);
+    if (val === monthlySalary && !overwriteHistory) return;
+
+    const expenses = useExpensesStore.getState().expenses;
+    let nextSalaryLog: Record<string, { date: string; amount: number }> | null = null;
+
+    if (overwriteHistory) {
+      const pastCycles = buildCycleHistory(salaryDay, salaryLog, 12).slice(1);
+      const updatedLog = { ...salaryLog };
+      let changed = false;
+      for (const cycle of pastCycles) {
+        if (updatedLog[cycle.startStr]) {
+          updatedLog[cycle.startStr] = { date: cycle.startStr, amount: val };
+          changed = true;
+        }
+      }
+      if (changed) nextSalaryLog = updatedLog;
+    } else {
+      nextSalaryLog = snapshotPreviousCyclesSalary({
+        salaryDay,
+        previousSalary: monthlySalary,
+        newSalary: val,
+        salaryLog,
+        expenses,
+      });
+    }
+
     setMonthlySalaryState(val);
     safeLocalStorage.setItem("phub_monthly_salary", String(val));
+    if (nextSalaryLog) {
+      setSalaryLogState(nextSalaryLog);
+      useExpensesStore.getState().setSalaryLog(nextSalaryLog);
+      patchSettings({ monthlySalary: val, salaryLog: nextSalaryLog });
+      return;
+    }
     patchSettings({ monthlySalary: val });
   };
 

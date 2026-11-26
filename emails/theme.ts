@@ -30,7 +30,14 @@ export const EMAIL_CSS = `
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
       font-size: 11px; font-weight: 700;
       text-transform: uppercase; letter-spacing: 1px;
-      text-decoration: none; padding: 11px 22px; border-radius: 2px;
+      text-decoration: none; padding: 12px 26px; border-radius: 9999px;
+    }
+    .mobile-only { display: none; max-height: 0; overflow: hidden; mso-hide: all; }
+    @media only screen and (max-width: 560px) {
+      .stack-tile { display: block !important; width: 100% !important; margin-bottom: 10px !important; }
+      .stack-spacer { display: none !important; width: 0 !important; height: 0 !important; }
+      .hide-mobile { display: none !important; }
+      .mobile-only { display: block !important; max-height: none !important; overflow: visible !important; }
     }
     .cat-bar-bg {
       height: 6px;

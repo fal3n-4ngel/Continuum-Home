@@ -29,7 +29,7 @@ export interface PortfolioEmailData {
 
 function statTile(label: string, valueHtml: string): string {
   return `
-            <td width="31%" class="bento-card" align="center" valign="middle" style="padding:20px;">
+            <td width="31%" class="bento-card stack-tile" align="center" valign="middle" style="padding:20px;">
               <div class="font-mono txt-muted" style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;">${label}</div>
               <div style="font-size:20px;font-weight:bold;margin-top:6px;">${valueHtml}</div>
             </td>`;
@@ -40,12 +40,13 @@ function holdingRow(a: PortfolioHolding): string {
                 <td align="left" style="padding:14px 0;border-bottom:1px solid ${COLORS.canvas};">
                   <div class="font-sans txt-main" style="font-weight:600;font-size:12px;">${a.name}</div>
                   <div class="font-mono txt-muted" style="font-size:9px;margin-top:4px;text-transform:uppercase;">${a.category}</div>
+                  <div class="font-mono txt-muted mobile-only" style="font-size:10px;margin-top:3px;">${a.quantity.toLocaleString("en-IN")} × ${inr2(a.currentPrice)}</div>
                 </td>
-                <td align="right" class="font-mono txt-muted" style="padding:14px 0;border-bottom:1px solid ${COLORS.canvas};font-size:11px;">${a.quantity.toLocaleString("en-IN")}</td>
-                <td align="right" class="font-mono txt-main" style="padding:14px 0;border-bottom:1px solid ${COLORS.canvas};font-size:11px;">₹${a.currentPrice.toFixed(2)}</td>
-                <td align="right" class="font-mono txt-main" style="padding:14px 0;border-bottom:1px solid ${COLORS.canvas};font-size:11px;font-weight:600;">₹${a.currentValue.toFixed(2)}</td>
+                <td align="right" class="font-mono txt-muted hide-mobile" style="padding:14px 0;border-bottom:1px solid ${COLORS.canvas};font-size:11px;">${a.quantity.toLocaleString("en-IN")}</td>
+                <td align="right" class="font-mono txt-main hide-mobile" style="padding:14px 0;border-bottom:1px solid ${COLORS.canvas};font-size:11px;">${inr2(a.currentPrice)}</td>
+                <td align="right" class="font-mono txt-main" style="padding:14px 0;border-bottom:1px solid ${COLORS.canvas};font-size:11px;font-weight:600;">${inr2(a.currentValue)}</td>
                 <td align="right" class="font-mono ${toneClass(a.pnl)}" style="padding:14px 0;border-bottom:1px solid ${COLORS.canvas};font-size:11px;font-weight:600;">
-                  ${a.pnl >= 0 ? "+" : ""}₹${a.pnl.toFixed(0)}
+                  ${a.pnl >= 0 ? "+" : "-"}${inr0(Math.abs(a.pnl))}
                   <div class="txt-muted" style="font-size:9px;font-weight:normal;margin-top:3px;">(${pct(a.pnlPercent, 1)})</div>
                 </td>
               </tr>`;
@@ -75,9 +76,9 @@ ${title("Daily Portfolio Close", "Indian Market Close Wrap-Up (5:30 PM IST)")}
         <tr><td>
           <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;"><tr>
 ${statTile("Invested Capital", `<span class="font-sans txt-main">${inr0(data.totalInvested)}</span>`)}
-            <td width="3.5%"></td>
+            <td width="3.5%" class="stack-spacer"></td>
 ${statTile("Today's P&amp;L (1D)", `<span class="font-sans ${toneClass(data.dailyChange)}">${delta(data.dailyChange)}</span>`)}
-            <td width="3.5%"></td>
+            <td width="3.5%" class="stack-spacer"></td>
 ${statTile("7-Day Change (1W)", `<span class="font-sans ${toneClass(data.weeklyChange)}">${delta(data.weeklyChange)}</span>`)}
           </tr></table>
         </td></tr>
@@ -86,8 +87,8 @@ ${sectionHeading("Active Holdings Ledger")}
           <table width="100%" cellpadding="0" cellspacing="0">
             <thead><tr>
               <th align="left" ${TH}>Asset / Class</th>
-              <th align="right" ${TH}>Qty</th>
-              <th align="right" ${TH}>CMP</th>
+              <th align="right" class="font-mono txt-muted hide-mobile" style="font-size:10px;font-weight:700;text-transform:uppercase;padding-bottom:12px;border-bottom:1px solid ${COLORS.hairline};">Qty</th>
+              <th align="right" class="font-mono txt-muted hide-mobile" style="font-size:10px;font-weight:700;text-transform:uppercase;padding-bottom:12px;border-bottom:1px solid ${COLORS.hairline};">CMP</th>
               <th align="right" ${TH}>Value</th>
               <th align="right" ${TH}>P&amp;L</th>
             </tr></thead>
@@ -97,7 +98,7 @@ ${sectionHeading("Active Holdings Ledger")}
           </table>
         </td></tr>
 ${footer({
-    ctaHref: data.appUrl,
+    ctaHref: `${data.appUrl.replace(/\/$/, "")}/dashboard?tab=investments`,
     ctaLabel: "Open Personal Dashboard",
     note: `Automated daily wrap-up from your dashboard.<br>USD to INR Rate: ₹${data.usdToInr.toFixed(2)}`,
     unsubscribe: data.unsubscribeUrl
@@ -106,8 +107,10 @@ ${footer({
   })}
   `);
 
+  const preheader = `Net worth ${inr0(data.totalCurrent)} · Today ${delta(data.dailyChange)} · Overall ${data.overallPnlPercent >= 0 ? "+" : ""}${pct(data.overallPnlPercent, 1)}`;
+
   return {
     subject: `Daily Portfolio Close: ${inr0(data.totalCurrent)} (${data.overallPnlPercent >= 0 ? "+" : ""}${pct(data.overallPnlPercent, 1)})`,
-    html: htmlDoc("Daily Portfolio Close", body),
+    html: htmlDoc("Daily Portfolio Close", body, preheader),
   };
 }

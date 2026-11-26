@@ -129,6 +129,45 @@ export function buildCycleHistory(
   return cycles;
 }
 
+export function snapshotPreviousCyclesSalary(options: {
+  salaryDay: number;
+  previousSalary: number;
+  newSalary: number;
+  salaryLog: Record<string, SalaryLogEntry>;
+  expenses: Array<{ date?: string | null }>;
+  depth?: number;
+  referenceDate?: Date;
+}): Record<string, SalaryLogEntry> | null {
+  const {
+    salaryDay,
+    previousSalary,
+    newSalary,
+    salaryLog,
+    expenses,
+    depth = 12,
+    referenceDate = new Date(),
+  } = options;
+
+  if (previousSalary <= 0 || previousSalary === newSalary) return null;
+
+  const pastCycles = buildCycleHistory(salaryDay, salaryLog, depth, referenceDate).slice(1);
+  let changed = false;
+  const nextLog: Record<string, SalaryLogEntry> = { ...salaryLog };
+
+  for (const cycle of pastCycles) {
+    if (cycle.loggedAmount !== null) continue;
+    const hasExpenses = expenses.some(
+      (e) => e.date && e.date >= cycle.startStr && e.date <= cycle.endStr
+    );
+    if (hasExpenses) {
+      nextLog[cycle.startStr] = { date: cycle.startStr, amount: previousSalary };
+      changed = true;
+    }
+  }
+
+  return changed ? nextLog : null;
+}
+
 export function getIstDateString(d: Date = new Date()): string {
   const tzDate = new Date(d.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
   const yyyy = tzDate.getFullYear();

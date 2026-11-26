@@ -113,11 +113,9 @@ export default function LandingPage({
   return (
     <div className="relative min-h-screen bg-[#F3EFEA] dark:bg-[#0C0D0E] text-[#26211F] dark:text-[#F4F5F7] selection:bg-[#D99419]/20 selection:text-[#9E5D48] font-sans antialiased">
       
-      {/* Background Architectural Subtle Grid */}
-      <div className="pointer-events-none fixed inset-0 z-0 architectural-grid opacity-40" />
+      <div className="pointer-events-none fixed inset-0 z-0 architectural-grid opacity-15" />
 
-      {/* Modern Product Header */}
-      <header className="sticky top-0 z-50 border-b border-[#DDD5CB] dark:border-[#25272E] bg-[#F3EFEA]/90 dark:bg-[#0C0D0E]/90 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-[#DDD5CB]/60 dark:border-[#25272E]/70 bg-[#F3EFEA]/85 dark:bg-[#0C0D0E]/85 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8">
           
           {/* Logo & Product Name */}
@@ -177,28 +175,22 @@ export default function LandingPage({
         </div>
       </header>
 
-      {/* Hero Section: Clean Architectural Product Hero Matching Reference Layout */}
-      <section className="relative z-10 mx-auto max-w-5xl px-4 sm:px-8 flex flex-col items-center justify-center pt-16 pb-12 text-center min-h-screen">
-        
-        {/* Architectural Tag Badge */}
-        <div className="border border-[#DDD5CB] dark:border-[#25272E] px-3.5 py-1 font-mono text-[10.5px] tracking-widest text-[#9E5D48] dark:text-[#E07A5F] uppercase mb-5 bg-[#FAF8F5] dark:bg-[#18191D] rounded-sm shadow-2xs">
-          ⌜ CONTINUUM HOME · OPEN SOURCE · AI-READY LIFE OS ⌟
-        </div>
+      <section className="relative z-10 mx-auto max-w-4xl px-4 sm:px-8 flex flex-col items-center justify-center py-24 sm:py-32 text-center min-h-[calc(100vh-4rem)]">
+        <p className="mb-5 font-mono text-[11px] tracking-[0.18em] text-[#70675E] dark:text-[#9BA1B0] uppercase">
+          Continuum Home · Open Source · Personal Life OS
+        </p>
 
-        {/* Headline */}
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-[#26211F] dark:text-[#F4F5F7] leading-[1.1] mb-4">
+        <h1 className="text-4xl sm:text-6xl md:text-[64px] font-bold tracking-tight text-[#26211F] dark:text-[#F4F5F7] leading-[1.12] mb-5">
           <span className="sr-only">Continuum Home — </span>
           <span className="font-serif italic font-normal text-[#9E5D48] dark:text-[#E07A5F]">
             A dashboard for you. An API for your AI.
           </span>
         </h1>
 
-        {/* Subtitle */}
-        <p className="mt-2 text-base sm:text-lg text-[#6D635C] dark:text-[#9BA1B0] max-w-2xl mx-auto leading-relaxed">
-          A self-hostable system for your daily expenses, investments, media watchlists, and book library &mdash; with an API designed for both humans and AI agents.
+        <p className="mt-1 text-base sm:text-lg text-[#6D635C] dark:text-[#9BA1B0] max-w-xl mx-auto leading-relaxed">
+          A calm, self-hostable home for your daily expenses, investments, watchlists, and books &mdash; built for both humans and AI agents.
         </p>
 
-        {/* CTA Buttons */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5">
           <button
             onClick={onLogin}
@@ -240,24 +232,7 @@ export default function LandingPage({
           </div>
         )}
 
-        {/* Focused Hero Category Badges */}
-        <div className="mt-7 flex flex-wrap justify-center gap-2.5">
-          <span className="inline-flex items-center gap-1.5 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-3.5 py-1.5 font-mono text-xs text-[#26211F] dark:text-[#F4F5F7] shadow-2xs">
-            🤖 AI Endpoints (ChatGPT &amp; Claude)
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-3.5 py-1.5 font-mono text-xs text-[#26211F] dark:text-[#F4F5F7] shadow-2xs">
-            💸 Expense &amp; Subscription Ledger
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-3.5 py-1.5 font-mono text-xs text-[#26211F] dark:text-[#F4F5F7] shadow-2xs">
-            📈 Investments &amp; Live Quotes
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-3.5 py-1.5 font-mono text-xs text-[#26211F] dark:text-[#F4F5F7] shadow-2xs">
-            🎬 Media &amp; Book Library
-          </span>
-        </div>
-
-        {/* Architecture Diagram: Direct Component under Hero Matching Reference */}
-        <div id="architecture" className="mt-10 w-full">
+        <div id="architecture" className="mt-14 w-full">
           <ArchitectureFlowDiagram />
         </div>
 
@@ -657,9 +632,9 @@ export default function LandingPage({
 
           </div>
 
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-[10.5px] text-[#9C9288] uppercase">
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-[10.5px] text-[#9C9288] ">
             <div>
-              Engineered by <a href={AUTHOR.url} target="_blank" rel="noopener noreferrer" className="text-[#1C1B18] dark:text-[#F4F5F7] font-semibold hover:underline">{AUTHOR.name}</a> (@{AUTHOR.githubHandle})
+              Engineered by <a href={AUTHOR.url} target="_blank" rel="noopener noreferrer" className="text-[#1C1B18] dark:text-[#F4F5F7] font-semibold hover:underline">@{AUTHOR.githubHandle}</a> 
             </div>
             <div>
               Continuum Home &bull; MIT Licensed

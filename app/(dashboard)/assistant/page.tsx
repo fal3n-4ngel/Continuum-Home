@@ -205,37 +205,77 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
           </p>
         </div>
 
-        <div className="rounded-sm border border-amber-500/30 bg-amber-500/5 p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <div className="flex flex-col gap-1.5 max-w-xl">
+        <div className={CARD}>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <span className="font-mono text-[9px] font-bold uppercase tracking-[1.2px] text-amber-600 dark:text-amber-400">
-                OpenAI Policy Notice
+              <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-emerald-600 dark:text-emerald-400">
+                Recommended
               </span>
-              <span className="font-mono text-[9px] text-text-muted">·</span>
-              <span className="font-mono text-[9px] text-text-muted">
-                Custom GPTs Sunsetting Dec 11, 2026
+              <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">·</span>
+              <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">
+                ChatGPT Plugin &amp; Universal MCP
               </span>
             </div>
-            <p className="text-[13px] leading-relaxed text-text-secondary">
-              By decision of OpenAI / ChatGPT, <strong className="text-text-primary">the Custom GPT is going away and will permanently stop working after December 11, 2026</strong>. Our official Custom GPT store link will be discontinued after this date. Continuum Home has already prepared the replacement: the new <strong>ChatGPT Plugin &amp; MCP Connector</strong>.
-            </p>
+            <span className="rounded-xs border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+              Active
+            </span>
           </div>
-          <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto">
-            <Link
-              href="/assistant/plugin"
-              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-text-primary bg-text-primary px-3.5 py-2 font-mono text-xs uppercase tracking-wider font-semibold text-bg-primary shadow-xs transition-all hover:opacity-90 w-full sm:w-auto text-center"
-            >
-              <span>Install New Plugin</span>
+          <h2 className="font-serif text-[20px] italic font-medium text-text-primary mb-2 leading-snug">
+            Install the Continuum ChatGPT Plugin (MCP Connector)
+          </h2>
+          <p className="text-[13px] leading-[1.7] text-text-secondary mb-4">
+            Connect Continuum with secure OAuth 2.0 to ChatGPT&apos;s new Plugin / Connected Apps architecture — and plug the same MCP URL into Claude Desktop, Cursor, Windsurf, or any MCP-compatible agent.
+          </p>
+          <div className="mb-5 flex flex-wrap items-center gap-2">
+            <span className={CODE}>{`${origin || SITE_URL}/api/mcp`}</span>
+            <button onClick={() => copyText("mcp", `${origin || SITE_URL}/api/mcp`)} className={`${BTN_GHOST} py-1.5 text-xs`}>
+              {copied === "mcp" ? "✓ Copied" : "Copy MCP URL"}
+            </button>
+          </div>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Link href="/assistant/plugin" className={BTN_PRIMARY}>
+              <span>Setup &amp; Create Plugin</span>
               <span className="text-xs">→</span>
             </Link>
             <a
               href="https://help.openai.com/en/articles/20001519-custom-gpt-retirement-and-migration-faq"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex cursor-pointer shrink-0 items-center justify-center gap-1.5 rounded-sm border border-border-subtle bg-bg-card px-3 py-2 font-mono text-xs text-text-secondary shadow-xs transition-all hover:bg-bg-secondary hover:text-text-primary"
+              className={BTN_GHOST}
             >
-              <span>FAQ</span>
-              <span className="text-xs">↗</span>
+              <span>OpenAI Migration FAQ ↗</span>
+            </a>
+          </div>
+        </div>
+
+        <div className="rounded-sm border border-amber-500/35 bg-amber-500/5 p-5 flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="rounded-xs border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[1px] text-amber-700 dark:text-amber-400">
+                Deprecated
+              </span>
+              <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">
+                Retiring Dec 11, 2026
+              </span>
+            </div>
+          </div>
+          <h2 className="font-serif text-[17px] italic font-medium text-text-primary leading-snug">
+            Legacy Public Custom GPT
+          </h2>
+          <p className="text-[13px] leading-[1.7] text-text-secondary">
+            By decision of OpenAI, <strong className="text-text-primary">Custom GPTs are deprecated and will stop working on December 11, 2026</strong>. Existing Custom GPT users should migrate to the new <strong className="text-text-primary">ChatGPT MCP Plugin</strong> above.
+          </p>
+          <div className="flex flex-wrap items-center gap-2.5 pt-1">
+            <Link href="/assistant/plugin" className={BTN_GHOST}>
+              <span>Switch to New Plugin →</span>
+            </Link>
+            <a
+              href="https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-dashboard-public"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-mono text-[11px] text-text-muted underline hover:text-text-primary"
+            >
+              Open Legacy Custom GPT ↗
             </a>
           </div>
         </div>
@@ -246,38 +286,10 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
           </div>
         )}
 
-        <div className={CARD}>
-          <div className="mb-3 flex items-center gap-2">
-            <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">
-              {enableGPTMigration ? "Plugins & Skills" : "Recommended"}
-            </span>
-            <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">·</span>
-            <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">
-              {enableGPTMigration ? "Migration Ready" : "Easiest"}
-            </span>
-          </div>
-          <h2 className="font-serif text-[18px] italic font-medium text-text-primary mb-2 leading-snug">
-            {enableGPTMigration ? "Official Continuum ChatGPT Plugin & Custom GPT" : "Use the Official Public Custom GPT"}
-          </h2>
-          <p className="text-[13px] leading-[1.7] text-text-secondary mb-5">
-            {enableGPTMigration
-              ? "Connect Continuum with secure OAuth 2.0. Works with our official ChatGPT Plugin or existing Custom GPT until December 11, 2026."
-              : "Connect to the pre-built Continuum Assistant on the GPT Store. It uses secure OAuth 2.0 — no copy-pasting API keys required."}
-          </p>
-          <a
-            href="https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-dashboard-public"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={BTN_PRIMARY}
-          >
-            {enableGPTMigration ? "Open in ChatGPT (Active until Dec 11)" : "Open in ChatGPT"}
-          </a>
-        </div>
-
         <div className="flex items-center gap-4 py-2">
           <div className="flex-1 border-t border-border-subtle" />
           <span className="font-mono text-[9px] font-bold uppercase tracking-[1.5px] text-text-muted">
-            Or Self-Host / Custom Agent
+            Or Connect Any Custom AI Agent (MCP / OpenAPI)
           </span>
           <div className="flex-1 border-t border-border-subtle" />
         </div>
@@ -285,10 +297,9 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
         <div className={`${CARD} flex gap-4`}>
           {renderStep(1)}
           <div className="min-w-0 flex-1">
-            <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Create a Custom GPT or AI Agent</h2>
+            <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Choose MCP (Any Agent) or OpenAPI</h2>
             <p className="text-[13px] leading-[1.7] text-text-secondary">
-              In ChatGPT (under Explore GPTs) or your preferred AI Agent builder (e.g. Coze, Dify), initiate a new custom assistant.
-              Keep sharing set to <strong className="text-text-primary">Only me</strong> — this agent will hold a token to your personal data.
+              Use the <strong className="text-text-primary">MCP Server URL</strong> (<span className="font-mono text-xs">{`${origin || SITE_URL}/api/mcp`}</span>) to plug Continuum into Claude Desktop, Cursor, Windsurf, ChatGPT Plugins, or any MCP-compatible agent. For legacy platforms (Coze, Dify, Poe), use the OpenAPI schema or Poe webhook below.
             </p>
           </div>
         </div>

@@ -8,7 +8,7 @@ const BILLING_CYCLES = ["monthly", "yearly"] as const;
 const ENTRY_TYPES = ["expense", "income"] as const;
 const ASSET_CATEGORIES = ["equity", "crypto", "mutual_fund", "sip", "gold", "cash", "fixed_deposit", "other"] as const;
 const FD_COMPOUNDING_OPTIONS = ["monthly", "quarterly", "half_yearly", "yearly"] as const;
-const TIME_FILTERS = ["7", "30", "90", "salary", "all"] as const;
+const TIME_FILTERS = ["7", "30", "90", "salary", "prev_salary", "all"] as const;
 const CURRENCY_SYMBOLS = ["₹", "$", "€", "£", "¥"] as const;
 
 export const MAX_PORTFOLIO_ASSETS = 500;
@@ -267,6 +267,15 @@ export function validateSubscriptionPatch(body: unknown): Partial<Omit<Subscript
 
 const MAX_RECONCILIATION_ENTRIES = 366;
 
+function normalizeDateKey(key: string): string {
+  const ddmmyyyy = key.match(/^(\d{2})-(\d{2})-(\d{4})$/);
+  if (ddmmyyyy) {
+    const [, dd, mm, yyyy] = ddmmyyyy;
+    return `${yyyy}-${mm}-${dd}`;
+  }
+  return key;
+}
+
 function asReconciliationsMap(value: unknown, field: string): Record<string, number> {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     badRequest(`Field '${field}' must be an object.`);
@@ -276,8 +285,9 @@ function asReconciliationsMap(value: unknown, field: string): Record<string, num
     badRequest(`Field '${field}' must contain at most ${MAX_RECONCILIATION_ENTRIES} entries.`);
   }
   const result: Record<string, number> = {};
-  for (const [key, val] of entries) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) badRequest(`Field '${field}' has an invalid date key: '${key}'.`);
+  for (const [rawKey, val] of entries) {
+    const key = normalizeDateKey(rawKey);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) badRequest(`Field '${field}' has an invalid date key: '${rawKey}'.`);
     result[key] = asNumber(val, `${field}.${key}`, { min: 0, max: 1_000_000_000 });
   }
   return result;
@@ -292,10 +302,12 @@ function asSalaryLogMap(value: unknown, field: string): Record<string, { date: s
     badRequest(`Field '${field}' must contain at most ${MAX_RECONCILIATION_ENTRIES} entries.`);
   }
   const result: Record<string, { date: string; amount: number }> = {};
-  for (const [key, val] of entries) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) badRequest(`Field '${field}' has an invalid date key: '${key}'.`);
+  for (const [rawKey, val] of entries) {
+    const key = normalizeDateKey(rawKey);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(key)) badRequest(`Field '${field}' has an invalid date key: '${rawKey}'.`);
     const entry = requireObject(val, `${field}.${key}`);
-    const date = asDate(entry.date, `${field}.${key}.date`) ?? badRequest(`Field '${field}.${key}.date' is required.`);
+    const rawDate = typeof entry.date === "string" ? normalizeDateKey(entry.date) : entry.date;
+    const date = asDate(rawDate, `${field}.${key}.date`) ?? badRequest(`Field '${field}.${key}.date' is required.`);
     const amount = asNumber(entry.amount, `${field}.${key}.amount`, { min: 0, max: 1_000_000_000 });
     result[key] = { date, amount };
   }

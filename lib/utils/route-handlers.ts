@@ -18,13 +18,59 @@ export function withErrors(label: string, handler: Handler): Handler {
   };
 }
 
+const DEPRECATION_NOTICE =
+  "Legacy Custom GPTs are deprecated and will stop working on Dec 11, 2026. Please switch to the Continuum ChatGPT MCP Plugin at /api/mcp (guide: /assistant/plugin).";
+
+function isLegacyCustomGptRequest(req: NextRequest): boolean {
+  const ua = (req.headers.get("user-agent") || "").toLowerCase();
+  return (
+    ua.includes("openai") ||
+    ua.includes("chatgpt") ||
+    req.headers.has("openai-conversation-id") ||
+    req.headers.has("openai-ephemeral-user-id")
+  );
+}
+
+async function attachLegacyGptDeprecation(res: NextResponse): Promise<NextResponse> {
+  const headers = new Headers(res.headers);
+  headers.set("Deprecation", "true");
+  headers.set("Sunset", "Fri, 11 Dec 2026 23:59:59 GMT");
+  headers.set("Link", '</assistant/plugin>; rel="successor-version"');
+  headers.set("X-Deprecation-Notice", DEPRECATION_NOTICE);
+
+  const contentType = headers.get("content-type") || "";
+  if (contentType.includes("application/json")) {
+    try {
+      const cloned = res.clone();
+      const data = await cloned.json();
+      if (data && typeof data === "object" && !Array.isArray(data)) {
+        return NextResponse.json(
+          {
+            ...data,
+            deprecated: true,
+            deprecationNotice: DEPRECATION_NOTICE,
+          },
+          { status: res.status, headers }
+        );
+      }
+    } catch {
+    }
+  }
+
+  return new NextResponse(res.body, { status: res.status, statusText: res.statusText, headers });
+}
+
 export function withUser(
   label: string,
   handler: (req: NextRequest, session: Session, ctx?: RouteContext) => Promise<NextResponse>
 ): Handler {
   return withErrors(label, async (req, ctx) => {
     const session = await requireUser(req);
-    return handler(req, session, ctx);
+    const res = await handler(req, session, ctx);
+    if (isLegacyCustomGptRequest(req) && !req.nextUrl.pathname.startsWith("/api/mcp")) {
+      return attachLegacyGptDeprecation(res);
+    }
+    return res;
   });
 }
 

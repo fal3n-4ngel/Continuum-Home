@@ -89,7 +89,7 @@ interface FinancialHealthTabProps {
   showInvestmentsTab: boolean;
   salaryDay: number;
   monthlySalary: number;
-  setMonthlySalary: (val: number) => void;
+  setMonthlySalary: (val: number, options?: { overwriteHistory?: boolean }) => void;
   additionalIncome: number;
   setAdditionalIncome: (val: number) => void;
   payCycle: PayCycle;
@@ -515,6 +515,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   const [showMethodology, setShowMethodology] = useState(false);
   const [salaryDraft, setSalaryDraft] = useState<string>(monthlySalary ? String(monthlySalary) : "");
   const [additionalIncomeDraft, setAdditionalIncomeDraft] = useState<string>(additionalIncome ? String(additionalIncome) : "");
+  const [overwriteSalaryHistory, setOverwriteSalaryHistory] = useState(false);
 
   useEffect(() => {
     setSalaryDraft(monthlySalary ? String(monthlySalary) : "");
@@ -1543,7 +1544,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                         onBlur={(e) => {
                           const val = Math.max(0, parseFloat(e.target.value) || 0);
                           setSalaryDraft(String(val) || "");
-                          setMonthlySalary(val);
+                          setMonthlySalary(val, { overwriteHistory: overwriteSalaryHistory });
                         }}
                         placeholder="0"
                         className="mt-1 w-full rounded-md border border-border-subtle bg-bg-card p-2 text-xs text-text-primary outline-none"
@@ -1564,6 +1565,29 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                         className="mt-1 w-full rounded-md border border-border-subtle bg-bg-card p-2 text-xs text-text-primary outline-none"
                       />
                     </div>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                    <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-text-muted select-none">
+                      <input
+                        type="checkbox"
+                        checked={overwriteSalaryHistory}
+                        onChange={(e) => setOverwriteSalaryHistory(e.target.checked)}
+                        className="h-3.5 w-3.5 rounded border-border-subtle"
+                      />
+                      <span>Also overwrite previous pay cycles</span>
+                    </label>
+                    {overwriteSalaryHistory && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const val = Math.max(0, parseFloat(salaryDraft) || monthlySalary || 0);
+                          setMonthlySalary(val, { overwriteHistory: true });
+                        }}
+                        className="cursor-pointer rounded-md border border-border-subtle bg-bg-secondary px-2.5 py-1 text-[10.5px] font-semibold text-text-primary transition-colors hover:border-border-hover"
+                      >
+                        Apply to past cycles
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

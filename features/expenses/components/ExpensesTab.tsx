@@ -163,7 +163,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     }
   }, [getHeaders, setIsFetchingExpenses, setExpenses, setExpensesLoaded]);
 
-  const handleTimeFilterChange = (val: "7" | "30" | "90" | "salary" | "all") => {
+  const handleTimeFilterChange = (val: "7" | "30" | "90" | "salary" | "prev_salary" | "all") => {
     setTimeFilter(val);
     if (user) {
       fetch("/api/settings", {
@@ -676,6 +676,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
               <option value="30">Last 30 days</option>
               <option value="90">Last 90 days</option>
               <option value="salary">Current Pay Period</option>
+              <option value="prev_salary">Previous Pay Period</option>
               <option value="all">All time</option>
             </select>
           </div>
@@ -689,7 +690,13 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
               <span className={LABEL_MONO}>Total Spent</span>
               <span className={STAT_VALUE}>{currency}{totalSpent.toLocaleString()}</span>
               <span className={STAT_SUBTEXT}>
-                {timeFilter === "all" ? "All time" : timeFilter === "salary" ? `Cycle (${currentPayCycle.startStr} – ${currentPayCycle.endStr})` : `Last ${timeFilter} days`}
+                {timeFilter === "all"
+                  ? "All time"
+                  : timeFilter === "salary"
+                  ? `Cycle (${currentPayCycle.startStr} – ${currentPayCycle.endStr})`
+                  : timeFilter === "prev_salary"
+                  ? `Prev Cycle (${currentPayCycle.prevStartStr} – ${currentPayCycle.prevEndStr})`
+                  : `Last ${timeFilter} days`}
               </span>
             </div>
             {totalIncome > 0 && (

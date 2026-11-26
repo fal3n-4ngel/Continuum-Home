@@ -444,6 +444,7 @@ export default function Dashboard() {
                     isAddingSub={subs.isAddingSub}
                     addSubscription={subs.addSubscription}
                     deleteSubscription={subs.deleteSubscription}
+                    updateSubscription={subs.updateSubscription}
                     updateSubscriptionIcon={subs.updateSubscriptionIcon}
                     toggleSubscriptionAutoPost={subs.toggleSubscriptionAutoPost}
                     syncDueSubscriptions={subs.syncDueSubscriptions}

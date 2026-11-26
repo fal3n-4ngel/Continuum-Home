@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth";
 import { getHealthAnalytics, saveHealthAnalytics, getSettings, HealthAnalyticsReport } from "@/lib/firebase";
-import { ApiError, toErrorResponse } from "@/lib/utils";
+import { toErrorResponse } from "@/lib/utils";
 import {
   reserveAiCall,
   acquireGenerationLock,

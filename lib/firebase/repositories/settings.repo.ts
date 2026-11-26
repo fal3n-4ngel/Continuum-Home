@@ -19,7 +19,7 @@ export interface UserIntegrations {
 }
 
 export interface DashboardSettings {
-  timeFilter: "7" | "30" | "90" | "salary" | "all";
+  timeFilter: "7" | "30" | "90" | "salary" | "prev_salary" | "all";
   salaryDay: number;
   monthlySalary?: number;
   additionalIncome?: number;

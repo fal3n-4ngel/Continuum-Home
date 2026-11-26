@@ -243,6 +243,31 @@ describe("features/expenses/lib/filtering real unit tests", () => {
     expect(trend[29][0]).toBe("2026-09-30");
   });
 
+  it("filters expenses and calculates daily trend for previous pay period", () => {
+    const payCycle = {
+      startStr: "2026-09-01",
+      endStr: "2026-09-30",
+      prevStartStr: "2026-08-01",
+      prevEndStr: "2026-08-31",
+    };
+    const filtered = filterExpensesBase(sampleExpenses, {
+      timeFilter: "prev_salary",
+      currentPayCycle: payCycle,
+      referenceDate: fixedRefDate,
+    });
+    expect(filtered.every((e) => e.date && e.date >= "2026-08-01" && e.date <= "2026-08-31")).toBe(true);
+    expect(filtered.some((e) => e.id === "exp-5")).toBe(true);
+
+    const trend = calculateDailyTrend(sampleExpenses, {
+      timeFilter: "prev_salary",
+      currentPayCycle: payCycle,
+      referenceDate: fixedRefDate,
+    });
+    expect(trend).toHaveLength(31);
+    expect(trend[0][0]).toBe("2026-08-01");
+    expect(trend[30][0]).toBe("2026-08-31");
+  });
+
   it("calculates daily trend for explicit custom start and end date", () => {
     const trend = calculateDailyTrend(sampleExpenses, {
       startDate: "2026-09-01",
