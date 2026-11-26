@@ -238,6 +238,7 @@ Analyze the user's monthly spending data and trends for the current pay cycle:
 - Target Monthly Savings Goal: ${currency}${targetSavings.toLocaleString("en-IN")}
 
 Analyze their monthly spending patterns, category distribution, spending velocity, anomalies, and pace shifts.
+Note: One-time monthly recurring obligations (such as Rent or auto-posted subscriptions) occur once per cycle and are already accounted for in Projected Total Cycle Spend—do not extrapolate a single monthly Rent or subscription charge as daily spending velocity.
 CRITICAL CONSTRAINT: DO NOT include markdown formatting like asterisks (**) or hashes (#) in any of the string fields. Return plain text only.
 Return ONLY a valid JSON object with these exact keys:
 - "trendStatus": A short 3-5 word trend summary (e.g., "+12.4% vs last cycle (Faster Pace)" or "On Track (-5.2% vs last cycle)").

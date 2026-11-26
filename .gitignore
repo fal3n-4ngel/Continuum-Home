@@ -51,3 +51,8 @@ next-env.d.ts
 .env*
 AGENTS.md
 CLAUDE.md
+.agents
+.claude
+data/*
+skills/*
+skills-lock.json

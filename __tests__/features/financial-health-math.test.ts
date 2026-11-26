@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   calculateDailyAndWeeklyLimits,
   calculateEmergencyRunway,
+  isFixedRecurringExpense,
+  calculateCycleSpendProjection,
 } from "@/features/health/lib/financial-math";
 
 describe("features/health/lib/financial-math unit tests", () => {
@@ -108,5 +110,42 @@ describe("features/health/lib/financial-math unit tests", () => {
         totalDays: 30,
       })
     ).toBeNull();
+  });
+
+  it("identifies one-time monthly recurring bills and rent without scaling them as daily spend", () => {
+    expect(isFixedRecurringExpense({ category: "Rent", amount: 5000 })).toBe(true);
+    expect(isFixedRecurringExpense({ category: "Subscriptions", tags: ["subscription"], amount: 499 })).toBe(true);
+    expect(isFixedRecurringExpense({ category: "Utilities", notes: "Auto-posted subscription", amount: 999 })).toBe(true);
+    expect(isFixedRecurringExpense({ category: "Food", notes: "Evening", amount: 153 })).toBe(false);
+
+    const projection = calculateCycleSpendProjection({
+      fixedSpentSoFar: 5000,
+      variableSpentSoFar: 153,
+      subMonthlyCost: 5000,
+      elapsedDays: 2,
+      totalDays: 30,
+      paceConfidence: 0,
+      historicalVariableBaseline: 0,
+    });
+
+    expect(projection.projectedFixedSpend).toBe(5000);
+    expect(projection.projectedVariableSpend).toBeCloseTo(2295, 2);
+    expect(projection.projectedTotalSpend).toBeCloseTo(7295, 2);
+  });
+
+  it("includes upcoming unpaid monthly subscriptions in projectedFixedSpend", () => {
+    const projection = calculateCycleSpendProjection({
+      fixedSpentSoFar: 0,
+      variableSpentSoFar: 600,
+      subMonthlyCost: 5000,
+      elapsedDays: 3,
+      totalDays: 30,
+      paceConfidence: 1 / 7,
+      historicalVariableBaseline: 6000,
+    });
+
+    expect(projection.projectedFixedSpend).toBe(5000);
+    expect(projection.projectedVariableSpend).toBeCloseTo(6000, 2);
+    expect(projection.projectedTotalSpend).toBeCloseTo(11000, 2);
   });
 });

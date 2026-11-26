@@ -101,8 +101,8 @@
   --bg-sidebar: #0A0A0B;
   --text-primary: #FFFFFF;
   --text-secondary: #A1A1AA;
-  --text-muted: #71717A;
-  --border-subtle: #242428;
+  --text-muted: #8E8E98;
+  --border-subtle: #2C2C32;
   --border-hover: #3F3F46;
   --accent-blue: #E4E4E7;
   --accent-yellow: #D4D4D8;
@@ -477,6 +477,9 @@ button:is([class*="h-"][class*="w-"], [class*="w-"][class*="h-"]):not([class*="p
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--border-hover);
+}
+.dark {
+  color-scheme: dark;
 }
 }
 

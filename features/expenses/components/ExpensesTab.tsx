@@ -24,7 +24,7 @@ const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.06em] text-t
 const STAT_VALUE = "text-[28px] font-bold tracking-[-0.02em] text-text-primary";
 const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
 const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
-const BTN_PRIMARY = "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-semibold text-bg-primary transition-transform duration-100 ease-out hover:opacity-90 active:scale-[0.97]";
+const BTN_PRIMARY = "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-semibold text-bg-primary transition-transform duration-100 ease-out hover:opacity-90 active:scale-[0.97] dark:border-zinc-200 dark:bg-zinc-200 dark:text-zinc-950";
 const BTN_SECONDARY = "cursor-pointer rounded-md border border-border-subtle bg-transparent text-[13px] font-medium text-text-primary transition-transform duration-100 ease-out hover:bg-bg-primary active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50";
 const INPUT_CLASS = "rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
 const LEDGER_TH = "border-b border-border-subtle bg-bg-card px-3 py-2.5 font-mono text-[11px] font-semibold tracking-[0.5px] text-text-muted uppercase";
@@ -67,12 +67,12 @@ const normalizeCsvDate = (dateStr: string): string => {
 
 const tabPillClass = (active: boolean) =>
   `cursor-pointer rounded-md px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
-    active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
+    active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs dark:bg-white/10 dark:border-white/15" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
   }`;
 
 const chartPillClass = (active: boolean) =>
   `cursor-pointer rounded-md px-3 py-[5px] text-[11px] font-semibold transition-all duration-200 ${
-    active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
+    active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs dark:bg-white/10 dark:border-white/15" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
   }`;
 
 const advanceBillingDate = (dateStr: string, cycle: "monthly" | "yearly"): string => {
@@ -730,7 +730,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
             </div>
 
             {activeChart === "category" ? (
-              <div className="flex h-[260px] items-end justify-start gap-4 overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2">
+              <div className="flex h-[260px] items-end justify-between gap-4 overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2">
                 {Object.entries(chartCatBreakdown).slice(0, 8).map(([cat, total], idx) => {
                   const maxAmt = Math.max(...Object.values(chartCatBreakdown), 1);
                   const pct = (total / maxAmt) * 100;
@@ -741,7 +741,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                     <div
                       key={cat}
                       onClick={() => setLedgerCategoryFilter(isSelected ? "" : cat)}
-                      className="flex min-w-[60px] max-w-[90px] flex-1 shrink-0 cursor-pointer flex-col items-center gap-1.5"
+                      className="flex min-w-[60px] flex-1 cursor-pointer flex-col items-center gap-1.5"
                       title={isSelected ? "Click to clear filter" : `Filter ledger by ${cat}`}
                     >
                       <span className={`text-[11px] font-semibold transition-colors duration-200 ${isInactive ? "text-text-muted" : "text-text-secondary"}`}>
