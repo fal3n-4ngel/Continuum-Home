@@ -41,10 +41,11 @@ interface SidebarProps {
   setExpenses: (val: any[]) => void;
   setWatchlist: (val: any[]) => void;
   setExpensesLoaded: (val: boolean) => void;
+  onOpenQuickAdd?: () => void;
 }
 
 const navLinkClass = (active: boolean) =>
-  `mb-1 flex w-full text-left cursor-pointer items-center gap-3 rounded-sm px-3.5 py-2 text-[13px] font-medium no-underline transition-all duration-150 ${
+  `mb-1 flex w-full text-left cursor-pointer items-center gap-3 rounded-sm px-3.5 py-2 text-[13px] font-medium no-underline transition-all duration-150 active:scale-[0.98] ${
     active
       ? "bg-bg-primary font-semibold text-accent-terracotta border-l-2 border-accent-terracotta shadow-xs"
       : "bg-transparent border-l-2 border-transparent text-text-secondary hover:bg-bg-primary hover:text-text-primary"
@@ -81,17 +82,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
   setExpenses,
   setWatchlist,
   setExpensesLoaded,
+  onOpenQuickAdd,
 }) => {
   const { theme, toggleTheme } = useTheme();
 
   return (
     <aside className="fixed top-0 bottom-0 left-0 z-[100] flex w-[250px] flex-col justify-between border-r border-border-subtle bg-bg-sidebar px-4 py-6 max-md:hidden min-[769px]:max-[1100px]:w-[210px]">
-      <div className="mb-6 flex items-center gap-2.5 px-2">
+      <div className="mb-4 flex items-center gap-2.5 px-2">
         <LogoMark size={22} className="text-text-primary" />
         <div>
           <span className="text-xl font-medium tracking-tight text-text-primary">{SITE_NAME}</span>
         </div>
       </div>
+
+      {onOpenQuickAdd && (
+        <button
+          type="button"
+          onClick={onOpenQuickAdd}
+          className="mb-4 flex w-full cursor-pointer items-center justify-between rounded-sm border border-border-subtle bg-bg-primary px-3 py-1.5 text-xs text-text-secondary transition-all duration-100 hover:border-border-hover hover:text-text-primary active:scale-[0.98]"
+        >
+          <span>Quick Log</span>
+          <kbd className="rounded border border-border-subtle bg-bg-card px-1.5 py-0.5 font-mono text-[10px] text-text-muted">⌘K</kbd>
+        </button>
+      )}
 
       <div className="flex flex-1 flex-col gap-1 overflow-y-auto">
         <nav aria-label="Main Navigation" className="flex flex-col gap-1">

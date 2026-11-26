@@ -27,6 +27,7 @@ import {
   DeleteAccountModal,
   ReleaseNotesModal,
   GoodreadsModal,
+  QuickAddModal,
 } from "@/components/modals";
 import { InstallBanner } from "@/components/pwa";
 import { KirokuTab } from "@/features/assistant";
@@ -88,10 +89,19 @@ export default function Dashboard() {
 
   const { user, authLoading, isProUser, setIsProUser, firebaseAuth } = useDashboardAuth();
 
-  const [activeTab, setActiveTab] = useState<string>("expenses");
+  const [activeTab, setActiveTabState] = useState<string>("expenses");
+  const setActiveTab = useCallback((tab: string) => {
+    setActiveTabState(tab);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", tab);
+      window.history.replaceState(null, "", `${url.pathname}${url.search}`);
+    }
+  }, []);
   const [mediaSubTab, setMediaSubTab] = useState<"watchlist" | "books" | "integrations">("watchlist");
   const [selectedMediaItem, setSelectedMediaItem] = useState<WatchlistItem | null>(null);
   const [showClaimPro, setShowClaimPro] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [isDataCorrectionOpen, setIsDataCorrectionOpen] = useState(false);
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -174,14 +184,25 @@ export default function Dashboard() {
 
     if (tab) {
       if (["expenses", "subscriptions", "investments", "financial", "reports", "agent", "admin", "settings"].includes(tab)) {
-        setActiveTab(tab);
+        setActiveTabState(tab);
       } else if (["watchlist", "books", "integrations"].includes(tab)) {
-        setActiveTab("media");
+        setActiveTabState("media");
         setMediaSubTab(tab as "watchlist" | "books" | "integrations");
       } else if (tab === "health") {
-        setActiveTab("financial");
+        setActiveTabState("financial");
       }
     }
+  }, []);
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setShowQuickAdd((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
   useEffect(() => {
@@ -274,7 +295,7 @@ export default function Dashboard() {
 
   const isDataLoaded =
     !user || (expensesLoaded && media.watchlistLoaded && subs.subscriptionsLoaded && investmentsLoaded && settings.settingsLoaded);
-  const showLoader = authLoading || (user && !isDataLoaded);
+  const showLoader = authLoading;
 
   if (showLoader) {
     return (
@@ -348,6 +369,7 @@ export default function Dashboard() {
         setExpensesLoaded={setExpensesLoaded}
         disconnectAnilist={media.disconnectAnilist}
         disconnectTrakt={media.disconnectTrakt}
+        onOpenQuickAdd={() => setShowQuickAdd(true)}
       />
 
       <Sidebar
@@ -378,16 +400,21 @@ export default function Dashboard() {
         setExpenses={setExpenses}
         setWatchlist={media.setWatchlist}
         setExpensesLoaded={setExpensesLoaded}
+        onOpenQuickAdd={() => setShowQuickAdd(true)}
       />
 
       <main className="ml-[250px] flex w-full max-w-[1680px] min-w-0 flex-1 flex-col gap-7 px-10 py-8 min-[769px]:max-[1100px]:ml-[210px] min-[769px]:max-[1100px]:gap-[22px] min-[769px]:max-[1100px]:px-7 min-[769px]:max-[1100px]:py-6 max-md:ml-0 max-md:w-full max-md:max-w-full max-md:overflow-x-hidden max-md:gap-3.5 max-md:p-3.5 max-md:pb-[calc(130px+env(safe-area-inset-bottom))]">
-        <AnimatePresence mode="wait">
+        {!isDataLoaded && (
+          <div className="h-0.5 w-full overflow-hidden rounded-full bg-bg-secondary">
+            <div className="h-full w-1/3 animate-pulse rounded-full bg-accent-terracotta" />
+          </div>
+        )}
+        <AnimatePresence initial={false}>
           <motion.div
             key={activeTab}
-            initial={{ opacity: 0, y: 6 }}
+            initial={{ opacity: 0, y: 4 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.16, ease: "easeOut" }}
+            transition={{ duration: 0.14, ease: "easeOut" }}
             className="flex w-full flex-col gap-7 min-w-0"
           >
             {activeTab === "expenses" && (
@@ -752,6 +779,17 @@ export default function Dashboard() {
         onRssSync={media.handleGoodreadsSync}
         onCsvImport={media.handleGoodreadsCsvImport}
         isSyncing={media.isImportingGoodreads}
+      />
+
+      <QuickAddModal
+        isOpen={showQuickAdd}
+        onClose={() => setShowQuickAdd(false)}
+        currency={settings.currency}
+        categories={Array.from(new Set(expenses.map((e) => e.category).filter((c): c is string => Boolean(c)))).sort()}
+        getHeaders={getHeaders}
+        onCreated={fetchExpenses}
+        onNavigateTab={setActiveTab}
+        showInvestmentsTab={showInvestmentsTab}
       />
 
       <InstallBanner />

@@ -28,6 +28,7 @@ interface MobileHeaderProps {
   setExpensesLoaded: (val: boolean) => void;
   disconnectAnilist: () => void;
   disconnectTrakt: () => void;
+  onOpenQuickAdd?: () => void;
 }
 
 export const MobileHeader: React.FC<MobileHeaderProps> = ({
@@ -44,22 +45,34 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
   setExpensesLoaded,
   disconnectAnilist,
   disconnectTrakt,
+  onOpenQuickAdd,
 }) => {
   const { theme, toggleTheme } = useTheme();
 
   return (
     <>
-      <header className="sticky top-0 z-[100] hidden min-h-[52px] items-center justify-between border-b border-border-subtle bg-bg-card px-4 max-md:flex">
+      <header className="sticky top-0 z-[100] hidden min-h-[52px] items-center justify-between border-b border-border-subtle/70 bg-bg-card/80 backdrop-blur-xl px-4 max-md:flex">
         <div className="flex items-center gap-2 shrink-0">
           <LogoMark size={20} className="text-text-primary" />
           <span className="text-base font-medium tracking-tight text-text-primary">{SITE_NAME}</span>
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-   
-
-    
-
+          {onOpenQuickAdd && (
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              type="button"
+              onClick={onOpenQuickAdd}
+              title="Quick Log"
+              aria-label="Quick Log"
+              className="shrink-0 flex h-9 w-9 items-center justify-center rounded-full border border-border-subtle bg-bg-primary text-text-primary transition-colors hover:border-border-hover cursor-pointer shadow-2xs"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </motion.button>
+          )}
           <a
             href={AUTHOR.coffeeUrl}
             target="_blank"
@@ -128,7 +141,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
         aria-label="Mobile Navigation"
         className="fixed bottom-4 left-0 right-0 z-[1000] hidden max-md:flex items-center justify-center px-4 pointer-events-none pb-[env(safe-area-inset-bottom)]"
       >
-        <div className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card/95 py-2 px-2 shadow-[0_14px_40px_rgba(0,0,0,0.12),0_2px_10px_rgba(0,0,0,0.05)] backdrop-blur-2xl">
+        <div className="pointer-events-auto flex max-w-[calc(100vw-24px)] items-center gap-1.5 overflow-x-auto scrollbar-none rounded-full border border-border-subtle bg-bg-card/90 py-2 px-2 shadow-[0_14px_40px_rgba(0,0,0,0.12),0_2px_10px_rgba(0,0,0,0.05)] backdrop-blur-2xl">
           <button
             type="button"
             onClick={() => setActiveTab("expenses")}

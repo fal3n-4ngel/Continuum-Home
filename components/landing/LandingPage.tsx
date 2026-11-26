@@ -168,7 +168,7 @@ export default function LandingPage({
             <button
               onClick={onLogin}
               disabled={!firebaseAuthReady}
-              className="flex cursor-pointer items-center gap-2 rounded-sm bg-[#1C1B18] dark:bg-[#F4F5F7] px-4 py-2 text-xs font-semibold text-[#FAF8F5] dark:text-[#0C0D0E] transition-all duration-150 hover:opacity-90 disabled:opacity-50 shadow-xs uppercase tracking-wider font-mono"
+              className="flex cursor-pointer items-center gap-2 rounded-sm bg-[#1C1B18] dark:bg-[#F4F5F7] px-4 py-2 text-xs font-semibold text-[#FAF8F5] dark:text-[#0C0D0E] transition-transform duration-100 ease-out hover:opacity-90 active:scale-[0.97] disabled:opacity-50 shadow-xs uppercase tracking-wider font-mono"
             >
               <span>Try Continuum</span>
               <ArrowRight size={13} />
@@ -203,14 +203,14 @@ export default function LandingPage({
           <button
             onClick={onLogin}
             disabled={!firebaseAuthReady}
-            className="flex cursor-pointer items-center gap-2 rounded-sm border border-[#9E5D48] bg-[#9E5D48] px-7 py-3 font-mono text-xs font-semibold tracking-wider text-[#FAF8F5] uppercase transition-all duration-150 hover:bg-[#854A37] shadow-xs disabled:opacity-50"
+            className="flex cursor-pointer items-center gap-2 rounded-sm border border-[#9E5D48] bg-[#9E5D48] px-7 py-3 font-mono text-xs font-semibold tracking-wider text-[#FAF8F5] uppercase transition-transform duration-100 ease-out hover:bg-[#854A37] active:scale-[0.97] shadow-xs disabled:opacity-50"
           >
             <span>Try Continuum &rarr;</span>
           </button>
 
           <Link
             href="/assistant/plugin"
-            className="flex items-center gap-2 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-6 py-3 font-mono text-xs font-semibold tracking-wider text-[#9E5D48] dark:text-[#E07A5F] uppercase no-underline transition-all duration-150 hover:border-[#9E5D48] shadow-2xs"
+            className="flex items-center gap-2 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-6 py-3 font-mono text-xs font-semibold tracking-wider text-[#9E5D48] dark:text-[#E07A5F] uppercase no-underline transition-transform duration-100 ease-out hover:border-[#9E5D48] active:scale-[0.97] shadow-2xs"
           >
             <span>ChatGPT MCP Plugin</span>
           </Link>
@@ -219,7 +219,7 @@ export default function LandingPage({
             href="https://github.com/fal3n-4ngel/Continuum-Home"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-6 py-3 font-mono text-xs font-semibold tracking-wider text-[#26211F] dark:text-[#F4F5F7] uppercase no-underline transition-all duration-150 hover:border-[#9E5D48] shadow-2xs"
+            className="flex items-center gap-2 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-6 py-3 font-mono text-xs font-semibold tracking-wider text-[#26211F] dark:text-[#F4F5F7] uppercase no-underline transition-transform duration-100 ease-out hover:border-[#9E5D48] active:scale-[0.97] shadow-2xs"
           >
             <span className="text-[#D99419]">★</span>
             <span>Star on GitHub</span>
