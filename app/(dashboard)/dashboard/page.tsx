@@ -270,7 +270,30 @@ export default function Dashboard() {
   }, [activeReleaseNote, user, getHeaders]);
 
   useEffect(() => {
-    if (user) {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/bootstrap", { headers: getHeaders() });
+        if (res.ok) {
+          const data = await res.json();
+          if (cancelled) return;
+          if (Array.isArray(data.expenses)) setExpenses(data.expenses);
+          setExpensesLoaded(true);
+          if (Array.isArray(data.watchlist)) media.hydrateWatchlist(data.watchlist);
+          if (Array.isArray(data.subscriptions)) subs.hydrateSubscriptions(data.subscriptions);
+          const portfolioList = Array.isArray(data.portfolio)
+            ? data.portfolio
+            : Array.isArray(data.portfolio?.assets)
+            ? data.portfolio.assets
+            : [];
+          useInvestmentsStore.getState().setInvestments(portfolioList);
+          useInvestmentsStore.getState().setInvestmentsLoaded(true);
+          if (data.settings) settings.applySettingsData(data.settings);
+          return;
+        }
+      } catch {}
+      if (cancelled) return;
       Promise.allSettled([
         fetchExpenses(),
         media.fetchWatchlist(),
@@ -278,7 +301,10 @@ export default function Dashboard() {
         inv.fetchInvestments(),
         settings.fetchSettings(),
       ]);
-    }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   useEffect(() => {
@@ -323,7 +349,17 @@ export default function Dashboard() {
 
   const isDataLoaded =
     !user || (expensesLoaded && media.watchlistLoaded && subs.subscriptionsLoaded && investmentsLoaded && settings.settingsLoaded);
-  const showLoader = authLoading || !isDataLoaded;
+  const isActiveTabReady =
+    !user ||
+    (settings.settingsLoaded &&
+      (activeTab === "media"
+        ? media.watchlistLoaded
+        : activeTab === "investments"
+        ? investmentsLoaded
+        : activeTab === "financial"
+        ? expensesLoaded && subs.subscriptionsLoaded
+        : expensesLoaded));
+  const showLoader = authLoading || !isActiveTabReady;
   const loaderAccentClass = isUatDeployment() ? "bg-[#DC2626]" : "bg-[#D99419]";
 
   if (showLoader) {
