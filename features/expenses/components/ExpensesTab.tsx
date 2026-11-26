@@ -742,7 +742,37 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
 
           <div className={BENTO_CARD}>
             <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-              <h3 className="text-[15px] font-semibold">Analytics</h3>
+              <div className="flex flex-wrap items-center gap-2.5">
+                <h3 className="text-[15px] font-semibold">Analytics</h3>
+                {activeChart === "category" && ledgerCategoryFilter && (
+                  <button
+                    type="button"
+                    onClick={() => setLedgerCategoryFilter("")}
+                    className="cursor-pointer rounded-full border border-border-subtle bg-bg-secondary px-2.5 py-0.5 text-[11px] font-semibold text-text-primary hover:border-border-hover transition-colors"
+                    title="Clear category filter"
+                  >
+                    {ledgerCategoryFilter} ✕
+                  </button>
+                )}
+                {activeChart === "trend" && ledgerStartDate && ledgerStartDate === ledgerEndDate && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLedgerStartDate("");
+                      setLedgerEndDate("");
+                    }}
+                    className="cursor-pointer rounded-full border border-border-subtle bg-bg-secondary px-2.5 py-0.5 text-[11px] font-semibold text-text-primary hover:border-border-hover transition-colors"
+                    title="Clear date filter"
+                  >
+                    {ledgerStartDate} ✕
+                  </button>
+                )}
+                {activeChart === "trend" && dailyTrend.length > 0 && (
+                  <span className="font-mono text-[10.5px] text-text-muted">
+                    Peak: {currency}{maxDailyAmt.toLocaleString()}
+                  </span>
+                )}
+              </div>
               <div className="flex max-w-full gap-1 overflow-x-auto rounded-lg bg-bg-secondary p-[3px] hide-scrollbar">
                 <button onClick={() => setActiveChart("category")} className={chartPillClass(activeChart === "category")}>
                   Category Distribution
@@ -816,22 +846,32 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                   const dateParts = date.split("-");
                   const dateFormatted = dateParts.length === 3 ? `${dateParts[1]}/${dateParts[2]}` : date;
                   const formattedTotal = total === 0 ? "—" : `${currency}${total >= 10000 ? `${(total / 1000).toFixed(1)}k` : total.toLocaleString()}`;
+                  const isDaySelected = ledgerStartDate === date && ledgerEndDate === date;
+                  const isDayInactive = Boolean(ledgerStartDate && ledgerStartDate === ledgerEndDate && !isDaySelected);
                   return (
                     <div
                       key={date}
-                      className="group flex min-w-[42px] max-w-[56px] flex-1 shrink-0 flex-col items-center gap-1.5"
-                      title={`${date}: ${currency}${total.toLocaleString()}`}
+                      onClick={() => {
+                        setLedgerStartDate(isDaySelected ? "" : date);
+                        setLedgerEndDate(isDaySelected ? "" : date);
+                      }}
+                      className="group flex min-w-[42px] max-w-[56px] flex-1 shrink-0 cursor-pointer flex-col items-center gap-1.5"
+                      title={isDaySelected ? "Click to clear date filter" : `${date}: ${currency}${total.toLocaleString()} (click to filter)`}
                     >
-                      <span className="text-[10px] font-semibold text-text-secondary truncate max-w-full text-center">
+                      <span className={`text-[10px] font-semibold truncate max-w-full text-center transition-colors ${isDayInactive ? "text-text-muted" : "text-text-secondary"}`}>
                         {formattedTotal}
                       </span>
-                      <div className="flex h-[180px] w-full max-w-[28px] items-end rounded-t-sm bg-bg-secondary group-hover:bg-bg-secondary/80 transition-colors">
+                      <div
+                        className={`flex h-[180px] w-full max-w-[28px] items-end rounded-t-sm bg-bg-secondary group-hover:bg-bg-secondary/80 transition-all ${
+                          isDaySelected ? "ring-2 ring-text-primary ring-offset-1 ring-offset-bg-card" : ""
+                        }`}
+                      >
                         <div
-                          className="w-full rounded-t-sm bg-accent-blue transition-[height] duration-500 ease-in-out group-hover:brightness-110"
-                          style={{ height: `${pct}%`, minHeight: total > 0 ? "2px" : "0px" }}
+                          className="w-full rounded-t-sm bg-accent-blue transition-[height,opacity] duration-500 ease-in-out group-hover:brightness-110"
+                          style={{ height: `${pct}%`, minHeight: total > 0 ? "2px" : "0px", opacity: isDayInactive ? 0.25 : 1 }}
                         ></div>
                       </div>
-                      <span className="w-full text-center font-mono text-[9px] text-text-muted group-hover:text-text-primary transition-colors">
+                      <span className={`w-full text-center font-mono text-[9px] transition-colors ${isDaySelected ? "font-bold text-text-primary" : "text-text-muted group-hover:text-text-primary"}`}>
                         {dateFormatted}
                       </span>
                     </div>
