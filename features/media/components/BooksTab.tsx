@@ -32,7 +32,7 @@ const BTN_PRIMARY = "rounded-full border border-text-primary bg-text-primary tex
 const INPUT_CLASS = "rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
 
 const pillClass = (id: string, active: boolean) => {
-  const base = "cursor-pointer rounded-md border-none px-3.5 py-1.5 text-[11px] font-semibold transition-all duration-200 flex items-center gap-1.5";
+  const base = "cursor-pointer shrink-0 whitespace-nowrap rounded-md border-none px-3.5 max-md:px-2.5 py-1.5 text-[11px] font-semibold transition-all duration-200 flex items-center gap-1.5";
   if (!active) return `${base} bg-transparent text-text-secondary hover:text-text-primary hover:bg-bg-secondary/40`;
 
   if (id === "reading") {
@@ -69,6 +69,27 @@ export const BooksTab: React.FC<BooksTabProps> = ({
 }) => {
   const [titleSearch, setTitleSearch] = React.useState("");
   const [sortBy, setSortBy] = React.useState<"title" | "year_new" | "year_old">("title");
+  const [visibleCount, setVisibleCount] = React.useState(36);
+  const loadMoreRef = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    setVisibleCount(36);
+  }, [bookFilter, titleSearch, sortBy]);
+
+  React.useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((prev) => prev + 36);
+        }
+      },
+      { rootMargin: "240px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [bookFilter, titleSearch, sortBy, visibleCount]);
 
   const [addingMap, setAddingMap] = React.useState<Record<string, boolean>>({});
   const [justAddedMap, setJustAddedMap] = React.useState<Record<string, boolean>>({});
@@ -533,7 +554,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
         <div className="mb-3.5 flex flex-wrap items-center justify-between gap-3">
           <h2 className="font-serif text-lg font-bold tracking-tight text-text-primary">Your Library</h2>
 
-          <div className="flex flex-wrap items-center gap-2.5">
+          <div className="flex min-w-0 flex-wrap items-center gap-2.5 max-md:w-full">
             {enrichMissingBookCovers && (
               <button
                 onClick={enrichMissingBookCovers}
@@ -567,7 +588,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
               </button>
             )}
 
-            <div className="flex gap-1 rounded-lg bg-bg-secondary p-[3px]">
+            <div className="flex max-w-full gap-1 rounded-lg bg-bg-secondary p-[3px] max-md:overflow-x-auto max-md:w-full hide-scrollbar">
               {(
                 [
                   { id: "all", label: "All" },
@@ -575,21 +596,31 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                   { id: "to_read", label: "⏳ To Read" },
                   { id: "completed", label: "✅ Done" },
                 ] as const
-              ).map((f) => (
-                <button
-                  key={f.id}
-                  onClick={() => setBookFilter(bookFilter === f.id ? "all" : f.id)}
-                  className={pillClass(f.id, bookFilter === f.id)}
-                >
-                  {f.label}
-                </button>
-              ))}
+              ).map((f) => {
+                const count = watchlist.filter((i) => {
+                  if (i.type !== "book") return false;
+                  if (f.id === "all") return true;
+                  if (f.id === "reading") return i.status === "watching";
+                  if (f.id === "to_read") return i.status === "plan_to_watch";
+                  return i.status === "completed";
+                }).length;
+                return (
+                  <button
+                    key={f.id}
+                    onClick={() => setBookFilter(bookFilter === f.id ? "all" : f.id)}
+                    className={pillClass(f.id, bookFilter === f.id)}
+                  >
+                    <span>{f.label}</span>
+                    {count > 0 && <span className="font-mono text-[9.5px] opacity-60">{count}</span>}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
 
         <div className="mb-5 flex flex-wrap items-center gap-2.5">
-          <div className="relative max-w-[260px] flex-1 max-md:max-w-none">
+          <div className="relative max-w-[260px] flex-1 max-md:max-w-none min-w-[160px]">
             <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-text-muted">
               <Search className="h-3.5 w-3.5" strokeWidth={2.5} />
             </span>
@@ -598,8 +629,18 @@ export const BooksTab: React.FC<BooksTabProps> = ({
               placeholder="Search your library by title..."
               value={titleSearch}
               onChange={(e) => setTitleSearch(e.target.value)}
-              className={`${INPUT_CLASS} w-full pl-8`}
+              className={`${INPUT_CLASS} w-full pl-8 pr-7`}
             />
+            {titleSearch && (
+              <button
+                type="button"
+                onClick={() => setTitleSearch("")}
+                aria-label="Clear book search"
+                className="absolute inset-y-0 right-2 flex items-center text-text-muted hover:text-text-primary cursor-pointer"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
           </div>
           <select
             value={sortBy}
@@ -610,10 +651,13 @@ export const BooksTab: React.FC<BooksTabProps> = ({
             <option value="year_new">Sort: Newest Year</option>
             <option value="year_old">Sort: Oldest Year</option>
           </select>
+          <span className="ml-auto font-mono text-[11px] text-text-muted max-sm:hidden">
+            {filteredBooks.length} {filteredBooks.length === 1 ? "book" : "books"}
+          </span>
         </div>
 
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] max-md:grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-5 overflow-y-auto max-h-[65vh] pr-1 pb-10">
-          {filteredBooks.map((item) => (
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] max-md:grid-cols-[repeat(auto-fill,minmax(125px,1fr))] gap-4 max-md:gap-3">
+          {filteredBooks.slice(0, visibleCount).map((item) => (
             <div key={item.id} className="group flex flex-col rounded-[14px] border border-border-subtle bg-bg-card shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1">
               <div
                 onClick={() => onItemClick(item)}
@@ -624,6 +668,8 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                     <img
                       src={item.coverImage}
                       alt={item.title}
+                      loading="lazy"
+                      decoding="async"
                       className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                     />
                     <div className="absolute inset-y-0 left-0 w-2.5 bg-linear-to-r from-black/25 via-black/10 to-transparent pointer-events-none" />
@@ -639,7 +685,7 @@ export const BooksTab: React.FC<BooksTabProps> = ({
                     e.stopPropagation();
                     deleteWatchItem(item.id);
                   }}
-                  className="absolute top-2 right-2 z-10 flex cursor-pointer items-center justify-center rounded-md border border-border-subtle bg-bg-card/95 p-1.5 text-text-muted shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#fdf2f2] dark:hover:bg-rose-950/40 hover:text-[#b3666b] dark:hover:text-rose-400 hover:border-[#fde2e2] dark:hover:border-rose-800/40 active:scale-95"
+                  className="absolute top-2 right-2 z-10 flex cursor-pointer items-center justify-center rounded-md border border-border-subtle bg-bg-card/95 p-1.5 text-text-muted shadow-sm max-md:opacity-100 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-[#fdf2f2] dark:hover:bg-rose-950/40 hover:text-[#b3666b] dark:hover:text-rose-400 hover:border-[#fde2e2] dark:hover:border-rose-800/40 active:scale-95"
                   title="Remove book"
                 >
                   <Trash2 className="h-3.5 w-3.5" strokeWidth={2.5} />
@@ -676,6 +722,18 @@ export const BooksTab: React.FC<BooksTabProps> = ({
             </p>
           )}
         </div>
+
+        {filteredBooks.length > visibleCount && (
+          <div ref={loadMoreRef} className="mt-5 flex justify-center">
+            <button
+              type="button"
+              onClick={() => setVisibleCount((prev) => prev + 36)}
+              className="cursor-pointer rounded-full border border-border-subtle bg-bg-secondary/50 px-5 py-2 text-xs font-semibold text-text-primary transition-all hover:border-border-hover hover:bg-bg-secondary"
+            >
+              Show more ({filteredBooks.length - visibleCount} remaining)
+            </button>
+          </div>
+        )}
       </div>
     </div>
   </div>
