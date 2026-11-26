@@ -61,7 +61,6 @@ export default function LandingPage({
   const [userCount, setUserCount] = useState<number | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [isDark, setIsDark] = useState(false);
-  const [activePromptIdx, setActivePromptIdx] = useState(0);
 
   const faqItems = FAQ_ITEMS;
 
@@ -257,62 +256,8 @@ export default function LandingPage({
           </span>
         </div>
 
-        <div className="mt-8 w-full max-w-2xl rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5]/95 dark:bg-[#18191D]/95 p-4 text-left shadow-xs">
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 border-b border-[#DDD5CB] dark:border-[#25272E] pb-2.5">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#9E5D48] dark:text-[#E07A5F]">
-              Live MCP Command Preview
-            </span>
-            <div className="flex gap-1.5">
-              {["Expense", "Portfolio", "Watchlist"].map((label, idx) => (
-                <button
-                  key={label}
-                  type="button"
-                  onClick={() => setActivePromptIdx(idx)}
-                  className={`cursor-pointer rounded-xs px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider transition-colors ${
-                    activePromptIdx === idx
-                      ? "bg-[#1C1B18] text-[#FAF8F5] dark:bg-[#F4F5F7] dark:text-[#0C0D0E]"
-                      : "bg-transparent text-[#6D635C] dark:text-[#9BA1B0] hover:text-[#9E5D48]"
-                  }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-          {activePromptIdx === 0 && (
-            <div className="flex flex-col gap-1.5 font-mono text-xs">
-              <div className="text-[#6D635C] dark:text-[#9BA1B0]">
-                <span className="text-[#9E5D48] dark:text-[#E07A5F] font-semibold">&gt;</span> &ldquo;Log ₹450 for Coffee under Food today&rdquo;
-              </div>
-              <div className="text-[#26211F] dark:text-[#F4F5F7]">
-                <span className="text-emerald-600 dark:text-emerald-400">✓</span> create_expense &rarr; encrypted with AES-256-GCM &amp; saved to Firestore
-              </div>
-            </div>
-          )}
-          {activePromptIdx === 1 && (
-            <div className="flex flex-col gap-1.5 font-mono text-xs">
-              <div className="text-[#6D635C] dark:text-[#9BA1B0]">
-                <span className="text-[#9E5D48] dark:text-[#E07A5F] font-semibold">&gt;</span> &ldquo;What is my current portfolio value and top holdings?&rdquo;
-              </div>
-              <div className="text-[#26211F] dark:text-[#F4F5F7]">
-                <span className="text-emerald-600 dark:text-emerald-400">✓</span> get_portfolio &rarr; decrypted in-memory · live AMFI &amp; equity quotes
-              </div>
-            </div>
-          )}
-          {activePromptIdx === 2 && (
-            <div className="flex flex-col gap-1.5 font-mono text-xs">
-              <div className="text-[#6D635C] dark:text-[#9BA1B0]">
-                <span className="text-[#9E5D48] dark:text-[#E07A5F] font-semibold">&gt;</span> &ldquo;Add Inception to my watchlist as plan to watch&rdquo;
-              </div>
-              <div className="text-[#26211F] dark:text-[#F4F5F7]">
-                <span className="text-emerald-600 dark:text-emerald-400">✓</span> add_watchlist_item &rarr; synced across web &amp; ChatGPT
-              </div>
-            </div>
-          )}
-        </div>
-
         {/* Architecture Diagram: Direct Component under Hero Matching Reference */}
-        <div id="architecture" className="mt-8 w-full">
+        <div id="architecture" className="mt-10 w-full">
           <ArchitectureFlowDiagram />
         </div>
 
