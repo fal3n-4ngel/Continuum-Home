@@ -11,6 +11,34 @@ export interface AnnouncementEmailData {
 
 const SANS = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
 
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+function formatInline(text: string): string {
+  return escapeHtml(text)
+    .replace(/\*\*([^*]+)\*\*/g, `<strong style="font-weight:600;color:${COLORS.ink};">$1</strong>`)
+    .replace(/`([^`]+)`/g, `<code style="background-color:${COLORS.canvas};padding:1px 5px;border-radius:3px;font-family:ui-monospace,monospace;font-size:12px;color:${COLORS.ink};">$1</code>`);
+}
+
+export function formatAnnouncementBodyHtml(raw: string): string {
+  return raw
+    .split("\n")
+    .map((line) => {
+      const trimmed = line.trim();
+      if (trimmed.startsWith("### ") || trimmed.startsWith("## ")) {
+        const heading = trimmed.replace(/^#{2,3}\s+/, "");
+        return `<span style="display:inline-block;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:17px;font-weight:600;color:${COLORS.ink};margin-top:6px;">${formatInline(heading)}</span>`;
+      }
+      if (trimmed.startsWith("- ") || trimmed.startsWith("* ") || trimmed.startsWith("• ")) {
+        const item = trimmed.replace(/^[-*•]\s+/, "");
+        return `<span style="display:inline-block;padding-left:2px;"><span style="color:${COLORS.terracotta};font-weight:700;">•</span>&nbsp;&nbsp;${formatInline(item)}</span>`;
+      }
+      return formatInline(line);
+    })
+    .join("\n");
+}
+
 export function buildAnnouncementEmail(data: AnnouncementEmailData): { subject: string; html: string } {
   const previewNotice = data.isPreview
     ? `
@@ -43,7 +71,7 @@ export function buildAnnouncementEmail(data: AnnouncementEmailData): { subject: 
 
                 <tr><td align="left">
                   <h1 style="font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 26px; font-weight: normal; margin: 0 0 16px 0; line-height: 1.3; color: ${COLORS.ink};">${data.title}</h1>
-                  <div style="font-family: ${SANS}; font-size: 14px; line-height: 1.6; white-space: pre-wrap; color: ${COLORS.ink};">${data.content}</div>
+                  <div style="font-family: ${SANS}; font-size: 14px; line-height: 1.6; white-space: pre-wrap; color: ${COLORS.ink};">${formatAnnouncementBodyHtml(data.content)}</div>
                 </td></tr>
 
                 <tr><td height="32"></td></tr>

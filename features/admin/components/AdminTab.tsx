@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { FirebaseUser, ProClaim, ProUserRecord } from "@/types";
 import { getAuthHeaders } from "@/lib/utils";
+import { buildAnnouncementEmail } from "@/emails/templates/announcement";
 import {
   Shield,
   Trash2,
@@ -579,96 +580,12 @@ Thank you for being part of our journey!`);
     }
   };
 
-  const emailHtmlPreview = `
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <meta charset="utf-8">
-        <style>
-          body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 16px;
-            background-color: #f4f3ec;
-            color: #1c1b18;
-          }
-          .bento-card {
-            background-color: #fcfbfa;
-            border: 1px solid #eae8e0;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 2px 10px rgba(28,27,24,0.02);
-            max-width: 100%;
-            box-sizing: border-box;
-          }
-          .header {
-            border-bottom: 1px solid #eae8e0;
-            padding-bottom: 12px;
-            margin-bottom: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 13px;
-            font-weight: 500;
-          }
-          .txt-main { color: #1c1b18; }
-          .txt-muted { color: #7c7a72; }
-          .title {
-            font-family: Georgia, "Times New Roman", serif;
-            font-style: italic;
-            font-size: 21px;
-            font-weight: normal;
-            margin: 0 0 12px 0;
-            line-height: 1.3;
-            color: #1c1b18;
-          }
-          .content {
-            font-size: 13px;
-            line-height: 1.5;
-            white-space: pre-wrap;
-            color: #2e2d27;
-          }
-          .footer {
-            margin-top: 24px;
-            border-top: 1px solid #eae8e0;
-            padding-top: 16px;
-            text-align: center;
-          }
-          .btn-primary {
-            display: inline-block;
-            background-color: #1c1b18;
-            color: #ffffff !important;
-            font-size: 12px;
-            font-weight: 600;
-            text-decoration: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-          }
-          .footer-text {
-            font-size: 9px;
-            margin-top: 12px;
-            color: #8c8a80;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="bento-card">
-          <div class="header">
-            <span class="txt-main">Continuum Home</span>
-            <span class="txt-muted">Announcement</span>
-          </div>
-          <div>
-            <h1 class="title">${annTitle || "Announcement Title"}</h1>
-            <div class="content">${annContent || "Write something..."}</div>
-          </div>
-          <div class="footer">
-            <a href="https://continuum-home.vercel.app" class="btn-primary">Open Dashboard</a>
-            <p class="footer-text">Continuum — steady flow of life progression.</p>
-          </div>
-        </div>
-      </body>
-    </html>
-  `;
+  const emailHtmlPreview = buildAnnouncementEmail({
+    subject: annSubject || "Announcement",
+    title: annTitle || "Announcement Title",
+    content: annContent || "Write something...",
+    appUrl: typeof window !== "undefined" ? window.location.origin : "https://continuum-home.vercel.app",
+  }).html;
 
   const CARD = "rounded-none border-2 border-border-subtle bg-bg-card p-6 shadow-subtle";
 
