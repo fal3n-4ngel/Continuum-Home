@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { SITE_NAME, getAuthHeaders, toLocalDateStr } from "@/lib/utils";
+import { SITE_NAME, getAuthHeaders, toLocalDateStr, isUatDeployment } from "@/lib/utils";
 import { safeLocalStorage } from "@/lib/utils/storage";
 import { WatchlistItem, ReleaseNote } from "@/types";
 import { useExpensesStore } from "@/lib/stores/expenses-store";
@@ -323,7 +323,8 @@ export default function Dashboard() {
 
   const isDataLoaded =
     !user || (expensesLoaded && media.watchlistLoaded && subs.subscriptionsLoaded && investmentsLoaded && settings.settingsLoaded);
-  const showLoader = authLoading;
+  const showLoader = authLoading || !isDataLoaded;
+  const loaderAccentClass = isUatDeployment() ? "bg-[#DC2626]" : "bg-[#D99419]";
 
   if (showLoader) {
     return (
@@ -342,9 +343,9 @@ export default function Dashboard() {
         <div className="flex flex-col items-center gap-6">
           <div className="grid grid-cols-2 gap-1.5 w-11 h-11">
             <div className="bento-cell bento-cell-1 rounded-[4px] bg-text-primary" />
-            <div className="bento-cell bento-cell-2 rounded-[4px] bg-text-primary/60" />
-            <div className="bento-cell bento-cell-3 rounded-[4px] bg-text-primary/60" />
-            <div className="bento-cell bento-cell-4 rounded-[4px] bg-text-primary/30" />
+            <div className={`bento-cell bento-cell-2 rounded-[4px] ${loaderAccentClass}`} />
+            <div className={`bento-cell bento-cell-3 rounded-[4px] ${loaderAccentClass}`} />
+            <div className="bento-cell bento-cell-4 rounded-[4px] bg-text-primary" />
           </div>
           <div className="flex flex-col items-center gap-1.5 text-center animate-[heroFadeUp_0.6s_ease-out_both]">
             <span className="font-body font-semibold text-lg tracking-tight">{SITE_NAME}</span>
