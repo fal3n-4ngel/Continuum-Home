@@ -587,7 +587,7 @@ Thank you for being part of our journey!`);
     appUrl: typeof window !== "undefined" ? window.location.origin : "https://continuum-home.vercel.app",
   }).html;
 
-  const CARD = "rounded-none border-2 border-border-subtle bg-bg-card p-6 shadow-subtle";
+  const CARD = "rounded-card border border-border-subtle bg-bg-card p-6 max-md:p-4 shadow-subtle";
 
   return (
     <div className="flex flex-col gap-6 w-full max-md:pb-8">
@@ -684,9 +684,9 @@ Thank you for being part of our journey!`);
           
 
           <div className={CARD}>
-            <div className="flex items-center justify-between border-b-2 border-border-subtle pb-3 mb-4">
+            <div className="flex items-center justify-between border-b border-border-subtle pb-3 mb-4">
               <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2">
-                <Zap className="h-4 w-4" /> Quick Operations Deck
+                <Zap className="h-4 w-4" /> Quick Operations
               </h3>
               <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-text-muted">1-Click Triggers</span>
             </div>
@@ -695,143 +695,105 @@ Thank you for being part of our journey!`);
               <button
                 onClick={flushCache}
                 disabled={flushLoading}
-                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left disabled:opacity-50"
+                className="flex flex-col items-start gap-1 p-3.5 rounded-xl border border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left disabled:opacity-50 cursor-pointer"
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
                     <Trash2 className="h-3.5 w-3.5" /> Cache
                   </span>
-                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">REDIS</span>
+                  <span className="text-[9px] font-mono font-bold rounded bg-bg-card border border-border-subtle px-1.5 py-0.5">REDIS</span>
                 </div>
                 <span className="text-xs font-bold text-text-primary mt-1">
                   {flushLoading ? "Flushing Cache..." : "Flush Redis Cache"}
                 </span>
                 <span className="text-[11px] text-text-secondary leading-snug">
-                  Invalidate cached API responses and sync keys across instances.
+                  Invalidate cached API responses across instances.
                 </span>
               </button>
 
               <button
                 onClick={handleQuickDiscordPing}
                 disabled={discordSending}
-                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left disabled:opacity-50"
+                className="flex flex-col items-start gap-1 p-3.5 rounded-xl border border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left disabled:opacity-50 cursor-pointer"
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
                     <Radio className="h-3.5 w-3.5" /> Webhook
                   </span>
-                  <span className="text-[9px] font-mono font-bold bg-[#5865F2]/10 border border-[#5865F2]/30 text-[#5865F2] px-1.5 py-0.5">DISCORD</span>
+                  <span className="text-[9px] font-mono font-bold rounded bg-[#5865F2]/10 border border-[#5865F2]/30 text-[#5865F2] px-1.5 py-0.5">DISCORD</span>
                 </div>
                 <span className="text-xs font-bold text-text-primary mt-1">
                   {discordSending ? "Pinging..." : "Test Discord Ping"}
                 </span>
                 <span className="text-[11px] text-text-secondary leading-snug">
-                  Send an instantaneous test alert to the configured Discord channel.
+                  Send a test alert to the configured Discord channel.
                 </span>
               </button>
 
               <button
                 onClick={() => sendPreviewEmail("expenses")}
                 disabled={previewLoading}
-                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left disabled:opacity-50"
+                className="flex flex-col items-start gap-1 p-3.5 rounded-xl border border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left disabled:opacity-50 cursor-pointer"
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
                     <Mail className="h-3.5 w-3.5" /> Dispatch
                   </span>
-                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">RESEND</span>
+                  <span className="text-[9px] font-mono font-bold rounded bg-bg-card border border-border-subtle px-1.5 py-0.5">RESEND</span>
                 </div>
                 <span className="text-xs font-bold text-text-primary mt-1">
                   {previewLoading ? "Sending Email..." : "Send Test Digest"}
                 </span>
                 <span className="text-[11px] text-text-secondary leading-snug">
-                  Dispatches a sample weekly digest email directly to {user.email}.
+                  Send a sample weekly digest to {user.email}.
                 </span>
               </button>
 
               <button
                 onClick={() => handleProductionCronClick("portfolio", "Portfolio Valuation Sync")}
-                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left"
+                className="flex flex-col items-start gap-1 p-3.5 rounded-xl border border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left cursor-pointer"
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
                     <Activity className="h-3.5 w-3.5" /> Market
                   </span>
-                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">YAHOO / CRON</span>
+                  <span className="text-[9px] font-mono font-bold rounded bg-bg-card border border-border-subtle px-1.5 py-0.5">CRON</span>
                 </div>
                 <span className="text-xs font-bold text-text-primary mt-1">Sync Portfolio Net Worth</span>
                 <span className="text-[11px] text-text-secondary leading-snug">
-                  Polls live market prices and updates portfolio historical net worth.
+                  Poll live prices and update historical net worth.
                 </span>
               </button>
 
               <button
                 onClick={() => handleProductionCronClick("subscriptions", "Subscription Renewal Audit")}
-                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left"
+                className="flex flex-col items-start gap-1 p-3.5 rounded-xl border border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left cursor-pointer"
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
                     <Clock className="h-3.5 w-3.5" /> Recurrence
                   </span>
-                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">CRON</span>
+                  <span className="text-[9px] font-mono font-bold rounded bg-bg-card border border-border-subtle px-1.5 py-0.5">CRON</span>
                 </div>
                 <span className="text-xs font-bold text-text-primary mt-1">Audit Subscription Cycles</span>
                 <span className="text-[11px] text-text-secondary leading-snug">
-                  Checks renewals and logs automated recurring expense line items.
+                  Check renewals and log recurring expense items.
                 </span>
               </button>
 
               <button
                 onClick={() => setActiveTab("communications")}
-                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left"
+                className="flex flex-col items-start gap-1 p-3.5 rounded-xl border border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left cursor-pointer"
               >
                 <div className="flex items-center justify-between w-full">
                   <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
                     <Bell className="h-3.5 w-3.5" /> Broadcast
                   </span>
-                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">COMM</span>
+                  <span className="text-[9px] font-mono font-bold rounded bg-bg-card border border-border-subtle px-1.5 py-0.5">COMM</span>
                 </div>
                 <span className="text-xs font-bold text-text-primary mt-1">Compose Announcement</span>
                 <span className="text-[11px] text-text-secondary leading-snug">
-                  Open email & Discord broadcast center to send system notices.
-                </span>
-              </button>
-
-              <button
-                onClick={handlePruneLegacy}
-                disabled={pruneLoading}
-                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left disabled:opacity-50 cursor-pointer"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
-                    <Database className="h-3.5 w-3.5" /> Maintenance
-                  </span>
-                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">FIRESTORE</span>
-                </div>
-                <span className="text-xs font-bold text-text-primary mt-1">
-                  {pruneLoading ? "Pruning..." : "Prune Legacy Collections"}
-                </span>
-                <span className="text-[11px] text-text-secondary leading-snug">
-                  Purge obsolete collections (notes, watchlist, health_analytics).
-                </span>
-              </button>
-
-              <button
-                onClick={handleMigrateArchitecture}
-                disabled={migrationLoading}
-                className="flex flex-col items-start gap-1 p-3.5 rounded-none border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all text-left disabled:opacity-50 cursor-pointer"
-              >
-                <div className="flex items-center justify-between w-full">
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-text-secondary flex items-center gap-1.5">
-                    <Database className="h-3.5 w-3.5" /> Migration
-                  </span>
-                  <span className="text-[9px] font-mono font-bold bg-bg-card border border-border-subtle px-1.5 py-0.5">SUBCOLLECTIONS</span>
-                </div>
-                <span className="text-xs font-bold text-text-primary mt-1">
-                  {migrationLoading ? "Migrating..." : "Migrate Schema to Subcollections"}
-                </span>
-                <span className="text-[11px] text-text-secondary leading-snug">
-                  Copy records to path-isolated /users/&#123;uid&#125;/... subcollections.
+                  Open email & Discord broadcast center.
                 </span>
               </button>
             </div>
@@ -839,10 +801,10 @@ Thank you for being part of our journey!`);
 
           <div className="grid grid-cols-2 gap-6 max-lg:grid-cols-1">
             <div className={CARD}>
-              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
                 <Server className="h-4 w-4" /> Infrastructure Health
               </h3>
-              <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-2.5">
                 {[
                   { name: "Database Engine", provider: "Cloud Firestore", status: "Operational", detail: "AES-256-GCM Encrypted" },
                   { name: "Cache Storage", provider: "Upstash Redis", status: "Active", detail: "Edge REST / Memory Key-Value" },
@@ -850,15 +812,15 @@ Thank you for being part of our journey!`);
                   { name: "Alert Webhooks", provider: "Discord API", status: "Connected", detail: "System Bot Dispatcher" },
                   { name: "Background Jobs", provider: "Vercel Cron", status: "5 Scheduled", detail: "Daily, Weekly & Monthly Tasks" },
                 ].map((srv, i) => (
-                  <div key={i} className="flex items-center justify-between border-2 border-border-subtle bg-bg-primary/20 p-3">
-                    <div className="flex flex-col">
-                      <div className="flex items-center gap-2">
+                  <div key={i} className="flex items-center justify-between gap-2 rounded-xl border border-border-subtle bg-bg-primary/20 px-3.5 py-2.5">
+                    <div className="flex flex-col min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5">
                         <span className="text-xs font-bold text-text-primary">{srv.name}</span>
                         <span className="font-mono text-[10px] text-text-secondary">({srv.provider})</span>
                       </div>
-                      <span className="text-[11px] text-text-secondary font-mono mt-0.5">{srv.detail}</span>
+                      <span className="text-[11px] text-text-secondary font-mono mt-0.5 truncate">{srv.detail}</span>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0 bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 px-2 py-1">
+                    <div className="flex items-center gap-1.5 shrink-0 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 px-2.5 py-0.5">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
                       <span className="font-mono text-[10px] font-bold">{srv.status}</span>
                     </div>
@@ -868,7 +830,7 @@ Thank you for being part of our journey!`);
             </div>
 
             <div className={CARD}>
-              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
                 <Cpu className="h-4 w-4" /> Developer Hub & Consoles
               </h3>
               <div className="flex flex-col gap-3">
@@ -883,14 +845,14 @@ Thank you for being part of our journey!`);
                     { name: "Upstash Redis", url: "https://console.upstash.com", badge: "CACHE" },
                     { name: "Resend Email", url: "https://resend.com", badge: "SMTP" },
                     { name: "Trakt.tv Developer", url: "https://trakt.tv/oauth/applications", badge: "API" },
-                    { name: "GitHub Repository", url: "https://github.com/fal3n-4ngel/personal-dashboard", badge: "GIT" },
+                    { name: "GitHub Repository", url: "https://github.com/fal3n-4ngel/Continuum-Home", badge: "GIT" },
                   ].map((link, i) => (
                     <a
                       key={i}
                       href={link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between p-2.5 border-2 border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all group"
+                      className="flex items-center justify-between rounded-xl p-2.5 border border-border-subtle bg-bg-primary/20 hover:border-text-primary hover:bg-bg-primary/40 transition-all group"
                     >
                       <div className="flex flex-col min-w-0">
                         <span className="text-xs font-bold text-text-primary truncate">{link.name}</span>
@@ -901,7 +863,7 @@ Thank you for being part of our journey!`);
                   ))}
                 </div>
 
-                <div className="mt-2 border-t-2 border-border-subtle pt-3 flex items-center justify-between text-[11px] font-mono text-text-secondary">
+                <div className="mt-2 border-t border-border-subtle pt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] font-mono text-text-secondary">
                   <span>Admin Identity:</span>
                   <span className="text-text-primary font-bold truncate max-w-[200px]">{user.email}</span>
                 </div>
@@ -914,14 +876,14 @@ Thank you for being part of our journey!`);
       {activeTab === "communications" && (
         <div className="flex flex-col gap-6 animate-[fadeIn_0.3s_ease-out_both]">
           <div className={CARD}>
-            <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3 mb-4">
+            <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3 mb-4">
               <TerminalSquare className="h-4 w-4" /> Discord Bot Dispatcher
             </h3>
             <div className="grid grid-cols-[1.2fr_1fr] gap-6 max-lg:grid-cols-1">
               <div className="flex flex-col gap-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wide">Target Channel</label>
-                  <div className="inline-flex border border-border-subtle p-0.5 bg-bg-primary">
+                  <div className="inline-flex rounded-lg border border-border-subtle p-0.5 bg-bg-primary">
                     <button
                       type="button"
                       onClick={() => setDiscordChannel("admin")}
@@ -1211,18 +1173,18 @@ Thank you for being part of our journey!`);
 
           <div className="flex flex-col gap-6">
             <div className={`${CARD} flex flex-col gap-4`}>
-              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3">
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3">
                 <RefreshCw className="h-4 w-4" /> System Commands
               </h3>
               <p className="text-[12.5px] leading-relaxed text-text-secondary">
-                Flush Redis cache values or re-encrypt DB rows for every registered cloud user.
+                Cache, encryption, and Firestore maintenance operations.
               </p>
 
-              <div className="flex flex-col gap-2.5 mt-2">
+              <div className="flex flex-col gap-2.5 mt-1">
                 <button
                   disabled={flushLoading}
                   onClick={flushCache}
-                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-none border-2 border-border-subtle bg-bg-primary/40 hover:bg-bg-primary hover:border-text-primary text-xs font-semibold text-text-primary py-2.5 transition-all disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-lg border border-border-subtle bg-bg-primary/40 hover:bg-bg-primary hover:border-text-primary text-xs font-semibold text-text-primary py-2.5 transition-all disabled:opacity-50"
                 >
                   <Trash2 className="h-3.5 w-3.5" /> {flushLoading ? "Flushing Cache..." : "Flush Redis Cache"}
                 </button>
@@ -1230,27 +1192,43 @@ Thank you for being part of our journey!`);
                 <button
                   disabled={migrationLoading}
                   onClick={runEncryptionMigration}
-                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-none border-2 border-border-subtle bg-transparent text-xs font-semibold text-text-primary py-2.5 transition-all hover:bg-bg-primary hover:border-text-primary disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-lg border border-border-subtle bg-transparent text-xs font-semibold text-text-primary py-2.5 transition-all hover:bg-bg-primary hover:border-text-primary disabled:opacity-50"
                 >
                   <Shield className="h-3.5 w-3.5" /> {migrationLoading ? "Encrypting Records..." : "Encrypt All Users' Data"}
+                </button>
+
+                <button
+                  disabled={migrationLoading}
+                  onClick={handleMigrateArchitecture}
+                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-lg border border-border-subtle bg-transparent text-xs font-semibold text-text-primary py-2.5 transition-all hover:bg-bg-primary hover:border-text-primary disabled:opacity-50"
+                >
+                  <Database className="h-3.5 w-3.5" /> {migrationLoading ? "Migrating..." : "Migrate Schema to Subcollections"}
+                </button>
+
+                <button
+                  disabled={pruneLoading}
+                  onClick={handlePruneLegacy}
+                  className="w-full flex items-center justify-center gap-2 cursor-pointer rounded-lg border border-rose-500/30 bg-rose-500/5 text-xs font-semibold text-rose-600 dark:text-rose-400 py-2.5 transition-all hover:bg-rose-500/10 disabled:opacity-50"
+                >
+                  <Database className="h-3.5 w-3.5" /> {pruneLoading ? "Pruning..." : "Prune Legacy Collections"}
                 </button>
               </div>
             </div>
 
             <div className={`${CARD} flex flex-col gap-4`}>
-              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b-2 border-border-subtle pb-3">
+              <h3 className="font-serif text-base font-medium italic text-text-primary flex items-center gap-2 border-b border-border-subtle pb-3">
                 <Server className="h-4 w-4" /> System Info
               </h3>
               <div className="flex flex-col gap-2.5 font-mono text-[10px] text-text-secondary">
-                <div className="flex justify-between border-b-2 border-border-subtle pb-1.5">
+                <div className="flex justify-between border-b border-border-subtle pb-1.5">
                   <span>DEPLOYED URL</span>
                   <span className="text-text-primary truncate max-w-[130px]">{user.email ? "https://continuum-home.vercel.app" : "http://localhost:3000"}</span>
                 </div>
-                <div className="flex justify-between border-b-2 border-border-subtle pb-1.5">
+                <div className="flex justify-between border-b border-border-subtle pb-1.5">
                   <span>REDIS STATUS</span>
                   <span className="text-text-primary font-bold">CONNECTED</span>
                 </div>
-                <div className="flex justify-between border-b-2 border-border-subtle pb-1.5">
+                <div className="flex justify-between border-b border-border-subtle pb-1.5">
                   <span>ENCRYPTION</span>
                   <span className="text-text-primary">AES-256-GCM</span>
                 </div>
