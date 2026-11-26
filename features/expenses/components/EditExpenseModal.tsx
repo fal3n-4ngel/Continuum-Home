@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 import { Pencil, X, Loader2, Plus, Trash2 } from "lucide-react";
 import { Expense, ExpenseSplit, ExpenseType } from "@/types";
 
@@ -47,7 +48,16 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
     }
   }, [expense]);
 
-  if (!isOpen || !expense || typeof window === "undefined") return null;
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, onClose]);
+
+  if (typeof window === "undefined") return null;
 
   const parseTags = (raw: string): string[] =>
     raw
@@ -58,6 +68,7 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!expense) return;
     const parsedAmount = parseFloat(amount);
     if (!title.trim() || isNaN(parsedAmount) || parsedAmount <= 0) {
       setErrorMessage("Please enter a valid title and positive amount.");
@@ -90,14 +101,26 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
   };
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/45 backdrop-blur-sm apple-backdrop-fade"
-      onClick={onClose}
-    >
-      <div
-        className="m-4 flex w-full max-w-[440px] flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle apple-modal-spring"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <AnimatePresence>
+      {isOpen && expense && (
+        <motion.div
+          key="edit-expense-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: "easeOut" }}
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/45 backdrop-blur-sm"
+          onClick={onClose}
+        >
+          <motion.div
+            key="edit-expense-card"
+            initial={{ opacity: 0, scale: 0.95, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 6 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.28 }}
+            className="m-3 sm:m-4 flex max-h-[90vh] w-full max-w-[440px] flex-col gap-4 overflow-y-auto rounded-card border border-border-subtle bg-bg-card p-4 sm:p-6 shadow-subtle"
+            onClick={(e) => e.stopPropagation()}
+          >
 
         <div className="flex items-center justify-between border-b border-border-subtle pb-3.5">
           <div className="flex items-center gap-2.5">
@@ -284,8 +307,10 @@ export const EditExpenseModal: React.FC<EditExpenseModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
-    </div>,
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
     document.body
   );
 };

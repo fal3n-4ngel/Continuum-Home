@@ -10,8 +10,8 @@ interface ExpensesState {
   expensesLoaded: boolean;
   setExpensesLoaded: (loaded: boolean) => void;
 
-  timeFilter: "7" | "30" | "90" | "salary" | "all";
-  setTimeFilter: (f: "7" | "30" | "90" | "salary" | "all") => void;
+  timeFilter: "7" | "30" | "90" | "salary" | "prev_salary" | "all";
+  setTimeFilter: (f: "7" | "30" | "90" | "salary" | "prev_salary" | "all") => void;
   salaryDay: number;
   setSalaryDay: (d: number) => void;
   salaryLog: Record<string, { date: string; amount: number }>;

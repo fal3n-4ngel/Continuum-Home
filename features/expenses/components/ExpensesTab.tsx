@@ -20,12 +20,12 @@ interface ExpensesTabProps {
 }
 
 const STAT_CARD = "flex flex-col gap-1 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-200 hover:shadow-hover hover:-translate-y-0.5";
-const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
-const STAT_VALUE = "text-[28px] font-bold tracking-[-0.5px] text-text-primary";
+const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.06em] text-text-secondary uppercase";
+const STAT_VALUE = "text-[28px] font-bold tracking-[-0.02em] text-text-primary";
 const STAT_SUBTEXT = "mt-1 text-[11px] text-text-muted";
 const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle";
-const BTN_PRIMARY = "rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-semibold text-bg-primary transition-all duration-200 hover:opacity-90";
-const BTN_SECONDARY = "rounded-md border border-border-subtle bg-transparent text-[13px] font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary disabled:cursor-not-allowed disabled:opacity-50";
+const BTN_PRIMARY = "cursor-pointer rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-semibold text-bg-primary transition-transform duration-100 ease-out hover:opacity-90 active:scale-[0.97] dark:border-zinc-200 dark:bg-zinc-200 dark:text-zinc-950";
+const BTN_SECONDARY = "cursor-pointer rounded-md border border-border-subtle bg-transparent text-[13px] font-medium text-text-primary transition-transform duration-100 ease-out hover:bg-bg-primary active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50";
 const INPUT_CLASS = "rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
 const LEDGER_TH = "border-b border-border-subtle bg-bg-card px-3 py-2.5 font-mono text-[11px] font-semibold tracking-[0.5px] text-text-muted uppercase";
 const LEDGER_TD = "border-b border-border-subtle px-3 py-3 align-middle text-[13px] text-text-primary";
@@ -67,12 +67,12 @@ const normalizeCsvDate = (dateStr: string): string => {
 
 const tabPillClass = (active: boolean) =>
   `cursor-pointer rounded-md px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
-    active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
+    active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs dark:bg-white/10 dark:border-white/15" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
   }`;
 
 const chartPillClass = (active: boolean) =>
   `cursor-pointer rounded-md px-3 py-[5px] text-[11px] font-semibold transition-all duration-200 ${
-    active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
+    active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs dark:bg-white/10 dark:border-white/15" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
   }`;
 
 const advanceBillingDate = (dateStr: string, cycle: "monthly" | "yearly"): string => {
@@ -163,7 +163,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     }
   }, [getHeaders, setIsFetchingExpenses, setExpenses, setExpensesLoaded]);
 
-  const handleTimeFilterChange = (val: "7" | "30" | "90" | "salary" | "all") => {
+  const handleTimeFilterChange = (val: "7" | "30" | "90" | "salary" | "prev_salary" | "all") => {
     setTimeFilter(val);
     if (user) {
       fetch("/api/settings", {
@@ -189,6 +189,14 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
   const pageSize = 15;
 
   const [editingExpense, setEditingExpense] = React.useState<Expense | null>(null);
+
+  const [showMoreFields, setShowMoreFields] = React.useState(false);
+  const [undoState, setUndoState] = React.useState<{
+    id: string;
+    title: string;
+    snapshot: Expense[];
+    timer: ReturnType<typeof setTimeout>;
+  } | null>(null);
 
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
@@ -524,18 +532,33 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
     }
   };
 
-  const deleteExpense = async (id: string) => {
-    triggerConfirm("Archive Expense", "Are you sure you want to archive this expense?", async () => {
-      const previousList = [...expenses];
-      setExpenses(previousList.filter((e) => e.id !== id));
+  const deleteExpense = (id: string) => {
+    const target = expenses.find((e) => e.id === id);
+    if (!target) return;
+    if (undoState) {
+      clearTimeout(undoState.timer);
+      fetch(`/api/expenses/${undoState.id}`, { method: "DELETE", headers: getHeaders() }).catch(() => {});
+    }
+    const snapshot = [...expenses];
+    setExpenses(snapshot.filter((e) => e.id !== id));
+    const timer = setTimeout(async () => {
+      setUndoState(null);
       try {
         const res = await fetch(`/api/expenses/${id}`, { method: "DELETE", headers: getHeaders() });
         if (!res.ok) throw new Error("Failed to archive");
       } catch (err) {
         console.error(err);
-        setExpenses(previousList);
+        setExpenses(snapshot);
       }
-    });
+    }, 4500);
+    setUndoState({ id, title: target.title, snapshot, timer });
+  };
+
+  const handleUndoDelete = () => {
+    if (!undoState) return;
+    clearTimeout(undoState.timer);
+    setExpenses(undoState.snapshot);
+    setUndoState(null);
   };
 
   const updateExpense = async (id: string, updates: Partial<Expense>) => {
@@ -653,6 +676,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
               <option value="30">Last 30 days</option>
               <option value="90">Last 90 days</option>
               <option value="salary">Current Pay Period</option>
+              <option value="prev_salary">Previous Pay Period</option>
               <option value="all">All time</option>
             </select>
           </div>
@@ -666,7 +690,13 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
               <span className={LABEL_MONO}>Total Spent</span>
               <span className={STAT_VALUE}>{currency}{totalSpent.toLocaleString()}</span>
               <span className={STAT_SUBTEXT}>
-                {timeFilter === "all" ? "All time" : timeFilter === "salary" ? `Cycle (${currentPayCycle.startStr} – ${currentPayCycle.endStr})` : `Last ${timeFilter} days`}
+                {timeFilter === "all"
+                  ? "All time"
+                  : timeFilter === "salary"
+                  ? `Cycle (${currentPayCycle.startStr} – ${currentPayCycle.endStr})`
+                  : timeFilter === "prev_salary"
+                  ? `Prev Cycle (${currentPayCycle.prevStartStr} – ${currentPayCycle.prevEndStr})`
+                  : `Last ${timeFilter} days`}
               </span>
             </div>
             {totalIncome > 0 && (
@@ -707,7 +737,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
             </div>
 
             {activeChart === "category" ? (
-              <div className="flex h-[260px] items-end justify-start gap-4 overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2">
+              <div className="flex h-[260px] items-end justify-between gap-4 overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2">
                 {Object.entries(chartCatBreakdown).slice(0, 8).map(([cat, total], idx) => {
                   const maxAmt = Math.max(...Object.values(chartCatBreakdown), 1);
                   const pct = (total / maxAmt) * 100;
@@ -718,7 +748,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                     <div
                       key={cat}
                       onClick={() => setLedgerCategoryFilter(isSelected ? "" : cat)}
-                      className="flex min-w-[60px] max-w-[90px] flex-1 shrink-0 cursor-pointer flex-col items-center gap-1.5"
+                      className="flex min-w-[60px] flex-1 cursor-pointer flex-col items-center gap-1.5"
                       title={isSelected ? "Click to clear filter" : `Filter ledger by ${cat}`}
                     >
                       <span className={`text-[11px] font-semibold transition-colors duration-200 ${isInactive ? "text-text-muted" : "text-text-secondary"}`}>
@@ -823,10 +853,16 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                           </button>
                           <button
                             onClick={() => {
-                              if (confirm(`Skip this billing cycle for ${sub.name}?`)) {
-                                const nextDate = advanceBillingDate(sub.nextBillingDate, sub.billingCycle);
-                                updateSubscription(sub.id, { nextBillingDate: nextDate });
-                              }
+                              triggerConfirm(
+                                "Skip Billing Cycle",
+                                `Skip this billing cycle for ${sub.name}?`,
+                                () => {
+                                  const nextDate = advanceBillingDate(sub.nextBillingDate, sub.billingCycle);
+                                  updateSubscription(sub.id, { nextBillingDate: nextDate });
+                                },
+                                false,
+                                "Skip Cycle"
+                              );
                             }}
                             className="flex h-7 w-7 items-center justify-center rounded-md border-none bg-rose-500/15 text-rose-600 dark:text-rose-400 cursor-pointer hover:bg-rose-500/25 transition-all font-semibold active:scale-95"
                             title="Decline / Skip Cycle"
@@ -865,7 +901,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                   </div>
                   <input id="transaction-desc-input" type="text" value={expenseTitle} onChange={(e) => setExpenseTitle(e.target.value)} placeholder="Description" required className={INPUT_CLASS} />
                   <input type="number" value={expenseAmount} onChange={(e) => setExpenseAmount(e.target.value)} placeholder={`Amount (${currency})`} required className={INPUT_CLASS} />
-                  <input type="text" value={expenseTags} onChange={(e) => setExpenseTags(e.target.value)} placeholder="Tags (comma-separated, optional)" className={INPUT_CLASS} />
 
                   <select value={expenseCategory} onChange={(e) => setExpenseCategory(e.target.value)} required className={`${INPUT_CLASS} w-full cursor-pointer`}>
                     <option value="">Select Category</option>
@@ -880,7 +915,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                         key={c}
                         type="button"
                         onClick={() => setExpenseCategory(c)}
-                        className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold transition-all cursor-pointer ${
+                        className={`rounded-md border px-2 py-0.5 text-[10px] font-semibold transition-all active:scale-[0.95] cursor-pointer ${
                           expenseCategory === c
                             ? "border-accent-terracotta bg-accent-terracotta text-[#FAF8F5] shadow-xs"
                             : "border-border-subtle bg-bg-secondary/60 text-text-secondary hover:border-border-hover hover:bg-bg-secondary"
@@ -891,32 +926,44 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                     ))}
                   </div>
 
-                  <div className="flex gap-1.5">
-                    <input
-                      type="text"
-                      value={newCategoryInput}
-                      onChange={(e) => setNewCategoryInput(e.target.value)}
-                      placeholder="New category..."
-                      className={`${INPUT_CLASS} flex-1 px-2 py-1.5 text-[11px]`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const trimmed = newCategoryInput.trim();
-                        if (trimmed && !customCategories.includes(trimmed)) {
-                          setCustomCategories([...customCategories, trimmed]);
-                          setExpenseCategory(trimmed);
-                          setNewCategoryInput("");
-                        }
-                      }}
-                      className="cursor-pointer rounded-md border border-border-subtle bg-bg-secondary px-3 py-1.5 text-[11px] font-semibold text-text-primary"
-                    >
-                      + Add
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowMoreFields((prev) => !prev)}
+                    className="self-start cursor-pointer border-none bg-transparent p-0 font-mono text-[10px] font-semibold uppercase tracking-[0.06em] text-text-muted hover:text-text-primary transition-colors"
+                  >
+                    {showMoreFields ? "− Less Details" : "+ More (Tags, Date, Notes)"}
+                  </button>
 
-                  <input type="date" lang="en-CA" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} className={INPUT_CLASS} />
-                  <input type="text" value={expenseNotes} onChange={(e) => setExpenseNotes(e.target.value)} placeholder="Notes" className={INPUT_CLASS} />
+                  {showMoreFields && (
+                    <div className="flex flex-col gap-[9px]">
+                      <div className="flex gap-1.5">
+                        <input
+                          type="text"
+                          value={newCategoryInput}
+                          onChange={(e) => setNewCategoryInput(e.target.value)}
+                          placeholder="New category..."
+                          className={`${INPUT_CLASS} flex-1 px-2 py-1.5 text-[11px]`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const trimmed = newCategoryInput.trim();
+                            if (trimmed && !customCategories.includes(trimmed)) {
+                              setCustomCategories([...customCategories, trimmed]);
+                              setExpenseCategory(trimmed);
+                              setNewCategoryInput("");
+                            }
+                          }}
+                          className="cursor-pointer rounded-md border border-border-subtle bg-bg-secondary px-3 py-1.5 text-[11px] font-semibold text-text-primary active:scale-[0.97]"
+                        >
+                          + Add
+                        </button>
+                      </div>
+                      <input type="text" value={expenseTags} onChange={(e) => setExpenseTags(e.target.value)} placeholder="Tags (comma-separated, optional)" className={INPUT_CLASS} />
+                      <input type="date" lang="en-CA" value={expenseDate} onChange={(e) => setExpenseDate(e.target.value)} className={INPUT_CLASS} />
+                      <input type="text" value={expenseNotes} onChange={(e) => setExpenseNotes(e.target.value)} placeholder="Notes" className={INPUT_CLASS} />
+                    </div>
+                  )}
                   <button type="submit" disabled={isAddingExpense} className={`${BTN_PRIMARY} mt-1`}>{isAddingExpense ? "Logging..." : "Log Item"}</button>
                 </form>
               </div>
@@ -1157,6 +1204,20 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
             setEditingExpense(null);
           }}
         />
+      )}
+
+      {mounted && undoState && createPortal(
+        <div className="fixed bottom-24 left-4 right-4 z-[99998] flex items-center justify-between gap-3 rounded-lg border border-border-subtle bg-bg-card px-4 py-2.5 text-xs text-text-primary shadow-subtle sm:left-auto sm:right-6 sm:justify-start md:bottom-6">
+          <span>Archived &ldquo;{undoState.title}&rdquo;</span>
+          <button
+            type="button"
+            onClick={handleUndoDelete}
+            className="cursor-pointer rounded-md bg-text-primary px-2.5 py-1 font-mono text-[11px] font-semibold text-bg-primary transition-transform duration-100 active:scale-[0.96]"
+          >
+            Undo
+          </button>
+        </div>,
+        document.body
       )}
     </>
   );

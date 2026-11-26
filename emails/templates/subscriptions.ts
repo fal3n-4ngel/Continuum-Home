@@ -1,4 +1,5 @@
 import { htmlDoc, wrap, header, footer, title, pill, previewBanner } from "../layout";
+import { inr2 } from "../format";
 import { COLORS } from "../theme";
 
 export interface UpcomingRenewal {
@@ -36,7 +37,7 @@ function renewalCard(sub: UpcomingRenewal): string {
                     </tr></table>
                   </td>
                   <td align="right" valign="middle">
-                    <div class="font-sans txt-main" style="font-size:18px;font-weight:700;">₹${sub.cost.toFixed(2)}</div>
+                    <div class="font-sans txt-main" style="font-size:18px;font-weight:700;">${inr2(sub.cost)}</div>
                     <div class="font-sans txt-muted" style="font-size:11px;font-weight:500;margin-top:4px;">${sub.billingCycle === "yearly" ? "Yearly" : "Monthly"} • ${sub.nextBillingDate}</div>
                   </td>
                 </tr></table>
@@ -53,17 +54,20 @@ ${title("Upcoming Subscription Renewals", "Heads up! The following subscriptions
           ${data.renewals.map(renewalCard).join("")}
         </td></tr>
 ${footer({
-    ctaHref: data.appUrl,
+    ctaHref: `${data.appUrl.replace(/\/$/, "")}/dashboard?tab=expenses`,
     ctaLabel: "Manage Subscriptions",
-    note: "This is an automated security alert from your dashboard.",
+    note: "This is an automated renewal reminder from your dashboard.",
     unsubscribe: data.unsubscribeUrl
       ? { url: data.unsubscribeUrl, label: "Unsubscribe from renewal alerts" }
       : undefined,
   })}
   `);
 
+  const names = data.renewals.map((r) => r.name).slice(0, 3).join(", ");
+  const preheader = `${data.renewals.length} upcoming renewal${data.renewals.length === 1 ? "" : "s"}${names ? `: ${names}` : ""}`;
+
   return {
     subject: `Alert: ${data.renewals.length} Upcoming Subscription Renewals`,
-    html: htmlDoc("Upcoming Renewals", body),
+    html: htmlDoc("Upcoming Renewals", body, preheader),
   };
 }

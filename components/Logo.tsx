@@ -7,16 +7,18 @@ interface LogoMarkProps {
   className?: string;
 }
 
-export function LogoMark({ size = 22, color = "currentColor", className }: LogoMarkProps) {
+export function LogoMark({ size = 22, color, className }: LogoMarkProps) {
   const gap = size * 0.08;
   const cell = (size - gap * 3) / 2;
-  const r = size * 0.12;
+  const r = size * 0.14;
+  const primary = color ?? "var(--text-primary, #26211F)";
+  const accent = color ?? "var(--accent-yellow, #D99419)";
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
-      <rect x={gap} y={gap} width={cell} height={cell} rx={r} fill={color} />
-      <rect x={gap * 2 + cell} y={gap} width={cell} height={cell} rx={r} fill={color} opacity="0.55" />
-      <rect x={gap} y={gap * 2 + cell} width={cell} height={cell} rx={r} fill={color} opacity="0.55" />
-      <rect x={gap * 2 + cell} y={gap * 2 + cell} width={cell} height={cell} rx={r} fill={color} opacity="0.85" />
+      <rect x={gap} y={gap} width={cell} height={cell} rx={r} fill={primary} />
+      <rect x={gap * 2 + cell} y={gap} width={cell} height={cell} rx={r} fill={accent} opacity={color ? "0.55" : undefined} />
+      <rect x={gap} y={gap * 2 + cell} width={cell} height={cell} rx={r} fill={accent} opacity={color ? "0.55" : undefined} />
+      <rect x={gap * 2 + cell} y={gap * 2 + cell} width={cell} height={cell} rx={r} fill={primary} opacity={color ? "0.85" : undefined} />
     </svg>
   );
 }

@@ -6,7 +6,8 @@ export const contentType = "image/png";
 
 export default function AppleIcon() {
   const isUat = isUatDeployment();
-  const boxColor = isUat ? "#DC2626" : "#1c1b18";
+  const primary = isUat ? "#DC2626" : "#FAF8F5";
+  const accent = isUat ? "#DC2626" : "#D99419";
 
   return new ImageResponse(
     (
@@ -19,16 +20,16 @@ export default function AppleIcon() {
           alignItems: "center",
           justifyContent: "center",
           gap: "10px",
-          backgroundColor: "#f4f3ec",
+          backgroundColor: isUat ? "#F3EFEA" : "#181715",
         }}
       >
         <div style={{ display: "flex", gap: "10px" }}>
-          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "12px", backgroundColor: boxColor, border: "none" }} />
-          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "12px", backgroundColor: boxColor, opacity: 0.55, border: "none" }} />
+          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "14px", backgroundColor: primary, border: "none" }} />
+          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "14px", backgroundColor: accent, opacity: isUat ? 0.55 : 1, border: "none" }} />
         </div>
         <div style={{ display: "flex", gap: "10px" }}>
-          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "12px", backgroundColor: boxColor, opacity: 0.55, border: "none" }} />
-          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "12px", backgroundColor: boxColor, opacity: 0.85, border: "none" }} />
+          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "14px", backgroundColor: accent, opacity: isUat ? 0.55 : 1, border: "none" }} />
+          <div style={{ display: "flex", width: "56px", height: "56px", borderRadius: "14px", backgroundColor: primary, opacity: isUat ? 0.85 : 1, border: "none" }} />
         </div>
       </div>
     ),

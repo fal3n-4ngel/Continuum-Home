@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { AUTHOR } from "@/lib/utils";
 import { LogoMark } from "@/components/Logo";
@@ -9,7 +9,6 @@ import { FeaturesShowcase } from "@/components/landing/FeaturesShowcase";
 import { AiAgentShowcase } from "@/components/landing/AiAgentShowcase";
 import { Sun, Moon, ExternalLink, ChevronDown, ArrowRight } from "lucide-react";
 import { THEMES } from "@/lib/theme/themes";
-import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -36,9 +35,9 @@ const FAQ_ITEMS: { question: string; answer: string; ref: string }[] = [
   },
   {
     ref: "SPEC-03",
-    question: "How does the OpenAI / ChatGPT Custom GPT integration work?",
+    question: "How does the AI Assistant & MCP integration work?",
     answer:
-      "Continuum automatically generates a compliant OpenAPI 3.1 specification at /api/openapi.json. You configure ChatGPT Actions or Claude with your authenticated token, enabling you to log expenses or update queues via natural language.",
+      "Continuum provides a native Model Context Protocol (MCP) server at /api/mcp with OAuth 2.0 + PKCE + Dynamic Client Registration, alongside an OpenAPI 3.1 specification at /api/openapi.json. Connect ChatGPT Apps/Plugins, Claude, or Cursor to log expenses, check portfolios, and manage watchlists in plain English.",
   },
   {
     ref: "SPEC-04",
@@ -59,26 +58,11 @@ export default function LandingPage({
   authError,
   firebaseAuthReady,
 }: LandingPageProps) {
-  const { enableGPTMigration } = useFeatureFlags();
   const [userCount, setUserCount] = useState<number | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(0);
   const [isDark, setIsDark] = useState(false);
 
-  const faqItems = useMemo(() => {
-    return FAQ_ITEMS.map((item) => {
-      if (item.ref === "SPEC-03") {
-        return enableGPTMigration
-          ? {
-              ref: "SPEC-03",
-              question: "How does the AI Assistant & MCP integration work?",
-              answer:
-                "Continuum provides a native Model Context Protocol (MCP) server at /api/mcp and an OpenAPI 3.1 specification at /api/openapi.json. Connect ChatGPT Plugins, Claude Desktop, Cursor, or autonomous agents securely via OAuth 2.0 to log expenses, check watchlists, and manage records in natural language.",
-            }
-          : item;
-      }
-      return item;
-    });
-  }, [enableGPTMigration]);
+  const faqItems = FAQ_ITEMS;
 
   useEffect(() => {
     let shouldBeDark = false;
@@ -129,11 +113,9 @@ export default function LandingPage({
   return (
     <div className="relative min-h-screen bg-[#F3EFEA] dark:bg-[#0C0D0E] text-[#26211F] dark:text-[#F4F5F7] selection:bg-[#D99419]/20 selection:text-[#9E5D48] font-sans antialiased">
       
-      {/* Background Architectural Subtle Grid */}
-      <div className="pointer-events-none fixed inset-0 z-0 architectural-grid opacity-40" />
+      <div className="pointer-events-none fixed inset-0 z-0 architectural-grid opacity-15" />
 
-      {/* Modern Product Header */}
-      <header className="sticky top-0 z-50 border-b border-[#DDD5CB] dark:border-[#25272E] bg-[#F3EFEA]/90 dark:bg-[#0C0D0E]/90 backdrop-blur-md">
+      <header className="sticky top-0 z-50 border-b border-[#DDD5CB]/60 dark:border-[#25272E]/70 bg-[#F3EFEA]/85 dark:bg-[#0C0D0E]/85 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-8">
           
           {/* Logo & Product Name */}
@@ -176,7 +158,7 @@ export default function LandingPage({
             <button
               onClick={toggleLandingTheme}
               aria-label="Toggle theme"
-              className="flex h-8 w-8 items-center justify-center rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] text-[#6D635C] dark:text-[#9BA1B0] transition-colors hover:border-[#9E5D48] hover:text-[#9E5D48]"
+              className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] text-[#6D635C] dark:text-[#9BA1B0] transition-colors hover:border-[#9E5D48] hover:text-[#9E5D48]"
             >
               {isDark ? <Sun size={14} /> : <Moon size={14} />}
             </button>
@@ -184,7 +166,7 @@ export default function LandingPage({
             <button
               onClick={onLogin}
               disabled={!firebaseAuthReady}
-              className="flex items-center gap-2 rounded-sm bg-[#1C1B18] dark:bg-[#F4F5F7] px-4 py-2 text-xs font-semibold text-[#FAF8F5] dark:text-[#0C0D0E] transition-all duration-150 hover:opacity-90 disabled:opacity-50 shadow-xs uppercase tracking-wider font-mono"
+              className="flex cursor-pointer items-center gap-2 rounded-sm bg-[#1C1B18] dark:bg-[#F4F5F7] px-4 py-2 text-xs font-semibold text-[#FAF8F5] dark:text-[#0C0D0E] transition-transform duration-100 ease-out hover:opacity-90 active:scale-[0.97] disabled:opacity-50 shadow-xs uppercase tracking-wider font-mono"
             >
               <span>Try Continuum</span>
               <ArrowRight size={13} />
@@ -193,42 +175,43 @@ export default function LandingPage({
         </div>
       </header>
 
-      {/* Hero Section: Clean Architectural Product Hero Matching Reference Layout */}
-      <section className="relative z-10 mx-auto max-w-5xl px-4 sm:px-8 flex flex-col items-center justify-center pt-16 pb-12 text-center min-h-screen">
-        
-        {/* Architectural Tag Badge */}
-        <div className="border border-[#DDD5CB] dark:border-[#25272E] px-3.5 py-1 font-mono text-[10.5px] tracking-widest text-[#9E5D48] dark:text-[#E07A5F] uppercase mb-5 bg-[#FAF8F5] dark:bg-[#18191D] rounded-sm shadow-2xs">
-          ⌜ CONTINUUM HOME · OPEN SOURCE · AI-READY LIFE OS ⌟
-        </div>
+      <section className="relative z-10 mx-auto max-w-4xl px-4 sm:px-8 flex flex-col items-center justify-center py-24 sm:py-32 text-center min-h-[calc(100vh-4rem)]">
+        <p className="mb-5 font-mono text-[11px] tracking-[0.18em] text-[#70675E] dark:text-[#9BA1B0] uppercase">
+          Continuum Home · Open Source · Personal Life OS
+        </p>
 
-        {/* Headline */}
-        <h1 className="text-4xl sm:text-6xl md:text-7xl font-bold tracking-tight text-[#26211F] dark:text-[#F4F5F7] leading-[1.1] mb-4">
+        <h1 className="text-4xl sm:text-6xl md:text-[64px] font-bold tracking-tight text-[#26211F] dark:text-[#F4F5F7] leading-[1.12] mb-5">
           <span className="sr-only">Continuum Home — </span>
           <span className="font-serif italic font-normal text-[#9E5D48] dark:text-[#E07A5F]">
             A dashboard for you. An API for your AI.
           </span>
         </h1>
 
-        {/* Subtitle */}
-        <p className="mt-2 text-base sm:text-lg text-[#6D635C] dark:text-[#9BA1B0] max-w-2xl mx-auto leading-relaxed">
-          A self-hostable system for your daily expenses, investments, media watchlists, and book library &mdash; with an API designed for both humans and AI agents.
+        <p className="mt-1 text-base sm:text-lg text-[#6D635C] dark:text-[#9BA1B0] max-w-xl mx-auto leading-relaxed">
+          A calm, self-hostable home for your daily expenses, investments, watchlists, and books &mdash; built for both humans and AI agents.
         </p>
 
-        {/* CTA Buttons */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3.5">
           <button
             onClick={onLogin}
             disabled={!firebaseAuthReady}
-            className="flex items-center gap-2 rounded-sm border border-[#9E5D48] bg-[#9E5D48] px-7 py-3 font-mono text-xs font-semibold tracking-wider text-[#FAF8F5] uppercase transition-all duration-150 hover:bg-[#854A37] shadow-xs disabled:opacity-50"
+            className="flex cursor-pointer items-center gap-2 rounded-sm border border-[#9E5D48] bg-[#9E5D48] px-7 py-3 font-mono text-xs font-semibold tracking-wider text-[#FAF8F5] uppercase transition-transform duration-100 ease-out hover:bg-[#854A37] active:scale-[0.97] shadow-xs disabled:opacity-50"
           >
             <span>Try Continuum &rarr;</span>
           </button>
+
+          <Link
+            href="/assistant/plugin"
+            className="flex items-center gap-2 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-6 py-3 font-mono text-xs font-semibold tracking-wider text-[#9E5D48] dark:text-[#E07A5F] uppercase no-underline transition-transform duration-100 ease-out hover:border-[#9E5D48] active:scale-[0.97] shadow-2xs"
+          >
+            <span>ChatGPT MCP Plugin</span>
+          </Link>
 
           <a
             href="https://github.com/fal3n-4ngel/Continuum-Home"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-6 py-3 font-mono text-xs font-semibold tracking-wider text-[#26211F] dark:text-[#F4F5F7] uppercase no-underline transition-all duration-150 hover:border-[#9E5D48] shadow-2xs"
+            className="flex items-center gap-2 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-6 py-3 font-mono text-xs font-semibold tracking-wider text-[#26211F] dark:text-[#F4F5F7] uppercase no-underline transition-transform duration-100 ease-out hover:border-[#9E5D48] active:scale-[0.97] shadow-2xs"
           >
             <span className="text-[#D99419]">★</span>
             <span>Star on GitHub</span>
@@ -249,24 +232,7 @@ export default function LandingPage({
           </div>
         )}
 
-        {/* Focused Hero Category Badges */}
-        <div className="mt-7 flex flex-wrap justify-center gap-2.5">
-          <span className="inline-flex items-center gap-1.5 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-3.5 py-1.5 font-mono text-xs text-[#26211F] dark:text-[#F4F5F7] shadow-2xs">
-            🤖 AI Endpoints (ChatGPT &amp; Claude)
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-3.5 py-1.5 font-mono text-xs text-[#26211F] dark:text-[#F4F5F7] shadow-2xs">
-            💸 Expense &amp; Subscription Ledger
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-3.5 py-1.5 font-mono text-xs text-[#26211F] dark:text-[#F4F5F7] shadow-2xs">
-            📈 Investments &amp; Live Quotes
-          </span>
-          <span className="inline-flex items-center gap-1.5 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#FAF8F5] dark:bg-[#18191D] px-3.5 py-1.5 font-mono text-xs text-[#26211F] dark:text-[#F4F5F7] shadow-2xs">
-            🎬 Media &amp; Book Library
-          </span>
-        </div>
-
-        {/* Architecture Diagram: Direct Component under Hero Matching Reference */}
-        <div id="architecture" className="mt-10 w-full">
+        <div id="architecture" className="mt-14 w-full">
           <ArchitectureFlowDiagram />
         </div>
 
@@ -346,7 +312,7 @@ export default function LandingPage({
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-[#D99419]">&bull;</span>
-                    <span>{enableGPTMigration ? "Native MCP & AI Agent API" : "Custom GPT & AI Agent API"}</span>
+                    <span>Native MCP &amp; AI Agent API</span>
                   </li>
                 </ul>
 
@@ -500,13 +466,14 @@ export default function LandingPage({
               </div>
 
               <div className="mt-8">
-                <button
-                  onClick={onLogin}
-                  disabled={!firebaseAuthReady}
-                  className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#F3EFEA] dark:bg-[#0C0D0E] px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wider text-[#1C1B18] dark:text-[#F4F5F7] transition-all hover:border-[#9E5D48] disabled:cursor-not-allowed disabled:opacity-50"
+                <a
+                  href={AUTHOR.coffeeUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-full cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-[#DDD5CB] dark:border-[#25272E] bg-[#F3EFEA] dark:bg-[#0C0D0E] px-5 py-2.5 font-mono text-xs font-semibold uppercase tracking-wider text-[#1C1B18] dark:text-[#F4F5F7] no-underline transition-all hover:border-[#9E5D48]"
                 >
                   Become a Supporter &rarr;
-                </button>
+                </a>
               </div>
             </div>
 
@@ -659,14 +626,16 @@ export default function LandingPage({
               <a href="#pricing" className="hover:text-[#1C1B18] dark:hover:text-[#F4F5F7] no-underline">Pricing</a>
               <a href="#self-host" className="hover:text-[#1C1B18] dark:hover:text-[#F4F5F7] no-underline">Deploy</a>
               <a href="https://github.com/fal3n-4ngel/Continuum-Home" target="_blank" rel="noopener noreferrer" className="hover:text-[#1C1B18] dark:hover:text-[#F4F5F7] no-underline">GitHub</a>
+              <Link href="/assistant/plugin" className="hover:text-[#1C1B18] dark:hover:text-[#F4F5F7] no-underline">MCP Plugin</Link>
               <Link href="/privacy" className="hover:text-[#1C1B18] dark:hover:text-[#F4F5F7] no-underline">Privacy</Link>
+              <Link href="/terms" className="hover:text-[#1C1B18] dark:hover:text-[#F4F5F7] no-underline">Terms</Link>
             </div>
 
           </div>
 
-          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-[10.5px] text-[#9C9288] uppercase">
+          <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-4 font-mono text-[10.5px] text-[#9C9288] ">
             <div>
-              Engineered by <a href={AUTHOR.url} target="_blank" rel="noopener noreferrer" className="text-[#1C1B18] dark:text-[#F4F5F7] font-semibold hover:underline">{AUTHOR.name}</a> (@{AUTHOR.githubHandle})
+              Engineered by <a href={AUTHOR.url} target="_blank" rel="noopener noreferrer" className="text-[#1C1B18] dark:text-[#F4F5F7] font-semibold hover:underline">@{AUTHOR.githubHandle}</a> 
             </div>
             <div>
               Continuum Home &bull; MIT Licensed

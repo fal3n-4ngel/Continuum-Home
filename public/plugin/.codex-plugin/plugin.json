@@ -1,0 +1,27 @@
+{
+  "apps": "./.app.json",
+  "author": {
+    "name": "Adithya Krishnan",
+    "url": "https://www.adithyakrishnan.com"
+  },
+  "description": "Manage your personal Continuum Home dashboard in plain English—log and query encrypted expenses, track recurring subscriptions and income, check portfolio holdings, and update your movie, anime, show, and book watchlist.",
+  "homepage": "https://continuum-home.vercel.app",
+  "privacyPolicy": "https://continuum-home.vercel.app/privacy",
+  "termsOfService": "https://continuum-home.vercel.app/terms",
+  "interface": {
+    "capabilities": ["Interactive", "Write"],
+    "category": "Productivity",
+    "defaultPrompt": [
+      "Log ₹450 for Coffee under Food today",
+      "Show my expenses from the last 30 days",
+      "What is the total value of my investment portfolio?",
+      "Add Inception to my watchlist as plan to watch"
+    ],
+    "developerName": "Adithya Krishnan",
+    "displayName": "Continuum Home",
+    "longDescription": "Manage your personal Continuum Home dashboard in plain English—log and query encrypted expenses, track recurring subscriptions and income, check portfolio holdings, and update your movie, anime, show, and book watchlist.",
+    "shortDescription": "Track your expenses, subscriptions, investment portfolio, and media watchlist."
+  },
+  "name": "dev-6b06865c2d0c8191881e7f6b2891f140",
+  "version": "1.0.1"
+}

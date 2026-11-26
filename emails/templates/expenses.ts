@@ -35,7 +35,7 @@ const HERO_RULE = "#9E5D48";
 const HERO_LABEL = "#9E5D48";
 const HERO_VALUE = "#26211F";
 
-const TH = `class="font-mono txt-muted" style="font-size:10px;font-weight:700;text-transform:uppercase;padding-bottom:12px;border-bottom:1px solid ${COLORS.hairline};`;
+const TH_STYLE = `font-size:10px;font-weight:700;text-transform:uppercase;padding-bottom:12px;border-bottom:1px solid ${COLORS.hairline};`;
 
 function categoryRow(cat: CategorySlice): string {
   return `
@@ -46,7 +46,7 @@ function categoryRow(cat: CategorySlice): string {
                   ${cat.name} <span class="txt-muted" style="font-weight:normal;font-size:12px;">(${cat.percentage.toFixed(1)}%)</span>
                 </td>
                 <td align="right" class="font-sans txt-main" style="font-size:13px;font-weight:600;padding:0;border:none;">
-                  ₹${cat.amount.toFixed(2)}
+                  ${inr2(cat.amount)}
                 </td>
               </tr>
             </table>
@@ -62,7 +62,7 @@ function expenseRow(exp: TopExpense): string {
                   <div class="font-mono txt-muted" style="font-size:9px;margin-top:4px;text-transform:uppercase;">${exp.category || "Uncategorized"}</div>
                 </td>
                 <td align="right" class="font-mono txt-muted" style="padding:14px 0;border-bottom:1px solid ${COLORS.canvas};font-size:11px;">${exp.date ?? ""}</td>
-                <td align="right" class="font-mono txt-main" style="padding:14px 0;border-bottom:1px solid ${COLORS.canvas};font-size:12px;font-weight:700;">₹${(exp.amount || 0).toFixed(2)}</td>
+                <td align="right" class="font-mono txt-main" style="padding:14px 0;border-bottom:1px solid ${COLORS.canvas};font-size:12px;font-weight:700;">${inr2(exp.amount || 0)}</td>
               </tr>`;
 }
 
@@ -83,7 +83,7 @@ ${title(periodTitle, `Reporting Period: ${data.periodRange}`)}
               <div class="font-mono" style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.8px;color:${HERO_LABEL}!important;-webkit-text-fill-color:${HERO_LABEL}!important;">Total Outflow</div>
               <div class="font-sans" style="font-size:36px;font-weight:bold;margin:8px 0;letter-spacing:-1px;color:${HERO_VALUE}!important;-webkit-text-fill-color:${HERO_VALUE}!important;">${inr2(data.totalAmount)}</div>
               <div class="font-sans" style="font-size:13px;font-weight:500;color:${HERO_VALUE}!important;-webkit-text-fill-color:${HERO_VALUE}!important;">
-                Average of <strong>₹${data.avgDaily.toFixed(2)}</strong> per day
+                Average of <strong>${inr2(data.avgDaily)}</strong> per day
               </div>
             </td></tr>
           </table>
@@ -96,9 +96,9 @@ ${sectionHeading("Top Outflows", 32)}
         <tr><td class="bento-card" style="padding:20px;">
           <table width="100%" cellpadding="0" cellspacing="0">
             <thead><tr>
-              <th align="left" ${TH}">Item / Category</th>
-              <th align="right" ${TH}width:80px;">Date</th>
-              <th align="right" ${TH}width:100px;">Amount</th>
+              <th align="left" class="font-mono txt-muted" style="${TH_STYLE}">Item / Category</th>
+              <th align="right" class="font-mono txt-muted" style="${TH_STYLE}width:88px;">Date</th>
+              <th align="right" class="font-mono txt-muted" style="${TH_STYLE}width:110px;">Amount</th>
             </tr></thead>
             <tbody>
               ${data.topExpenses.map(expenseRow).join("")}
@@ -106,7 +106,7 @@ ${sectionHeading("Top Outflows", 32)}
           </table>
         </td></tr>
 ${footer({
-    ctaHref: data.appUrl,
+    ctaHref: `${data.appUrl.replace(/\/$/, "")}/dashboard?tab=expenses`,
     ctaLabel: "View Ledger",
     note: "This is an automated summary email generated from your dashboard.",
     unsubscribe: data.unsubscribeUrl
@@ -115,8 +115,11 @@ ${footer({
   })}
   `);
 
+  const topCat = data.categories[0];
+  const preheader = `${inr0(data.totalAmount)} spent (${inr0(data.avgDaily)}/day avg)${topCat ? ` · ${topCat.name} led at ${topCat.percentage.toFixed(0)}%` : ""} · ${data.periodRange}`;
+
   return {
     subject: `${periodTitle}: ${inr0(data.totalAmount)} spent`,
-    html: htmlDoc(periodTitle, body),
+    html: htmlDoc(periodTitle, body, preheader),
   };
 }

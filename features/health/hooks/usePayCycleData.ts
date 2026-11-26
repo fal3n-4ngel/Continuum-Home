@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Expense, Subscription } from "@/types";
 import { resolvePayCycle, buildCycleHistory, toLocalDateStr } from "@/lib/utils";
+import { isFixedRecurringExpense, calculateCycleSpendProjection } from "../lib/financial-math";
 
 export interface PayCycleCalculation {
   startStr: string;
@@ -81,16 +82,26 @@ export function usePayCycleData({
     const elapsedDays = Math.min(totalDays, Math.max(1, Math.round((today.getTime() - start.getTime()) / 86400000) + 1));
     const remainingDays = Math.max(0, totalDays - elapsedDays);
 
-    const cycleExpensesSoFar = expenses.filter((e) => e.date && e.date >= startStr && e.date <= todayStr);
+    const cycleExpensesSoFar = expenses.filter(
+      (e) => e.type !== "income" && e.date && e.date >= startStr && e.date <= todayStr
+    );
     const spentSoFar = cycleExpensesSoFar.reduce((acc, e) => acc + (e.amount || 0), 0);
+    const fixedSpentSoFar = cycleExpensesSoFar
+      .filter(isFixedRecurringExpense)
+      .reduce((acc, e) => acc + (e.amount || 0), 0);
+    const variableSpentSoFar = Math.max(0, spentSoFar - fixedSpentSoFar);
 
-    const subMonthlyCost = subscriptions.reduce((acc, sub) => {
-      let cost = sub.cost || 0;
-      if (sub.billingCycle === "yearly") cost = cost / 12;
-      return acc + cost;
-    }, 0);
+    const subMonthlyCost = subscriptions
+      .filter((sub) => sub.type !== "income")
+      .reduce((acc, sub) => {
+        let cost = sub.cost || 0;
+        if (sub.billingCycle === "yearly") cost = cost / 12;
+        return acc + cost;
+      }, 0);
 
-    const prevCycleExpenses = expenses.filter((e) => e.date && e.date >= prevStartStr && e.date <= prevEndStr);
+    const prevCycleExpenses = expenses.filter(
+      (e) => e.type !== "income" && e.date && e.date >= prevStartStr && e.date <= prevEndStr
+    );
     const prevSameDayEnd = new Date(`${prevStartStr}T00:00:00`);
     prevSameDayEnd.setDate(prevSameDayEnd.getDate() + elapsedDays - 1);
     const prevSameDayEndStr = toLocalDateStr(prevSameDayEnd);
@@ -98,26 +109,43 @@ export function usePayCycleData({
       .filter((e) => e.date! <= prevSameDayEndStr)
       .reduce((acc, e) => acc + (e.amount || 0), 0);
     const prevCycleTransactional = prevCycleExpenses.reduce((acc, e) => acc + (e.amount || 0), 0);
-    const prevCycleSpend = prevCycleTransactional + subMonthlyCost;
+    const prevCycleFixed = prevCycleExpenses
+      .filter(isFixedRecurringExpense)
+      .reduce((acc, e) => acc + (e.amount || 0), 0);
+    const prevCycleVariable = Math.max(0, prevCycleTransactional - prevCycleFixed);
+    const prevCycleSpend = prevCycleTransactional + Math.max(0, subMonthlyCost - prevCycleFixed);
 
     const paceConfidence = Math.max(0, Math.min(1, (elapsedDays - BLACKOUT_DAYS) / WARMUP_DAYS));
-    const dailyPace = elapsedDays > 0 ? spentSoFar / elapsedDays : 0;
-    const paceProjectedTransactional = dailyPace * totalDays;
 
-    const pastCyclesSpend = cycleHistoryRaw
+    const pastCyclesVariableSpend = cycleHistoryRaw
       .slice(1, 1 + HISTORY_CYCLES_FOR_BASELINE)
-      .map((c) => expenses.filter((e) => e.date && e.date >= c.startStr && e.date <= c.endStr).reduce((acc, e) => acc + (e.amount || 0), 0))
+      .map((c) =>
+        expenses
+          .filter(
+            (e) =>
+              e.type !== "income" &&
+              e.date &&
+              e.date >= c.startStr &&
+              e.date <= c.endStr &&
+              !isFixedRecurringExpense(e)
+          )
+          .reduce((acc, e) => acc + (e.amount || 0), 0)
+      )
       .filter((v) => v > 0);
-    const historicalBaselineTransactional =
-      pastCyclesSpend.length > 0 ? pastCyclesSpend.reduce((a, b) => a + b, 0) / pastCyclesSpend.length : prevCycleTransactional;
+    const historicalVariableBaseline =
+      pastCyclesVariableSpend.length > 0
+        ? pastCyclesVariableSpend.reduce((a, b) => a + b, 0) / pastCyclesVariableSpend.length
+        : prevCycleVariable;
 
-    const projectedTransactional =
-      historicalBaselineTransactional > 0
-        ? paceConfidence * paceProjectedTransactional + (1 - paceConfidence) * historicalBaselineTransactional
-        : paceProjectedTransactional;
-
-    const hasLedgerHistory = historicalBaselineTransactional > 0 || spentSoFar > 0;
-    const projectedTotalSpend = hasLedgerHistory ? projectedTransactional : subMonthlyCost;
+    const { projectedTotalSpend } = calculateCycleSpendProjection({
+      fixedSpentSoFar,
+      variableSpentSoFar,
+      subMonthlyCost,
+      elapsedDays,
+      totalDays,
+      paceConfidence,
+      historicalVariableBaseline,
+    });
 
     const salaryThisCycle = loggedAmount ?? monthlySalary;
     const totalIncome = salaryThisCycle + additionalIncome;
@@ -161,9 +189,14 @@ export function usePayCycleData({
     return cycleHistoryRaw
       .slice(1)
       .map((c) => {
-        const cycleExpenses = expenses.filter((e) => e.date && e.date >= c.startStr && e.date <= c.endStr);
+        const cycleExpenses = expenses.filter(
+          (e) => e.type !== "income" && e.date && e.date >= c.startStr && e.date <= c.endStr
+        );
         const transactional = cycleExpenses.reduce((acc, e) => acc + (e.amount || 0), 0);
-        const spend = transactional + payCycle.subMonthlyCost;
+        const fixedInCycle = cycleExpenses
+          .filter(isFixedRecurringExpense)
+          .reduce((acc, e) => acc + (e.amount || 0), 0);
+        const spend = transactional + Math.max(0, payCycle.subMonthlyCost - fixedInCycle);
         const income = (c.loggedAmount ?? monthlySalary) + additionalIncome;
         return {
           startStr: c.startStr,

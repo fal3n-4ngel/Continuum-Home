@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
 
 export interface ConfirmState {
   isOpen: boolean;
@@ -30,7 +31,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({ confirmDlg, setConfi
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [confirmDlg.isOpen, setConfirmDlg]);
 
-  if (!confirmDlg.isOpen || typeof window === "undefined") return null;
+  if (typeof window === "undefined") return null;
 
   const isAlert = confirmDlg.variant === "alert";
   const tone = confirmDlg.tone || (confirmDlg.isDestructive !== false ? "danger" : "info");
@@ -40,59 +41,73 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({ confirmDlg, setConfi
   const confirmBtnBg = tone === "danger" ? "#b3666b" : tone === "success" ? "#16a34a" : "var(--text-primary)";
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/45 backdrop-blur-sm apple-backdrop-fade"
-      onClick={() => setConfirmDlg((prev) => ({ ...prev, isOpen: false }))}
-    >
-      <div
-        role={confirmDlg.isDestructive ? "alertdialog" : "dialog"}
-        aria-modal="true"
-        aria-labelledby="confirm-modal-title"
-        aria-describedby="confirm-modal-description"
-        className="m-4 flex w-full max-w-[400px] flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-7 shadow-subtle apple-modal-spring"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start gap-3.5">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xs" style={{ backgroundColor: iconBg }}>
-            {tone === "danger" && (
-              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-            )}
-            {tone === "success" && (
-              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-            )}
-            {tone === "info" && (
-              <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-            )}
-          </div>
-          <div>
-            <p id="confirm-modal-title" className="mb-1.5 text-[15px] font-bold text-text-primary">{confirmDlg.title}</p>
-            <p id="confirm-modal-description" className="text-[13px] leading-normal text-text-secondary">{confirmDlg.message}</p>
-          </div>
-        </div>
-        <div className="flex justify-end gap-2">
-          {!isAlert && (
-            <button
-              type="button"
-              className="rounded-xs border border-border-subtle bg-transparent px-4 py-2 text-xs font-mono uppercase tracking-wider font-medium text-text-primary transition-all duration-200 hover:bg-bg-primary active:scale-95 cursor-pointer"
-              onClick={() => setConfirmDlg((prev) => ({ ...prev, isOpen: false }))}
-            >
-              {confirmDlg.cancelText || "Cancel"}
-            </button>
-          )}
-          <button
-            type="button"
-            className="rounded-xs px-4 py-2 text-xs font-mono uppercase tracking-wider font-semibold transition-all active:scale-95 cursor-pointer hover:opacity-90 shadow-2xs"
-            style={{
-              backgroundColor: confirmBtnBg,
-              color: tone === "danger" || tone === "success" ? "#ffffff" : "var(--bg-card)",
-            }}
-            onClick={confirmDlg.onConfirm}
+    <AnimatePresence>
+      {confirmDlg.isOpen && (
+        <motion.div
+          key="confirm-backdrop"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.18, ease: "easeOut" }}
+          className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/45 backdrop-blur-sm"
+          onClick={() => setConfirmDlg((prev) => ({ ...prev, isOpen: false }))}
+        >
+          <motion.div
+            key="confirm-card"
+            role={confirmDlg.isDestructive ? "alertdialog" : "dialog"}
+            aria-modal="true"
+            aria-labelledby="confirm-modal-title"
+            aria-describedby="confirm-modal-description"
+            initial={{ opacity: 0, scale: 0.95, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 6 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.28 }}
+            className="m-4 flex w-full max-w-[400px] flex-col gap-4 rounded-card border border-border-subtle bg-bg-card p-7 shadow-subtle"
+            onClick={(e) => e.stopPropagation()}
           >
-            {confirmDlg.confirmText || (isAlert ? "OK" : "Confirm")}
-          </button>
-        </div>
-      </div>
-    </div>,
+            <div className="flex items-start gap-3.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xs" style={{ backgroundColor: iconBg }}>
+                {tone === "danger" && (
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                )}
+                {tone === "success" && (
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                )}
+                {tone === "info" && (
+                  <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={strokeColor} strokeWidth="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                )}
+              </div>
+              <div>
+                <p id="confirm-modal-title" className="mb-1.5 text-[15px] font-bold text-text-primary">{confirmDlg.title}</p>
+                <p id="confirm-modal-description" className="text-[13px] leading-normal text-text-secondary">{confirmDlg.message}</p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              {!isAlert && (
+                <button
+                  type="button"
+                  className="rounded-xs border border-border-subtle bg-transparent px-4 py-2 text-xs font-mono uppercase tracking-wider font-medium text-text-primary transition-transform duration-100 ease-out hover:bg-bg-primary active:scale-[0.97] cursor-pointer"
+                  onClick={() => setConfirmDlg((prev) => ({ ...prev, isOpen: false }))}
+                >
+                  {confirmDlg.cancelText || "Cancel"}
+                </button>
+              )}
+              <button
+                type="button"
+                className="rounded-xs px-4 py-2 text-xs font-mono uppercase tracking-wider font-semibold transition-transform duration-100 ease-out active:scale-[0.97] cursor-pointer hover:opacity-90 shadow-2xs"
+                style={{
+                  backgroundColor: confirmBtnBg,
+                  color: tone === "danger" || tone === "success" ? "#ffffff" : "var(--bg-card)",
+                }}
+                onClick={confirmDlg.onConfirm}
+              >
+                {confirmDlg.confirmText || (isAlert ? "OK" : "Confirm")}
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>,
     document.body
   );
 };

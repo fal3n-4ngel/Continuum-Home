@@ -8,20 +8,41 @@ export interface FooterOptions {
   unsubscribe?: { url: string; label: string };
 }
 
-export function htmlDoc(title: string, body: string): string {
+export function htmlDoc(title: string, body: string, preheader?: string): string {
+  const preheaderHtml = preheader
+    ? `<div style="display:none;font-size:1px;color:${COLORS.canvas};line-height:1px;max-height:0px;max-width:0px;opacity:0;overflow:hidden;">${preheader}&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;&nbsp;&zwnj;</div>`
+    : "";
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta name="color-scheme" content="light only">
   <meta name="supported-color-schemes" content="light">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta charset="utf-8">
   <title>${title}</title>
   <style>${EMAIL_CSS}</style>
 </head>
 <body class="font-sans" style="background-color:${COLORS.canvas};margin:0;padding:0;">
+  ${preheaderHtml}
   ${body}
 </body>
 </html>`;
+}
+
+export function brandMarkHtml(): string {
+  return `<table cellpadding="0" cellspacing="0" style="display:inline-table;vertical-align:middle;margin-right:8px;">
+    <tr>
+      <td style="width:7px;height:7px;background-color:${COLORS.ink};border-radius:1.5px;font-size:0;line-height:0;">&nbsp;</td>
+      <td style="width:2px;font-size:0;line-height:0;">&nbsp;</td>
+      <td style="width:7px;height:7px;background-color:${COLORS.ochre};border-radius:1.5px;font-size:0;line-height:0;">&nbsp;</td>
+    </tr>
+    <tr><td colspan="3" style="height:2px;font-size:0;line-height:0;">&nbsp;</td></tr>
+    <tr>
+      <td style="width:7px;height:7px;background-color:${COLORS.ochre};border-radius:1.5px;font-size:0;line-height:0;">&nbsp;</td>
+      <td style="width:2px;font-size:0;line-height:0;">&nbsp;</td>
+      <td style="width:7px;height:7px;background-color:${COLORS.ink};border-radius:1.5px;font-size:0;line-height:0;">&nbsp;</td>
+    </tr>
+  </table>`;
 }
 
 export function wrap(bodyRows: string, maxWidth = 680): string {
@@ -41,9 +62,7 @@ export function header(rightHtml: string): string {
             <td style="border-bottom:1px solid ${COLORS.hairline};padding-bottom:16px;">
               <table width="100%" cellpadding="0" cellspacing="0"><tr>
                 <td align="left" style="font-size:15px;font-weight:700;">
-                  <span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:${COLORS.terracotta};margin-right:6px;">⌜</span>
-                  <span class="txt-main font-sans" style="font-size:15px;font-weight:700;letter-spacing:-0.2px;">Continuum</span>
-                  <span style="font-family:ui-monospace,monospace;font-size:11px;font-weight:700;color:${COLORS.terracotta};margin-left:6px;">⌟</span>
+                  ${brandMarkHtml()}<span class="txt-main font-sans" style="font-size:15px;font-weight:700;letter-spacing:-0.2px;vertical-align:middle;">Continuum</span>
                 </td>
                 <td align="right">${rightHtml}</td>
               </tr></table>

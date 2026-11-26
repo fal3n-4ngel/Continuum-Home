@@ -29,7 +29,7 @@ import { HealthAnalyticsReport } from "@/lib/firebase";
 import { toLocalDateStr } from "@/lib/utils/dates";
 import { safeLocalStorage } from "@/lib/utils/storage";
 import { HistoricalAnalyticsView } from "./HistoricalAnalyticsView";
-import { calculateDailyAndWeeklyLimits } from "../lib/financial-math";
+import { calculateDailyAndWeeklyLimits, isFixedRecurringExpense } from "../lib/financial-math";
 
 interface PayCycle {
   startStr: string;
@@ -80,12 +80,16 @@ interface FinancialHealthTabProps {
     date: string | null;
     category?: string | null;
     title?: string | null;
+    notes?: string | null;
+    tags?: string[] | null;
+    type?: string | null;
+    idempotencyKey?: string | null;
   }>;
   investments: InvestmentAsset[];
   showInvestmentsTab: boolean;
   salaryDay: number;
   monthlySalary: number;
-  setMonthlySalary: (val: number) => void;
+  setMonthlySalary: (val: number, options?: { overwriteHistory?: boolean }) => void;
   additionalIncome: number;
   setAdditionalIncome: (val: number) => void;
   payCycle: PayCycle;
@@ -105,15 +109,15 @@ interface FinancialHealthTabProps {
 }
 
 const STAT_CARD =
-  "flex flex-col justify-between gap-2 rounded-sm border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-150 hover:border-border-hover";
+  "flex flex-col justify-between gap-2 rounded-card border border-border-subtle bg-bg-card p-5 shadow-subtle relative overflow-hidden transition-all duration-150 hover:border-border-hover";
 const LABEL_MONO = "font-mono text-[10px] font-semibold tracking-[0.8px] text-text-secondary uppercase";
 const STAT_VALUE = "text-[24px] font-bold tracking-tight text-text-primary";
 const STAT_SUBTEXT = "text-[11px] text-text-muted";
-const BENTO_CARD = "rounded-sm border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col justify-between";
+const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shadow-subtle flex flex-col justify-between";
 const BTN_PRIMARY =
-  "cursor-pointer rounded-sm border border-accent-terracotta bg-accent-terracotta px-4 py-2 font-mono text-xs font-semibold tracking-wider text-[#FAF8F5] uppercase shadow-xs transition-all duration-150 hover:opacity-90 disabled:opacity-50";
+  "cursor-pointer rounded-full border border-accent-terracotta bg-accent-terracotta px-4 py-2 font-mono text-xs font-semibold tracking-wider text-[#FAF8F5] uppercase shadow-xs transition-all duration-100 ease-out hover:opacity-90 active:scale-[0.97] disabled:opacity-50";
 const BTN_SECONDARY =
-  "cursor-pointer rounded-sm border border-border-subtle bg-bg-card px-4 py-2 font-mono text-xs font-semibold tracking-wider text-text-primary uppercase shadow-2xs transition-all duration-150 hover:bg-bg-primary hover:border-border-hover disabled:opacity-50";
+  "cursor-pointer rounded-md border border-border-subtle bg-bg-card px-4 py-2 font-mono text-xs font-semibold tracking-wider text-text-primary uppercase shadow-2xs transition-all duration-100 ease-out hover:bg-bg-primary hover:border-border-hover active:scale-[0.97] disabled:opacity-50";
 
 const fmtDate = (s: string) => {
   const d = new Date(`${s}T00:00:00`);
@@ -242,9 +246,14 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
     targetSavingsGoal,
   ]);
 
-  const severityColor = (severity?: string) => {
-    if (severity === "good") return "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
-    if (severity === "warning") return "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/30";
+  const severityColor = (severity?: string, trendStatus?: string) => {
+    const normalizedStatus = (trendStatus || "").toLowerCase();
+    const effectiveSeverity =
+      severity === "warning" && (normalizedStatus.includes("slower pace") || normalizedStatus.includes("on track"))
+        ? "good"
+        : severity;
+    if (effectiveSeverity === "good") return "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30";
+    if (effectiveSeverity === "warning") return "text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/30";
     return "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/30";
   };
 
@@ -313,19 +322,19 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
   }
 
   return (
-    <div className="rounded-sm border border-border-subtle border-t-2 border-t-accent-terracotta/80 bg-bg-card p-5 shadow-subtle flex flex-col gap-4 relative overflow-hidden transition-all duration-150">
+    <div className="rounded-card border border-border-subtle border-t-2 border-t-accent-terracotta/80 bg-bg-card p-5 shadow-subtle flex flex-col gap-4 relative overflow-hidden transition-all duration-150">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-subtle pb-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-8 w-8 items-center justify-center rounded-sm border border-border-subtle bg-bg-primary text-accent-terracotta">
             <BarChart3 size={16} />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h3 className="font-serif text-xl font-semibold tracking-tight text-text-primary">
                 Monthly Spend &amp; Trend Analytics
               </h3>
               {report && (
-                <span className={`px-2.5 py-0.5 rounded-sm font-mono text-[10px] font-semibold uppercase tracking-wider border flex items-center gap-1 ${severityColor(report.trendSeverity)}`}>
+                <span className={`px-2.5 py-0.5 rounded-sm font-mono text-[10px] font-semibold uppercase tracking-wider border flex items-center gap-1 ${severityColor(report.trendSeverity, report.trendStatus)}`}>
                   {cleanText(report.trendStatus)}
                 </span>
               )}
@@ -370,7 +379,7 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
 
       {report && (
         <div className="flex flex-col gap-4 text-xs">
-          <div className="border-l-2 border-l-accent-terracotta pl-3.5 py-1 text-text-secondary text-[12.5px] leading-relaxed italic">
+          <div className="border-l-2 border-l-accent-terracotta pl-3.5 py-1 max-w-3xl text-[13px] leading-relaxed text-text-secondary">
             <p className="font-medium text-text-primary">{cleanText(report.executiveSummary)}</p>
           </div>
 
@@ -388,7 +397,7 @@ const AiHealthAnalytics: React.FC<AiHealthAnalyticsProps> = ({
                         {currency}{cat.amount.toLocaleString("en-IN")} ({cat.percentage}%)
                       </span>
                     </div>
-                    <div className="h-1.5 w-full rounded-xs bg-border-subtle/30 overflow-hidden">
+                    <div className="h-2 w-full rounded-xs bg-border-subtle/30 overflow-hidden">
                       <div
                         className="h-full rounded-xs transition-all duration-300"
                         style={{
@@ -506,6 +515,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   const [showMethodology, setShowMethodology] = useState(false);
   const [salaryDraft, setSalaryDraft] = useState<string>(monthlySalary ? String(monthlySalary) : "");
   const [additionalIncomeDraft, setAdditionalIncomeDraft] = useState<string>(additionalIncome ? String(additionalIncome) : "");
+  const [overwriteSalaryHistory, setOverwriteSalaryHistory] = useState(false);
 
   useEffect(() => {
     setSalaryDraft(monthlySalary ? String(monthlySalary) : "");
@@ -630,7 +640,13 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
   const todayStr = toLocalDateStr(new Date());
 
   const todaySpent = expenses
-    .filter((e) => e.date === todayStr && typeof e.amount === "number")
+    .filter(
+      (e) =>
+        e.type !== "income" &&
+        e.date === todayStr &&
+        typeof e.amount === "number" &&
+        !isFixedRecurringExpense(e)
+    )
     .reduce((sum, e) => sum + (e.amount || 0), 0);
 
   const {
@@ -993,7 +1009,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
             <button
               type="button"
               onClick={() => setHealthView("overview")}
-              className="flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs uppercase tracking-wider font-semibold transition-all duration-150 cursor-pointer bg-bg-card text-text-primary shadow-xs border border-border-subtle/80"
+              className="flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs uppercase tracking-wider font-semibold transition-all duration-150 cursor-pointer bg-bg-card text-text-primary shadow-xs border border-border-subtle/80 dark:bg-white/10 dark:border-white/15"
             >
               <HeartPulse size={13} className="text-accent-terracotta" />
               <span>Overview &amp; Burn Rate</span>
@@ -1035,10 +1051,10 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                   key={pct}
                   type="button"
                   onClick={() => handleTargetSavingsChange(amount)}
-                  className={`cursor-pointer rounded-sm border-none px-3.5 py-1 font-mono text-xs font-semibold uppercase tracking-wider transition-all duration-150 ${
+                  className={`cursor-pointer rounded-sm px-3.5 py-1 font-mono text-xs font-semibold uppercase tracking-wider transition-all duration-150 ${
                     isActive
-                      ? "bg-bg-card text-text-primary shadow-xs border border-border-subtle/80 font-bold"
-                      : "bg-transparent text-text-secondary hover:text-text-primary"
+                      ? "bg-bg-card text-text-primary shadow-xs border border-border-subtle/80 dark:bg-white/10 dark:border-white/15 font-bold"
+                      : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
                   }`}
                 >
                   {label}
@@ -1165,19 +1181,12 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
               {payCycle.expectedSavings.toLocaleString("en-IN", { maximumFractionDigits: 0 })}
             </div>
           </div>
-          <span className={STAT_SUBTEXT}>{payCycle.savingsRate.toFixed(1)}% of income</span>
+          <span className={STAT_SUBTEXT}>
+            {payCycle.savingsRate.toFixed(1)}% of income
+            {payCycle.elapsedDays <= 2 ? " · Early-cycle baseline" : ""}
+          </span>
         </div>
       </div>
-
-      <AiHealthAnalytics
-        currency={currency}
-        payCycle={payCycle}
-        targetSavingsGoal={targetSavingsGoal}
-        portfolioValue={portfolioValue}
-        getHeaders={getHeaders}
-        aiOptOut={aiOptOut}
-        onOpenSettings={onOpenSettings}
-      />
 
       <div className="grid grid-cols-2 gap-5 max-lg:grid-cols-1">
         <div className={`${BENTO_CARD} border-t-2 border-t-accent-blue/80`}>
@@ -1304,8 +1313,8 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                   onClick={() => setRightTab("reconcile")}
                   className={`flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs font-semibold uppercase tracking-wider transition-all duration-150 cursor-pointer ${
                     rightTab === "reconcile"
-                      ? "bg-bg-card text-text-primary shadow-xs border border-border-subtle/80 font-bold"
-                      : "bg-transparent text-text-secondary hover:text-text-primary"
+                      ? "bg-bg-card text-text-primary shadow-xs border border-border-subtle/80 dark:bg-white/10 dark:border-white/15 font-bold"
+                      : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
                   }`}
                 >
                   <ScanSearch size={14} className="text-accent-terracotta" /> Reconcile Cash
@@ -1315,8 +1324,8 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                   onClick={() => setRightTab("income")}
                   className={`flex items-center gap-1.5 rounded-sm px-3.5 py-1 font-mono text-xs font-semibold uppercase tracking-wider transition-all duration-150 cursor-pointer ${
                     rightTab === "income"
-                      ? "bg-bg-card text-text-primary shadow-xs border border-border-subtle/80 font-bold"
-                      : "bg-transparent text-text-secondary hover:text-text-primary"
+                      ? "bg-bg-card text-text-primary shadow-xs border border-border-subtle/80 dark:bg-white/10 dark:border-white/15 font-bold"
+                      : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
                   }`}
                 >
                   <Settings2 size={14} /> Payday &amp; Income
@@ -1535,7 +1544,7 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                         onBlur={(e) => {
                           const val = Math.max(0, parseFloat(e.target.value) || 0);
                           setSalaryDraft(String(val) || "");
-                          setMonthlySalary(val);
+                          setMonthlySalary(val, { overwriteHistory: overwriteSalaryHistory });
                         }}
                         placeholder="0"
                         className="mt-1 w-full rounded-md border border-border-subtle bg-bg-card p-2 text-xs text-text-primary outline-none"
@@ -1557,12 +1566,45 @@ export const FinancialHealthTab: React.FC<FinancialHealthTabProps> = ({
                       />
                     </div>
                   </div>
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                    <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-text-muted select-none">
+                      <input
+                        type="checkbox"
+                        checked={overwriteSalaryHistory}
+                        onChange={(e) => setOverwriteSalaryHistory(e.target.checked)}
+                        className="h-3.5 w-3.5 rounded border-border-subtle"
+                      />
+                      <span>Also overwrite previous pay cycles</span>
+                    </label>
+                    {overwriteSalaryHistory && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const val = Math.max(0, parseFloat(salaryDraft) || monthlySalary || 0);
+                          setMonthlySalary(val, { overwriteHistory: true });
+                        }}
+                        className="cursor-pointer rounded-md border border-border-subtle bg-bg-secondary px-2.5 py-1 text-[10.5px] font-semibold text-text-primary transition-colors hover:border-border-hover"
+                      >
+                        Apply to past cycles
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
+
+      <AiHealthAnalytics
+        currency={currency}
+        payCycle={payCycle}
+        targetSavingsGoal={targetSavingsGoal}
+        portfolioValue={portfolioValue}
+        getHeaders={getHeaders}
+        aiOptOut={aiOptOut}
+        onOpenSettings={onOpenSettings}
+      />
 
       <div className="grid grid-cols-2 gap-5 max-lg:grid-cols-1">
         <div className={`${BENTO_CARD} border-t-2 border-t-border-subtle`}>

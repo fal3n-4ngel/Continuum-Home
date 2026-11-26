@@ -113,6 +113,25 @@ export function useSubscriptionsController({
     [subscriptions, getHeaders, triggerConfirm]
   );
 
+  const updateSubscription = useCallback(
+    async (id: string, patch: Partial<Subscription>) => {
+      const previousList = [...subscriptions];
+      setSubscriptions((prev) => prev.map((s) => (s.id === id ? { ...s, ...patch } : s)));
+      try {
+        const res = await fetch(`/api/subscriptions/${id}`, {
+          method: "PATCH",
+          headers: getHeaders(),
+          body: JSON.stringify(patch),
+        });
+        if (!res.ok) throw new Error("Failed to update subscription");
+      } catch (err) {
+        console.error(err);
+        setSubscriptions(previousList);
+      }
+    },
+    [subscriptions, getHeaders]
+  );
+
   const updateSubscriptionIcon = useCallback(
     async (id: string, icon: string) => {
       const nextIcon = icon.trim() || null;
@@ -190,6 +209,7 @@ export function useSubscriptionsController({
     fetchSubscriptions,
     addSubscription,
     deleteSubscription,
+    updateSubscription,
     updateSubscriptionIcon,
     toggleSubscriptionAutoPost,
     syncDueSubscriptions,

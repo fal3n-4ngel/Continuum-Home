@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
+import { withUser } from '@/lib/utils/route-handlers';
 
-export async function GET(request: Request) {
+export const GET = withUser('GET /api/omdb', async (request) => {
   const { searchParams } = new URL(request.url);
   const apiKey = process.env.OMDB_API_KEY;
 
@@ -34,4 +35,4 @@ export async function GET(request: Request) {
     console.error('Error proxying to OMDb:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-}
+});
