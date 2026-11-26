@@ -6,7 +6,7 @@ import { LogoMark } from "@/components/Logo";
 import { SITE_NAME } from "@/lib/utils";
 import { safeSessionStorage } from "@/lib/utils/storage";
 import { useTheme } from "@/lib/theme/use-theme";
-import { GoogleAuthProvider, signInWithRedirect, type Auth } from "firebase/auth";
+import type { Auth } from "firebase/auth";
 
 function GoogleIcon({ className }: { className?: string }) {
   return (
@@ -126,9 +126,7 @@ export default function LoginPage() {
             setStatus("error");
             setError("Unable to complete redirect sign-in. You can sign in directly below.");
           } else {
-            sessionStorage.setItem("redirect_sent", "1");
-            setStatus("redirecting");
-            await signInWithRedirect(auth, new GoogleAuthProvider());
+            setStatus("ready");
           }
         }
 
