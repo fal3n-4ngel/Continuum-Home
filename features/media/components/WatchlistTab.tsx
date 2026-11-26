@@ -136,10 +136,26 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
   const [sortBy, setSortBy] = React.useState<"title" | "rating" | "year">("year");
   const [visibleCount, setVisibleCount] = React.useState(36);
   const [synopsisExpanded, setSynopsisExpanded] = React.useState(false);
+  const loadMoreRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
     setVisibleCount(36);
   }, [activeCategoryTab, statusFilter, titleSearch, sortBy]);
+
+  React.useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((prev) => prev + 36);
+        }
+      },
+      { rootMargin: "240px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [activeCategoryTab, statusFilter, titleSearch, sortBy, visibleCount]);
 
   const [addingMap, setAddingMap] = React.useState<Record<string, boolean>>({});
   const [justAddedMap, setJustAddedMap] = React.useState<Record<string, boolean>>({});
@@ -698,11 +714,19 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
                       { id: "plan_to_watch", label: "⏳ Plan" },
                       { id: "completed", label: "✅ Done" },
                     ] as const
-                  ).map((st) => (
-                    <button key={st.id} onClick={() => setStatusFilter(st.id)} className={statusPillClass(statusFilter === st.id)}>
-                      {st.label}
-                    </button>
-                  ))}
+                  ).map((st) => {
+                    const count = watchlist.filter(
+                      (i) => i.type === activeCategoryTab && (st.id === "all" || i.status === st.id)
+                    ).length;
+                    return (
+                      <button key={st.id} onClick={() => setStatusFilter(st.id)} className={statusPillClass(statusFilter === st.id)}>
+                        {st.label}
+                        {count > 0 && (
+                          <span className="ml-1 font-mono text-[9.5px] opacity-60">{count}</span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
                 {openDataCorrection && (
                   <button
@@ -877,7 +901,7 @@ export const WatchlistTab: React.FC<WatchlistTabProps> = ({
           </div>
 
           {filteredWatchlist.length > visibleCount && (
-            <div className="mt-5 flex justify-center">
+            <div ref={loadMoreRef} className="mt-5 flex justify-center">
               <button
                 type="button"
                 onClick={() => setVisibleCount((prev) => prev + 36)}
