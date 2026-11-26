@@ -5,7 +5,6 @@ import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { SITE_NAME, getAuthHeaders, toLocalDateStr } from "@/lib/utils";
 import { safeLocalStorage } from "@/lib/utils/storage";
-import { readUserCache, writeUserCache } from "@/lib/utils/client-cache";
 import { WatchlistItem, ReleaseNote } from "@/types";
 import { useExpensesStore } from "@/lib/stores/expenses-store";
 import { useUiStore } from "@/lib/stores/ui-store";
@@ -129,18 +128,14 @@ export default function Dashboard() {
     setIsFetchingExpenses(true);
     try {
       const res = await fetch("/api/expenses", { headers: getHeaders() });
-      if (res.ok) {
-        const data = await res.json();
-        setExpenses(data);
-        if (user?.uid) writeUserCache(user.uid, "expenses", data);
-      }
+      if (res.ok) setExpenses(await res.json());
     } catch (err) {
       console.error(err);
     } finally {
       setIsFetchingExpenses(false);
       setExpensesLoaded(true);
     }
-  }, [getHeaders, setIsFetchingExpenses, setExpenses, setExpensesLoaded, user?.uid]);
+  }, [getHeaders, setIsFetchingExpenses, setExpenses, setExpensesLoaded]);
 
   const media = useMediaController({
     user,
@@ -276,16 +271,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user) {
-      if (user.uid) {
-        const cachedExpenses = readUserCache<any[]>(user.uid, "expenses");
-        if (cachedExpenses) {
-          setExpenses(cachedExpenses);
-          setExpensesLoaded(true);
-        }
-        if (safeLocalStorage.getItem(`phub_settings_synced_${user.uid}`) === "1") {
-          useExpensesStore.getState().setSettingsLoaded(true);
-        }
-      }
       Promise.allSettled([
         fetchExpenses(),
         media.fetchWatchlist(),
@@ -295,12 +280,6 @@ export default function Dashboard() {
       ]);
     }
   }, [user]);
-
-  useEffect(() => {
-    if (user?.uid && expensesLoaded) {
-      writeUserCache(user.uid, "expenses", expenses);
-    }
-  }, [user?.uid, expensesLoaded, expenses]);
 
   useEffect(() => {
     if (!user || !expensesLoaded) return;

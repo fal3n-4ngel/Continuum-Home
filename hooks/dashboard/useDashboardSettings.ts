@@ -134,9 +134,6 @@ export function useDashboardSettings({
         if (data.lastSeenRelease) {
           setFirestoreLastSeenRelease(data.lastSeenRelease);
         }
-        if (user?.uid) {
-          safeLocalStorage.setItem(`phub_settings_synced_${user.uid}`, "1");
-        }
         setIsProUser(data.isPro === true);
 
         if (data.integrations) {

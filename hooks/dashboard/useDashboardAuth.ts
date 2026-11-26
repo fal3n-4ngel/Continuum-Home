@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { safeLocalStorage } from "@/lib/utils/storage";
-import { clearAllUserCaches } from "@/lib/utils/client-cache";
 import { setClientAuthSession, clearClientAuthSession } from "@/lib/auth/session-cookie";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import type { Auth, GoogleAuthProvider as GoogleAuthProviderType, UserCredential, AuthProvider } from "firebase/auth";
@@ -103,7 +102,6 @@ export function useDashboardAuth() {
           setUser(null);
           setIsProUser(false);
           clearClientAuthSession();
-          clearAllUserCaches();
         }
         setAuthLoading(false);
       });
