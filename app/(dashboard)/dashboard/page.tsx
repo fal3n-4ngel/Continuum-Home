@@ -297,6 +297,12 @@ export default function Dashboard() {
   }, [user]);
 
   useEffect(() => {
+    if (user?.uid && expensesLoaded) {
+      writeUserCache(user.uid, "expenses", expenses);
+    }
+  }, [user?.uid, expensesLoaded, expenses]);
+
+  useEffect(() => {
     if (!user || !expensesLoaded) return;
     if (safeLocalStorage.getItem("phub_onboarding_seen")) return;
     safeLocalStorage.setItem("phub_onboarding_seen", "1");
