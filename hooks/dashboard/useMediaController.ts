@@ -701,6 +701,11 @@ export function useMediaController({
   };
 
 
+  const hydrateWatchlist = (items: WatchlistItem[]) => {
+    setWatchlist(Array.isArray(items) ? items : []);
+    setWatchlistLoaded(true);
+  };
+
   const fetchWatchlist = async () => {
     setIsFetchingWatchlist(true);
     try {
@@ -1117,6 +1122,7 @@ export function useMediaController({
   return {
     watchlist,
     setWatchlist,
+    hydrateWatchlist,
     isFetchingWatchlist,
     watchlistLoaded,
     mediaQuery,

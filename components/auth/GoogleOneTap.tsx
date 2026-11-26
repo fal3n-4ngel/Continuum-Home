@@ -72,10 +72,11 @@ export function GoogleOneTap({ clientId, disabled = false }: GoogleOneTapProps) 
             console.error("[GoogleOneTap] Sign-in with credential failed:", signInErr);
           }
         },
-        auto_select: false,
+        auto_select: true,
         cancel_on_tap_outside: true,
         context: "signin",
         itp_support: true,
+        use_fedcm_for_prompt: true,
       });
 
       // 3. Display One Tap prompt overlay

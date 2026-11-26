@@ -84,6 +84,8 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
   isFetchingSubscriptions,
 }) => {
   const [now] = React.useState(() => Date.now());
+  const [subSearch, setSubSearch] = React.useState("");
+  const [subFilter, setSubFilter] = React.useState<"all" | "monthly" | "yearly" | "due">("all");
   const [editingIconId, setEditingIconId] = React.useState<string | null>(null);
   const [iconDraft, setIconDraft] = React.useState("");
   const [editingSubId, setEditingSubId] = React.useState<string | null>(null);
@@ -284,12 +286,49 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
 
       <div className="grid grid-cols-[1fr_300px] items-start gap-6 max-md:grid-cols-1">
         <div className={BENTO_CARD}>
-          <span className={`${LABEL_MONO} mb-4 block`}>
-            Active Subscriptions
-            <span className="ml-2 rounded-full bg-bg-secondary px-[7px] py-0.5 text-[11px] font-medium text-text-muted">
-              {subscriptions.length}
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5">
+            <span className={LABEL_MONO}>
+              Active Subscriptions
+              <span className="ml-2 rounded-full bg-bg-secondary px-[7px] py-0.5 text-[11px] font-medium text-text-muted">
+                {subscriptions.length}
+              </span>
             </span>
-          </span>
+
+            {subscriptions.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 max-md:w-full">
+                <input
+                  type="text"
+                  placeholder="Filter..."
+                  value={subSearch}
+                  onChange={(e) => setSubSearch(e.target.value)}
+                  className={`${INPUT_CLASS} w-[130px] max-md:flex-1 py-1 text-xs`}
+                />
+                <div className="flex gap-0.5 rounded-lg bg-bg-secondary p-[3px] overflow-x-auto hide-scrollbar">
+                  {(
+                    [
+                      { id: "all", label: "All" },
+                      { id: "monthly", label: "Monthly" },
+                      { id: "yearly", label: "Yearly" },
+                      { id: "due", label: "Due Soon" },
+                    ] as const
+                  ).map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setSubFilter(f.id)}
+                      className={`cursor-pointer whitespace-nowrap rounded-md px-2.5 py-1 text-[11px] font-semibold transition-all ${
+                        subFilter === f.id
+                          ? "bg-bg-card text-text-primary border border-border-subtle shadow-2xs"
+                          : "border border-transparent text-text-secondary hover:text-text-primary"
+                      }`}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="flex flex-col gap-2">
             {subscriptions.length === 0 && isFetchingSubscriptions && (
@@ -298,7 +337,25 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
             {subscriptions.length === 0 && !isFetchingSubscriptions && (
               <p className="p-5 text-center text-[13px] text-text-muted">No subscriptions added yet.</p>
             )}
-            {subscriptions.map((sub) => {
+            {(() => {
+              const visibleSubscriptions = subscriptions.filter((sub) => {
+                if (subSearch.trim() && !sub.name.toLowerCase().includes(subSearch.trim().toLowerCase())) return false;
+                if (subFilter === "monthly" && sub.billingCycle !== "monthly") return false;
+                if (subFilter === "yearly" && sub.billingCycle !== "yearly") return false;
+                if (subFilter === "due") {
+                  const daysUntil = Math.ceil((new Date(sub.nextBillingDate).getTime() - now) / 86400000);
+                  if (daysUntil > 7) return false;
+                }
+                return true;
+              });
+              if (subscriptions.length > 0 && visibleSubscriptions.length === 0) {
+                return (
+                  <p className="p-5 text-center text-[13px] text-text-muted">
+                    No subscriptions match the current filter.
+                  </p>
+                );
+              }
+              return visibleSubscriptions.map((sub) => {
               const nextDate = new Date(sub.nextBillingDate);
               const daysUntil = Math.ceil((nextDate.getTime() - now) / 86400000);
               const isDueSoon = daysUntil <= 7 && daysUntil >= 0;
@@ -503,7 +560,8 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                   </div>
                 </div>
               );
-            })}
+              });
+            })()}
           </div>
         </div>
 

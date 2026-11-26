@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { SITE_NAME, getAuthHeaders, toLocalDateStr } from "@/lib/utils";
+import { SITE_NAME, getAuthHeaders, toLocalDateStr, isUatDeployment } from "@/lib/utils";
 import { safeLocalStorage } from "@/lib/utils/storage";
 import { WatchlistItem, ReleaseNote } from "@/types";
 import { useExpensesStore } from "@/lib/stores/expenses-store";
@@ -195,10 +195,40 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
+    const tabMap: Record<string, string> = {
+      "1": "expenses",
+      "2": "financial",
+      "3": "investments",
+      "4": "media",
+      "5": "reports",
+      "6": "agent",
+      "7": "settings",
+    };
     const onKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setShowQuickAdd((prev) => !prev);
+        return;
+      }
+      if (e.key === "Escape") {
+        setShowQuickAdd(false);
+        return;
+      }
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === "INPUT" ||
+          target.tagName === "TEXTAREA" ||
+          target.tagName === "SELECT" ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const nextTab = tabMap[e.key];
+      if (nextTab) {
+        e.preventDefault();
+        setActiveTabState(nextTab);
       }
     };
     window.addEventListener("keydown", onKeyDown);
@@ -206,24 +236,22 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
-    Promise.all([
-      fetch("/api/release-notes/latest").then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      fetch("/api/settings", { headers: getHeaders() }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-    ]).then(([relData, settingsData]) => {
-      if (relData?.releaseNote && relData.releaseNote.active) {
-        const note = relData.releaseNote as ReleaseNote;
-        const firestoreSeen = settingsData?.lastSeenRelease;
-        const localSeen = safeLocalStorage.getItem("continuum_last_seen_release");
-        const lastSeen = firestoreSeen || localSeen;
-        if (firestoreSeen) setFirestoreLastSeenRelease(firestoreSeen);
-        if (lastSeen !== note.id && lastSeen !== note.version) {
-          setActiveReleaseNote(note);
-          setShowReleaseNotesModal(true);
+    if (!user || !settings.settingsLoaded) return;
+    fetch("/api/release-notes/latest")
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then((relData) => {
+        if (relData?.releaseNote && relData.releaseNote.active) {
+          const note = relData.releaseNote as ReleaseNote;
+          const localSeen = safeLocalStorage.getItem("continuum_last_seen_release");
+          const lastSeen = firestoreLastSeenRelease || localSeen;
+          if (lastSeen !== note.id && lastSeen !== note.version) {
+            setActiveReleaseNote(note);
+            setShowReleaseNotesModal(true);
+          }
         }
-      }
-    });
-  }, [user, getHeaders]);
+      });
+  }, [user, settings.settingsLoaded, firestoreLastSeenRelease]);
 
   const handleDismissReleaseNotes = useCallback(() => {
     if (activeReleaseNote) {
@@ -242,7 +270,30 @@ export default function Dashboard() {
   }, [activeReleaseNote, user, getHeaders]);
 
   useEffect(() => {
-    if (user) {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/bootstrap", { headers: getHeaders() });
+        if (res.ok) {
+          const data = await res.json();
+          if (cancelled) return;
+          if (Array.isArray(data.expenses)) setExpenses(data.expenses);
+          setExpensesLoaded(true);
+          if (Array.isArray(data.watchlist)) media.hydrateWatchlist(data.watchlist);
+          if (Array.isArray(data.subscriptions)) subs.hydrateSubscriptions(data.subscriptions);
+          const portfolioList = Array.isArray(data.portfolio)
+            ? data.portfolio
+            : Array.isArray(data.portfolio?.assets)
+            ? data.portfolio.assets
+            : [];
+          useInvestmentsStore.getState().setInvestments(portfolioList);
+          useInvestmentsStore.getState().setInvestmentsLoaded(true);
+          if (data.settings) settings.applySettingsData(data.settings);
+          return;
+        }
+      } catch {}
+      if (cancelled) return;
       Promise.allSettled([
         fetchExpenses(),
         media.fetchWatchlist(),
@@ -250,7 +301,10 @@ export default function Dashboard() {
         inv.fetchInvestments(),
         settings.fetchSettings(),
       ]);
-    }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user]);
 
   useEffect(() => {
@@ -295,7 +349,18 @@ export default function Dashboard() {
 
   const isDataLoaded =
     !user || (expensesLoaded && media.watchlistLoaded && subs.subscriptionsLoaded && investmentsLoaded && settings.settingsLoaded);
-  const showLoader = authLoading;
+  const isActiveTabReady =
+    !user ||
+    (settings.settingsLoaded &&
+      (activeTab === "media"
+        ? media.watchlistLoaded
+        : activeTab === "investments"
+        ? investmentsLoaded
+        : activeTab === "financial"
+        ? expensesLoaded && subs.subscriptionsLoaded
+        : expensesLoaded));
+  const showLoader = authLoading || !isActiveTabReady;
+  const loaderAccentClass = isUatDeployment() ? "bg-[#DC2626]" : "bg-[#D99419]";
 
   if (showLoader) {
     return (
@@ -314,9 +379,9 @@ export default function Dashboard() {
         <div className="flex flex-col items-center gap-6">
           <div className="grid grid-cols-2 gap-1.5 w-11 h-11">
             <div className="bento-cell bento-cell-1 rounded-[4px] bg-text-primary" />
-            <div className="bento-cell bento-cell-2 rounded-[4px] bg-text-primary/60" />
-            <div className="bento-cell bento-cell-3 rounded-[4px] bg-text-primary/60" />
-            <div className="bento-cell bento-cell-4 rounded-[4px] bg-text-primary/30" />
+            <div className={`bento-cell bento-cell-2 rounded-[4px] ${loaderAccentClass}`} />
+            <div className={`bento-cell bento-cell-3 rounded-[4px] ${loaderAccentClass}`} />
+            <div className="bento-cell bento-cell-4 rounded-[4px] bg-text-primary" />
           </div>
           <div className="flex flex-col items-center gap-1.5 text-center animate-[heroFadeUp_0.6s_ease-out_both]">
             <span className="font-body font-semibold text-lg tracking-tight">{SITE_NAME}</span>

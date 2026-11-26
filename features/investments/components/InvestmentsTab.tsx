@@ -269,6 +269,8 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
 
   const [activeGuideTab, setActiveGuideTab] = React.useState<"allocations" | "classes" | "advice">("allocations");
   const [selectedRiskProfile, setSelectedRiskProfile] = React.useState<"conservative" | "balanced" | "aggressive">("balanced");
+  const [holdingSearch, setHoldingSearch] = React.useState("");
+  const [holdingCategoryFilter, setHoldingCategoryFilter] = React.useState<"all" | InvestmentCategory>("all");
 
   const [mounted, setMounted] = React.useState(false);
   React.useEffect(() => {
@@ -966,11 +968,50 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
 
         <div className="flex flex-col gap-5 overflow-hidden">
           <div className={`${BENTO_CARD} p-5 border-t-2 border-t-[#e39282]/80`}>
-            <div className="flex items-center justify-between border-b border-border-subtle pb-3.5 mb-4">
-              <span className={LABEL_MONO}>Active Holdings Ledger</span>
-              <span className="text-[10.5px] text-text-muted italic">Values in {currency}</span>
+            <div className="flex flex-wrap items-center justify-between gap-2.5 border-b border-border-subtle pb-3.5 mb-4">
+              <div className="flex items-center gap-2">
+                <span className={LABEL_MONO}>Active Holdings Ledger</span>
+                <span className="text-[10.5px] text-text-muted italic">Values in {currency}</span>
+              </div>
+
+              {activeInvestments.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 max-md:w-full">
+                  <input
+                    type="text"
+                    placeholder="Search holdings..."
+                    value={holdingSearch}
+                    onChange={(e) => setHoldingSearch(e.target.value)}
+                    className={`${INPUT_CLASS} !w-[150px] max-md:!w-auto max-md:flex-1 py-1 text-xs`}
+                  />
+                  <select
+                    value={holdingCategoryFilter}
+                    onChange={(e) => setHoldingCategoryFilter(e.target.value as "all" | InvestmentCategory)}
+                    className={`${INPUT_CLASS} !w-auto cursor-pointer py-1 text-xs`}
+                  >
+                    <option value="all">All Categories</option>
+                    {Array.from(new Set(activeInvestments.map((a) => a.category))).map((cat) => (
+                      <option key={cat} value={cat}>
+                        {categoryLabels[cat] || cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
+            {(() => {
+              const filteredActiveInvestments = activeInvestments.filter((asset) => {
+                if (holdingCategoryFilter !== "all" && asset.category !== holdingCategoryFilter) return false;
+                if (
+                  holdingSearch.trim() &&
+                  !asset.name.toLowerCase().includes(holdingSearch.trim().toLowerCase()) &&
+                  !(asset.notes || "").toLowerCase().includes(holdingSearch.trim().toLowerCase())
+                ) {
+                  return false;
+                }
+                return true;
+              });
+              return (
             <div className="overflow-x-auto">
               <table className="w-full border-collapse text-left">
                 <thead>
@@ -986,7 +1027,7 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                   </tr>
                 </thead>
                 <tbody>
-                  {activeInvestments.map((asset) => {
+                  {filteredActiveInvestments.map((asset) => {
                     return (
                       <AssetRow
                         key={asset.id}
@@ -1009,7 +1050,16 @@ export const InvestmentsTab: React.FC<InvestmentsTabProps> = ({
                   </p>
                 </div>
               )}
+              {activeInvestments.length > 0 && filteredActiveInvestments.length === 0 && (
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <p className="text-[13px] text-text-muted font-medium">
+                    No holdings match the current filter.
+                  </p>
+                </div>
+              )}
             </div>
+              );
+            })()}
           </div>
 
           {soldInvestments.length > 0 && (

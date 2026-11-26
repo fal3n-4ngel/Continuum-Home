@@ -29,26 +29,33 @@ export function useSubscriptionsController({
   const [isAddingSub, setIsAddingSub] = useState(false);
   const [isSyncingSubscriptions, setIsSyncingSubscriptions] = useState(false);
 
+  const hydrateSubscriptions = useCallback(
+    (loaded: Subscription[]) => {
+      const rolled = loaded.map((sub) => {
+        if (sub.autoPost) return sub;
+        const futureDate = getNextFutureBillingDate(sub.nextBillingDate, sub.billingCycle);
+        if (futureDate !== sub.nextBillingDate) {
+          fetch(`/api/subscriptions/${sub.id}`, {
+            method: "PATCH",
+            headers: getHeaders(),
+            body: JSON.stringify({ nextBillingDate: futureDate }),
+          }).catch((e) => console.error(e));
+          return { ...sub, nextBillingDate: futureDate };
+        }
+        return sub;
+      });
+      setSubscriptions(rolled);
+      setSubscriptionsLoaded(true);
+    },
+    [getHeaders, setSubscriptions, setSubscriptionsLoaded]
+  );
+
   const fetchSubscriptions = useCallback(async () => {
     setIsFetchingSubscriptions(true);
     try {
       const res = await fetch("/api/subscriptions", { headers: getHeaders() });
       if (res.ok) {
-        const loaded = (await res.json()) as Subscription[];
-        const rolled = loaded.map((sub) => {
-          if (sub.autoPost) return sub;
-          const futureDate = getNextFutureBillingDate(sub.nextBillingDate, sub.billingCycle);
-          if (futureDate !== sub.nextBillingDate) {
-            fetch(`/api/subscriptions/${sub.id}`, {
-              method: "PATCH",
-              headers: getHeaders(),
-              body: JSON.stringify({ nextBillingDate: futureDate }),
-            }).catch((e) => console.error(e));
-            return { ...sub, nextBillingDate: futureDate };
-          }
-          return sub;
-        });
-        setSubscriptions(rolled);
+        hydrateSubscriptions((await res.json()) as Subscription[]);
       }
     } catch (err) {
       console.error(err);
@@ -56,7 +63,7 @@ export function useSubscriptionsController({
       setIsFetchingSubscriptions(false);
       setSubscriptionsLoaded(true);
     }
-  }, [getHeaders]);
+  }, [getHeaders, hydrateSubscriptions, setIsFetchingSubscriptions, setSubscriptionsLoaded]);
 
   const addSubscription = useCallback(
     async (e: React.FormEvent) => {
@@ -207,6 +214,7 @@ export function useSubscriptionsController({
     isAddingSub,
     isSyncingSubscriptions,
     fetchSubscriptions,
+    hydrateSubscriptions,
     addSubscription,
     deleteSubscription,
     updateSubscription,

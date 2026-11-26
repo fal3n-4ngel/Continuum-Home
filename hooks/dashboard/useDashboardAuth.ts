@@ -36,13 +36,43 @@ export function useDashboardAuth() {
     }
 
     let unsubscribe: (() => void) | undefined;
-    import("firebase/app").then(async ({ initializeApp, getApps }) => {
+
+    const loadFirebaseConfig = async () => {
+      if (
+        process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
+        process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN &&
+        process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+      ) {
+        return {
+          apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+          authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+          projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+          storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+          messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+          appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+        };
+      }
+      const cachedRaw = safeLocalStorage.getItem("phub_firebase_config");
+      if (cachedRaw) {
+        try {
+          const parsed = JSON.parse(cachedRaw);
+          if (parsed && parsed.apiKey) return parsed;
+        } catch {}
+      }
       const res = await fetch("/api/auth/config");
       const config = await res.json();
-      const app = getApps().length ? getApps()[0] : initializeApp(config);
+      try {
+        safeLocalStorage.setItem("phub_firebase_config", JSON.stringify(config));
+      } catch {}
+      return config;
+    };
 
-      const { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, getRedirectResult } =
-        await import("firebase/auth");
+    Promise.all([
+      import("firebase/app"),
+      import("firebase/auth"),
+      loadFirebaseConfig(),
+    ]).then(([{ initializeApp, getApps }, { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, getRedirectResult }, config]) => {
+      const app = getApps().length ? getApps()[0] : initializeApp(config);
       const auth = getAuth(app);
       setFirebaseAuth({ auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut });
 
