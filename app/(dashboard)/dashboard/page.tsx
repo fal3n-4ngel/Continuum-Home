@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { SITE_NAME, getAuthHeaders, toLocalDateStr } from "@/lib/utils";
 import { safeLocalStorage } from "@/lib/utils/storage";
+import { readUserCache, writeUserCache } from "@/lib/utils/client-cache";
 import { WatchlistItem, ReleaseNote } from "@/types";
 import { useExpensesStore } from "@/lib/stores/expenses-store";
 import { useUiStore } from "@/lib/stores/ui-store";
@@ -128,14 +129,18 @@ export default function Dashboard() {
     setIsFetchingExpenses(true);
     try {
       const res = await fetch("/api/expenses", { headers: getHeaders() });
-      if (res.ok) setExpenses(await res.json());
+      if (res.ok) {
+        const data = await res.json();
+        setExpenses(data);
+        if (user?.uid) writeUserCache(user.uid, "expenses", data);
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setIsFetchingExpenses(false);
       setExpensesLoaded(true);
     }
-  }, [getHeaders, setIsFetchingExpenses, setExpenses, setExpensesLoaded]);
+  }, [getHeaders, setIsFetchingExpenses, setExpenses, setExpensesLoaded, user?.uid]);
 
   const media = useMediaController({
     user,
@@ -236,24 +241,22 @@ export default function Dashboard() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
-    Promise.all([
-      fetch("/api/release-notes/latest").then((r) => (r.ok ? r.json() : null)).catch(() => null),
-      fetch("/api/settings", { headers: getHeaders() }).then((r) => (r.ok ? r.json() : null)).catch(() => null),
-    ]).then(([relData, settingsData]) => {
-      if (relData?.releaseNote && relData.releaseNote.active) {
-        const note = relData.releaseNote as ReleaseNote;
-        const firestoreSeen = settingsData?.lastSeenRelease;
-        const localSeen = safeLocalStorage.getItem("continuum_last_seen_release");
-        const lastSeen = firestoreSeen || localSeen;
-        if (firestoreSeen) setFirestoreLastSeenRelease(firestoreSeen);
-        if (lastSeen !== note.id && lastSeen !== note.version) {
-          setActiveReleaseNote(note);
-          setShowReleaseNotesModal(true);
+    if (!user || !settings.settingsLoaded) return;
+    fetch("/api/release-notes/latest")
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null)
+      .then((relData) => {
+        if (relData?.releaseNote && relData.releaseNote.active) {
+          const note = relData.releaseNote as ReleaseNote;
+          const localSeen = safeLocalStorage.getItem("continuum_last_seen_release");
+          const lastSeen = firestoreLastSeenRelease || localSeen;
+          if (lastSeen !== note.id && lastSeen !== note.version) {
+            setActiveReleaseNote(note);
+            setShowReleaseNotesModal(true);
+          }
         }
-      }
-    });
-  }, [user, getHeaders]);
+      });
+  }, [user, settings.settingsLoaded, firestoreLastSeenRelease]);
 
   const handleDismissReleaseNotes = useCallback(() => {
     if (activeReleaseNote) {
@@ -273,6 +276,16 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user) {
+      if (user.uid) {
+        const cachedExpenses = readUserCache<any[]>(user.uid, "expenses");
+        if (cachedExpenses) {
+          setExpenses(cachedExpenses);
+          setExpensesLoaded(true);
+        }
+        if (safeLocalStorage.getItem(`phub_settings_synced_${user.uid}`) === "1") {
+          useExpensesStore.getState().setSettingsLoaded(true);
+        }
+      }
       Promise.allSettled([
         fetchExpenses(),
         media.fetchWatchlist(),

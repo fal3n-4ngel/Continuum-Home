@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { safeLocalStorage } from "@/lib/utils/storage";
+import { clearAllUserCaches } from "@/lib/utils/client-cache";
 import { setClientAuthSession, clearClientAuthSession } from "@/lib/auth/session-cookie";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import type { Auth, GoogleAuthProvider as GoogleAuthProviderType, UserCredential, AuthProvider } from "firebase/auth";
@@ -36,13 +37,29 @@ export function useDashboardAuth() {
     }
 
     let unsubscribe: (() => void) | undefined;
-    import("firebase/app").then(async ({ initializeApp, getApps }) => {
+
+    const loadFirebaseConfig = async () => {
+      const cachedRaw = safeLocalStorage.getItem("phub_firebase_config");
+      if (cachedRaw) {
+        try {
+          const parsed = JSON.parse(cachedRaw);
+          if (parsed && parsed.apiKey) return parsed;
+        } catch {}
+      }
       const res = await fetch("/api/auth/config");
       const config = await res.json();
-      const app = getApps().length ? getApps()[0] : initializeApp(config);
+      try {
+        safeLocalStorage.setItem("phub_firebase_config", JSON.stringify(config));
+      } catch {}
+      return config;
+    };
 
-      const { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, getRedirectResult } =
-        await import("firebase/auth");
+    Promise.all([
+      import("firebase/app"),
+      import("firebase/auth"),
+      loadFirebaseConfig(),
+    ]).then(([{ initializeApp, getApps }, { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut, getRedirectResult }, config]) => {
+      const app = getApps().length ? getApps()[0] : initializeApp(config);
       const auth = getAuth(app);
       setFirebaseAuth({ auth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, signOut });
 
@@ -86,6 +103,7 @@ export function useDashboardAuth() {
           setUser(null);
           setIsProUser(false);
           clearClientAuthSession();
+          clearAllUserCaches();
         }
         setAuthLoading(false);
       });
