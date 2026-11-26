@@ -66,7 +66,7 @@ const normalizeCsvDate = (dateStr: string): string => {
 };
 
 const tabPillClass = (active: boolean) =>
-  `cursor-pointer rounded-md px-3.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
+  `cursor-pointer whitespace-nowrap rounded-md px-3.5 max-md:px-2.5 py-1.5 text-xs font-semibold transition-all duration-200 ${
     active ? "bg-bg-card text-text-primary border border-border-subtle shadow-xs dark:bg-white/10 dark:border-white/15" : "border border-transparent bg-transparent text-text-secondary hover:text-text-primary"
   }`;
 
@@ -620,8 +620,8 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
 
   return (
     <>
-      <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-4 max-md:gap-2.5">
+        <div className="flex flex-wrap items-center gap-3 max-md:w-full max-md:justify-between max-md:gap-2">
           <div className="flex gap-0.5 rounded-lg bg-bg-secondary p-[3px]">
             <button onClick={() => setExpenseTab("ledger")} className={tabPillClass(expenseTab === "ledger")}>
               Ledger
@@ -632,11 +632,11 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
           </div>
 
           <div className="flex items-center gap-1.5">
-            <span className="font-mono text-[11px] text-text-muted uppercase">Currency</span>
+            <span className="font-mono text-[11px] max-md:text-[10px] text-text-muted uppercase">Currency</span>
             <select
               value={currency}
               onChange={(e) => setCurrency(e.target.value)}
-              className={`${INPUT_CLASS} px-2 py-1 text-xs`}
+              className={`${INPUT_CLASS} !w-auto px-2 py-1 text-xs`}
             >
               <option value="₹">INR (₹)</option>
               <option value="$">USD ($)</option>
@@ -648,14 +648,14 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
         </div>
 
         {expenseTab === "ledger" && (
-          <div className="flex flex-wrap items-center gap-2.5 max-md:w-full">
+          <div className="flex items-center gap-3 max-md:w-full max-md:justify-between max-md:gap-2">
             {timeFilter === "salary" && (
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="font-mono text-[11px] text-text-muted uppercase">Payday</span>
+              <div className="flex items-center gap-1.5 min-w-0 max-md:flex-1">
+                <span className="font-mono text-[11px] max-md:text-[10px] shrink-0 text-text-muted uppercase">Payday</span>
                 <select
                   value={salaryDay}
                   onChange={(e) => handleSalaryDayChange(parseInt(e.target.value, 10))}
-                  className={`${INPUT_CLASS} min-w-0 max-w-full px-2 py-1 text-xs`}
+                  className={`${INPUT_CLASS} !w-auto max-md:!w-full min-w-0 max-w-full px-2 max-md:px-1.5 py-1 text-xs`}
                 >
                   {Array.from({ length: 28 }, (_, i) => i + 1).map((day) => (
                     <option key={day} value={day}>
@@ -670,7 +670,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
             <select
               value={timeFilter}
               onChange={(e) => handleTimeFilterChange(e.target.value as any)}
-              className={`${INPUT_CLASS} min-w-0 max-w-full px-2 py-1 text-xs`}
+              className={`${INPUT_CLASS} !w-auto max-md:flex-1 min-w-0 max-w-full px-2 max-md:px-1.5 py-1 text-xs`}
             >
               <option value="7">Last 7 days</option>
               <option value="30">Last 30 days</option>
@@ -742,7 +742,7 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
               return (
                 <div
                   className={`flex h-[260px] items-end overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2 ${
-                    fewCategories ? "justify-center gap-10 sm:gap-16" : "justify-between gap-4"
+                    fewCategories ? "justify-start gap-6 sm:gap-10" : "justify-between gap-4"
                   }`}
                 >
                   {catEntries.map(([cat, total], idx) => {
