@@ -736,29 +736,38 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
               </div>
             </div>
 
-            {activeChart === "category" ? (
-              <div className="flex h-[260px] items-end justify-between gap-4 overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2">
-                {Object.entries(chartCatBreakdown).slice(0, 8).map(([cat, total], idx) => {
-                  const maxAmt = Math.max(...Object.values(chartCatBreakdown), 1);
-                  const pct = (total / maxAmt) * 100;
-                  const isSelected = ledgerCategoryFilter === cat;
-                  const isInactive = ledgerCategoryFilter !== "" && !isSelected;
-                  const barColor = getThemeCategoryColor(themeId, cat, idx);
-                  return (
-                    <div
-                      key={cat}
-                      onClick={() => setLedgerCategoryFilter(isSelected ? "" : cat)}
-                      className="flex min-w-[60px] flex-1 cursor-pointer flex-col items-center gap-1.5"
-                      title={isSelected ? "Click to clear filter" : `Filter ledger by ${cat}`}
-                    >
-                      <span className={`text-[11px] font-semibold transition-colors duration-200 ${isInactive ? "text-text-muted" : "text-text-secondary"}`}>
-                        {currency}{(total/1000).toFixed(1)}k
-                      </span>
+            {activeChart === "category" ? (() => {
+              const catEntries = Object.entries(chartCatBreakdown).slice(0, 8);
+              const fewCategories = catEntries.length <= 4;
+              return (
+                <div
+                  className={`flex h-[260px] items-end overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2 ${
+                    fewCategories ? "justify-center gap-10 sm:gap-16" : "justify-between gap-4"
+                  }`}
+                >
+                  {catEntries.map(([cat, total], idx) => {
+                    const maxAmt = Math.max(...Object.values(chartCatBreakdown), 1);
+                    const pct = (total / maxAmt) * 100;
+                    const isSelected = ledgerCategoryFilter === cat;
+                    const isInactive = ledgerCategoryFilter !== "" && !isSelected;
+                    const barColor = getThemeCategoryColor(themeId, cat, idx);
+                    return (
                       <div
-                        className={`flex h-[200px] w-8 items-end rounded-t-md bg-bg-secondary transition-all duration-200 ${
-                          isSelected ? "ring-2 ring-text-primary ring-offset-1 ring-offset-bg-card" : ""
+                        key={cat}
+                        onClick={() => setLedgerCategoryFilter(isSelected ? "" : cat)}
+                        className={`flex cursor-pointer flex-col items-center gap-1.5 ${
+                          fewCategories ? "w-[84px] shrink-0" : "min-w-[60px] flex-1"
                         }`}
+                        title={isSelected ? "Click to clear filter" : `Filter ledger by ${cat}`}
                       >
+                        <span className={`text-[11px] font-semibold transition-colors duration-200 ${isInactive ? "text-text-muted" : "text-text-secondary"}`}>
+                          {currency}{(total/1000).toFixed(1)}k
+                        </span>
+                        <div
+                          className={`flex h-[200px] w-10 items-end rounded-t-md bg-bg-secondary transition-all duration-200 ${
+                            isSelected ? "ring-2 ring-text-primary ring-offset-1 ring-offset-bg-card" : ""
+                          }`}
+                        >
                         <div
                           className="w-full rounded-t-md transition-all duration-500 ease-in-out"
                           style={{
@@ -780,9 +789,10 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                     </div>
                   );
                 })}
-                {Object.keys(chartCatBreakdown).length === 0 && <p className="self-center text-[13px] text-text-muted">No transactions to plot.</p>}
+                {catEntries.length === 0 && <p className="self-center text-[13px] text-text-muted">No transactions to plot.</p>}
               </div>
-            ) : (
+              );
+            })() : (
               <div className="flex h-[260px] items-end justify-start gap-3 overflow-x-auto overflow-y-hidden border-b border-border-subtle pt-2 pb-2">
                 {dailyTrend.map(([date, total]) => {
                   const pct = Math.min((total / maxDailyAmt) * 100, 100);
