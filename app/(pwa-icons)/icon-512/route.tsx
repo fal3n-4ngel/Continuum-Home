@@ -6,7 +6,7 @@ export const contentType = "image/png";
 
 export async function GET() {
   const isUat = isUatDeployment();
-  const primary = isUat ? "#DC2626" : "#26211F";
+  const primary = "#26211F";
   const accent = isUat ? "#DC2626" : "#D99419";
   const cell = 182;
   const gap = 32;
@@ -22,18 +22,18 @@ export async function GET() {
           alignItems: "center",
           justifyContent: "center",
           position: "relative",
-          backgroundColor: isUat ? "#F3EFEA" : "#FAF8F5",
+          backgroundColor: "#FAF8F5",
           borderRadius: radius,
         }}
       >
         <div style={{ display: "flex", flexDirection: "column", gap }}>
           <div style={{ display: "flex", gap }}>
             <div style={{ display: "flex", width: cell, height: cell, borderRadius: 42, backgroundColor: primary }} />
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 42, backgroundColor: accent, opacity: isUat ? 0.55 : 1 }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 42, backgroundColor: accent }} />
           </div>
           <div style={{ display: "flex", gap }}>
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 42, backgroundColor: accent, opacity: isUat ? 0.55 : 1 }} />
-            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 42, backgroundColor: primary, opacity: isUat ? 0.85 : 1 }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 42, backgroundColor: accent }} />
+            <div style={{ display: "flex", width: cell, height: cell, borderRadius: 42, backgroundColor: primary }} />
           </div>
         </div>
       </div>
