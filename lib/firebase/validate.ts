@@ -232,8 +232,43 @@ export function validateSyncPayload(body: unknown): { source: SyncSource; entrie
   return { source, entries };
 }
 
+const MAX_FAMILY_MEMBERS = 10;
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validateFamilyMembers(value: unknown): Array<{ name: string; email: string; share?: number | null }> | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (!Array.isArray(value)) badRequest("Field 'familyMembers' must be an array.");
+  if (value.length > MAX_FAMILY_MEMBERS) {
+    badRequest(`Field 'familyMembers' must contain at most ${MAX_FAMILY_MEMBERS} members.`);
+  }
+  const seenEmails = new Set<string>();
+  return value.map((item, idx) => {
+    if (typeof item !== "object" || item === null || Array.isArray(item)) {
+      badRequest(`Family member ${idx + 1} must be an object.`);
+    }
+    const m = item as Record<string, unknown>;
+    const name = asTrimmedString(m.name, `familyMembers[${idx}].name`, 80, true)!;
+    const rawEmail = asTrimmedString(m.email, `familyMembers[${idx}].email`, 160, true)!.toLowerCase();
+    if (!EMAIL_RE.test(rawEmail)) {
+      badRequest(`Family member ${idx + 1} has an invalid email address.`);
+    }
+    if (seenEmails.has(rawEmail)) {
+      badRequest(`Duplicate family member email: ${rawEmail}`);
+    }
+    seenEmails.add(rawEmail);
+    const share =
+      m.share !== undefined && m.share !== null && m.share !== ""
+        ? asNumber(m.share, `familyMembers[${idx}].share`, { min: 0, max: 1_000_000 })
+        : null;
+    return { name, email: rawEmail, ...(share !== null ? { share } : {}) };
+  });
+}
+
 export function validateSubscriptionEntry(body: unknown): SubscriptionEntry {
   const b = requireObject(body, "Subscription entry");
+  const isFamilyPlan = b.isFamilyPlan !== undefined ? asBoolean(b.isFamilyPlan, "isFamilyPlan") : false;
+  const sendMemberEmails = b.sendMemberEmails !== undefined ? asBoolean(b.sendMemberEmails, "sendMemberEmails") : true;
+  const familyMembers = validateFamilyMembers(b.familyMembers);
   return {
     name: asTrimmedString(b.name, "name", 200, true)!,
     cost: asNumber(b.cost, "cost", { min: 0, max: 1_000_000 }),
@@ -244,6 +279,9 @@ export function validateSubscriptionEntry(body: unknown): SubscriptionEntry {
     autoPost: b.autoPost !== undefined ? asBoolean(b.autoPost, "autoPost") : false,
     category: asTrimmedString(b.category, "category", 100, false) ?? null,
     tags: asTags(b.tags, "tags"),
+    isFamilyPlan,
+    sendMemberEmails,
+    ...(familyMembers ? { familyMembers } : {}),
   };
 }
 
@@ -259,8 +297,11 @@ export function validateSubscriptionPatch(body: unknown): Partial<Omit<Subscript
   if (b.autoPost !== undefined) patch.autoPost = asBoolean(b.autoPost, "autoPost");
   if (b.category !== undefined) patch.category = asTrimmedString(b.category, "category", 100, false) ?? null;
   if (b.tags !== undefined) patch.tags = asTags(b.tags, "tags") ?? [];
+  if (b.isFamilyPlan !== undefined) patch.isFamilyPlan = asBoolean(b.isFamilyPlan, "isFamilyPlan");
+  if (b.sendMemberEmails !== undefined) patch.sendMemberEmails = asBoolean(b.sendMemberEmails, "sendMemberEmails");
+  if (b.familyMembers !== undefined) patch.familyMembers = validateFamilyMembers(b.familyMembers) ?? [];
   if (Object.keys(patch).length === 0) {
-    badRequest("Patch body must include at least one of: name, cost, billingCycle, nextBillingDate, icon, type, autoPost, category, tags.");
+    badRequest("Patch body must include at least one of: name, cost, billingCycle, nextBillingDate, icon, type, autoPost, category, tags, isFamilyPlan, sendMemberEmails, familyMembers.");
   }
   return patch;
 }

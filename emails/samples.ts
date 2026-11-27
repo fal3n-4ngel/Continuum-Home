@@ -1,7 +1,7 @@
 
 import type { PortfolioEmailData } from "./templates/portfolio";
 import type { ExpensesEmailData, ExpensePeriod } from "./templates/expenses";
-import type { SubscriptionsEmailData } from "./templates/subscriptions";
+import type { SubscriptionsEmailData, FamilyMemberSubscriptionEmailData } from "./templates/subscriptions";
 
 function todayLabel(): string {
   return new Date().toLocaleDateString("en-IN", { weekday: "long", year: "numeric", month: "short", day: "numeric" });
@@ -75,5 +75,29 @@ export function sampleSubscriptions(appUrl: string, unsubscribeUrl?: string): Su
     appUrl,
     unsubscribeUrl,
     isPreview: true,
+  };
+}
+
+export function sampleFamilySubscription(
+  appUrl: string,
+  isContinuumUser: boolean,
+  unsubscribeUrl?: string
+): FamilyMemberSubscriptionEmailData {
+  return {
+    subscription: {
+      name: "Spotify Family",
+      icon: "🎵",
+      cost: 179,
+      billingCycle: "monthly",
+      nextBillingDate: isoDaysFromNow(2),
+      daysUntil: 2,
+    },
+    memberName: isContinuumUser ? "Riya" : "Alex",
+    memberShare: 44.75,
+    totalMembers: 4,
+    ownerEmail: "adithya@adithyakrishnan.com",
+    isContinuumUser,
+    appUrl,
+    unsubscribeUrl,
   };
 }

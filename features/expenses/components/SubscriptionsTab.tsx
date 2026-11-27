@@ -1,5 +1,5 @@
 import React from "react";
-import { Subscription } from "@/types";
+import { FamilyMember, SharedSubscription, Subscription } from "@/types";
 import { getSubLogoUrl } from "@/lib/finance";
 import { useExpensesStore } from "@/lib/stores/expenses-store";
 
@@ -18,6 +18,7 @@ const DEFAULT_SUB_CATEGORIES = [
 
 interface SubscriptionsTabProps {
   subscriptions: Subscription[];
+  sharedSubscriptions?: SharedSubscription[];
   currency: string;
   subName: string;
   setSubName: (s: string) => void;
@@ -35,6 +36,16 @@ interface SubscriptionsTabProps {
   setSubAutoPost?: (b: boolean) => void;
   subCategory?: string;
   setSubCategory?: (s: string) => void;
+  subIsFamilyPlan?: boolean;
+  setSubIsFamilyPlan?: (b: boolean) => void;
+  subSendMemberEmails?: boolean;
+  setSubSendMemberEmails?: (b: boolean) => void;
+  subFamilyMembers?: FamilyMember[];
+  setSubFamilyMembers?: React.Dispatch<React.SetStateAction<FamilyMember[]>>;
+  continuumMemberEmails?: Record<string, boolean>;
+  checkFamilyMembers?: (emails: string[]) => void;
+  logSharedSubscriptionPayment?: (shared: SharedSubscription) => Promise<boolean>;
+  dismissSharedSubscription?: (id: string) => void;
   isAddingSub: boolean;
   addSubscription: (e: React.FormEvent) => void;
   deleteSubscription: (id: string) => void;
@@ -54,8 +65,169 @@ const BENTO_CARD = "rounded-card border border-border-subtle bg-bg-card p-6 shad
 const BTN_PRIMARY = "rounded-full border border-text-primary bg-text-primary px-4 py-2 text-[13px] font-semibold text-bg-primary transition-all duration-200 hover:opacity-90";
 const INPUT_CLASS = "rounded-lg border border-border-subtle bg-bg-card px-3 py-2 text-[13px] text-text-primary outline-none transition-all duration-200 focus:border-border-hover focus:shadow-focus";
 
+interface FamilyMembersEditorProps {
+  members: FamilyMember[];
+  onChange: (members: FamilyMember[]) => void;
+  totalCost: number;
+  currency: string;
+  sendMemberEmails?: boolean;
+  onToggleSendMemberEmails?: (send: boolean) => void;
+  continuumMemberEmails?: Record<string, boolean>;
+  onCheckEmails?: (emails: string[]) => void;
+}
+
+const FamilyMembersEditor: React.FC<FamilyMembersEditorProps> = ({
+  members,
+  onChange,
+  totalCost,
+  currency,
+  sendMemberEmails = true,
+  onToggleSendMemberEmails,
+  continuumMemberEmails = {},
+  onCheckEmails,
+}) => {
+  const [name, setName] = React.useState("");
+  const [email, setEmail] = React.useState("");
+  const [share, setShare] = React.useState("");
+  const [err, setErr] = React.useState<string | null>(null);
+
+  const defaultSplit = totalCost > 0 ? totalCost / (members.length + 1) : 0;
+
+  const handleAdd = () => {
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedName) {
+      setErr("Enter member name.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+      setErr("Enter a valid email address.");
+      return;
+    }
+    if (members.some((m) => m.email.toLowerCase() === trimmedEmail)) {
+      setErr("Member email already added.");
+      return;
+    }
+    if (members.length >= 10) {
+      setErr("Maximum 10 family members per plan.");
+      return;
+    }
+    const parsedShare = share.trim() ? parseFloat(share) : null;
+    if (parsedShare !== null && (isNaN(parsedShare) || parsedShare < 0)) {
+      setErr("Share must be a valid non-negative number.");
+      return;
+    }
+    onChange([...members, { name: trimmedName, email: trimmedEmail, ...(parsedShare !== null ? { share: parsedShare } : {}) }]);
+    onCheckEmails?.([trimmedEmail]);
+    setName("");
+    setEmail("");
+    setShare("");
+    setErr(null);
+  };
+
+  return (
+    <div className="col-span-2 md:col-span-6 rounded-lg border border-border-subtle bg-bg-secondary/60 p-3 flex flex-col gap-2.5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.6px] text-text-secondary">
+          Family Plan Members ({members.length})
+        </span>
+        {onToggleSendMemberEmails ? (
+          <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-text-secondary select-none">
+            <input
+              type="checkbox"
+              checked={sendMemberEmails}
+              onChange={(e) => onToggleSendMemberEmails(e.target.checked)}
+              className="h-3.5 w-3.5 rounded border-border-subtle"
+            />
+            <span>Send reminder emails to members</span>
+          </label>
+        ) : (
+          <span className="text-[11px] text-text-muted">
+            Reminders sent 2–3d before renewal.
+          </span>
+        )}
+      </div>
+      {members.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {members.map((m) => {
+            const effectiveShare = typeof m.share === "number" ? m.share : defaultSplit;
+            const isContinuum = continuumMemberEmails[m.email.toLowerCase()] === true;
+            return (
+              <span
+                key={m.email}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-bg-card px-2.5 py-1 text-[11px] text-text-primary"
+              >
+                <span className="font-semibold">{m.name}</span>
+                <span className="text-text-muted">({m.email})</span>
+                {isContinuum && (
+                  <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-emerald-600 dark:text-emerald-400">
+                    ✓ Continuum
+                  </span>
+                )}
+                {effectiveShare > 0 && (
+                  <span className="font-mono text-[10px] text-text-secondary">
+                    · {currency}{effectiveShare.toFixed(0)}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={() => onChange(members.filter((x) => x.email !== m.email))}
+                  className="ml-0.5 cursor-pointer border-none bg-transparent p-0 text-text-muted hover:text-[#b3666b]"
+                  aria-label={`Remove ${m.name}`}
+                >
+                  ×
+                </button>
+              </span>
+            );
+          })}
+        </div>
+      )}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1.4fr_110px_auto]">
+        <input
+          type="text"
+          placeholder="Member name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className={`${INPUT_CLASS} py-1.5 text-xs`}
+        />
+        <input
+          type="email"
+          placeholder="Member email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              handleAdd();
+            }
+          }}
+          className={`${INPUT_CLASS} py-1.5 text-xs`}
+        />
+        <input
+          type="number"
+          step="0.01"
+          min="0"
+          placeholder={`Share (${currency})`}
+          value={share}
+          onChange={(e) => setShare(e.target.value)}
+          className={`${INPUT_CLASS} py-1.5 text-xs`}
+        />
+        <button
+          type="button"
+          onClick={handleAdd}
+          className="cursor-pointer rounded-lg border border-border-subtle bg-bg-card px-3 py-1.5 text-xs font-semibold text-text-primary transition-colors hover:border-border-hover"
+        >
+          + Member
+        </button>
+      </div>
+      {err && <p className="text-[11px] text-[#b3666b]">{err}</p>}
+    </div>
+  );
+};
+
 export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
   subscriptions,
+  sharedSubscriptions = [],
   currency,
   subName,
   setSubName,
@@ -73,6 +245,16 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
   setSubAutoPost,
   subCategory = "",
   setSubCategory,
+  subIsFamilyPlan = false,
+  setSubIsFamilyPlan,
+  subSendMemberEmails = true,
+  setSubSendMemberEmails,
+  subFamilyMembers = [],
+  setSubFamilyMembers,
+  continuumMemberEmails = {},
+  checkFamilyMembers,
+  logSharedSubscriptionPayment,
+  dismissSharedSubscription,
   isAddingSub,
   addSubscription,
   deleteSubscription,
@@ -84,6 +266,8 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
   isFetchingSubscriptions,
 }) => {
   const [now] = React.useState(() => Date.now());
+  const [loggedSharedIds, setLoggedSharedIds] = React.useState<Record<string, boolean>>({});
+  const [loggingSharedId, setLoggingSharedId] = React.useState<string | null>(null);
   const [subSearch, setSubSearch] = React.useState("");
   const [subFilter, setSubFilter] = React.useState<"all" | "monthly" | "yearly" | "due">("all");
   const [editingIconId, setEditingIconId] = React.useState<string | null>(null);
@@ -97,6 +281,9 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
     type: "expense" | "income";
     category: string;
     autoPost: boolean;
+    isFamilyPlan: boolean;
+    sendMemberEmails: boolean;
+    familyMembers: FamilyMember[];
   }>({
     name: "",
     cost: "",
@@ -105,6 +292,9 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
     type: "expense",
     category: "",
     autoPost: false,
+    isFamilyPlan: false,
+    sendMemberEmails: true,
+    familyMembers: [],
   });
   const expenses = useExpensesStore((s) => s.expenses);
   const customCategories = useExpensesStore((s) => s.customCategories);
@@ -142,6 +332,9 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
       type: sub.type === "income" ? "income" : "expense",
       category: sub.category || "",
       autoPost: Boolean(sub.autoPost),
+      isFamilyPlan: Boolean(sub.isFamilyPlan),
+      sendMemberEmails: sub.sendMemberEmails !== false,
+      familyMembers: sub.familyMembers ? [...sub.familyMembers] : [],
     });
   };
 
@@ -158,6 +351,9 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
       type: editDraft.type,
       category: editDraft.category || null,
       autoPost: editDraft.autoPost,
+      isFamilyPlan: editDraft.isFamilyPlan,
+      sendMemberEmails: editDraft.isFamilyPlan ? editDraft.sendMemberEmails : true,
+      familyMembers: editDraft.isFamilyPlan ? editDraft.familyMembers : [],
     });
     setEditingSubId(null);
   };
@@ -279,13 +475,37 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                   <span>Auto-post to ledger on billing date</span>
                 </label>
               )}
+              {setSubIsFamilyPlan && (
+                <label className="flex cursor-pointer items-center gap-1.5 select-none">
+                  <input
+                    type="checkbox"
+                    checked={subIsFamilyPlan}
+                    onChange={(e) => setSubIsFamilyPlan(e.target.checked)}
+                    className="h-3.5 w-3.5 rounded border-border-subtle"
+                  />
+                  <span>Family plan (send reminders to members)</span>
+                </label>
+              )}
             </div>
+          )}
+          {subIsFamilyPlan && setSubFamilyMembers && (
+            <FamilyMembersEditor
+              members={subFamilyMembers}
+              onChange={setSubFamilyMembers}
+              totalCost={parseFloat(subCost) || 0}
+              currency={currency}
+              sendMemberEmails={subSendMemberEmails}
+              onToggleSendMemberEmails={setSubSendMemberEmails}
+              continuumMemberEmails={continuumMemberEmails}
+              onCheckEmails={checkFamilyMembers}
+            />
           )}
         </form>
       </div>
 
       <div className="grid grid-cols-[1fr_300px] items-start gap-6 max-md:grid-cols-1">
-        <div className={BENTO_CARD}>
+        <div className="flex flex-col gap-6 min-w-0">
+          <div className={BENTO_CARD}>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2.5">
             <span className={LABEL_MONO}>
               Active Subscriptions
@@ -433,6 +653,15 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                           />
                           <span>Auto-post</span>
                         </label>
+                        <label className="flex cursor-pointer items-center gap-1.5 select-none">
+                          <input
+                            type="checkbox"
+                            checked={editDraft.isFamilyPlan}
+                            onChange={(e) => setEditDraft((prev) => ({ ...prev, isFamilyPlan: e.target.checked }))}
+                            className="h-3.5 w-3.5 rounded border-border-subtle"
+                          />
+                          <span>Family plan</span>
+                        </label>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
@@ -450,6 +679,18 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                         </button>
                       </div>
                     </div>
+                    {editDraft.isFamilyPlan && (
+                      <FamilyMembersEditor
+                        members={editDraft.familyMembers}
+                        onChange={(members) => setEditDraft((prev) => ({ ...prev, familyMembers: members }))}
+                        totalCost={parseFloat(editDraft.cost) || 0}
+                        currency={currency}
+                        sendMemberEmails={editDraft.sendMemberEmails}
+                        onToggleSendMemberEmails={(send) => setEditDraft((prev) => ({ ...prev, sendMemberEmails: send }))}
+                        continuumMemberEmails={continuumMemberEmails}
+                        onCheckEmails={checkFamilyMembers}
+                      />
+                    )}
                   </form>
                 );
               }
@@ -509,6 +750,23 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                             {sub.category}
                           </span>
                         )}
+                        {sub.isFamilyPlan && (
+                          <span
+                            title={
+                              sub.familyMembers && sub.familyMembers.length > 0
+                                ? `Shared with: ${sub.familyMembers.map((m) => `${m.name} (${m.email})`).join(", ")}`
+                                : "Family plan"
+                            }
+                            className="rounded bg-amber-500/15 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-amber-700 dark:text-amber-400"
+                          >
+                            Family{sub.familyMembers?.length ? ` · ${sub.familyMembers.length + 1}` : ""}
+                          </span>
+                        )}
+                        {sub.isFamilyPlan && sub.sendMemberEmails === false && (
+                          <span className="rounded border border-border-subtle bg-bg-card px-1.5 py-0.5 font-mono text-[9px] font-medium uppercase text-text-muted">
+                            Emails Off
+                          </span>
+                        )}
                         {toggleSubscriptionAutoPost ? (
                           <button
                             type="button"
@@ -530,6 +788,27 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                       <p className={`mt-0.5 text-[11px] ${isDueSoon ? "font-semibold text-[#b3666b]" : "font-normal text-text-muted"}`}>
                         {isDueSoon ? `⚡ Due in ${daysUntil}d` : `Next: ${sub.nextBillingDate}`}
                       </p>
+                      {sub.isFamilyPlan && sub.familyMembers && sub.familyMembers.length > 0 && (
+                        <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                          {sub.familyMembers.map((m) => {
+                            const isContinuum = continuumMemberEmails[m.email.toLowerCase()] === true;
+                            return (
+                              <span
+                                key={m.email}
+                                title={m.email}
+                                className="inline-flex items-center gap-1 rounded border border-border-subtle bg-bg-card px-1.5 py-0.5 text-[10px] text-text-secondary"
+                              >
+                                <span>{m.name}</span>
+                                {isContinuum && (
+                                  <span className="font-mono text-[8.5px] font-semibold uppercase text-emerald-600 dark:text-emerald-400">
+                                    ✓ Continuum
+                                  </span>
+                                )}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-3.5">
@@ -563,6 +842,96 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
               });
             })()}
           </div>
+        </div>
+
+          {sharedSubscriptions.length > 0 && (
+            <div className={BENTO_CARD}>
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                <span className={LABEL_MONO}>
+                  Shared With You
+                  <span className="ml-2 rounded-full bg-bg-secondary px-[7px] py-0.5 text-[11px] font-medium text-text-muted">
+                    {sharedSubscriptions.length}
+                  </span>
+                </span>
+                <span className="text-[11px] text-text-muted">Family plans shared with you</span>
+              </div>
+              <div className="flex flex-col gap-2">
+                {sharedSubscriptions.map((shared) => {
+                  const daysUntil = Math.ceil((new Date(shared.nextBillingDate).getTime() - now) / 86400000);
+                  const isDueSoon = daysUntil <= 7 && daysUntil >= 0;
+                  const isLogged = loggedSharedIds[shared.id] === true;
+                  const isLogging = loggingSharedId === shared.id;
+                  return (
+                    <div
+                      key={shared.id}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-[10px] border border-border-subtle bg-bg-secondary px-3.5 py-3 transition-colors duration-150 hover:bg-bg-card"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-[38px] w-[38px] shrink-0 items-center justify-center rounded-[9px] border border-border-subtle bg-bg-card text-[17px]">
+                          {shared.icon ? (
+                            <span>{shared.icon}</span>
+                          ) : getSubLogoUrl(shared.name) ? (
+                            <img src={getSubLogoUrl(shared.name)!} alt={shared.name} width={28} height={28} className="rounded-[3px] object-contain" />
+                          ) : (
+                            <span>💳</span>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <p className="text-[13px] font-semibold text-text-primary">{shared.name}</p>
+                            <span className="rounded border border-border-subtle bg-bg-card px-1.5 py-0.5 font-mono text-[9px] font-medium text-text-secondary">
+                              {shared.ownerEmail}
+                            </span>
+                          </div>
+                          <p className={`mt-0.5 text-[11px] ${isDueSoon ? "font-semibold text-[#b3666b]" : "text-text-muted"}`}>
+                            {isDueSoon ? `⚡ Due in ${daysUntil}d` : `Next: ${shared.nextBillingDate}`} · Total {currency}{shared.totalCost.toFixed(0)} / {shared.totalMembers}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="text-right">
+                          <p className="text-[13px] font-bold text-text-primary">{currency}{shared.memberShare.toFixed(2)}</p>
+                          <p className="font-mono text-[10px] tracking-[0.4px] text-text-muted uppercase">Your {shared.billingCycle} share</p>
+                        </div>
+                        {logSharedSubscriptionPayment && (
+                          <button
+                            type="button"
+                            disabled={isLogging || isLogged}
+                            onClick={async () => {
+                              setLoggingSharedId(shared.id);
+                              const ok = await logSharedSubscriptionPayment(shared);
+                              setLoggingSharedId(null);
+                              if (ok) {
+                                setLoggedSharedIds((prev) => ({ ...prev, [shared.id]: true }));
+                              }
+                            }}
+                            className={`cursor-pointer rounded-full px-3 py-1 text-[11px] font-semibold transition-all ${
+                              isLogged
+                                ? "border border-emerald-500/40 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                : "border border-text-primary bg-text-primary text-bg-primary hover:opacity-90"
+                            } disabled:opacity-60`}
+                          >
+                            {isLogging ? "Logging..." : isLogged ? "Logged ✓" : "Log Payment"}
+                          </button>
+                        )}
+                        {dismissSharedSubscription && (
+                          <button
+                            type="button"
+                            onClick={() => dismissSharedSubscription(shared.id)}
+                            title="Dismiss shared subscription"
+                            className="cursor-pointer rounded-md border-none bg-transparent p-1 text-text-muted transition-colors hover:text-[#b3666b]"
+                            aria-label={`Dismiss ${shared.name}`}
+                          >
+                            ×
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
         {subscriptions.length > 0 && (() => {

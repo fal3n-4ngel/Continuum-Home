@@ -30,3 +30,22 @@ export function buildUnsubscribeUrl(uid: string, category: UnsubscribeCategory):
   const params = new URLSearchParams({ uid, category, token: signUnsubscribeToken(uid) });
   return `${env.APP_URL}/api/unsubscribe?${params.toString()}`;
 }
+
+export function signGuestUnsubscribeToken(email: string): string {
+  return signUnsubscribeToken(`guest:${email.trim().toLowerCase()}`);
+}
+
+export function verifyGuestUnsubscribeToken(email: string, token: string): boolean {
+  if (!email || !token) return false;
+  return verifyUnsubscribeToken(`guest:${email.trim().toLowerCase()}`, token);
+}
+
+export function buildGuestUnsubscribeUrl(email: string): string {
+  const normalized = email.trim().toLowerCase();
+  const params = new URLSearchParams({
+    email: normalized,
+    category: "subscriptions",
+    token: signGuestUnsubscribeToken(normalized),
+  });
+  return `${env.APP_URL}/api/unsubscribe?${params.toString()}`;
+}

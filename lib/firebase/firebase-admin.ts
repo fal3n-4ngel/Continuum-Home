@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { getApps, initializeApp, cert, type App } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, FieldValue, type Firestore } from "firebase-admin/firestore";
@@ -14,6 +15,7 @@ import {
   type WatchlistItem,
   type DailyRecommendation,
 } from "./firebase";
+import type { SharedSubscription } from "./validators/subscription.schema";
 
 let adminApp: App | null = null;
 
@@ -129,6 +131,176 @@ export async function adminListExpenses(uid: string): Promise<ExpenseRecord[]> {
   });
 }
 
+export async function adminFindUsersByEmails(emails: string[]): Promise<Map<string, AdminUser>> {
+  const result = new Map<string, AdminUser>();
+  const unique = Array.from(new Set(emails.map((e) => e.trim().toLowerCase()).filter(Boolean)));
+  if (unique.length === 0) return result;
+
+  const auth = getAdminAuth();
+  for (let i = 0; i < unique.length; i += 100) {
+    const chunk = unique.slice(i, i + 100);
+    try {
+      const res = await auth.getUsers(chunk.map((email) => ({ email })));
+      for (const u of res.users) {
+        if (u.email) {
+          result.set(u.email.toLowerCase(), { uid: u.uid, email: u.email });
+        }
+      }
+    } catch (err) {
+      console.error("Failed to batch-lookup users by email:", err);
+    }
+  }
+  return result;
+}
+
+export async function adminListSharedSubscriptions(uid: string): Promise<SharedSubscription[]> {
+  const db = getAdminDb();
+  const snap = await db.collection("users").doc(uid).collection("shared_subscriptions").get();
+  if (snap.empty) return [];
+
+  const valid: SharedSubscription[] = [];
+  const staleRefs: FirebaseFirestore.DocumentReference[] = [];
+
+  await Promise.all(
+    snap.docs.map(async (doc) => {
+      const data = doc.data();
+      const ownerUid = String(data.ownerUid || "");
+      const subscriptionId = String(data.subscriptionId || "");
+
+      if (ownerUid && subscriptionId) {
+        try {
+          const ownerSubDoc = await db
+            .collection("users")
+            .doc(ownerUid)
+            .collection("subscriptions")
+            .doc(subscriptionId)
+            .get();
+          const ownerData = ownerSubDoc.data();
+          if (!ownerSubDoc.exists || !ownerData?.isFamilyPlan) {
+            staleRefs.push(doc.ref);
+            return;
+          }
+        } catch {
+          // keep on transient read failure
+        }
+      }
+
+      valid.push({
+        id: doc.id,
+        sourceKey: String(data.sourceKey || doc.id),
+        subscriptionId,
+        ownerUid,
+        ownerEmail: String(data.ownerEmail || ""),
+        name: String(data.name || "Untitled"),
+        icon: typeof data.icon === "string" ? data.icon : null,
+        totalCost: typeof data.totalCost === "number" ? data.totalCost : 0,
+        memberShare: typeof data.memberShare === "number" ? data.memberShare : 0,
+        totalMembers: typeof data.totalMembers === "number" ? data.totalMembers : 2,
+        billingCycle: (data.billingCycle === "yearly" ? "yearly" : "monthly") as SharedSubscription["billingCycle"],
+        nextBillingDate: String(data.nextBillingDate || ""),
+        category: typeof data.category === "string" ? data.category : null,
+        updatedAt: typeof data.updatedAt === "number" ? data.updatedAt : 0,
+      });
+    })
+  );
+
+  if (staleRefs.length > 0) {
+    const batch = db.batch();
+    staleRefs.forEach((ref) => batch.delete(ref));
+    await batch.commit().catch(() => {});
+  }
+
+  return valid.sort((a, b) => a.nextBillingDate.localeCompare(b.nextBillingDate));
+}
+
+export async function adminDismissSharedSubscription(uid: string, id: string): Promise<void> {
+  const db = getAdminDb();
+  await db.collection("users").doc(uid).collection("shared_subscriptions").doc(id).delete();
+}
+
+export async function adminSyncSharedSubscription(
+  ownerUid: string,
+  ownerEmail: string,
+  sub: SubscriptionRecord | null,
+  subscriptionId: string
+): Promise<{ syncedCount: number; removedCount: number }> {
+  const db = getAdminDb();
+  const sourceKey = `${ownerUid}_${subscriptionId}`;
+  const syncIndexRef = db.collection("users").doc(ownerUid).collection("shared_sync_index").doc(subscriptionId);
+  const syncIndexSnap = await syncIndexRef.get();
+  const previousUids = Array.isArray(syncIndexSnap.data()?.memberUids)
+    ? (syncIndexSnap.data()?.memberUids as string[])
+    : [];
+
+  const shouldShare = Boolean(
+    sub &&
+      sub.type !== "income" &&
+      sub.isFamilyPlan &&
+      sub.familyMembers &&
+      sub.familyMembers.length > 0
+  );
+
+  const targetByUid = new Map<string, SharedSubscription>();
+  if (shouldShare && sub) {
+    const members = sub.familyMembers || [];
+    const totalMembers = members.length + 1;
+    const defaultShare = sub.cost / totalMembers;
+    const continuumUsers = await adminFindUsersByEmails(members.map((m) => m.email));
+
+    for (const member of members) {
+      const memberUser = continuumUsers.get(member.email.trim().toLowerCase());
+      if (!memberUser || memberUser.uid === ownerUid) continue;
+      const memberShare = typeof member.share === "number" ? member.share : defaultShare;
+      targetByUid.set(memberUser.uid, {
+        id: sourceKey,
+        sourceKey,
+        subscriptionId,
+        ownerUid,
+        ownerEmail,
+        name: sub.name,
+        icon: sub.icon,
+        totalCost: sub.cost,
+        memberShare,
+        totalMembers,
+        billingCycle: sub.billingCycle,
+        nextBillingDate: sub.nextBillingDate,
+        category: sub.category ?? null,
+        updatedAt: Date.now(),
+      });
+    }
+  }
+
+  let removedCount = 0;
+  const batch = db.batch();
+  for (const prevUid of previousUids) {
+    if (!targetByUid.has(prevUid)) {
+      batch.delete(db.collection("users").doc(prevUid).collection("shared_subscriptions").doc(sourceKey));
+      removedCount++;
+    }
+  }
+
+  for (const [memberUid, payload] of targetByUid.entries()) {
+    const ref = db
+      .collection("users")
+      .doc(memberUid)
+      .collection("shared_subscriptions")
+      .doc(sourceKey);
+    batch.set(ref, payload);
+  }
+
+  if (targetByUid.size > 0) {
+    batch.set(syncIndexRef, { memberUids: Array.from(targetByUid.keys()), updatedAt: Date.now() });
+  } else if (syncIndexSnap.exists) {
+    batch.delete(syncIndexRef);
+  }
+
+  if (removedCount > 0 || targetByUid.size > 0 || syncIndexSnap.exists) {
+    await batch.commit();
+  }
+
+  return { syncedCount: targetByUid.size, removedCount };
+}
+
 export async function adminListSubscriptions(uid: string): Promise<SubscriptionRecord[]> {
   const db = getAdminDb();
   let snap = await db.collection("users").doc(uid).collection("subscriptions").get();
@@ -138,6 +310,14 @@ export async function adminListSubscriptions(uid: string): Promise<SubscriptionR
   return snap.docs
     .map((doc) => {
       const data = doc.data();
+      const rawMembers = Array.isArray(data.familyMembers) ? data.familyMembers : [];
+      const familyMembers = rawMembers
+        .filter((m): m is Record<string, unknown> => typeof m === "object" && m !== null && typeof (m as Record<string, unknown>).name === "string" && typeof (m as Record<string, unknown>).email === "string")
+        .map((m) => ({
+          name: m.name as string,
+          email: (m.email as string).toLowerCase(),
+          ...(typeof m.share === "number" ? { share: m.share } : {}),
+        }));
       return {
         id: doc.id,
         name: (data.name as string) || "Untitled",
@@ -149,6 +329,9 @@ export async function adminListSubscriptions(uid: string): Promise<SubscriptionR
         autoPost: Boolean(data.autoPost),
         category: typeof data.category === "string" ? data.category : null,
         tags: Array.isArray(data.tags) ? data.tags.filter((t): t is string => typeof t === "string") : undefined,
+        ...(data.isFamilyPlan ? { isFamilyPlan: true } : {}),
+        ...(typeof data.sendMemberEmails === "boolean" ? { sendMemberEmails: data.sendMemberEmails } : {}),
+        ...(familyMembers.length > 0 ? { familyMembers } : {}),
         lastAutoPostedDate: typeof data.lastAutoPostedDate === "string" ? data.lastAutoPostedDate : null,
         createdAt: typeof data.createdAt === "number" ? data.createdAt : 0,
       };
@@ -292,6 +475,24 @@ export async function adminGetEmailSubscriptions(uid: string): Promise<EmailSubs
 export async function adminSetEmailSubscriptions(uid: string, updates: Partial<EmailSubscriptions>): Promise<void> {
   const db = getAdminDb();
   await db.collection("users").doc(uid).collection("settings").doc("preferences").set({ emailSubscriptions: updates, updatedAt: Date.now() }, { merge: true });
+}
+
+function guestEmailHash(email: string): string {
+  return createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+}
+
+export async function adminUnsubscribeGuestEmail(email: string): Promise<void> {
+  const db = getAdminDb();
+  await db.collection("guest_unsubscribes").doc(guestEmailHash(email)).set({
+    unsubscribed: true,
+    updatedAt: Date.now(),
+  });
+}
+
+export async function adminIsGuestEmailUnsubscribed(email: string): Promise<boolean> {
+  const db = getAdminDb();
+  const doc = await db.collection("guest_unsubscribes").doc(guestEmailHash(email)).get();
+  return doc.exists && doc.data()?.unsubscribed === true;
 }
 
 export async function adminSaveDailyRecommendation(

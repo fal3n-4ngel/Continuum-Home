@@ -35,6 +35,10 @@ service cloud.firestore {
                               && request.resource.data.cost is number;
       }
 
+      match /shared_subscriptions/{docId} {
+        allow read, delete: if isOwner(userId);
+      }
+
       match /portfolio/{docId} {
         allow read, write: if isOwner(userId);
       }
