@@ -1,6 +1,6 @@
 import React from "react";
 import { FamilyMember, SharedSubscription, Subscription } from "@/types";
-import { getSubLogoUrl } from "@/lib/finance";
+import { getOwnerSubscriptionCost, getSubLogoUrl } from "@/lib/finance";
 import { isValidEmail } from "@/lib/firebase/validate";
 import { useExpensesStore } from "@/lib/stores/expenses-store";
 
@@ -95,6 +95,15 @@ const FamilyMembersEditor: React.FC<FamilyMembersEditorProps> = ({
   const [err, setErr] = React.useState<string | null>(null);
 
   const defaultSplit = totalCost > 0 ? totalCost / (members.length + 1) : 0;
+  const ownerRemaining =
+    totalCost > 0
+      ? getOwnerSubscriptionCost({
+          cost: totalCost,
+          type: "expense",
+          isFamilyPlan: true,
+          familyMembers: members,
+        })
+      : 0;
 
   const handleAdd = () => {
     const trimmedName = name.trim();
@@ -132,7 +141,7 @@ const FamilyMembersEditor: React.FC<FamilyMembersEditorProps> = ({
     <div className="col-span-2 md:col-span-6 rounded-lg border border-border-subtle bg-bg-secondary/60 p-3 flex flex-col gap-2.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.6px] text-text-secondary">
-          Family Plan Members ({members.length})
+          Family Plan Members ({members.length}){totalCost > 0 ? ` · Your share: ${currency}${ownerRemaining.toFixed(2)}` : ""}
         </span>
         {onToggleSendMemberEmails ? (
           <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-text-secondary select-none">
@@ -369,14 +378,20 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
         <div className={STAT_CARD}>
           <span className={LABEL_MONO}>Monthly Burn</span>
           <span className={STAT_VALUE}>
-            {currency}{subscriptions.filter((s) => s.type !== "income").reduce((acc, sub) => acc + (sub.billingCycle === "yearly" ? sub.cost / 12 : sub.cost), 0).toFixed(0)}
+            {currency}{subscriptions.filter((s) => s.type !== "income").reduce((acc, sub) => {
+              const ownerCost = getOwnerSubscriptionCost(sub);
+              return acc + (sub.billingCycle === "yearly" ? ownerCost / 12 : ownerCost);
+            }, 0).toFixed(0)}
           </span>
-          <span className={STAT_SUBTEXT}>per month (normalised)</span>
+          <span className={STAT_SUBTEXT}>per month (your share)</span>
         </div>
         <div className={STAT_CARD}>
           <span className={LABEL_MONO}>Yearly Total</span>
           <span className={STAT_VALUE}>
-            {currency}{subscriptions.filter((s) => s.type !== "income").reduce((acc, sub) => acc + (sub.billingCycle === "yearly" ? sub.cost : sub.cost * 12), 0).toFixed(0)}
+            {currency}{subscriptions.filter((s) => s.type !== "income").reduce((acc, sub) => {
+              const ownerCost = getOwnerSubscriptionCost(sub);
+              return acc + (sub.billingCycle === "yearly" ? ownerCost : ownerCost * 12);
+            }, 0).toFixed(0)}
           </span>
           <span className={STAT_SUBTEXT}>annual commitment</span>
         </div>
@@ -832,6 +847,11 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                     <div className="text-right">
                       <p className="text-[13px] font-bold">{currency}{sub.cost.toFixed(2)}</p>
                       <p className="font-mono text-[10px] tracking-[0.4px] text-text-muted uppercase">{sub.billingCycle}</p>
+                      {sub.isFamilyPlan && sub.familyMembers && sub.familyMembers.length > 0 && sub.type !== "income" && (
+                        <p className="mt-0.5 font-mono text-[10px] text-text-secondary">
+                          Yours: {currency}{getOwnerSubscriptionCost(sub).toFixed(2)}
+                        </p>
+                      )}
                     </div>
                     {updateSubscription && (
                       <button
@@ -972,7 +992,10 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
 
         {subscriptions.length > 0 && (() => {
           const COLORS = ["#b3666b", "#e39282", "#6366f1", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#14b8a6"];
-          const monthlyAmounts = subscriptions.map((s) => (s.billingCycle === "yearly" ? s.cost / 12 : s.cost));
+          const monthlyAmounts = subscriptions.map((s) => {
+            const ownerCost = getOwnerSubscriptionCost(s);
+            return s.billingCycle === "yearly" ? ownerCost / 12 : ownerCost;
+          });
           const totalMonthly = monthlyAmounts.reduce((a, b) => a + b, 0);
           const r = 72, cx = 100, cy = 100, strokeW = 20;
           const circ = 2 * Math.PI * r;

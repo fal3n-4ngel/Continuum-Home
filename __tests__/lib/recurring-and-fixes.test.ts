@@ -5,6 +5,7 @@ import {
   advanceRecurringDate,
   collectDueBillingDates,
   buildRecurringExpenseEntry,
+  getOwnerSubscriptionCost,
 } from "@/lib/finance/recurring";
 import { listSubcollectionDocs } from "@/lib/firebase/client";
 import { POST as postOAuthRegister } from "@/app/api/(auth)/oauth/register/route";
@@ -54,6 +55,39 @@ describe("Recurring Subscriptions & Idempotency", () => {
     expect(entry.type).toBe("income");
     expect(entry.category).toBe("Salary");
     expect(entry.idempotencyKey).toBe("sub_sal1_2026-11-01");
+  });
+
+  it("logs only the owner's reduced share for family plans (equal split and custom shares)", () => {
+    const equalSub: SubscriptionRecord = {
+      id: "fam1",
+      name: "Spotify Family",
+      cost: 179,
+      billingCycle: "monthly",
+      nextBillingDate: "2026-11-25",
+      icon: "🎵",
+      type: "expense",
+      autoPost: true,
+      isFamilyPlan: true,
+      familyMembers: [
+        { name: "A", email: "a@example.com" },
+        { name: "B", email: "b@example.com" },
+        { name: "C", email: "c@example.com" },
+      ],
+      createdAt: 1000,
+    };
+    expect(getOwnerSubscriptionCost(equalSub)).toBe(44.75);
+    const equalEntry = buildRecurringExpenseEntry(equalSub, "2026-11-25");
+    expect(equalEntry.amount).toBe(44.75);
+    expect(equalEntry.notes).toContain("44.75 of 179.00");
+
+    const customSub: SubscriptionRecord = {
+      ...equalSub,
+      id: "fam2",
+      cost: 121,
+      familyMembers: [{ name: "Test", email: "test@example.com", share: 100 }],
+    };
+    expect(getOwnerSubscriptionCost(customSub)).toBe(21);
+    expect(buildRecurringExpenseEntry(customSub, "2026-11-25").amount).toBe(21);
   });
 });
 
