@@ -275,64 +275,149 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
     }
   };
 
-  const renderMarkdown = (text: string) => {
-    const lines = text.split("\n");
-    return lines.map((line, index) => {
-      let isBullet = false;
-      let cleanLine = line;
-      if (line.trim().startsWith("* ") || line.trim().startsWith("- ")) {
-        isBullet = true;
-        cleanLine = line.trim().substring(2);
+  const renderInlineMarkdown = (text: string): React.ReactNode[] => {
+    const parts: React.ReactNode[] = [];
+    const tokenRegex = /(\*\*[^*]+\*\*|`[^`]+`)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = tokenRegex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
       }
-
-      const parts: React.ReactNode[] = [];
-      const tokenRegex = /(\*\*[^*]+\*\*|`[^`]+`)/g;
-      let lastIndex = 0;
-      let match;
-
-      while ((match = tokenRegex.exec(cleanLine)) !== null) {
-        if (match.index > lastIndex) {
-          parts.push(cleanLine.substring(lastIndex, match.index));
-        }
-        const token = match[0];
-        if (token.startsWith("**") && token.endsWith("**")) {
-          parts.push(
-            <strong key={match.index} className="font-semibold text-text-primary">
-              {token.slice(2, -2)}
-            </strong>
-          );
-        } else if (token.startsWith("`") && token.endsWith("`")) {
-          parts.push(
-            <code
-              key={match.index}
-              className="rounded bg-bg-secondary px-1.5 py-0.5 font-mono text-[12px] text-text-primary"
-            >
-              {token.slice(1, -1)}
-            </code>
-          );
-        }
-        lastIndex = tokenRegex.lastIndex;
-      }
-
-      if (lastIndex < cleanLine.length) {
-        parts.push(cleanLine.substring(lastIndex));
-      }
-
-      if (isBullet) {
-        return (
-          <li key={index} className="flex items-start gap-2 mt-1 text-[13.5px] sm:text-[14px] leading-relaxed text-text-primary">
-            <span className="text-text-muted mt-1 leading-none select-none">•</span>
-            <span className="flex-1">{parts}</span>
-          </li>
+      const token = match[0];
+      if (token.startsWith("**") && token.endsWith("**")) {
+        parts.push(
+          <strong key={match.index} className="font-semibold text-text-primary">
+            {token.slice(2, -2)}
+          </strong>
+        );
+      } else if (token.startsWith("`") && token.endsWith("`")) {
+        parts.push(
+          <code
+            key={match.index}
+            className="rounded bg-bg-secondary px-1.5 py-0.5 font-mono text-[12px] text-text-primary break-all"
+          >
+            {token.slice(1, -1)}
+          </code>
         );
       }
+      lastIndex = tokenRegex.lastIndex;
+    }
 
-      return (
-        <p key={index} className="min-h-[1em] mt-1.5 text-[13.5px] sm:text-[14px] leading-relaxed text-text-primary first:mt-0">
-          {parts}
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts;
+  };
+
+  const isTableRow = (line: string) => {
+    const t = line.trim();
+    return t.startsWith("|") && t.endsWith("|") && t.length > 2;
+  };
+
+  const isTableSeparator = (line: string) => {
+    const t = line.trim();
+    return /^\|[\s:|-]+\|$/.test(t) && t.includes("-");
+  };
+
+  const splitTableCells = (line: string) =>
+    line
+      .trim()
+      .slice(1, -1)
+      .split("|")
+      .map((cell) => cell.trim());
+
+  const renderMarkdown = (text: string) => {
+    const lines = text.split("\n");
+    const blocks: React.ReactNode[] = [];
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]!;
+
+      if (isTableRow(line) && i + 1 < lines.length && isTableSeparator(lines[i + 1]!)) {
+        const headers = splitTableCells(line);
+        const rows: string[][] = [];
+        let j = i + 2;
+        while (j < lines.length && isTableRow(lines[j]!)) {
+          rows.push(splitTableCells(lines[j]!));
+          j++;
+        }
+        blocks.push(
+          <div
+            key={`tbl-${i}`}
+            className="my-2.5 w-full overflow-x-auto rounded-sm border border-border-subtle bg-bg-card/80"
+          >
+            <table className="w-full border-collapse text-left text-[12.5px] sm:text-[13px]">
+              <thead>
+                <tr className="border-b border-border-subtle bg-bg-secondary/70">
+                  {headers.map((h, idx) => (
+                    <th
+                      key={idx}
+                      className="whitespace-nowrap px-3 py-2 font-mono text-[10.5px] font-semibold uppercase tracking-wider text-text-secondary"
+                    >
+                      {renderInlineMarkdown(h)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row, rIdx) => (
+                  <tr
+                    key={rIdx}
+                    className="border-b border-border-subtle/50 last:border-b-0 hover:bg-bg-secondary/30"
+                  >
+                    {headers.map((_, cIdx) => (
+                      <td key={cIdx} className="whitespace-nowrap px-3 py-2 text-text-primary">
+                        {renderInlineMarkdown(row[cIdx] ?? "")}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+        i = j - 1;
+        continue;
+      }
+
+      const trimmed = line.trim();
+      if (trimmed.startsWith("### ") || trimmed.startsWith("## ") || trimmed.startsWith("# ")) {
+        const headingText = trimmed.replace(/^#{1,3}\s+/, "");
+        blocks.push(
+          <h4 key={i} className="mt-2.5 text-[14px] font-semibold text-text-primary first:mt-0">
+            {renderInlineMarkdown(headingText)}
+          </h4>
+        );
+        continue;
+      }
+
+      if (trimmed.startsWith("* ") || trimmed.startsWith("- ")) {
+        const cleanLine = trimmed.substring(2);
+        blocks.push(
+          <li key={i} className="flex items-start gap-2 mt-1 text-[13.5px] sm:text-[14px] leading-relaxed text-text-primary">
+            <span className="text-text-muted mt-1 leading-none select-none">•</span>
+            <span className="flex-1 min-w-0 break-words">{renderInlineMarkdown(cleanLine)}</span>
+          </li>
+        );
+        continue;
+      }
+
+      if (!trimmed) {
+        blocks.push(<div key={i} className="h-2" />);
+        continue;
+      }
+
+      blocks.push(
+        <p key={i} className="mt-1.5 text-[13.5px] sm:text-[14px] leading-relaxed text-text-primary break-words first:mt-0">
+          {renderInlineMarkdown(line)}
         </p>
       );
-    });
+    }
+
+    return blocks;
   };
 
   if (!isProUser) {
@@ -550,7 +635,7 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
           <>
             <main
           ref={scrollRef}
-          className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex flex-col gap-5 custom-scrollbar"
+          className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-6 md:p-8 flex flex-col gap-5 custom-scrollbar"
         >
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center my-auto py-10 px-4 text-center max-w-4xl mx-auto animate-[fadeIn_0.3s_ease] w-full">
@@ -632,20 +717,20 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
                       {msg.text}
                     </div>
                   ) : (
-                    <div className="flex items-start gap-3 max-w-[85%] max-sm:max-w-[90%]">
-                      <KirokuSeal className="h-7 w-7 text-xs shrink-0 mt-0.5" />
-                      <div className="flex flex-col gap-1.5 min-w-0">
-                        <div className="rounded-sm rounded-tl-none border border-border-subtle/80 bg-bg-primary/60 px-5 py-3.5 text-text-primary shadow-xs">
+                    <div className="flex items-start gap-2.5 sm:gap-3 w-full max-w-[95%] sm:max-w-[85%] min-w-0">
+                      <KirokuSeal className="h-6 w-6 sm:h-7 sm:w-7 text-[11px] sm:text-xs shrink-0 mt-0.5" />
+                      <div className="flex flex-col gap-1.5 min-w-0 flex-1">
+                        <div className="rounded-sm rounded-tl-none border border-border-subtle/80 bg-bg-primary/60 px-3.5 py-3 sm:px-5 sm:py-3.5 text-text-primary shadow-xs overflow-hidden">
                           {renderMarkdown(msg.text)}
                         </div>
 
-                        <div className="flex items-center gap-2 text-[11px] text-text-muted px-1 font-mono">
-                          <span>{msg.timestamp}</span>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-text-muted px-1 font-mono">
+                          <span className="whitespace-nowrap">{msg.timestamp}</span>
                           <span>•</span>
                           <button
                             type="button"
                             onClick={() => handleCopy(msg.id, msg.text)}
-                            className="flex items-center gap-1 hover:text-text-primary transition-colors cursor-pointer"
+                            className="inline-flex items-center gap-1 whitespace-nowrap hover:text-text-primary transition-colors cursor-pointer"
                           >
                             {copiedId === msg.id ? (
                               <>
@@ -710,7 +795,7 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
                 onKeyDown={handleKeyDown}
                 disabled={loading || !idToken}
                 placeholder={!idToken ? "Sign in to query Kiroku..." : "Ask Kiroku about expenses, watchlist, subscriptions..."}
-                className="seamless-input flex-1 min-w-0 !bg-transparent !border-0 !border-none !rounded-none !shadow-none !ring-0 !outline-none text-[13.5px] sm:text-[14px] text-text-primary placeholder:text-text-muted/70 resize-none py-1 leading-relaxed max-h-[120px]"
+                className="seamless-input flex-1 min-w-0 !bg-transparent !border-0 !border-none !rounded-none !shadow-none !ring-0 !outline-none text-[13.5px] sm:text-[14px] text-text-primary placeholder:text-text-muted/70 resize-none py-1 leading-snug max-h-[120px] overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
                 style={{
                   border: "none",
                   outline: "none",
@@ -755,7 +840,7 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
 
             <div className="flex items-center justify-between px-2 text-[10.5px] text-text-muted">
               <span className="truncate">Kiroku (記録) • Dedicated AI Assistant</span>
-              <span className="font-mono text-[9.5px]">Shift + Enter for new line</span>
+              <span className="hidden sm:inline font-mono text-[9.5px] shrink-0">Shift + Enter for new line</span>
             </div>
           </div>
         </footer>
