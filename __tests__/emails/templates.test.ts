@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { buildExpensesEmail, expensesPeriodTitle } from "@/emails/templates/expenses";
-import { buildSubscriptionsEmail } from "@/emails/templates/subscriptions";
+import { buildSubscriptionsEmail, buildFamilyMemberSubscriptionEmail } from "@/emails/templates/subscriptions";
 import { buildAnnouncementEmail } from "@/emails/templates/announcement";
 import { samplePortfolio, sampleExpenses, sampleSubscriptions } from "@/emails/samples";
 import { buildPortfolioEmail } from "@/emails/templates/portfolio";
@@ -67,6 +67,59 @@ describe("subscriptions email template", () => {
     const { html } = buildSubscriptionsEmail(data);
     expect(html).toContain("Yearly");
     expect(html).toContain("Monthly");
+  });
+
+  it("renders family member reminder with Continuum member perks when registered", () => {
+    const { subject, html } = buildFamilyMemberSubscriptionEmail({
+      subscription: {
+        name: "Spotify Family",
+        icon: "🎵",
+        cost: 179,
+        billingCycle: "monthly",
+        nextBillingDate: "2026-12-01",
+        daysUntil: 2,
+      },
+      memberName: "Riya",
+      memberShare: 44.75,
+      totalMembers: 4,
+      ownerEmail: "owner@example.com",
+      isContinuumUser: true,
+      appUrl: APP,
+      unsubscribeUrl: UNSUB,
+    });
+    expect(subject).toContain("Spotify Family");
+    expect(subject).toContain("owner@example.com");
+    expect(html).toContain("Visible in Your Continuum App");
+    expect(html).toContain("Shared With You");
+    expect(html).toContain("View in Subscriptions & Log Payment");
+    expect(html).toContain("please pay owner@example.com");
+    expect(html).toContain("Unsubscribe from subscription alerts");
+    expect(html).toContain("44.75");
+  });
+
+  it("renders family member reminder for non-Continuum members with small promotion and guest unsubscribe", () => {
+    const { html } = buildFamilyMemberSubscriptionEmail({
+      subscription: {
+        name: "YouTube Premium",
+        icon: "▶️",
+        cost: 299,
+        billingCycle: "monthly",
+        nextBillingDate: "2026-12-02",
+        daysUntil: 3,
+      },
+      memberName: "Alex",
+      memberShare: 99.67,
+      totalMembers: 3,
+      ownerEmail: "owner@example.com",
+      isContinuumUser: false,
+      appUrl: APP,
+      unsubscribeUrl: `${APP}/api/unsubscribe?email=alex%40example.com&category=subscriptions&token=abc`,
+    });
+    expect(html).toContain("Family Plan");
+    expect(html).toContain("Learn About Continuum Home");
+    expect(html).toContain("free, encrypted personal finance dashboard");
+    expect(html).toContain("Unsubscribe from these reminders");
+    expect(html).not.toContain("Visible in Your Continuum App");
   });
 });
 

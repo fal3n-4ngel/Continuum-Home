@@ -703,18 +703,6 @@ export const ExpensesTab: React.FC<ExpensesTabProps> = () => {
                   ? `Prev Cycle (${currentPayCycle.prevStartStr} – ${currentPayCycle.prevEndStr})`
                   : `Last ${timeFilter} days`}
               </span>
-              {!isLedgerLoading && timeFilter === "salary" && totalSpent > 0 && (() => {
-                const startMs = new Date(`${currentPayCycle.startStr}T00:00:00`).getTime();
-                const endMs = new Date(`${currentPayCycle.endStr}T23:59:59`).getTime();
-                const elapsedDays = Math.max(1, Math.floor((mountNowMs - startMs) / 86400000) + 1);
-                const daysLeft = Math.max(0, Math.ceil((endMs - mountNowMs) / 86400000));
-                const avgDaily = Math.round(totalSpent / elapsedDays);
-                return (
-                  <span className="mt-1 font-mono text-[10px] text-text-muted">
-                    {currency}{avgDaily.toLocaleString()}/day avg · {daysLeft}d left
-                  </span>
-                );
-              })()}
             </div>
             {!isLedgerLoading && totalIncome > 0 && (
               <div className={`${STAT_CARD} border-t-2 border-t-emerald-500/80`}>

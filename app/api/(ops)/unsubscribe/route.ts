@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminSetEmailSubscriptions, type EmailSubscriptions } from "@/lib/firebase/firebase-admin";
-import { EMAIL_CATEGORIES, EMAIL_CATEGORY_LABELS, verifyUnsubscribeToken, type EmailCategory, type UnsubscribeCategory } from "@/lib/auth";
+import { adminSetEmailSubscriptions, adminUnsubscribeGuestEmail, type EmailSubscriptions } from "@/lib/firebase/firebase-admin";
+import {
+  EMAIL_CATEGORIES,
+  EMAIL_CATEGORY_LABELS,
+  verifyUnsubscribeToken,
+  verifyGuestUnsubscribeToken,
+  type EmailCategory,
+  type UnsubscribeCategory,
+} from "@/lib/auth";
 import { env } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -44,14 +51,28 @@ function errorPage(message: string): NextResponse {
   );
 }
 
-function parseParams(req: NextRequest): { uid: string; category: UnsubscribeCategory; token: string } | null {
+type ParsedUnsubscribe =
+  | { kind: "user"; uid: string; category: UnsubscribeCategory; token: string }
+  | { kind: "guest"; email: string; category: UnsubscribeCategory; token: string };
+
+function parseParams(req: NextRequest): ParsedUnsubscribe | null {
   const { searchParams } = new URL(req.url);
   const uid = searchParams.get("uid") || "";
+  const email = searchParams.get("email") || "";
   const category = searchParams.get("category") || "";
   const token = searchParams.get("token") || "";
   const validCategory = category === "all" || EMAIL_CATEGORIES.includes(category as EmailCategory);
-  if (!uid || !token || !validCategory) return null;
-  return { uid, category: category as UnsubscribeCategory, token };
+  if (!token || !validCategory) return null;
+  if (uid) return { kind: "user", uid, category: category as UnsubscribeCategory, token };
+  if (email) return { kind: "guest", email, category: category as UnsubscribeCategory, token };
+  return null;
+}
+
+function isTokenValid(parsed: ParsedUnsubscribe | null): boolean {
+  if (!parsed) return false;
+  return parsed.kind === "user"
+    ? verifyUnsubscribeToken(parsed.uid, parsed.token)
+    : verifyGuestUnsubscribeToken(parsed.email, parsed.token);
 }
 
 function categoryLabel(category: UnsubscribeCategory): string {
@@ -65,14 +86,20 @@ function updatesFor(category: UnsubscribeCategory): Partial<EmailSubscriptions> 
 
 export async function GET(req: NextRequest) {
   const parsed = parseParams(req);
-  if (!parsed || !verifyUnsubscribeToken(parsed.uid, parsed.token)) {
+  if (!parsed || !isTokenValid(parsed)) {
     return errorPage("This unsubscribe link is malformed or has expired. If you still want to stop these emails, sign in and use the Settings page instead.");
   }
+
+  const label = parsed.kind === "guest" ? "Shared Family Plan Reminder emails" : categoryLabel(parsed.category);
+  const hint =
+    parsed.kind === "guest"
+      ? "You will no longer receive family subscription payment reminders from Continuum Home."
+      : "You can turn this back on anytime from Settings.";
 
   return page(
     "Unsubscribe — Continuum Home",
     `<h1>Unsubscribe?</h1>
-     <p>Stop receiving <span class="cat">${categoryLabel(parsed.category)}</span> from Continuum Home. You can turn this back on anytime from Settings.</p>
+     <p>Stop receiving <span class="cat">${label}</span> from Continuum Home. ${hint}</p>
      <form method="POST">
        <button type="submit">Confirm Unsubscribe</button>
      </form>`
@@ -81,18 +108,31 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   const parsed = parseParams(req);
-  if (!parsed || !verifyUnsubscribeToken(parsed.uid, parsed.token)) {
+  if (!parsed || !isTokenValid(parsed)) {
     return errorPage("This unsubscribe link is malformed or has expired. If you still want to stop these emails, sign in and use the Settings page instead.");
   }
 
   try {
-    await adminSetEmailSubscriptions(parsed.uid, updatesFor(parsed.category));
+    if (parsed.kind === "user") {
+      await adminSetEmailSubscriptions(parsed.uid, updatesFor(parsed.category));
+    } else {
+      await adminUnsubscribeGuestEmail(parsed.email);
+    }
   } catch (err) {
     console.error("Unsubscribe failed:", err);
     return page(
       "Unsubscribe — Continuum Home",
       `<div class="icon">⚠️</div><h1>Something went wrong</h1><p>We couldn't process your request. Please try again in a moment.</p>`,
       500
+    );
+  }
+
+  if (parsed.kind === "guest") {
+    return page(
+      "Unsubscribed — Continuum Home",
+      `<div class="icon">✓</div><h1>You're unsubscribed</h1>
+       <p>You won't receive family subscription reminder emails from Continuum Home anymore.</p>
+       <a class="btn" href="${env.APP_URL}">Visit Continuum Home</a>`
     );
   }
 

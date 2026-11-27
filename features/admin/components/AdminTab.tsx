@@ -535,6 +535,24 @@ Thank you for being part of our journey!`);
     }
   };
 
+  const viewEmailPreview = async (task: string): Promise<{ subject: string; html: string } | null> => {
+    try {
+      const res = await fetch(`/api/admin/preview-email?type=${encodeURIComponent(task)}`, {
+        headers: getHeaders(),
+      });
+      const data = await res.json();
+      if (res.ok && data.html) {
+        return { subject: data.subject, html: data.html };
+      }
+      setStatusMessage({ text: data.error || "Failed to load email preview.", type: "error" });
+      return null;
+    } catch (err) {
+      console.error(err);
+      setStatusMessage({ text: "Failed to load email preview.", type: "error" });
+      return null;
+    }
+  };
+
   const flushCache = async () => {
     setFlushLoading(true);
     setStatusMessage(null);
@@ -1169,6 +1187,7 @@ Thank you for being part of our journey!`);
             cronRunning={cronRunning}
             sendPreviewEmail={sendPreviewEmail}
             handleProductionCronClick={handleProductionCronClick}
+            viewEmailPreview={viewEmailPreview}
           />
 
           <div className="flex flex-col gap-6">

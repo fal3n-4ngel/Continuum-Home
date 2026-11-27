@@ -489,6 +489,7 @@ export default function Dashboard() {
                 {expenseTab === "subscriptions" && (
                   <SubscriptionsTab
                     subscriptions={subs.subscriptions}
+                    sharedSubscriptions={subs.sharedSubscriptions}
                     currency={settings.currency}
                     subName={subs.subName}
                     setSubName={subs.setSubName}
@@ -506,6 +507,18 @@ export default function Dashboard() {
                     setSubAutoPost={subs.setSubAutoPost}
                     subCategory={subs.subCategory}
                     setSubCategory={subs.setSubCategory}
+                    subIsFamilyPlan={subs.subIsFamilyPlan}
+                    setSubIsFamilyPlan={subs.setSubIsFamilyPlan}
+                    subSendMemberEmails={subs.subSendMemberEmails}
+                    setSubSendMemberEmails={subs.setSubSendMemberEmails}
+                    subFamilyMembers={subs.subFamilyMembers}
+                    setSubFamilyMembers={subs.setSubFamilyMembers}
+                    continuumMemberEmails={subs.continuumMemberEmails}
+                    checkFamilyMembers={subs.checkFamilyMembers}
+                    toggleFamilyMemberPaid={subs.toggleFamilyMemberPaid}
+                    toggleSharedSubscriptionPaid={subs.toggleSharedSubscriptionPaid}
+                    logSharedSubscriptionPayment={subs.logSharedSubscriptionPayment}
+                    dismissSharedSubscription={subs.dismissSharedSubscription}
                     isAddingSub={subs.isAddingSub}
                     addSubscription={subs.addSubscription}
                     deleteSubscription={subs.deleteSubscription}
