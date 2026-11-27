@@ -1,6 +1,7 @@
 import React from "react";
 import { FamilyMember, SharedSubscription, Subscription } from "@/types";
 import { getSubLogoUrl } from "@/lib/finance";
+import { isValidEmail } from "@/lib/firebase/validate";
 import { useExpensesStore } from "@/lib/stores/expenses-store";
 
 const DEFAULT_SUB_CATEGORIES = [
@@ -102,7 +103,7 @@ const FamilyMembersEditor: React.FC<FamilyMembersEditorProps> = ({
       setErr("Enter member name.");
       return;
     }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
+    if (!isValidEmail(trimmedEmail)) {
       setErr("Enter a valid email address.");
       return;
     }

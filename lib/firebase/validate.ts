@@ -233,7 +233,15 @@ export function validateSyncPayload(body: unknown): { source: SyncSource; entrie
 }
 
 const MAX_FAMILY_MEMBERS = 10;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function isValidEmail(email: string): boolean {
+  if (!email || email.length > 160 || /\s/.test(email)) return false;
+  const at = email.indexOf("@");
+  if (at <= 0 || at !== email.lastIndexOf("@")) return false;
+  const domain = email.slice(at + 1);
+  const dot = domain.lastIndexOf(".");
+  return dot > 0 && dot < domain.length - 1;
+}
 
 function validateFamilyMembers(value: unknown): Array<{ name: string; email: string; share?: number | null; paidForCycle?: string | null }> | undefined {
   if (value === undefined || value === null) return undefined;
@@ -249,7 +257,7 @@ function validateFamilyMembers(value: unknown): Array<{ name: string; email: str
     const m = item as Record<string, unknown>;
     const name = asTrimmedString(m.name, `familyMembers[${idx}].name`, 80, true)!;
     const rawEmail = asTrimmedString(m.email, `familyMembers[${idx}].email`, 160, true)!.toLowerCase();
-    if (!EMAIL_RE.test(rawEmail)) {
+    if (!isValidEmail(rawEmail)) {
       badRequest(`Family member ${idx + 1} has an invalid email address.`);
     }
     if (seenEmails.has(rawEmail)) {

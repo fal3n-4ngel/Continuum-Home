@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { withUser } from "@/lib/utils/route-handlers";
 import { ApiError } from "@/lib/utils";
 import { adminFindUsersByEmails } from "@/lib/firebase/firebase-admin";
+import { isValidEmail } from "@/lib/firebase/validate";
 
 export const dynamic = "force-dynamic";
 
 const MAX_EMAILS = 25;
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const POST = withUser("POST /api/subscriptions/check-members", async (req: NextRequest) => {
   let body: unknown;
@@ -26,7 +26,7 @@ export const POST = withUser("POST /api/subscriptions/check-members", async (req
       rawEmails
         .filter((e): e is string => typeof e === "string")
         .map((e) => e.trim().toLowerCase())
-        .filter((e) => EMAIL_RE.test(e))
+        .filter((e) => isValidEmail(e))
     )
   ).slice(0, MAX_EMAILS);
 
