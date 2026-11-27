@@ -2,7 +2,8 @@ import { createHash } from "crypto";
 import { getApps, initializeApp, cert, type App } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
 import { getFirestore, FieldValue, type Firestore } from "firebase-admin/firestore";
-import { encrypt, decrypt, ApiError, env } from "@/lib/utils";
+import { encrypt, decrypt, ApiError, env, cacheInvalidate } from "@/lib/utils";
+import { sendWebPush, isPushConfigured, type PushNotificationPayload } from "@/lib/push/web-push";
 import {
   encryptAsset,
   decryptAsset,
@@ -198,6 +199,7 @@ export async function adminListSharedSubscriptions(uid: string): Promise<SharedS
         totalMembers: typeof data.totalMembers === "number" ? data.totalMembers : 2,
         billingCycle: (data.billingCycle === "yearly" ? "yearly" : "monthly") as SharedSubscription["billingCycle"],
         nextBillingDate: String(data.nextBillingDate || ""),
+        paidForCycle: typeof data.paidForCycle === "string" ? data.paidForCycle : null,
         category: typeof data.category === "string" ? data.category : null,
         updatedAt: typeof data.updatedAt === "number" ? data.updatedAt : 0,
       });
@@ -216,6 +218,37 @@ export async function adminListSharedSubscriptions(uid: string): Promise<SharedS
 export async function adminDismissSharedSubscription(uid: string, id: string): Promise<void> {
   const db = getAdminDb();
   await db.collection("users").doc(uid).collection("shared_subscriptions").doc(id).delete();
+}
+
+export async function adminSendPushToUser(
+  uid: string,
+  payload: PushNotificationPayload
+): Promise<number> {
+  if (!isPushConfigured()) return 0;
+  try {
+    const db = getAdminDb();
+    const snap = await db.collection("users").doc(uid).collection("push_subscriptions").get();
+    if (snap.empty) return 0;
+    const results = await Promise.allSettled(
+      snap.docs.map((doc) => {
+        const d = doc.data();
+        return sendWebPush(
+          {
+            endpoint: String(d.endpoint || ""),
+            keys: {
+              p256dh: String(d.keys?.p256dh || ""),
+              auth: String(d.keys?.auth || ""),
+            },
+          },
+          payload
+        );
+      })
+    );
+    return results.filter((r) => r.status === "fulfilled" && r.value).length;
+  } catch (err) {
+    console.error(`Failed to send cross-user push to uid ${uid}:`, err);
+    return 0;
+  }
 }
 
 export async function adminSyncSharedSubscription(
@@ -264,6 +297,7 @@ export async function adminSyncSharedSubscription(
         totalMembers,
         billingCycle: sub.billingCycle,
         nextBillingDate: sub.nextBillingDate,
+        paidForCycle: member.paidForCycle ?? null,
         category: sub.category ?? null,
         updatedAt: Date.now(),
       });
@@ -279,6 +313,7 @@ export async function adminSyncSharedSubscription(
     }
   }
 
+  const newlyAddedEntries: Array<[string, SharedSubscription]> = [];
   for (const [memberUid, payload] of targetByUid.entries()) {
     const ref = db
       .collection("users")
@@ -286,6 +321,9 @@ export async function adminSyncSharedSubscription(
       .collection("shared_subscriptions")
       .doc(sourceKey);
     batch.set(ref, payload);
+    if (!previousUids.includes(memberUid)) {
+      newlyAddedEntries.push([memberUid, payload]);
+    }
   }
 
   if (targetByUid.size > 0) {
@@ -298,7 +336,96 @@ export async function adminSyncSharedSubscription(
     await batch.commit();
   }
 
+  for (const [memberUid, payload] of newlyAddedEntries) {
+    adminSendPushToUser(memberUid, {
+      title: `Shared Plan: ${payload.name}`,
+      body: `${ownerEmail} added you (your share: ₹${payload.memberShare.toFixed(2)}/${payload.billingCycle})`,
+      url: "/dashboard?tab=expenses",
+      tag: `shared-sub-${sourceKey}`,
+    }).catch(() => {});
+  }
+
   return { syncedCount: targetByUid.size, removedCount };
+}
+
+export async function adminSetFamilyMemberPaidStatus(opts: {
+  ownerUid: string;
+  ownerEmail: string;
+  subscriptionId: string;
+  memberEmail: string;
+  paid: boolean;
+  actor: "owner" | "member";
+}): Promise<{ paidForCycle: string | null }> {
+  const db = getAdminDb();
+  const subRef = db.collection("users").doc(opts.ownerUid).collection("subscriptions").doc(opts.subscriptionId);
+  const subSnap = await subRef.get();
+  if (!subSnap.exists) {
+    throw new ApiError(404, "Subscription not found.");
+  }
+
+  const data = subSnap.data() || {};
+  const nextBillingDate = String(data.nextBillingDate || "");
+  const subName = String(data.name || "Subscription");
+  const billingCycle = (data.billingCycle === "yearly" ? "yearly" : "monthly") as "monthly" | "yearly";
+  const cost = typeof data.cost === "number" ? data.cost : 0;
+  const rawMembers = Array.isArray(data.familyMembers) ? (data.familyMembers as Array<Record<string, unknown>>) : [];
+  const targetEmail = opts.memberEmail.trim().toLowerCase();
+
+  const memberIdx = rawMembers.findIndex(
+    (m) => typeof m.email === "string" && m.email.trim().toLowerCase() === targetEmail
+  );
+  if (memberIdx === -1) {
+    throw new ApiError(403, "Member is not part of this family plan.");
+  }
+
+  const paidForCycle = opts.paid ? nextBillingDate : null;
+  const updatedMembers = rawMembers.map((m, idx) =>
+    idx === memberIdx ? { ...m, paidForCycle } : m
+  );
+
+  await subRef.set({ familyMembers: updatedMembers }, { merge: true });
+
+  const projectId = env.FIREBASE_CONFIG ? (JSON.parse(env.FIREBASE_CONFIG) as { projectId?: string }).projectId : undefined;
+  if (projectId) {
+    await cacheInvalidate(`subscriptions:${projectId}:${opts.ownerUid}`).catch(() => {});
+  }
+
+  const memberCount = rawMembers.length + 1;
+  const targetMember = rawMembers[memberIdx]!;
+  const memberShare = typeof targetMember.share === "number" ? targetMember.share : cost / memberCount;
+  const continuumUsers = await adminFindUsersByEmails([targetEmail]);
+  const memberUser = continuumUsers.get(targetEmail);
+
+  if (memberUser) {
+    const sourceKey = `${opts.ownerUid}_${opts.subscriptionId}`;
+    await db
+      .collection("users")
+      .doc(memberUser.uid)
+      .collection("shared_subscriptions")
+      .doc(sourceKey)
+      .set({ paidForCycle, updatedAt: Date.now() }, { merge: true })
+      .catch(() => {});
+  }
+
+  if (opts.paid) {
+    if (opts.actor === "member") {
+      adminSendPushToUser(opts.ownerUid, {
+        title: `${subName} — Share Paid`,
+        body: `${targetEmail} marked their ${billingCycle} share (₹${memberShare.toFixed(2)}) as paid.`,
+        url: "/dashboard?tab=expenses",
+        tag: `sub-paid-${opts.subscriptionId}`,
+      }).catch(() => {});
+    } else if (memberUser) {
+      adminSendPushToUser(memberUser.uid, {
+        title: `${subName} — Marked Paid`,
+        body: `${opts.ownerEmail} marked your share for ${nextBillingDate} as paid.`,
+        url: "/dashboard?tab=expenses",
+        tag: `sub-paid-${opts.subscriptionId}`,
+      }).catch(() => {});
+    }
+  }
+
+  return { paidForCycle };
 }
 
 export async function adminListSubscriptions(uid: string): Promise<SubscriptionRecord[]> {
@@ -317,6 +444,7 @@ export async function adminListSubscriptions(uid: string): Promise<SubscriptionR
           name: m.name as string,
           email: (m.email as string).toLowerCase(),
           ...(typeof m.share === "number" ? { share: m.share } : {}),
+          ...(typeof m.paidForCycle === "string" ? { paidForCycle: m.paidForCycle } : {}),
         }));
       return {
         id: doc.id,

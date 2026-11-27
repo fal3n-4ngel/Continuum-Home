@@ -235,7 +235,7 @@ export function validateSyncPayload(body: unknown): { source: SyncSource; entrie
 const MAX_FAMILY_MEMBERS = 10;
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-function validateFamilyMembers(value: unknown): Array<{ name: string; email: string; share?: number | null }> | undefined {
+function validateFamilyMembers(value: unknown): Array<{ name: string; email: string; share?: number | null; paidForCycle?: string | null }> | undefined {
   if (value === undefined || value === null) return undefined;
   if (!Array.isArray(value)) badRequest("Field 'familyMembers' must be an array.");
   if (value.length > MAX_FAMILY_MEMBERS) {
@@ -260,7 +260,13 @@ function validateFamilyMembers(value: unknown): Array<{ name: string; email: str
       m.share !== undefined && m.share !== null && m.share !== ""
         ? asNumber(m.share, `familyMembers[${idx}].share`, { min: 0, max: 1_000_000 })
         : null;
-    return { name, email: rawEmail, ...(share !== null ? { share } : {}) };
+    const paidForCycle = asDate(m.paidForCycle, `familyMembers[${idx}].paidForCycle`);
+    return {
+      name,
+      email: rawEmail,
+      ...(share !== null ? { share } : {}),
+      ...(paidForCycle ? { paidForCycle } : {}),
+    };
   });
 }
 

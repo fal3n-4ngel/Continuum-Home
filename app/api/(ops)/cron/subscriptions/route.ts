@@ -9,6 +9,7 @@ import {
   adminFindUsersByEmails,
   adminSyncSharedSubscription,
   adminIsGuestEmailUnsubscribed,
+  adminSendPushToUser,
   type AdminUser,
 } from "@/lib/firebase/firebase-admin";
 import { collectDueBillingDates, buildRecurringExpenseEntry } from "@/lib/finance";
@@ -52,6 +53,7 @@ async function sendFamilyMemberReminders(
     for (const member of members) {
       const normalizedEmail = member.email.trim().toLowerCase();
       if (!normalizedEmail || normalizedEmail === owner.email.toLowerCase()) continue;
+      if (member.paidForCycle === sub.nextBillingDate) continue;
 
       const memberHash = createHash("sha256").update(normalizedEmail).digest("hex").slice(0, 16);
       const cronJobKey = `sub-family:${sub.id}`;
@@ -119,6 +121,14 @@ async function sendFamilyMemberReminders(
       }
 
       await markCronAsSentToday(cronJobKey, memberHash, todayDateStr);
+      if (continuumUser) {
+        adminSendPushToUser(continuumUser.uid, {
+          title: `${sub.name} renews in ${daysUntil}d`,
+          body: `Your share is ₹${memberShare.toFixed(2)} — due to ${owner.email}`,
+          url: "/dashboard?tab=expenses",
+          tag: `sub-reminder-${sub.id}`,
+        }).catch(() => {});
+      }
       sentCount++;
     }
   }

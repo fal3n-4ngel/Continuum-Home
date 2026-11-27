@@ -44,6 +44,8 @@ interface SubscriptionsTabProps {
   setSubFamilyMembers?: React.Dispatch<React.SetStateAction<FamilyMember[]>>;
   continuumMemberEmails?: Record<string, boolean>;
   checkFamilyMembers?: (emails: string[]) => void;
+  toggleFamilyMemberPaid?: (subscriptionId: string, memberEmail: string, paid: boolean) => void;
+  toggleSharedSubscriptionPaid?: (shared: SharedSubscription, paid: boolean) => Promise<boolean>;
   logSharedSubscriptionPayment?: (shared: SharedSubscription) => Promise<boolean>;
   dismissSharedSubscription?: (id: string) => void;
   isAddingSub: boolean;
@@ -253,6 +255,8 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
   setSubFamilyMembers,
   continuumMemberEmails = {},
   checkFamilyMembers,
+  toggleFamilyMemberPaid,
+  toggleSharedSubscriptionPaid,
   logSharedSubscriptionPayment,
   dismissSharedSubscription,
   isAddingSub,
@@ -792,11 +796,20 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                         <div className="mt-1.5 flex flex-wrap items-center gap-1">
                           {sub.familyMembers.map((m) => {
                             const isContinuum = continuumMemberEmails[m.email.toLowerCase()] === true;
+                            const isPaid = Boolean(sub.nextBillingDate && m.paidForCycle === sub.nextBillingDate);
                             return (
-                              <span
+                              <button
                                 key={m.email}
-                                title={m.email}
-                                className="inline-flex items-center gap-1 rounded border border-border-subtle bg-bg-card px-1.5 py-0.5 text-[10px] text-text-secondary"
+                                type="button"
+                                onClick={() => toggleFamilyMemberPaid?.(sub.id, m.email, !isPaid)}
+                                title={`${m.email} — Click to mark ${isPaid ? "pending" : "paid"} for ${sub.nextBillingDate}`}
+                                className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] transition-colors ${
+                                  toggleFamilyMemberPaid ? "cursor-pointer hover:border-border-hover" : ""
+                                } ${
+                                  isPaid
+                                    ? "border-emerald-500/35 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                                    : "border-border-subtle bg-bg-card text-text-secondary"
+                                }`}
                               >
                                 <span>{m.name}</span>
                                 {isContinuum && (
@@ -804,7 +817,10 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                                     ✓ Continuum
                                   </span>
                                 )}
-                              </span>
+                                <span className={`font-mono text-[8.5px] font-semibold uppercase ${isPaid ? "text-emerald-600 dark:text-emerald-400" : "text-text-muted"}`}>
+                                  · {isPaid ? "Paid ✓" : "Pending"}
+                                </span>
+                              </button>
                             );
                           })}
                         </div>
@@ -860,6 +876,7 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                   const daysUntil = Math.ceil((new Date(shared.nextBillingDate).getTime() - now) / 86400000);
                   const isDueSoon = daysUntil <= 7 && daysUntil >= 0;
                   const isLogged = loggedSharedIds[shared.id] === true;
+                  const isPaid = Boolean(shared.nextBillingDate && shared.paidForCycle === shared.nextBillingDate);
                   const isLogging = loggingSharedId === shared.id;
                   return (
                     <div
@@ -882,17 +899,35 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                             <span className="rounded border border-border-subtle bg-bg-card px-1.5 py-0.5 font-mono text-[9px] font-medium text-text-secondary">
                               {shared.ownerEmail}
                             </span>
+                            {isPaid && (
+                              <span className="rounded bg-emerald-500/15 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase text-emerald-600 dark:text-emerald-400">
+                                Paid ✓
+                              </span>
+                            )}
                           </div>
-                          <p className={`mt-0.5 text-[11px] ${isDueSoon ? "font-semibold text-[#b3666b]" : "text-text-muted"}`}>
+                          <p className={`mt-0.5 text-[11px] ${isDueSoon && !isPaid ? "font-semibold text-[#b3666b]" : "text-text-muted"}`}>
                             {isDueSoon ? `⚡ Due in ${daysUntil}d` : `Next: ${shared.nextBillingDate}`} · Total {currency}{shared.totalCost.toFixed(0)} / {shared.totalMembers}
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <div className="text-right">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="text-right mr-1">
                           <p className="text-[13px] font-bold text-text-primary">{currency}{shared.memberShare.toFixed(2)}</p>
                           <p className="font-mono text-[10px] tracking-[0.4px] text-text-muted uppercase">Your {shared.billingCycle} share</p>
                         </div>
+                        {toggleSharedSubscriptionPaid && (
+                          <button
+                            type="button"
+                            onClick={() => toggleSharedSubscriptionPaid(shared, !isPaid)}
+                            className={`cursor-pointer rounded-full border px-2.5 py-1 text-[11px] font-semibold transition-all ${
+                              isPaid
+                                ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                                : "border-border-subtle bg-bg-card text-text-secondary hover:border-border-hover hover:text-text-primary"
+                            }`}
+                          >
+                            {isPaid ? "Paid ✓" : "Mark Paid"}
+                          </button>
+                        )}
                         {logSharedSubscriptionPayment && (
                           <button
                             type="button"

@@ -7,6 +7,7 @@ export const FamilyMemberSchema = z.object({
   name: z.string().min(1, "Member name is required").max(80),
   email: z.string().email("Valid member email is required").max(160),
   share: z.number().nonnegative().nullable().optional(),
+  paidForCycle: z.string().nullable().optional(),
 });
 
 export const SubscriptionSchema = z.object({
@@ -45,6 +46,7 @@ export interface SharedSubscription {
   totalMembers: number;
   billingCycle: BillingCycle;
   nextBillingDate: string;
+  paidForCycle?: string | null;
   category?: string | null;
   updatedAt: number;
 }

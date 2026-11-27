@@ -515,6 +515,8 @@ export default function Dashboard() {
                     setSubFamilyMembers={subs.setSubFamilyMembers}
                     continuumMemberEmails={subs.continuumMemberEmails}
                     checkFamilyMembers={subs.checkFamilyMembers}
+                    toggleFamilyMemberPaid={subs.toggleFamilyMemberPaid}
+                    toggleSharedSubscriptionPaid={subs.toggleSharedSubscriptionPaid}
                     logSharedSubscriptionPayment={subs.logSharedSubscriptionPayment}
                     dismissSharedSubscription={subs.dismissSharedSubscription}
                     isAddingSub={subs.isAddingSub}

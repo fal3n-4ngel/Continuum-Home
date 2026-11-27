@@ -286,6 +286,77 @@ export function useSubscriptionsController({
     }
   }, [getHeaders, fetchSubscriptions, onAutoPosted]);
 
+  const toggleFamilyMemberPaid = useCallback(
+    async (subscriptionId: string, memberEmail: string, paid: boolean) => {
+      const normalized = memberEmail.trim().toLowerCase();
+      const targetSub = subscriptions.find((s) => s.id === subscriptionId);
+      const nextPaidCycle = paid ? (targetSub?.nextBillingDate || "") : null;
+      const previous = [...subscriptions];
+
+      setSubscriptions((prev) =>
+        prev.map((s) =>
+          s.id !== subscriptionId
+            ? s
+            : {
+                ...s,
+                familyMembers: (s.familyMembers || []).map((m) =>
+                  m.email.trim().toLowerCase() === normalized
+                    ? { ...m, paidForCycle: nextPaidCycle }
+                    : m
+                ),
+              }
+        )
+      );
+
+      try {
+        const res = await fetch("/api/subscriptions/shared/pay", {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify({
+            mode: "owner",
+            subscriptionId,
+            memberEmail: normalized,
+            paid,
+          }),
+        });
+        if (!res.ok) throw new Error("Failed to update member paid status");
+      } catch (err) {
+        console.error(err);
+        setSubscriptions(previous);
+      }
+    },
+    [subscriptions, getHeaders]
+  );
+
+  const toggleSharedSubscriptionPaid = useCallback(
+    async (shared: SharedSubscription, paid: boolean): Promise<boolean> => {
+      const nextPaidCycle = paid ? shared.nextBillingDate : null;
+      const previous = [...sharedSubscriptions];
+      setSharedSubscriptions((prev) =>
+        prev.map((s) => (s.id === shared.id ? { ...s, paidForCycle: nextPaidCycle } : s))
+      );
+      try {
+        const res = await fetch("/api/subscriptions/shared/pay", {
+          method: "POST",
+          headers: getHeaders(),
+          body: JSON.stringify({
+            mode: "member",
+            ownerUid: shared.ownerUid,
+            subscriptionId: shared.subscriptionId,
+            paid,
+          }),
+        });
+        if (!res.ok) throw new Error("Failed to update shared paid status");
+        return true;
+      } catch (err) {
+        console.error(err);
+        setSharedSubscriptions(previous);
+        return false;
+      }
+    },
+    [sharedSubscriptions, getHeaders]
+  );
+
   const logSharedSubscriptionPayment = useCallback(
     async (shared: SharedSubscription): Promise<boolean> => {
       try {
@@ -303,6 +374,7 @@ export function useSubscriptionsController({
           }),
         });
         if (res.ok) {
+          await toggleSharedSubscriptionPaid(shared, true);
           onAutoPosted?.();
           return true;
         }
@@ -312,7 +384,7 @@ export function useSubscriptionsController({
         return false;
       }
     },
-    [getHeaders, onAutoPosted]
+    [getHeaders, onAutoPosted, toggleSharedSubscriptionPaid]
   );
 
   const dismissSharedSubscription = useCallback(
@@ -363,6 +435,8 @@ export function useSubscriptionsController({
     setSubFamilyMembers,
     continuumMemberEmails,
     checkFamilyMembers,
+    toggleFamilyMemberPaid,
+    toggleSharedSubscriptionPaid,
     logSharedSubscriptionPayment,
     dismissSharedSubscription,
     isAddingSub,

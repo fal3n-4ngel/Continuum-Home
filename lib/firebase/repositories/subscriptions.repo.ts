@@ -55,6 +55,7 @@ function parseFamilyMembers(raw: unknown): FamilyMember[] | undefined {
       name: m.name,
       email: m.email,
       ...(typeof m.share === "number" ? { share: m.share } : {}),
+      ...(typeof m.paidForCycle === "string" ? { paidForCycle: m.paidForCycle } : {}),
     });
   }
   return members.length > 0 ? members : undefined;
