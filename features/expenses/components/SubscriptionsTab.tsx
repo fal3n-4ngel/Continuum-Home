@@ -1,6 +1,6 @@
 import React from "react";
 import { FamilyMember, SharedSubscription, Subscription } from "@/types";
-import { getSubLogoUrl } from "@/lib/finance";
+import { getOwnerSubscriptionCost, getSubLogoUrl } from "@/lib/finance";
 import { isValidEmail } from "@/lib/firebase/validate";
 import { useExpensesStore } from "@/lib/stores/expenses-store";
 
@@ -95,6 +95,15 @@ const FamilyMembersEditor: React.FC<FamilyMembersEditorProps> = ({
   const [err, setErr] = React.useState<string | null>(null);
 
   const defaultSplit = totalCost > 0 ? totalCost / (members.length + 1) : 0;
+  const ownerRemaining =
+    totalCost > 0
+      ? getOwnerSubscriptionCost({
+          cost: totalCost,
+          type: "expense",
+          isFamilyPlan: true,
+          familyMembers: members,
+        })
+      : 0;
 
   const handleAdd = () => {
     const trimmedName = name.trim();
@@ -132,7 +141,7 @@ const FamilyMembersEditor: React.FC<FamilyMembersEditorProps> = ({
     <div className="col-span-2 md:col-span-6 rounded-lg border border-border-subtle bg-bg-secondary/60 p-3 flex flex-col gap-2.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.6px] text-text-secondary">
-          Family Plan Members ({members.length})
+          Family Plan Members ({members.length}){totalCost > 0 ? ` · Your share: ${currency}${ownerRemaining.toFixed(2)}` : ""}
         </span>
         {onToggleSendMemberEmails ? (
           <label className="flex cursor-pointer items-center gap-1.5 text-[11px] text-text-secondary select-none">
@@ -369,14 +378,20 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
         <div className={STAT_CARD}>
           <span className={LABEL_MONO}>Monthly Burn</span>
           <span className={STAT_VALUE}>
-            {currency}{subscriptions.filter((s) => s.type !== "income").reduce((acc, sub) => acc + (sub.billingCycle === "yearly" ? sub.cost / 12 : sub.cost), 0).toFixed(0)}
+            {currency}{subscriptions.filter((s) => s.type !== "income").reduce((acc, sub) => {
+              const ownerCost = getOwnerSubscriptionCost(sub);
+              return acc + (sub.billingCycle === "yearly" ? ownerCost / 12 : ownerCost);
+            }, 0).toFixed(0)}
           </span>
-          <span className={STAT_SUBTEXT}>per month (normalised)</span>
+          <span className={STAT_SUBTEXT}>per month (your share)</span>
         </div>
         <div className={STAT_CARD}>
           <span className={LABEL_MONO}>Yearly Total</span>
           <span className={STAT_VALUE}>
-            {currency}{subscriptions.filter((s) => s.type !== "income").reduce((acc, sub) => acc + (sub.billingCycle === "yearly" ? sub.cost : sub.cost * 12), 0).toFixed(0)}
+            {currency}{subscriptions.filter((s) => s.type !== "income").reduce((acc, sub) => {
+              const ownerCost = getOwnerSubscriptionCost(sub);
+              return acc + (sub.billingCycle === "yearly" ? ownerCost : ownerCost * 12);
+            }, 0).toFixed(0)}
           </span>
           <span className={STAT_SUBTEXT}>annual commitment</span>
         </div>
@@ -702,9 +717,9 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
               return (
                 <div
                   key={sub.id}
-                  className="flex items-center justify-between rounded-[10px] border border-border-subtle bg-bg-secondary px-3.5 py-3 transition-colors duration-150 hover:bg-bg-card"
+                  className="flex flex-col gap-3 rounded-[10px] border border-border-subtle bg-bg-secondary px-3.5 py-3 transition-colors duration-150 hover:bg-bg-card sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-start gap-3 min-w-0 flex-1">
                     {editingIconId === sub.id ? (
                       <input
                         type="text"
@@ -742,7 +757,7 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                         </span>
                       </button>
                     )}
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <p className="text-[13px] font-semibold">{sub.name}</p>
                         {sub.type === "income" && (
@@ -790,7 +805,7 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                           </span>
                         ) : null}
                       </div>
-                      <p className={`mt-0.5 text-[11px] ${isDueSoon ? "font-semibold text-[#b3666b]" : "font-normal text-text-muted"}`}>
+                      <p className={`mt-0.5 text-[11px] whitespace-nowrap ${isDueSoon ? "font-semibold text-[#b3666b]" : "font-normal text-text-muted"}`}>
                         {isDueSoon ? `⚡ Due in ${daysUntil}d` : `Next: ${sub.nextBillingDate}`}
                       </p>
                       {sub.isFamilyPlan && sub.familyMembers && sub.familyMembers.length > 0 && (
@@ -804,7 +819,7 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                                 type="button"
                                 onClick={() => toggleFamilyMemberPaid?.(sub.id, m.email, !isPaid)}
                                 title={`${m.email} — Click to mark ${isPaid ? "pending" : "paid"} for ${sub.nextBillingDate}`}
-                                className={`inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] transition-colors ${
+                                className={`inline-flex items-center gap-1 whitespace-nowrap rounded border px-1.5 py-0.5 text-[10px] transition-colors ${
                                   toggleFamilyMemberPaid ? "cursor-pointer hover:border-border-hover" : ""
                                 } ${
                                   isPaid
@@ -828,31 +843,38 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3.5">
-                    <div className="text-right">
+                  <div className="flex items-center justify-between gap-3 border-t border-border-subtle/60 pt-2.5 sm:border-t-0 sm:pt-0 sm:justify-end sm:shrink-0">
+                    <div className="text-left sm:text-right">
                       <p className="text-[13px] font-bold">{currency}{sub.cost.toFixed(2)}</p>
                       <p className="font-mono text-[10px] tracking-[0.4px] text-text-muted uppercase">{sub.billingCycle}</p>
+                      {sub.isFamilyPlan && sub.familyMembers && sub.familyMembers.length > 0 && sub.type !== "income" && (
+                        <p className="mt-0.5 font-mono text-[10px] text-text-secondary">
+                          Yours: {currency}{getOwnerSubscriptionCost(sub).toFixed(2)}
+                        </p>
+                      )}
                     </div>
-                    {updateSubscription && (
+                    <div className="flex items-center gap-2">
+                      {updateSubscription && (
+                        <button
+                          type="button"
+                          onClick={() => startSubEdit(sub)}
+                          className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-text-muted transition-all duration-150 hover:border-border-subtle hover:bg-bg-secondary hover:text-text-primary"
+                          title="Edit subscription"
+                          aria-label={`Edit ${sub.name}`}
+                        >
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
+                          </svg>
+                        </button>
+                      )}
                       <button
-                        type="button"
-                        onClick={() => startSubEdit(sub)}
-                        className="flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-transparent bg-transparent text-text-muted transition-all duration-150 hover:border-border-subtle hover:bg-bg-secondary hover:text-text-primary"
-                        title="Edit subscription"
-                        aria-label={`Edit ${sub.name}`}
+                        onClick={() => deleteSubscription(sub.id)}
+                        className="rounded-md border-none bg-transparent p-1 text-text-muted transition-colors duration-150 hover:text-[#b3666b]"
                       >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M12 20h9" />
-                          <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                        </svg>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
                       </button>
-                    )}
-                    <button
-                      onClick={() => deleteSubscription(sub.id)}
-                      className="rounded-md border-none bg-transparent p-1 text-text-muted transition-colors duration-150 hover:text-[#b3666b]"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-                    </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -972,7 +994,10 @@ export const SubscriptionsTab: React.FC<SubscriptionsTabProps> = ({
 
         {subscriptions.length > 0 && (() => {
           const COLORS = ["#b3666b", "#e39282", "#6366f1", "#f59e0b", "#10b981", "#3b82f6", "#8b5cf6", "#14b8a6"];
-          const monthlyAmounts = subscriptions.map((s) => (s.billingCycle === "yearly" ? s.cost / 12 : s.cost));
+          const monthlyAmounts = subscriptions.map((s) => {
+            const ownerCost = getOwnerSubscriptionCost(s);
+            return s.billingCycle === "yearly" ? ownerCost / 12 : ownerCost;
+          });
           const totalMonthly = monthlyAmounts.reduce((a, b) => a + b, 0);
           const r = 72, cx = 100, cy = 100, strokeW = 20;
           const circ = 2 * Math.PI * r;

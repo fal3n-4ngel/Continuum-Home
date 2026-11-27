@@ -54,14 +54,35 @@ export function collectDueBillingDates(
   return { dueDates, nextDate: cursor };
 }
 
+export function getOwnerSubscriptionCost(
+  sub: Pick<SubscriptionRecord, "cost" | "type" | "isFamilyPlan" | "familyMembers">
+): number {
+  if (sub.type === "income" || !sub.isFamilyPlan || !sub.familyMembers || sub.familyMembers.length === 0) {
+    return sub.cost;
+  }
+  const totalMembers = sub.familyMembers.length + 1;
+  const defaultShare = sub.cost / totalMembers;
+  const membersSum = sub.familyMembers.reduce(
+    (sum, m) => sum + (typeof m.share === "number" ? m.share : defaultShare),
+    0
+  );
+  return Math.max(0, Number((sub.cost - membersSum).toFixed(2)));
+}
+
 export function buildRecurringExpenseEntry(sub: SubscriptionRecord, billingDate: string): ExpenseEntry {
   const isIncome = sub.type === "income";
+  const effectiveAmount = getOwnerSubscriptionCost(sub);
+  const isReducedFamily = !isIncome && Boolean(sub.isFamilyPlan && sub.familyMembers && sub.familyMembers.length > 0);
   return {
     title: sub.name,
-    amount: sub.cost,
+    amount: effectiveAmount,
     category: sub.category || (isIncome ? "Salary" : "Subscriptions"),
     date: billingDate,
-    notes: isIncome ? "Auto-posted recurring income" : "Auto-posted subscription",
+    notes: isIncome
+      ? "Auto-posted recurring income"
+      : isReducedFamily
+      ? `Auto-posted family plan share (${effectiveAmount.toFixed(2)} of ${sub.cost.toFixed(2)})`
+      : "Auto-posted subscription",
     type: isIncome ? "income" : "expense",
     tags: sub.tags && sub.tags.length > 0 ? sub.tags : [isIncome ? "recurring-income" : "subscription"],
     idempotencyKey: buildRecurringIdempotencyKey(sub.id, billingDate),

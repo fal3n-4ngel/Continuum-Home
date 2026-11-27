@@ -1,5 +1,5 @@
 import { ExpenseRecord, InvestmentAsset, Subscription } from "@/types";
-import { getEffectiveAmount } from "@/lib/finance";
+import { getEffectiveAmount, getOwnerSubscriptionCost } from "@/lib/finance";
 
 export function calculateTotalExpenses(expenses: ExpenseRecord[]): number {
   return expenses.reduce((sum, item) => sum + (item.amount || 0), 0);
@@ -31,9 +31,10 @@ export function calculatePortfolioMetrics(assets: InvestmentAsset[]) {
 
 export function calculateMonthlySubscriptionCost(subscriptions: Subscription[]): number {
   return subscriptions.reduce((total, sub) => {
+    const ownerCost = getOwnerSubscriptionCost(sub);
     if (sub.billingCycle === "yearly") {
-      return total + sub.cost / 12;
+      return total + ownerCost / 12;
     }
-    return total + sub.cost;
+    return total + ownerCost;
   }, 0);
 }
