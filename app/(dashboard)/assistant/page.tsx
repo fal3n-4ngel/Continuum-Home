@@ -5,7 +5,6 @@ import Link from "next/link";
 import type { Auth, GoogleAuthProvider as GoogleAuthProviderClass, signInWithPopup as signInWithPopupFn } from "firebase/auth";
 import { SITE_URL, SITE_NAME } from "@/lib/utils";
 import { useOrigin } from "@/hooks/useOrigin";
-import { useFeatureFlags } from "@/hooks/useFeatureFlags";
 import { LogoMark } from "@/components/Logo";
 
 interface AgentUser {
@@ -25,7 +24,6 @@ export default function AssistantIntegrationPage() {
   const [user, setUser] = useState<AgentUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [authError, setAuthError] = useState("");
-  const { enableGPTMigration } = useFeatureFlags();
 
   const origin = useOrigin();
   const [copied, setCopied] = useState<string>("");
@@ -196,12 +194,10 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
         <div className="border-b border-border-subtle pb-6">
           <p className="font-mono text-[9px] font-bold uppercase tracking-[1.2px] text-text-muted mb-2">Integration guide</p>
           <h1 className="font-serif text-[28px] italic font-medium text-text-primary leading-tight mb-2">
-            {enableGPTMigration ? "Connect ChatGPT Plugin & AI Agents" : "Connect a Custom GPT"}
+            Connect Universal MCP &amp; AI Agents
           </h1>
           <p className="text-[13px] leading-[1.7] text-text-secondary max-w-[560px]">
-            {enableGPTMigration
-              ? "Link your dashboard to our ChatGPT Plugin, a Custom GPT (active until Dec 11), or any AI agent platform via OpenAPI."
-              : "Link your dashboard to a Custom GPT on the GPT Store, or wire it up to any AI agent platform that supports OpenAPI schemas."}
+            Link your dashboard to Claude, Gemini CLI, ChatGPT, Cursor, Windsurf, or any AI agent platform via Universal MCP and OpenAPI schemas.
           </p>
         </div>
 
@@ -213,7 +209,7 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
               </span>
               <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">·</span>
               <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">
-                ChatGPT Plugin &amp; Universal MCP
+                Universal MCP
               </span>
             </div>
             <span className="rounded-xs border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
@@ -221,10 +217,10 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
             </span>
           </div>
           <h2 className="font-serif text-[20px] italic font-medium text-text-primary mb-2 leading-snug">
-            Install the Continuum ChatGPT Plugin (MCP Connector)
+            Connect via Universal MCP (OAuth 2.0 &amp; API Key)
           </h2>
           <p className="text-[13px] leading-[1.7] text-text-secondary mb-4">
-            Connect Continuum with secure OAuth 2.0 to ChatGPT&apos;s new Plugin / Connected Apps architecture — and plug the same MCP URL into Claude Desktop, Cursor, Windsurf, or any MCP-compatible agent.
+            Connect Continuum with secure OAuth 2.0 to Claude and ChatGPT Connected Apps — or plug the exact same MCP URL into Gemini CLI, Antigravity, Claude Desktop, Cursor, Windsurf, or any MCP-compatible agent.
           </p>
           <div className="mb-5 flex flex-wrap items-center gap-2">
             <span className={CODE}>{`${origin || SITE_URL}/api/mcp`}</span>
@@ -237,46 +233,6 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
               <span>Setup &amp; Create Plugin</span>
               <span className="text-xs">→</span>
             </Link>
-            <a
-              href="https://help.openai.com/en/articles/20001519-custom-gpt-retirement-and-migration-faq"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={BTN_GHOST}
-            >
-              <span>OpenAI Migration FAQ ↗</span>
-            </a>
-          </div>
-        </div>
-
-        <div className="rounded-sm border border-amber-500/35 bg-amber-500/5 p-5 flex flex-col gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="rounded-xs border border-amber-500/40 bg-amber-500/15 px-2 py-0.5 font-mono text-[9px] font-bold uppercase tracking-[1px] text-amber-700 dark:text-amber-400">
-                Deprecated
-              </span>
-              <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">
-                Retiring Dec 11, 2026
-              </span>
-            </div>
-          </div>
-          <h2 className="font-serif text-[17px] italic font-medium text-text-primary leading-snug">
-            Legacy Public Custom GPT
-          </h2>
-          <p className="text-[13px] leading-[1.7] text-text-secondary">
-            By decision of OpenAI, <strong className="text-text-primary">Custom GPTs are deprecated and will stop working on December 11, 2026</strong>. Existing Custom GPT users should migrate to the new <strong className="text-text-primary">ChatGPT MCP Plugin</strong> above.
-          </p>
-          <div className="flex flex-wrap items-center gap-2.5 pt-1">
-            <Link href="/assistant/plugin" className={BTN_GHOST}>
-              <span>Switch to New Plugin →</span>
-            </Link>
-            <a
-              href="https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-dashboard-public"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 font-mono text-[11px] text-text-muted underline hover:text-text-primary"
-            >
-              Open Legacy Custom GPT ↗
-            </a>
           </div>
         </div>
 
@@ -299,7 +255,7 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
           <div className="min-w-0 flex-1">
             <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Choose MCP (Any Agent) or OpenAPI</h2>
             <p className="text-[13px] leading-[1.7] text-text-secondary">
-              Use the <strong className="text-text-primary">MCP Server URL</strong> (<span className="font-mono text-xs">{`${origin || SITE_URL}/api/mcp`}</span>) to plug Continuum into Claude Desktop, Cursor, Windsurf, ChatGPT Plugins, or any MCP-compatible agent. For legacy platforms (Coze, Dify, Poe), use the OpenAPI schema or Poe webhook below.
+              Use the <strong className="text-text-primary">MCP Server URL</strong> (<span className="font-mono text-xs">{`${origin || SITE_URL}/api/mcp`}</span>) to plug Continuum into Claude, Gemini CLI, Antigravity, Cursor, Windsurf, ChatGPT, or any MCP-compatible agent. For legacy platforms (Coze, Dify, Poe), use the OpenAPI schema or Poe webhook below.
             </p>
           </div>
         </div>
@@ -310,7 +266,7 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
             <div>
               <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Import the API schema</h2>
               <p className="text-[13px] leading-[1.7] text-text-secondary">
-                For <strong className="text-text-primary">ChatGPT Actions</strong> (Custom GPTs) or agent platforms,
+                For <strong className="text-text-primary">OpenAPI-compatible AI agent platforms</strong>,
                 choose to import a schema from a URL and paste the link below:
               </p>
             </div>

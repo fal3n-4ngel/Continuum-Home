@@ -41,7 +41,7 @@ export default function PrivacyPolicyPage() {
           <section className="flex flex-col gap-2">
             <h2 className="font-bold text-base text-[#9E5D48] dark:text-[#E07A5F]">1. Introduction</h2>
             <p>
-              This Privacy Policy explains how **{SITE_NAME}** and its integrated **AI Assistants (e.g. ChatGPT Custom GPT Actions)** collect, process, and protect your data. We respect your privacy and are committed to keeping your personal information secure.
+              This Privacy Policy explains how **{SITE_NAME}** and its integrated **AI Assistants (e.g. MCP &amp; OpenAPI AI Agents)** collect, process, and protect your data. We respect your privacy and are committed to keeping your personal information secure.
             </p>
           </section>
 
@@ -73,7 +73,7 @@ export default function PrivacyPolicyPage() {
           <section className="flex flex-col gap-2">
             <h2 className="font-bold text-base text-[#9E5D48] dark:text-[#E07A5F]">3. AI Assistant Integration (OAuth &amp; APIs)</h2>
             <p>
-              When you connect the official Custom GPT or any custom AI Agents:
+              When you connect an MCP plugin or any AI Agent:
             </p>
             <ul className="flex flex-col gap-2 font-mono text-xs text-[#26211F] dark:text-[#F4F5F7] mt-2">
               <li className="flex items-start gap-2">

@@ -37,7 +37,7 @@ export const metadata: Metadata = {
     "AniList sync",
     "Trakt sync",
     "Letterboxd sync",
-    "ChatGPT custom GPT",
+    "MCP personal dashboard",
     "OpenAPI personal dashboard",
     "AI agent dashboard",
     "open source personal dashboard",
@@ -124,7 +124,7 @@ const structuredData = {
         "Investment & Mutual Funds NAV Tracking",
         "Subscription Management & Renewal Alerts",
         "Letterboxd, Trakt & AniList Sync",
-        "ChatGPT Custom GPT & Claude OpenAPI Action Support",
+        "Native MCP Server & OpenAPI AI Agent Support",
         "Self-hostable with Firebase and Next.js",
       ],
       author: {

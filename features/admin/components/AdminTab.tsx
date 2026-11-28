@@ -74,7 +74,7 @@ Key Updates:
 • New domain: continuum-home.vercel.app
 • Refined warm paper aesthetics and dynamic layouts
 • Fully-loaded data guarantees at launch to prevent layout shifts
-• Native Custom GPT integrations for automated ledger management
+• Native MCP & OpenAPI AI agent integrations for automated ledger management
 
 Thank you for being part of our journey!`);
   const [annSending, setAnnSending] = useState<"preview" | "send" | null>(null);
@@ -1002,7 +1002,7 @@ Thank you for being part of our journey!`);
                     type="text"
                     value={annTitle}
                     onChange={(e) => setAnnTitle(e.target.value)}
-                    placeholder="e.g. Announcing Rebranding & Custom GPTs"
+                    placeholder="e.g. Announcing Rebranding & MCP Support"
                     className="w-full rounded-none border-2 border-border-subtle bg-bg-primary px-3.5 py-2 text-xs text-text-primary outline-none transition-all focus:border-text-primary"
                   />
                 </div>
