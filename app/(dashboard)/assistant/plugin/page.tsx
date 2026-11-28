@@ -8,10 +8,8 @@ import { LogoMark } from "@/components/Logo";
 import {
   Copy,
   Check,
-  ExternalLink,
   ArrowLeft,
   Sparkles,
-  AlertTriangle,
   Terminal,
 } from "lucide-react";
 
@@ -80,20 +78,6 @@ export default function PluginInstallationPage() {
           </h1>
           <p className="text-[14px] leading-relaxed text-text-secondary max-w-[660px]">
             Connect your personal Continuum Home ledger, expense tracker, and watchlist directly to ChatGPT using the new Model Context Protocol (MCP) plugin architecture.
-          </p>
-        </div>
-
-        {/* Official December 11 OpenAI Notice Banner */}
-        <div className="rounded-sm border border-amber-500/40 bg-amber-500/5 p-5 flex flex-col gap-3">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-            <span className="font-mono text-[10px] font-bold uppercase tracking-[1.2px] text-amber-600 dark:text-amber-400">
-              OpenAI Policy Notice · Custom GPTs Retiring Dec 11, 2026
-            </span>
-          </div>
-          <p className="text-[13px] leading-relaxed text-text-secondary">
-            OpenAI has announced that legacy <strong>Custom GPTs will stop running on December 11, 2026</strong>. In their place, ChatGPT is transitioning to modular <strong>Plugins &amp; Apps (powered by MCP)</strong>.
-            This new plugin allows you to access Continuum Home tools directly across all regular chats without needing to open a standalone GPT store link.
           </p>
         </div>
 
@@ -386,7 +370,7 @@ export default function PluginInstallationPage() {
             </h3>
           </div>
           <p className="text-[13px] leading-relaxed text-text-secondary">
-            Remember that you don&apos;t have to rely on ChatGPT store policies to talk to your workspace. Continuum Home includes a fully autonomous in-app assistant (powered by Gemini and OpenAI) available directly on your dashboard.
+            Remember that you don&apos;t have to rely on external AI agent platforms to talk to your workspace. Continuum Home includes a fully autonomous in-app assistant (powered by Gemini and OpenAI) available directly on your dashboard.
           </p>
           <div className="flex flex-wrap gap-3">
             <Link
@@ -395,15 +379,6 @@ export default function PluginInstallationPage() {
             >
               Open In-App Assistant
             </Link>
-            <a
-              href="https://chatgpt.com/g/g-6a60b01e38c8819187662d1e42c6bee7-Continuum-dashboard-public"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-sm border border-border-subtle bg-bg-secondary px-4 py-2 font-mono text-xs uppercase tracking-wider font-medium text-text-secondary hover:text-text-primary transition-all"
-            >
-              <span>Legacy GPT Link (Dec 11)</span>
-              <ExternalLink className="h-3 w-3" />
-            </a>
           </div>
         </div>
       </div>
