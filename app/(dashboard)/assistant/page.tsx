@@ -194,10 +194,10 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
         <div className="border-b border-border-subtle pb-6">
           <p className="font-mono text-[9px] font-bold uppercase tracking-[1.2px] text-text-muted mb-2">Integration guide</p>
           <h1 className="font-serif text-[28px] italic font-medium text-text-primary leading-tight mb-2">
-            Connect ChatGPT Plugin &amp; AI Agents
+            Connect Universal MCP &amp; AI Agents
           </h1>
           <p className="text-[13px] leading-[1.7] text-text-secondary max-w-[560px]">
-            Link your dashboard to our ChatGPT MCP Plugin, Claude Desktop, Cursor, or any AI agent platform via MCP and OpenAPI schemas.
+            Link your dashboard to Claude, Gemini CLI, ChatGPT, Cursor, Windsurf, or any AI agent platform via Universal MCP and OpenAPI schemas.
           </p>
         </div>
 
@@ -209,7 +209,7 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
               </span>
               <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">·</span>
               <span className="font-mono text-[9px] font-bold uppercase tracking-[1px] text-text-muted">
-                ChatGPT Plugin &amp; Universal MCP
+                Universal MCP
               </span>
             </div>
             <span className="rounded-xs border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
@@ -217,10 +217,10 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
             </span>
           </div>
           <h2 className="font-serif text-[20px] italic font-medium text-text-primary mb-2 leading-snug">
-            Install the Continuum ChatGPT Plugin (MCP Connector)
+            Connect via Universal MCP (OAuth 2.0 &amp; API Key)
           </h2>
           <p className="text-[13px] leading-[1.7] text-text-secondary mb-4">
-            Connect Continuum with secure OAuth 2.0 to ChatGPT&apos;s Plugin / Connected Apps architecture — and plug the same MCP URL into Claude Desktop, Cursor, Windsurf, or any MCP-compatible agent.
+            Connect Continuum with secure OAuth 2.0 to Claude and ChatGPT Connected Apps — or plug the exact same MCP URL into Gemini CLI, Antigravity, Claude Desktop, Cursor, Windsurf, or any MCP-compatible agent.
           </p>
           <div className="mb-5 flex flex-wrap items-center gap-2">
             <span className={CODE}>{`${origin || SITE_URL}/api/mcp`}</span>
@@ -255,7 +255,7 @@ Confirm Destructive Actions: If the user asks to delete a major investment or wi
           <div className="min-w-0 flex-1">
             <h2 className="mb-2 text-[14px] font-semibold text-text-primary">Choose MCP (Any Agent) or OpenAPI</h2>
             <p className="text-[13px] leading-[1.7] text-text-secondary">
-              Use the <strong className="text-text-primary">MCP Server URL</strong> (<span className="font-mono text-xs">{`${origin || SITE_URL}/api/mcp`}</span>) to plug Continuum into Claude Desktop, Cursor, Windsurf, ChatGPT Plugins, or any MCP-compatible agent. For legacy platforms (Coze, Dify, Poe), use the OpenAPI schema or Poe webhook below.
+              Use the <strong className="text-text-primary">MCP Server URL</strong> (<span className="font-mono text-xs">{`${origin || SITE_URL}/api/mcp`}</span>) to plug Continuum into Claude, Gemini CLI, Antigravity, Cursor, Windsurf, ChatGPT, or any MCP-compatible agent. For legacy platforms (Coze, Dify, Poe), use the OpenAPI schema or Poe webhook below.
             </p>
           </div>
         </div>

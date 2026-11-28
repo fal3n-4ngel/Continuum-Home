@@ -504,10 +504,10 @@ export function KirokuTab({ idToken, onOpenUpgrade, aiOptOut, onOpenSettings }: 
               </span>
             </div>
             <h3 className="font-serif text-2xl sm:text-3xl italic font-normal tracking-tight text-text-primary">
-              Connect ChatGPT Plugins &amp; AI Agents
+              Connect Universal MCP &amp; AI Agents
             </h3>
             <p className="text-[13.5px] leading-relaxed text-text-secondary">
-              Don&apos;t have Pro? Connect your Continuum workspace to ChatGPT Plugins, Claude Desktop, Cursor, or any MCP / OpenAPI-compatible agent with secure OAuth 2.0 to log expenses, check spending, and manage watchlists at zero cost.
+              Don&apos;t have Pro? Connect your Continuum workspace to Claude, Gemini CLI, ChatGPT, Cursor, Windsurf, or any MCP / OpenAPI-compatible agent with secure OAuth 2.0 or a Permanent API Key to log expenses, check spending, and manage watchlists at zero cost.
             </p>
           </div>
 
